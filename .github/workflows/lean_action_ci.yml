@@ -1,0 +1,44 @@
+name: Lean Action CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    - name: Install Lean
+      uses: leanprover/lean-action@v1
+
+    - name: Build charon
+      run: make setup-charon
+      cwd: ./aeneas
+
+    - name: Install OCaml
+      uses: avencera/setup-ocaml@v1
+      with:
+        ocaml-version: 5.3
+        packages: ppx_deriving visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
+
+    - name: Build aeneas
+      run: make
+      cwd: ./aeneas
+
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+
+    - name: Generate LLBC using Charon
+      run: ./aeneas/charon/bin/charon cargo --preset=aeneas 
+      cwd: ./merc/crates/lts/
+
+    - name: Generate lean code using aeneas
+      run: ./aeneas/bin/aeneas -split-files 
+      cwd: ./aeneas
