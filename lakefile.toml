@@ -5,10 +5,6 @@ defaultTargets = ["merc-verified"]
 [[lean_lib]]
 name = "MercVerified"
 
-[[lean_exe]]
-name = "merc-verified"
-root = "Main"
-
 [[require]]
 name = "cslib"
 scope = "leanprover"
