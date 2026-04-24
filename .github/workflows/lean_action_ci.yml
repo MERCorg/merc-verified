@@ -19,7 +19,7 @@ jobs:
 
     - name: Build charon
       run: make setup-charon
-      cwd: ./aeneas
+      working-directory: ./aeneas
 
     - name: Install OCaml
       uses: avencera/setup-ocaml@v1
@@ -29,7 +29,7 @@ jobs:
 
     - name: Build aeneas
       run: make
-      cwd: ./aeneas
+      working-directory: ./aeneas
 
     - uses: dtolnay/rust-toolchain@stable
       with:
@@ -37,8 +37,8 @@ jobs:
 
     - name: Generate LLBC using Charon
       run: ./aeneas/charon/bin/charon cargo --preset=aeneas 
-      cwd: ./merc/crates/lts/
+      working-directory: ./crate
 
     - name: Generate lean code using aeneas
-      run: ./aeneas/bin/aeneas -split-files 
-      cwd: ./aeneas
+      run: ./aeneas/bin/aeneas -split-files -backend=lean -dest=./MercVerified/code/ ./crate/test.llbc
+      working-directory: ./aeneas
