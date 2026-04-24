@@ -22,7 +22,7 @@ jobs:
       working-directory: ./aeneas
 
     - name: Install OCaml
-      uses: avencera/setup-ocaml@v1
+      uses: ocaml/setup-ocaml@v3
       with:
         ocaml-version: 5.3
         packages: ppx_deriving visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
