@@ -1,6 +1,6 @@
 name = "merc-verified"
 version = "0.1.0"
-defaultTargets = ["merc-verified"]
+defaultTargets = ["MercVerified"]
 
 [[lean_lib]]
 name = "MercVerified"

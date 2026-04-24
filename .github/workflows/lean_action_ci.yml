@@ -14,9 +14,6 @@ jobs:
       with:
         submodules: true
 
-    - name: Install Lean
-      uses: leanprover/lean-action@v1
-
     - name: Build charon
       run: make setup-charon
       working-directory: ./aeneas
@@ -42,3 +39,6 @@ jobs:
     - name: Generate lean code using aeneas
       run: ./aeneas/bin/aeneas -split-files -backend=lean -dest=./MercVerified/code/ ./crate/test.llbc
       working-directory: ./aeneas
+
+    - name: Install and build Lean
+      uses: leanprover/lean-action@v1
