@@ -32,13 +32,10 @@ jobs:
     - name: Install OCaml Dependencies
       run: opam install -y ppx_deriving visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
 
-    - name: Setup dune
-      uses: ocaml-dune/setup-dune@v2
-      with:
-        steps: install-dune
-
     - name: Build aeneas
-      run: make
+      run: |
+        eval $(opam env)
+        make
       working-directory: ./aeneas
 
     - uses: dtolnay/rust-toolchain@stable
@@ -46,12 +43,11 @@ jobs:
         components: clippy
 
     - name: Generate LLBC using Charon
-      run: ./aeneas/charon/bin/charon cargo --preset=aeneas 
+      run: ../aeneas/charon/bin/charon cargo --preset=aeneas 
       working-directory: ./crate
 
     - name: Generate lean code using aeneas
       run: ./aeneas/bin/aeneas -split-files -backend=lean -dest=./MercVerified/code/ ./crate/test.llbc
-      working-directory: ./aeneas
 
     - name: Install and build Lean
       uses: leanprover/lean-action@v1
