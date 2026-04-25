@@ -21,8 +21,10 @@ jobs:
     - name: Install OCaml
       uses: ocaml/setup-ocaml@v3
       with:
-        ocaml-version: 5.3
-        packages: ppx_deriving visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
+        ocaml-compiler: 5.3
+
+    - name: Install OCaml Dependencies
+      run: opam install -y ppx_deriving visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
 
     - name: Build aeneas
       run: make
