@@ -34,7 +34,8 @@ jobs:
 
     - name: Setup dune
       uses: ocaml-dune/setup-dune@v2
-      steps: install-dune
+      with:
+        steps: install-dune
 
     - name: Build aeneas
       run: make
