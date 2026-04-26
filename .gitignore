@@ -8,4 +8,4 @@ target
 *.llbc
 
 # Ignore the generated Lean code
-MercVerified/code/
+Code/

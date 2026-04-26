@@ -47,7 +47,7 @@ jobs:
       working-directory: ./crate
 
     - name: Generate lean code using aeneas
-      run: ./aeneas/bin/aeneas -split-files -backend=lean -dest=./MercVerified/code/ ./crate/test.llbc
+      run: ./aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=Code ./crate/test.llbc
 
     - name: Install and build Lean
       uses: leanprover/lean-action@v1

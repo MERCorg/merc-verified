@@ -5,6 +5,9 @@ defaultTargets = ["MercVerified"]
 [[lean_lib]]
 name = "MercVerified"
 
+[[lean_lib]]
+name = "Code"
+
 [[require]]
 name = "cslib"
 scope = "leanprover"
