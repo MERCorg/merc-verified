@@ -1,6 +1,7 @@
 [package]
 name = "verified"
 edition = "2024"
+version = "1.0.0"
 
 [dependencies]
 merc_lts = { path = "../3rd-party/merc/crates/lts" }
