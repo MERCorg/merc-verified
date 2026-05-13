@@ -2,6 +2,8 @@
 
 Formal verification of labelled transition system (LTS) algorithms. Rust implementations in `crate/` are translated to Lean 4 via [Aeneas](https://github.com/AeneasVerif/aeneas) and verified against formal definitions in `MercVerified/`.
 
+We want to prove the correctness of the `merc` repository. For this we introduce a derived `crate` of (simplified) Rust code that we can translate to Lean and verify. The `MercVerified/` directory contains the formal definitions and proofs, while `Code` contains the generated Lean code from the Rust implementations.
+
 ## Prerequisites
 
 - [Rust](https://rustup.rs/) (stable toolchain)
@@ -10,14 +12,9 @@ Formal verification of labelled transition system (LTS) algorithms. Rust impleme
 
 ## Getting Started
 
-### 1. Clone the repository (with submodules)
+### 1. Initialize the submodules
 
-```bash
-git clone --recurse-submodules https://github.com/mlaveaux/merc-verified.git
-cd merc-verified
-```
-
-If you already cloned without submodules:
+Use the following command to initialize the git submodule:
 
 ```bash
 git submodule update --init --recursive
@@ -34,9 +31,10 @@ make setup-charon
 cd ..
 
 # Install OCaml dependencies
-opam install -y ppx_deriving visitors easy_logging zarith yojson \
-  core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind \
-  zarith progress domainslib
+opam switch create 5.3.0
+
+opam install ppx_deriving visitors easy_logging zarith yojson core_unix odoc \
+  ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
 
 # Build Aeneas (LLBC → Lean translator)
 cd aeneas
@@ -66,3 +64,19 @@ lake build
 ```
 
 This builds both the formal definitions in `MercVerified/` and the generated code in `MercVerified/code/`, checking all proofs.
+
+### 5. Proving with AI agents
+
+Install `ripgrep` for searching:
+
+```bash
+cargo install --locked ripgrep
+```
+
+Install the `uv` Python package manager for the `lean-lsp-mcp`. A `MCP` is a
+Model Context Protocol that allows AI agents to connect to external programs, in
+this case interacting with lean.
+
+```bash
+cargo install uv
+```
