@@ -1,7 +1,8 @@
-import MercVerified.BranchingBisimilarity
-import MercVerified.Signature
+import Signatures.BranchingBisimilarity
+import Signatures.Signature
 
 -- Import the generated Lean code
-import MercVerified.code.Funs;
-import MercVerified.code.FunsExternal_Template;
-import MercVerified.code.Types;
+import Code.Funs;
+import Code.FunsExternal_Template;
+import Code.FunsExternal;
+import Code.Types;
