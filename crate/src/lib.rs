@@ -1,3 +1,3 @@
-mod labelled_transition_system;
+mod simple_labelled_transition_system;
 
-pub use labelled_transition_system::*;
+pub use simple_labelled_transition_system::*;

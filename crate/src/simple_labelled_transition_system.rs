@@ -25,7 +25,7 @@ impl Transition {
 /// Uses byte compressed vectors to store the states and their outgoing
 /// transitions efficiently in memory.
 #[derive(PartialEq, Eq, Clone)]
-pub struct LabelledTransitionSystem<Label> {
+pub struct SimpleLabelledTransitionSystem<Label> {
     /// Encodes the states and their outgoing transitions.
     states: Vec<usize>,
     transition_labels: Vec<LabelIndex>,
@@ -38,7 +38,7 @@ pub struct LabelledTransitionSystem<Label> {
     initial_state: StateIndex,
 }
 
-impl<Label> LabelledTransitionSystem<Label> {
+impl<Label> SimpleLabelledTransitionSystem<Label> {
     /// Creates a new labelled transition system with the given transitions,
     /// labels, and hidden labels.
     ///
@@ -53,7 +53,7 @@ impl<Label> LabelledTransitionSystem<Label> {
         num_of_states: Option<usize>,
         mut transition_iter: F,
         labels: Vec<Label>,
-    ) -> LabelledTransitionSystem<Label>
+    ) -> SimpleLabelledTransitionSystem<Label>
     where
         F: FnMut() -> I,
         I: Iterator<Item = (StateIndex, LabelIndex, StateIndex)>,
@@ -119,7 +119,7 @@ impl<Label> LabelledTransitionSystem<Label> {
         // Add the sentinel state.
         states.push(transition_labels.len());
 
-        LabelledTransitionSystem::from_raw_parts(
+        SimpleLabelledTransitionSystem::from_raw_parts(
             initial_state,
             states,
             transition_labels,
@@ -228,7 +228,7 @@ impl<Label> LabelledTransitionSystem<Label> {
         transition_to: Vec<StateIndex>,
         labels: Vec<Label>,
     ) -> Self {
-        let lts = LabelledTransitionSystem {
+        let lts = SimpleLabelledTransitionSystem {
             initial_state,
             states,
             transition_labels,
