@@ -8,4 +8,6 @@ target
 *.llbc
 
 # Ignore the generated Lean code
-Code/
+MercVerified/Code/Funs.lean
+MercVerified/Code/FunsExternal_Template.lean
+MercVerified/Code/Types.lean

@@ -19,7 +19,7 @@ jobs:
 
     - name: Build charon
       run: make setup-charon
-      working-directory: ./aeneas
+      working-directory: ./3rd-party/aeneas
       env:        
         RUSTC_WRAPPER: sccache
 
@@ -36,18 +36,18 @@ jobs:
       run: |
         eval $(opam env)
         make
-      working-directory: ./aeneas
+      working-directory: ./3rd-party/aeneas
 
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: clippy
 
     - name: Generate LLBC using Charon
-      run: ../aeneas/charon/bin/charon cargo --preset=aeneas 
-      working-directory: ./crate
+      run: ../3rd-party/aeneas/charon/bin/charon cargo --preset=aeneas 
+      working-directory: ./verified
 
     - name: Generate lean code using aeneas
-      run: ./aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=Code ./verified/verified.llbc
+      run: ./3rd-party/aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=MercVerified/Code ./verified/verified.llbc
 
     - name: Install and build Lean
       uses: leanprover/lean-action@v1
