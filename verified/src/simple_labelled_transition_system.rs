@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+use std::collections::HashMap;
+
 type StateIndex = usize;
 type LabelIndex = usize;
 
@@ -27,9 +29,7 @@ impl Transition {
 #[derive(PartialEq, Eq, Clone)]
 pub struct SimpleLabelledTransitionSystem<Label> {
     /// Encodes the states and their outgoing transitions.
-    states: Vec<usize>,
-    transition_labels: Vec<LabelIndex>,
-    transition_to: Vec<StateIndex>,
+    transitions: HashMap<LabelIndex, Vec<Transition>>,
 
     /// Keeps track of the labels for every index, and which of them are hidden.
     labels: Vec<Label>,
@@ -39,76 +39,11 @@ pub struct SimpleLabelledTransitionSystem<Label> {
 }
 
 impl<Label> SimpleLabelledTransitionSystem<Label> {
-    /// Creates a labelled transition system from another one, given the permutation of state indices.
-    ///
-    /// The permutation maps old state indices to new state indices, i.e.,
-    /// `permutation(old) = new`. The transition arrays are rebuilt so that
-    /// transitions are contiguous per new state index, and all transition
-    /// targets are updated to reference the new state indices.
-    pub fn new_from_permutation<P>(lts: Self, permutation: P) -> Self
-    where
-        P: Fn(StateIndex) -> StateIndex + Copy,
-    {
-        // Build the inverse permutation: inverse[new_index] = old_index
-        let mut inverse = vec![0; lts.num_of_states()];
-        for state_index in lts.iter_states() {
-            inverse[permutation(state_index)] = state_index;
-        }
-
-        // Rebuild transition arrays in the order of the new state indices.
-        let mut states = Vec::new();
-        let mut transition_labels = Vec::new();
-        let mut transition_to = Vec::new();
-
-        for &old_index in &inverse {
-            states.push(transition_labels.len());
-
-            let start = lts.states[old_index];
-            let end = lts.states[old_index + 1];
-
-            for i in start..end {
-                transition_labels.push(lts.transition_labels[i]);
-                transition_to.push(permutation(lts.transition_to[i]));
-            }
-        }
-
-        // Add the sentinel state.
-        states.push(transition_labels.len());
-
-        Self::from_raw_parts(
-            permutation(lts.initial_state),
-            states,
-            transition_labels,
-            transition_to,
-            lts.labels,
-        )
-    }
-
-    /// Constructs a [LabelledTransitionSystem] directly from its raw internal arrays.
-    ///
-    /// The `states` array must contain one entry per state holding the start offset of that
-    /// state's transitions in the transition arrays, plus a sentinel entry at the end equal
-    /// to the total number of transitions. `transition_labels` and `transition_to` must have
-    /// equal length and all indices they contain must be in bounds.
-    ///
-    /// # Panics
-    ///
-    /// Panics (in debug mode) if the invariants of the internal representation are violated.
-    pub fn from_raw_parts(
-        initial_state: StateIndex,
-        states: Vec<usize>,
-        transition_labels: Vec<LabelIndex>,
-        transition_to: Vec<StateIndex>,
-        labels: Vec<Label>,
-    ) -> Self {
-        let lts = SimpleLabelledTransitionSystem {
-            initial_state,
-            states,
-            transition_labels,
-            transition_to,
-            labels,
-        };
-        lts
+    pub fn outgoing_transitions(&self, state_index: StateIndex) -> Vec<Transition> {
+        self.transitions
+           .get(&state_index)
+           .expect("State index out of bounds.")
+           .clone()
     }
 
     pub fn initial_state_index(&self) -> StateIndex {
@@ -120,8 +55,7 @@ impl<Label> SimpleLabelledTransitionSystem<Label> {
     }
 
     pub fn num_of_states(&self) -> usize {
-        // Remove the sentinel state.
-        self.states.len() - 1
+        self.transitions.len()
     }
 
     pub fn num_of_labels(&self) -> usize {
@@ -129,7 +63,7 @@ impl<Label> SimpleLabelledTransitionSystem<Label> {
     }
 
     pub fn num_of_transitions(&self) -> usize {
-        self.transition_labels.len()
+        self.transitions.values().map(|v| v.len()).sum()
     }
 
     pub fn labels(&self) -> &[Label] {
