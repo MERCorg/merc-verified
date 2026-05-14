@@ -5,7 +5,7 @@ public import Cslib.Foundations.Semantics.LTS.HasTau
 
 open Cslib (LTS HasTau)
 
-public section BranchingBisimulation
+@[expose] public section BranchingBisimulation
 
 /-! ## Branching bisimulation and branching bisimilarity -/
 
