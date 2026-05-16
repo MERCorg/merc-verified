@@ -22,20 +22,57 @@ def BranchingSignature [Cslib.HasTau Label] (lts : Cslib.LTS State Label) (s : S
 def IsStable (sig : State → Sig) (partition : State → Block) : Prop :=
   ∀ s s', partition s = partition s' → sig s = sig s'
 
--- The coarsest partition stable w.r.t. the StrongSignature: states are related iff some stable
--- partition keeps them in the same block. (Existential form — the previous ∀ form was degenerate,
--- collapsing to Eq via the always-stable discrete partition.) `Block` shares State's universe so
--- witnesses like `Quotient ...` fit.
-def StrongFixPoint.{u, v} {State : Type u} {Label : Type v} (lts : Cslib.LTS State Label) :
+-- PreSig: refined signature combining visible/non-inert transitions (tagged by block) with
+-- inert τ-transitions (tagged with a hash of the destination's Sig). The `sigHash` parameter is
+-- abstract — for the recursive definition in the paper, `sigHash s' = h (Sig π sigHash s')`,
+-- the hash of the destination's signature.
+--
+-- Reference: signature-based partition refinement for branching bisimilarity.
+def PreSig [Cslib.HasTau Label] (lts : Cslib.LTS State Label) (partition : State → Block)
+    {Tag : Type _} (sigHash : State → Tag) (s : State) : Set (Label × (Block ⊕ Tag)) :=
+  { e | (∃ a s', lts.Tr s a s' ∧ (a ≠ Cslib.HasTau.τ ∨ partition s ≠ partition s') ∧
+                e = (a, Sum.inl (partition s'))) ∨
+        (∃ s', lts.Tr s Cslib.HasTau.τ s' ∧ partition s = partition s' ∧
+                e = (Cslib.HasTau.τ, Sum.inr (sigHash s'))) }
+
+-- Sig (one-step operator): given an oracle `sigFn` for `Sig`, computes one step of the recurrence.
+-- If `s` has an inert τ-successor `s'` (within the same block) whose `sigFn s'` absorbs `PreSig s`
+-- (plus the inert step itself), then `Sig s` collapses to `sigFn s'`; otherwise `Sig s = PreSig s`.
+--
+-- The full recursive `Sig π` of the paper is the fixed point of this operator under the
+-- coherence condition `sigHash s' = h (sigFn s')`. We expose it as a parameterized one-step
+-- operator so it can be instantiated by future fixed-point developments.
+open Classical in
+noncomputable def Sig [Cslib.HasTau Label] (lts : Cslib.LTS State Label) (partition : State → Block)
+    {Tag : Type _} (sigHash : State → Tag)
+    (sigFn : State → Set (Label × (Block ⊕ Tag))) (s : State) :
+    Set (Label × (Block ⊕ Tag)) :=
+  if h : ∃ s', lts.Tr s Cslib.HasTau.τ s' ∧ partition s = partition s' ∧
+              PreSig lts partition sigHash s ⊆
+                sigFn s' ∪ {(Cslib.HasTau.τ, Sum.inr (sigHash s'))} then
+    sigFn h.choose
+  else
+    PreSig lts partition sigHash s
+
+-- Generic FixPoint: the coarsest partition stable w.r.t. a partition-aware signature builder.
+-- States s, s' are related iff some stable partition keeps them in the same block. The `Block`
+-- universe matches State's so concrete witnesses like quotients fit. (Existential form — a ∀
+-- form would be degenerate since the discrete partition is always stable.)
+def FixPoint.{u, w} {State : Type u} {Sig : Type u → Type w}
+    (sigBuilder : {Block : Type u} → (State → Block) → State → Sig Block) :
     State → State → Prop :=
   fun s s' => ∃ (Block : Type u) (partition : State → Block),
-    IsStable (fun x => StrongSignature lts x partition) partition ∧ partition s = partition s'
+    IsStable (sigBuilder partition) partition ∧ partition s = partition s'
 
--- The coarsest partition stable w.r.t. the BranchingSignature (inert-τ excluded).
+-- Strong-bisim FixPoint: FixPoint instantiated with the StrongSignature builder.
+def StrongFixPoint.{u, v} {State : Type u} {Label : Type v} (lts : Cslib.LTS State Label) :
+    State → State → Prop :=
+  FixPoint (fun {_} partition s => StrongSignature lts s partition)
+
+-- Branching-bisim FixPoint: FixPoint instantiated with the (inert-τ-excluded) BranchingSignature.
 def BranchingFixPoint.{u, v} {State : Type u} {Label : Type v} [Cslib.HasTau Label]
     (lts : Cslib.LTS State Label) : State → State → Prop :=
-  fun s s' => ∃ (Block : Type u) (partition : State → Block),
-    IsStable (fun x => BranchingSignature lts x partition) partition ∧ partition s = partition s'
+  FixPoint (fun {_} partition s => BranchingSignature lts s partition)
 
 -- Homogeneous branching bisimulation: the single-LTS variant of LTS.IsBranchingBisimulation
 abbrev IsHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
@@ -157,3 +194,57 @@ theorem Cslib.LTS.Bisimilarity.strongFixPoint (lts : Cslib.LTS State Label)
       have hdc : Cslib.LTS.Bisimilarity lts lts d c := ⟨r, hrDC, hrBis⟩
       exact ⟨c, hTrC, (Quotient.sound hdc).symm.trans hD⟩
   · exact Quotient.sound h
+
+-- Reverse direction (branching): branching bisimilarity implies BranchingFixPoint. Uses the
+-- ≈br-quotient as the witness partition. The inert-τ exclusion in BranchingSignature is essential
+-- here: when the inner τ-step is matched by "do nothing", the side condition `μ ≠ τ ∨ α ≠ β`
+-- rules out the case that would otherwise prevent stability of the bisim-class partition.
+theorem BranchingBisimilarity.branchingFixPoint [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    {s s' : State} (h : BranchingBisimilarity lts s s') :
+    BranchingFixPoint lts s s' := by
+  let brSetoid : Setoid State :=
+    ⟨fun a b => BranchingBisimilarity lts a b,
+     ⟨BranchingBisimilarity.refl,
+      fun {_ _} => BranchingBisimilarity.symm,
+      fun {_ _ _} => BranchingBisimilarity.trans⟩⟩
+  refine ⟨Quotient brSetoid, Quotient.mk brSetoid, ?_, ?_⟩
+  · -- Stability: branching-bisimilar states have equal BranchingSignatures w.r.t. the quotient.
+    intro a b hab
+    have hAB : BranchingBisimilarity lts a b := Quotient.exact hab
+    -- Helper: same direction once, then mirror via symmetry of ≈br.
+    have aux : ∀ {x y : State}, BranchingBisimilarity lts x y →
+        BranchingSignature lts x (Quotient.mk brSetoid) ⊆
+          BranchingSignature lts y (Quotient.mk brSetoid) := by
+      rintro x y hxy ⟨β, μ, α⟩ ⟨u, u', hτPath, hTr, hβEq, hαEq, hSide⟩
+      obtain ⟨r, hrXY, hrBis⟩ := hxy
+      -- Stutter through τ-path to find matching y-side state.
+      obtain ⟨v, hPathYV, hrUV⟩ :=
+        LTS.IsBranchingBisimulation.stutter hrBis hrXY hτPath
+      -- Apply BB on (u, v) for u →μ→ u'.
+      rcases (hrBis hrUV μ).1 _ hTr with ⟨hμτ, hrU'V⟩ | ⟨w, w', hSTrVw, hTrW, hrUW, hrU'W'⟩
+      · -- Or.inl: u' ≈br v ≈br u (same equivalence class), so partition u = partition u',
+        -- i.e., β = α. But the side condition forbids μ=τ ∧ α=β. Contradiction.
+        exfalso
+        have hUV : BranchingBisimilarity lts u v := ⟨r, hrUV, hrBis⟩
+        have hU'V : BranchingBisimilarity lts u' v := ⟨r, hrU'V, hrBis⟩
+        have hUU' : BranchingBisimilarity lts u u' :=
+          BranchingBisimilarity.trans hUV (BranchingBisimilarity.symm hU'V)
+        rcases hSide with hμNeτ | hαNeβ
+        · exact hμNeτ hμτ
+        · apply hαNeβ
+          rw [← hαEq, ← hβEq]
+          exact (Quotient.sound hUU').symm
+      · -- Or.inr: real τ*-prefix + μ-step in y-side, matching the triple.
+        refine ⟨w, w', ?_, hTrW, ?_, ?_, hSide⟩
+        · exact hPathYV.trans ((Cslib.LTS.sTr_τSTr lts).mp hSTrVw)
+        · rw [← hβEq]
+          exact (Quotient.sound (s := brSetoid) ⟨r, hrUW, hrBis⟩).symm
+        · rw [← hαEq]
+          exact (Quotient.sound (s := brSetoid) ⟨r, hrU'W', hrBis⟩).symm
+    exact Set.eq_of_subset_of_subset (aux hAB) (aux (BranchingBisimilarity.symm hAB))
+  · exact Quotient.sound h
+
+-- Not done — reverse direction for branching (BranchingBisimilarity →
+-- BranchingFixPoint). It needs (a) transitivity of ≈br (not in the file or in
+-- Cslib) and (b) the stuttering lemma for branching bisimulations. Both are
+-- classical results but require substantive Lean work. Want me to take that on?
