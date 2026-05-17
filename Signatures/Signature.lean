@@ -74,10 +74,6 @@ def BranchingFixPoint.{u, v} {State : Type u} {Label : Type v} [Cslib.HasTau Lab
     (lts : Cslib.LTS State Label) : State → State → Prop :=
   FixPoint (fun {_} partition s => BranchingSignature lts s partition)
 
--- Homogeneous branching bisimulation: the single-LTS variant of LTS.IsBranchingBisimulation
-abbrev IsHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
-    (r : State → State → Prop) : Prop :=
-  LTS.IsBranchingBisimulation lts r
 
 -- If a partition is stable w.r.t. the StrongSignature (i.e., it is a fixed point of refinement),
 -- then same-block states form a bisimulation. This is the classical partition refinement result.

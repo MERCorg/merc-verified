@@ -38,6 +38,11 @@ def BranchingBisimilarity [HasTau Label] (lts : LTS State Label) : State → Sta
   fun s1 s2 =>
     ∃ r : State → State → Prop, r s1 s2 ∧ LTS.IsBranchingBisimulation lts r
 
+-- Homogeneous branching bisimulation: the single-LTS variant of LTS.IsBranchingBisimulation
+abbrev IsHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    (r : State → State → Prop) : Prop :=
+  LTS.IsBranchingBisimulation lts r
+
 /-- Notation for branching bisimilarity. -/
 notation s:max " ≈br[" lts "] " s':max => BranchingBisimilarity lts s s'
 
