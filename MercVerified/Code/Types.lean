@@ -33,21 +33,21 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
   build_hasher : Self → Result Self_Hasher
 
 /-- [merc_lts::lts::LabelTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 14:0-14:19
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 12:0-12:19
     Name pattern: [merc_lts::lts::LabelTag]
     Visibility: public -/
 @[reducible, rust_type "merc_lts::lts::LabelTag"]
 def merc_lts.lts.LabelTag := Unit
 
 /-- [merc_lts::lts::StateTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 17:0-17:19
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 15:0-15:19
     Name pattern: [merc_lts::lts::StateTag]
     Visibility: public -/
 @[reducible, rust_type "merc_lts::lts::StateTag"]
 def merc_lts.lts.StateTag := Unit
 
 /-- [merc_lts::lts::Transition]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 116:0-116:21
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 104:0-104:21
     Name pattern: [merc_lts::lts::Transition]
     Visibility: public -/
 @[rust_type "merc_lts::lts::Transition"]
@@ -56,7 +56,7 @@ structure merc_lts.lts.Transition where
   «to» : merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag
 
 /-- Trait declaration: [merc_lts::lts::TransitionLabel]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 96:0-96:78
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 84:0-84:78
     Name pattern: [merc_lts::lts::TransitionLabel]
     Visibility: public -/
 @[rust_trait "merc_lts::lts::TransitionLabel"
@@ -73,7 +73,7 @@ structure merc_lts.lts.TransitionLabel (Self : Type) where
   from_index : Std.Usize → Result Self
 
 /-- Trait declaration: [merc_lts::lts::LTS]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 30:0-30:13
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 28:0-28:13
     Name pattern: [merc_lts::lts::LTS]
     Visibility: public -/
 @[rust_trait "merc_lts::lts::LTS" (parentClauses := ["TransitionLabelInst"])]
@@ -92,10 +92,6 @@ structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
   labels : Self → Result (Slice Self_Label)
   is_hidden_label : Self → merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.LabelTag → Result Bool
-  merge_disjoint : forall {L : Type} (LTSInst : merc_lts.lts.LTS L Self_Label),
-    Self → L → Result
-    ((merc_lts.labelled_transition_system.LabelledTransitionSystem Self_Label)
-    × (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
 
 /-- [verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem]
     Source: 'src/simple_labelled_transition_system.rs', lines 19:0-28:1
@@ -108,12 +104,5 @@ structure simple_labelled_transition_system.SimpleLabelledTransitionSystem
   labels : alloc.vec.Vec Label
   initial_state : merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.StateTag
-
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure]
-    Source: 'src/simple_labelled_transition_system.rs', lines 57:38-57:49 -/
-@[reducible]
-def simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
-  (Label : Type) :=
-Unit
 
 end verified

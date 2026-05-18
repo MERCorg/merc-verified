@@ -42,14 +42,6 @@ axiom std.hash.random.RandomState : Type
 @[rust_type "std::hash::random::DefaultHasher"]
 axiom std.hash.random.DefaultHasher : Type
 
-/-- [merc_lts::labelled_transition_system::LabelledTransitionSystem]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/labelled_transition_system.rs', lines 29:0-29:42
-    Name pattern: [merc_lts::labelled_transition_system::LabelledTransitionSystem]
-    Visibility: public -/
-@[rust_type "merc_lts::labelled_transition_system::LabelledTransitionSystem"]
-axiom merc_lts.labelled_transition_system.LabelledTransitionSystem (Label :
-  Type) : Type
-
 /-- [merc_utilities::tagged_index::TagIndex]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 32:0-32:27
     Name pattern: [merc_utilities::tagged_index::TagIndex]

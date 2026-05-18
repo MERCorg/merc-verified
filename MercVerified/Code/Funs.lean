@@ -36,42 +36,6 @@ def Usize.Insts.CoreHashHash : core.hash.Hash Std.Usize := {
     Usize.Insts.CoreHashHash.hash HasherInst
 }
 
-/-- Trait implementation: [core::iter::traits::accum::{core::iter::traits::accum::Sum<usize> for usize}]
-    Source: '/rustc/library/core/src/iter/traits/accum.rs', lines 48:8-48:23
-    Name pattern: [core::iter::traits::accum::Sum<usize, usize>] -/
-@[reducible, rust_trait_impl "core::iter::traits::accum::Sum<usize, usize>"]
-def Usize.Insts.CoreIterTraitsAccumSumUsize : core.iter.traits.accum.Sum
-  Std.Usize Std.Usize := {
-  sum := fun {I : Type} (iteratorIteratorPUsizeInst :
-    core.iter.traits.iterator.Iterator I Std.Usize) =>
-    Usize.Insts.CoreIterTraitsAccumSumUsize.sum iteratorIteratorPUsizeInst
-}
-
-/-- Trait implementation: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}]
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2232:0-2232:44
-    Name pattern: [core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>] -/
-@[reducible, rust_trait_impl
-  "core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>"]
-def
-  std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV
-  (K : Type) (V : Type) : core.iter.traits.iterator.Iterator
-  (std.collections.hash.map.Values K V) V := {
-  next :=
-    std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.next
-  map := fun {B : Type} {F : Type} (coreopsfunctionFnMutPTupleSharedFPInst :
-    core.ops.function.FnMut F V B) =>
-    std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.map
-    coreopsfunctionFnMutPTupleSharedFPInst
-  collect := fun {B : Type} (coreitertraitscollectFromIteratorPSharedPInst :
-    core.iter.traits.collect.FromIterator B V) =>
-    std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.collect
-    coreitertraitscollectFromIteratorPSharedPInst
-  sum := fun {S : Type} (coreitertraitsaccumSumPSharedPInst :
-    core.iter.traits.accum.Sum S V) =>
-    std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.sum
-    coreitertraitsaccumSumPSharedPInst
-}
-
 /-- Trait implementation: [std::hash::random::{core::clone::Clone for std::hash::random::RandomState}]
     Source: '/rustc/library/std/src/hash/random.rs', lines 34:9-34:14
     Name pattern: [core::clone::Clone<std::hash::random::RandomState>] -/
@@ -107,7 +71,7 @@ def std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher :
 }
 
 /-- Trait implementation: [merc_lts::lts::{core::clone::Clone for merc_lts::lts::Transition}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 115:9-115:14
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
     Name pattern: [core::clone::Clone<merc_lts::lts::Transition>] -/
 @[reducible, rust_trait_impl "core::clone::Clone<merc_lts::lts::Transition>"]
 def merc_lts.lts.Transition.Insts.CoreCloneClone : core.clone.Clone
@@ -116,7 +80,7 @@ def merc_lts.lts.Transition.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- Trait implementation: [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 115:23-115:32
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:23-103:32
     Name pattern: [core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>] -/
 @[reducible, rust_trait_impl
   "core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>"]
@@ -299,23 +263,8 @@ def
     corecloneCloneInst
 }
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::merge_disjoint]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 68:4-76:5
-    Visibility: public -/
-def
-  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.merge_disjoint
-  {Label : Type} {L : Type} (merc_ltsltsTransitionLabelInst :
-  merc_lts.lts.TransitionLabel Label) (merc_ltsltsLTSInst : merc_lts.lts.LTS L
-  Label)
-  (self : simple_labelled_transition_system.SimpleLabelledTransitionSystem
-  Label) (_other : L) :
-  Result ((merc_lts.labelled_transition_system.LabelledTransitionSystem Label)
-    × (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
-  := do
-  fail panic
-
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::is_hidden_label]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 64:4-66:5
+    Source: 'src/simple_labelled_transition_system.rs', lines 75:4-77:5
     Visibility: public -/
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.is_hidden_label
@@ -331,7 +280,7 @@ def
     core.cmp.PartialEqUsize label_index 0#usize
 
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::labels]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 60:4-62:5
+    Source: 'src/simple_labelled_transition_system.rs', lines 71:4-73:5
     Visibility: public -/
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.labels
@@ -344,71 +293,48 @@ def
   alloc.vec.Vec.index (core.slice.index.SliceIndexRangeFromUsizeSlice Label)
     self.labels { start := 0#usize }
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::{core::ops::function::FnMut<(&'_ (alloc::vec::Vec<merc_lts::lts::Transition>)), usize> for verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure<Label>}::call_mut]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 57:38-57:49 -/
+/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]: loop body 0:
+    Source: 'src/simple_labelled_transition_system.rs', lines 65:8-67:9
+    Visibility: public -/
+@[rust_loop_body]
 def
-  simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnMutTupleSharedVecTransitionUsize.call_mut
-  {Label : Type} (merc_ltsltsTransitionLabelInst : merc_lts.lts.TransitionLabel
-  Label)
-  (c :
-  simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
-  Label) (tupled_args : alloc.vec.Vec merc_lts.lts.Transition) :
-  Result (Std.Usize ×
-    (simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
-    Label))
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions_loop.body
+  (iter : std.collections.hash.map.Values (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.StateTag) (alloc.vec.Vec merc_lts.lts.Transition))
+  (total : Std.Usize) :
+  Result (ControlFlow ((std.collections.hash.map.Values
+    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+    (alloc.vec.Vec merc_lts.lts.Transition)) × Std.Usize) Std.Usize)
   := do
-  let i := alloc.vec.Vec.len tupled_args
-  ok (i, c)
+  let (o, iter1) ←
+    std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.next
+      iter
+  match o with
+  | none => ok (done total)
+  | some v =>
+    let i := alloc.vec.Vec.len v
+    let total1 ← total + i
+    ok (cont (iter1, total1))
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::{core::ops::function::FnOnce<(&'_ (alloc::vec::Vec<merc_lts::lts::Transition>)), usize> for verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure<Label>}::call_once]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 57:38-57:49 -/
+/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]: loop 0:
+    Source: 'src/simple_labelled_transition_system.rs', lines 65:8-67:9
+    Visibility: public -/
+@[rust_loop]
 def
-  simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnOnceTupleSharedVecTransitionUsize.call_once
-  {Label : Type} (merc_ltsltsTransitionLabelInst : merc_lts.lts.TransitionLabel
-  Label)
-  (c :
-  simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
-  Label) (v : alloc.vec.Vec merc_lts.lts.Transition) :
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions_loop
+  (iter : std.collections.hash.map.Values (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.StateTag) (alloc.vec.Vec merc_lts.lts.Transition))
+  (total : Std.Usize) :
   Result Std.Usize
   := do
-  let (i, _) ←
-    simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnMutTupleSharedVecTransitionUsize.call_mut
-      merc_ltsltsTransitionLabelInst c v
-  ok i
-
-/-- Trait implementation: [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::{core::ops::function::FnOnce<(&'_ (alloc::vec::Vec<merc_lts::lts::Transition>)), usize> for verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure<Label>}]
-    Source: 'src/simple_labelled_transition_system.rs', lines 57:38-57:49 -/
-@[reducible]
-def
-  simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnOnceTupleSharedVecTransitionUsize
-  {Label : Type} (merc_ltsltsTransitionLabelInst : merc_lts.lts.TransitionLabel
-  Label) : core.ops.function.FnOnce
-  (simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
-  Label) (alloc.vec.Vec merc_lts.lts.Transition) Std.Usize := {
-  call_once :=
-    simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnOnceTupleSharedVecTransitionUsize.call_once
-    merc_ltsltsTransitionLabelInst
-}
-
-/-- Trait implementation: [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::{core::ops::function::FnMut<(&'_ (alloc::vec::Vec<merc_lts::lts::Transition>)), usize> for verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure<Label>}]
-    Source: 'src/simple_labelled_transition_system.rs', lines 57:38-57:49 -/
-@[reducible]
-def
-  simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnMutTupleSharedVecTransitionUsize
-  {Label : Type} (merc_ltsltsTransitionLabelInst : merc_lts.lts.TransitionLabel
-  Label) : core.ops.function.FnMut
-  (simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
-  Label) (alloc.vec.Vec merc_lts.lts.Transition) Std.Usize := {
-  FnOnceInst :=
-    simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnOnceTupleSharedVecTransitionUsize
-    merc_ltsltsTransitionLabelInst
-  call_mut :=
-    simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnMutTupleSharedVecTransitionUsize.call_mut
-    merc_ltsltsTransitionLabelInst
-}
+  loop
+    (fun (iter1, total1) =>
+      simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions_loop.body
+      iter1 total1)
+    (iter, total)
 
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 56:4-58:5
+    Source: 'src/simple_labelled_transition_system.rs', lines 63:4-69:5
     Visibility: public -/
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions
@@ -418,20 +344,12 @@ def
   Label) :
   Result Std.Usize
   := do
-  let v ← std.collections.hash.map.HashMap.values self.transitions
-  let m ←
-    std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.map
-      (simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnMutTupleSharedVecTransitionUsize
-      merc_ltsltsTransitionLabelInst) v ()
-  core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.sum
-    (std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV
-    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
-    (alloc.vec.Vec merc_lts.lts.Transition))
-    (simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure.Insts.CoreOpsFunctionFnMutTupleSharedVecTransitionUsize
-    merc_ltsltsTransitionLabelInst) Usize.Insts.CoreIterTraitsAccumSumUsize m
+  let iter ← std.collections.hash.map.HashMap.values self.transitions
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions_loop
+    iter 0#usize
 
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_labels]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 52:4-54:5
+    Source: 'src/simple_labelled_transition_system.rs', lines 59:4-61:5
     Visibility: public -/
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_labels
@@ -444,7 +362,7 @@ def
   ok (alloc.vec.Vec.len self.labels)
 
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_states]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 48:4-50:5
+    Source: 'src/simple_labelled_transition_system.rs', lines 55:4-57:5
     Visibility: public -/
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_states
@@ -456,8 +374,47 @@ def
   := do
   std.collections.hash.map.HashMap.len self.transitions
 
+/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]: loop body 0:
+    Source: 'src/simple_labelled_transition_system.rs', lines 48:8-51:9
+    Visibility: public -/
+@[rust_loop_body]
+def
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop.body
+  (n : Std.Usize)
+  (result : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag)) (i : Std.Usize) :
+  Result (ControlFlow ((alloc.vec.Vec (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag)) × Std.Usize) (alloc.vec.Vec
+    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)))
+  := do
+  if i < n
+  then
+    let ti ← merc_utilities.tagged_index.TagIndex.new merc_lts.lts.StateTag i
+    let result1 ← alloc.vec.Vec.push result ti
+    let i1 ← i + 1#usize
+    ok (cont (result1, i1))
+  else ok (done result)
+
+/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]: loop 0:
+    Source: 'src/simple_labelled_transition_system.rs', lines 48:8-51:9
+    Visibility: public -/
+@[rust_loop]
+def
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop
+  (n : Std.Usize)
+  (result : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag)) (i : Std.Usize) :
+  Result (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag))
+  := do
+  loop
+    (fun (result1, i1) =>
+      simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop.body
+      n result1 i1)
+    (result, i)
+
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]:
-    Source: 'src/simple_labelled_transition_system.rs', lines 44:4-46:5
+    Source: 'src/simple_labelled_transition_system.rs', lines 44:4-53:5
     Visibility: public -/
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states
@@ -468,20 +425,14 @@ def
   Result (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.StateTag))
   := do
-  let i ←
+  let n ←
     simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_states
       merc_ltsltsTransitionLabelInst self
-  let m ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.map
-      core.iter.range.StepUsize (BuiltinFnMut Std.Usize
-      (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
-      { start := 0#usize, «end» := i }
-      (merc_utilities.tagged_index.TagIndex.new merc_lts.lts.StateTag)
-  core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.collect
-    (core.iter.traits.iterator.IteratorRange core.iter.range.StepUsize)
-    (BuiltinFnMut Std.Usize (merc_utilities.tagged_index.TagIndex Std.Usize
-    merc_lts.lts.StateTag)) (core.iter.traits.collect.FromIteratorVec
-    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)) m
+  let result :=
+    alloc.vec.Vec.with_capacity (merc_utilities.tagged_index.TagIndex Std.Usize
+      merc_lts.lts.StateTag) n
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop
+    n result 0#usize
 
 /-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::initial_state_index]:
     Source: 'src/simple_labelled_transition_system.rs', lines 40:4-42:5
@@ -527,7 +478,7 @@ def
   alloc.vec.CloneVec.clone merc_lts.lts.Transition.Insts.CoreCloneClone v
 
 /-- Trait implementation: [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
-    Source: 'src/simple_labelled_transition_system.rs', lines 30:0-77:1 -/
+    Source: 'src/simple_labelled_transition_system.rs', lines 30:0-78:1 -/
 @[reducible]
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS
@@ -560,10 +511,6 @@ def
   is_hidden_label :=
     simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.is_hidden_label
     merc_ltsltsTransitionLabelInst
-  merge_disjoint := fun {L : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
-    Label) =>
-    simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.merge_disjoint
-    merc_ltsltsTransitionLabelInst merc_ltsltsLTSInst
 }
 
 end verified

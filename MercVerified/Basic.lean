@@ -14,13 +14,17 @@ import MercVerified.Code.TypesExternal
 
 We view the Aeneas-translated `SimpleLabelledTransitionSystem Label` as an
 `LTS` (in the sense of `Cslib.Foundations.Semantics.LTS.Basic`). The states are
-the usize indices addressed by the implementation, and the labels are the usize
-*label indices* stored in each `Transition`. There is a transition
-`s →[μ] s'` iff `outgoing_transitions sys s` succeeds and the resulting vector
-contains the transition record `⟨μ, s'⟩`.
+the `TagIndex Usize StateTag` indices addressed by the implementation, and the
+labels are the `TagIndex Usize LabelTag` *label indices* stored in each
+`Transition`. There is a transition `s →[μ] s'` iff `outgoing_transitions sys s`
+succeeds and the resulting vector contains the transition record
+`⟨μ, s'⟩`.
 -/
 
 open Aeneas Aeneas.Std Result
+open merc_utilities.tagged_index (TagIndex)
+open verified.merc_lts.lts (Transition StateTag LabelTag TransitionLabel)
+open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
 
 namespace verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem
 
@@ -28,27 +32,40 @@ namespace verified.simple_labelled_transition_system.SimpleLabelledTransitionSys
     `s →[μ] s'` iff `outgoing_transitions sys s` succeeds with a vector that
     contains the transition `{ label := μ, to := s' }`. -/
 def tr {Label : Type}
+    (TLInst : TransitionLabel Label)
     (sys : SimpleLabelledTransitionSystem Label)
-    (s : Std.Usize) (μ : Std.Usize) (s' : Std.Usize) : Prop :=
+    (s : TagIndex Std.Usize StateTag)
+    (μ : TagIndex Std.Usize LabelTag)
+    (s' : TagIndex Std.Usize StateTag) : Prop :=
   ∃ ts : alloc.vec.Vec Transition,
-    sys.outgoing_transitions s = ok ts
+    SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.outgoing_transitions
+        TLInst sys s = ok ts
       ∧ ({ label := μ, «to» := s' } : Transition) ∈ ts.val
 
 /-- The cslib `LTS` view of a `SimpleLabelledTransitionSystem`.
-    States are usize indices; labels are usize label-indices. -/
+    States are state-tagged usize indices; labels are label-tagged usize indices. -/
 def toLTS {Label : Type}
-    (sys : SimpleLabelledTransitionSystem Label) : Cslib.LTS Std.Usize Std.Usize where
-  Tr := sys.tr
+    (TLInst : TransitionLabel Label)
+    (sys : SimpleLabelledTransitionSystem Label) :
+    Cslib.LTS (TagIndex Std.Usize StateTag) (TagIndex Std.Usize LabelTag) where
+  Tr := tr TLInst sys
 
 @[simp] theorem toLTS_Tr {Label : Type}
+    (TLInst : TransitionLabel Label)
     (sys : SimpleLabelledTransitionSystem Label)
-    (s μ s' : Std.Usize) :
-    sys.toLTS.Tr s μ s' ↔ sys.tr s μ s' := Iff.rfl
+    (s : TagIndex Std.Usize StateTag)
+    (μ : TagIndex Std.Usize LabelTag)
+    (s' : TagIndex Std.Usize StateTag) :
+    (toLTS TLInst sys).Tr s μ s' ↔ tr TLInst sys s μ s' := Iff.rfl
 
 end verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem
 
 /-- The Rust method `is_hidden_label` declares the hidden (τ) label to be
-    index `0`. We mirror this with the cslib `HasTau` class so that the LTS
-    can be used with weak/branching bisimilarity. -/
-instance : Cslib.HasTau Std.Usize where
-  τ := 0#usize
+    the tagged index `TagIndex::new(0)`. Since `TagIndex` is modelled
+    axiomatically by Aeneas, we postulate the corresponding element here so
+    that the cslib `HasTau` class can be instantiated, making the LTS usable
+    with weak/branching bisimilarity. -/
+axiom tauLabelIndex : TagIndex Std.Usize LabelTag
+
+noncomputable instance : Cslib.HasTau (TagIndex Std.Usize LabelTag) where
+  τ := tauLabelIndex

@@ -42,7 +42,14 @@ impl<Label: TransitionLabel> LTS for SimpleLabelledTransitionSystem<Label> {
     }
 
     fn iter_states(&self) -> Vec<StateIndex> {
-        (0..self.num_of_states()).map(StateIndex::new).collect()
+        let n = self.num_of_states();
+        let mut result = Vec::with_capacity(n);
+        let mut i = 0;
+        while i < n {
+            result.push(StateIndex::new(i));
+            i += 1;
+        }
+        result
     }
 
     fn num_of_states(&self) -> usize {
@@ -54,7 +61,11 @@ impl<Label: TransitionLabel> LTS for SimpleLabelledTransitionSystem<Label> {
     }
 
     fn num_of_transitions(&self) -> usize {
-        self.transitions.values().map(|v| v.len()).sum()
+        let mut total = 0usize;
+        for v in self.transitions.values() {
+            total += v.len();
+        }
+        total
     }
 
     fn labels(&self) -> &[Label] {
@@ -63,15 +74,5 @@ impl<Label: TransitionLabel> LTS for SimpleLabelledTransitionSystem<Label> {
 
     fn is_hidden_label(&self, label_index: LabelIndex) -> bool {
         label_index == 0
-    }
-
-    fn merge_disjoint<L: LTS<Label = Self::Label>>(
-        self,
-        _other: &L,
-    ) -> (
-        merc_lts::LabelledTransitionSystem<Self::Label>,
-        merc_lts::StateIndex,
-    ) {
-        todo!()
     }
 }

@@ -30,102 +30,6 @@ axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
 axiom Usize.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
-/-- [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::collect]:
-    Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
-    Name pattern: [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::collect]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::collect"]
-axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.collect
-  {B : Type} {I : Type} {F : Type} {B1 : Type} {Clause0_Item : Type}
-  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator I
-  Clause0_Item) (opsfunctionFnMutFTupleClause0_ItemBInst :
-  core.ops.function.FnMut F Clause0_Item B) (traitscollectFromIteratorInst :
-  core.iter.traits.collect.FromIterator B1 B) :
-  core.iter.adapters.map.Map I F → Result B1
-
-/-- [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::sum]:
-    Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
-    Name pattern: [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::sum]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::sum"]
-axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.sum
-  {B : Type} {I : Type} {F : Type} {S : Type} {Clause0_Item : Type}
-  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator I
-  Clause0_Item) (opsfunctionFnMutFTupleClause0_ItemBInst :
-  core.ops.function.FnMut F Clause0_Item B) (traitsaccumSumInst :
-  core.iter.traits.accum.Sum S B) :
-  core.iter.adapters.map.Map I F → Result S
-
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::sum]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
-    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::sum]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::sum"]
-axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.sum
-  {A : Type} {S : Type} (StepInst : core.iter.range.Step A) (traitsaccumSumInst
-  : core.iter.traits.accum.Sum S A) :
-  core.ops.range.Range A → Result S
-
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::collect]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
-    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::collect]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::collect"]
-axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.collect
-  {A : Type} {B : Type} (StepInst : core.iter.range.Step A)
-  (traitscollectFromIteratorInst : core.iter.traits.collect.FromIterator B A) :
-  core.ops.range.Range A → Result B
-
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::map]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
-    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::map]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::map"]
-axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.map
-  {A : Type} {B : Type} {F : Type} (StepInst : core.iter.range.Step A)
-  (opsfunctionFnMutFTupleABInst : core.ops.function.FnMut F A B) :
-  core.ops.range.Range A → F → Result (core.iter.adapters.map.Map
-    (core.ops.range.Range A) F)
-
-/-- [core::iter::traits::accum::{core::iter::traits::accum::Sum<usize> for usize}::sum]:
-    Source: '/rustc/library/core/src/iter/traits/accum.rs', lines 49:12-49:59
-    Name pattern: [core::iter::traits::accum::{core::iter::traits::accum::Sum<usize, usize>}::sum]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::traits::accum::{core::iter::traits::accum::Sum<usize, usize>}::sum"]
-axiom Usize.Insts.CoreIterTraitsAccumSumUsize.sum
-  {I : Type} (iteratorIteratorIUsizeInst : core.iter.traits.iterator.Iterator I
-  Std.Usize) :
-  I → Result Std.Usize
-
-/-- [core::iter::traits::iterator::Iterator::map]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 789:4-792:34
-    Name pattern: [core::iter::traits::iterator::Iterator::map]
-    Visibility: public -/
-@[rust_fun "core::iter::traits::iterator::Iterator::map"]
-axiom core.iter.traits.iterator.Iterator.map.default
-  {Self : Type} {B : Type} {F : Type} {Clause0_Item : Type} (IteratorInst :
-  core.iter.traits.iterator.Iterator Self Clause0_Item)
-  (opsfunctionFnMutFTupleClause0_ItemBInst : core.ops.function.FnMut F
-  Clause0_Item B) :
-  Self → F → Result (core.iter.adapters.map.Map Self F)
-
-/-- [core::iter::traits::iterator::Iterator::sum]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 3653:4-3656:27
-    Name pattern: [core::iter::traits::iterator::Iterator::sum]
-    Visibility: public -/
-@[rust_fun "core::iter::traits::iterator::Iterator::sum"]
-axiom core.iter.traits.iterator.Iterator.sum.default
-  {Self : Type} {S : Type} {Clause0_Item : Type} (IteratorInst :
-  core.iter.traits.iterator.Iterator Self Clause0_Item) (accumSumInst :
-  core.iter.traits.accum.Sum S Clause0_Item) :
-  Self → Result S
-
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::values]:
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 543:4-543:44
     Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::values]
@@ -201,44 +105,6 @@ axiom
   std.collections.hash.map.Values K V → Result ((Option V) ×
     (std.collections.hash.map.Values K V))
 
-/-- [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}::sum]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2232:0-2232:44
-    Name pattern: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::sum]
-    Visibility: public -/
-@[rust_fun
-  "std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::sum"]
-axiom
-  std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.sum
-  {K : Type} {V : Type} {S : Type} (coreitertraitsaccumSumSSharedAVInst :
-  core.iter.traits.accum.Sum S V) :
-  std.collections.hash.map.Values K V → Result S
-
-/-- [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}::collect]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2232:0-2232:44
-    Name pattern: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::collect]
-    Visibility: public -/
-@[rust_fun
-  "std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::collect"]
-axiom
-  std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.collect
-  {K : Type} {V : Type} {B : Type}
-  (coreitertraitscollectFromIteratorBSharedAVInst :
-  core.iter.traits.collect.FromIterator B V) :
-  std.collections.hash.map.Values K V → Result B
-
-/-- [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}::map]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2232:0-2232:44
-    Name pattern: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::map]
-    Visibility: public -/
-@[rust_fun
-  "std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::map"]
-axiom
-  std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.map
-  {K : Type} {V : Type} {B : Type} {F : Type}
-  (coreopsfunctionFnMutFTupleSharedAVBInst : core.ops.function.FnMut F V B) :
-  std.collections.hash.map.Values K V → F → Result
-    (core.iter.adapters.map.Map (std.collections.hash.map.Values K V) F)
-
 /-- [std::hash::random::{core::clone::Clone for std::hash::random::RandomState}::clone]:
     Source: '/rustc/library/std/src/hash/random.rs', lines 34:9-34:14
     Name pattern: [std::hash::random::{core::clone::Clone<std::hash::random::RandomState>}::clone]
@@ -279,7 +145,7 @@ axiom
   : std.hash.random.RandomState → Result std.hash.random.DefaultHasher
 
 /-- [merc_lts::lts::{core::clone::Clone for merc_lts::lts::Transition}::clone]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 115:9-115:14
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
     Name pattern: [merc_lts::lts::{core::clone::Clone<merc_lts::lts::Transition>}::clone]
     Visibility: public -/
 @[rust_fun
@@ -288,7 +154,7 @@ axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
   : merc_lts.lts.Transition → Result merc_lts.lts.Transition
 
 /-- [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 115:23-115:32
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:23-103:32
     Name pattern: [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>}::eq]
     Visibility: public -/
 @[rust_fun
