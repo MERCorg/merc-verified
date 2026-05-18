@@ -1,4 +1,4 @@
-name: Lean Action CI
+name: Generate Aeneas Code
 
 on:
   push:
@@ -50,3 +50,12 @@ jobs:
 
     - name: Generate lean code using aeneas
       run: ./3rd-party/aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=MercVerified/Code ./verified/verified.llbc
+
+    - name: Check generated code matches checked-in code
+      run: |
+        git add --intent-to-add MercVerified/Code
+        if ! git diff --exit-code -- MercVerified/Code; then
+          echo "::error::Generated Lean code in MercVerified/Code does not match the checked-in version."
+          echo "Run the generation steps locally and commit the result."
+          exit 1
+        fi
