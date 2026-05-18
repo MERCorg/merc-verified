@@ -753,23 +753,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merc_reduction"
-version = "1.0.0"
-dependencies = [
- "bitvec",
- "bumpalo",
- "delegate",
- "itertools 0.14.0",
- "log",
- "merc_collections",
- "merc_io",
- "merc_lts",
- "merc_utilities",
- "rand",
- "rustc-hash",
-]
-
-[[package]]
 name = "merc_sharedmutex"
 version = "1.0.0"
 dependencies = [
@@ -1437,7 +1420,6 @@ name = "verified"
 version = "1.0.0"
 dependencies = [
  "merc_lts",
- "merc_reduction",
 ]
 
 [[package]]

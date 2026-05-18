@@ -22,26 +22,6 @@ open verified
 @[rust_fun "core::borrow::{core::borrow::Borrow<@T, @T>}::borrow"]
 axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
 
-/-- [core::cmp::impls::{core::cmp::Eq for usize}::assert_receiver_is_total_eq]:
-    Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
-    Name pattern: [core::cmp::impls::{core::cmp::Eq<usize>}::assert_receiver_is_total_eq]
-    Visibility: public -/
-@[rust_fun
-  "core::cmp::impls::{core::cmp::Eq<usize>}::assert_receiver_is_total_eq"]
-axiom Usize.Insts.CoreCmpEq.assert_receiver_is_total_eq
-  : Std.Usize → Result Unit
-
-/-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish]:
-    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2466:4-2473:15
-    Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish]
-    Visibility: public -/
-@[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish"]
-axiom core.fmt.Formatter.debug_struct_field2_finish
-  :
-  core.fmt.Formatter → Str → Str → Dyn (fun _dyn => core.fmt.Debug _dyn)
-    → Str → Dyn (fun _dyn => core.fmt.Debug _dyn) → Result
-    ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
-
 /-- [core::hash::impls::{core::hash::Hash for usize}::hash]:
     Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
     Name pattern: [core::hash::impls::{core::hash::Hash<usize>}::hash]
@@ -49,6 +29,20 @@ axiom core.fmt.Formatter.debug_struct_field2_finish
 @[rust_fun "core::hash::impls::{core::hash::Hash<usize>}::hash"]
 axiom Usize.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
+
+/-- [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::collect]:
+    Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
+    Name pattern: [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::collect]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::collect"]
+axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.collect
+  {B : Type} {I : Type} {F : Type} {B1 : Type} {Clause0_Item : Type}
+  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator I
+  Clause0_Item) (opsfunctionFnMutFTupleClause0_ItemBInst :
+  core.ops.function.FnMut F Clause0_Item B) (traitscollectFromIteratorInst :
+  core.iter.traits.collect.FromIterator B1 B) :
+  core.iter.adapters.map.Map I F → Result B1
 
 /-- [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::sum]:
     Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
@@ -63,6 +57,40 @@ axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.sum
   core.ops.function.FnMut F Clause0_Item B) (traitsaccumSumInst :
   core.iter.traits.accum.Sum S B) :
   core.iter.adapters.map.Map I F → Result S
+
+/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::sum]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::sum]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::sum"]
+axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.sum
+  {A : Type} {S : Type} (StepInst : core.iter.range.Step A) (traitsaccumSumInst
+  : core.iter.traits.accum.Sum S A) :
+  core.ops.range.Range A → Result S
+
+/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::collect]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::collect]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::collect"]
+axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.collect
+  {A : Type} {B : Type} (StepInst : core.iter.range.Step A)
+  (traitscollectFromIteratorInst : core.iter.traits.collect.FromIterator B A) :
+  core.ops.range.Range A → Result B
+
+/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::map]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::map]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::map"]
+axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.map
+  {A : Type} {B : Type} {F : Type} (StepInst : core.iter.range.Step A)
+  (opsfunctionFnMutFTupleABInst : core.ops.function.FnMut F A B) :
+  core.ops.range.Range A → F → Result (core.iter.adapters.map.Map
+    (core.ops.range.Range A) F)
 
 /-- [core::iter::traits::accum::{core::iter::traits::accum::Sum<usize> for usize}::sum]:
     Source: '/rustc/library/core/src/iter/traits/accum.rs', lines 49:12-49:59
@@ -185,6 +213,19 @@ axiom
   core.iter.traits.accum.Sum S V) :
   std.collections.hash.map.Values K V → Result S
 
+/-- [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}::collect]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2232:0-2232:44
+    Name pattern: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::collect]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::collect"]
+axiom
+  std.collections.hash.map.Values.Insts.CoreIterTraitsIteratorIteratorSharedAV.collect
+  {K : Type} {V : Type} {B : Type}
+  (coreitertraitscollectFromIteratorBSharedAVInst :
+  core.iter.traits.collect.FromIterator B V) :
+  std.collections.hash.map.Values K V → Result B
+
 /-- [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}::map]:
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2232:0-2232:44
     Name pattern: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::map]
@@ -236,4 +277,86 @@ axiom std.hash.random.DefaultHasher.Insts.CoreHashHasher.write
 axiom
   std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher.build_hasher
   : std.hash.random.RandomState → Result std.hash.random.DefaultHasher
+
+/-- [merc_lts::lts::{core::clone::Clone for merc_lts::lts::Transition}::clone]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 115:9-115:14
+    Name pattern: [merc_lts::lts::{core::clone::Clone<merc_lts::lts::Transition>}::clone]
+    Visibility: public -/
+@[rust_fun
+  "merc_lts::lts::{core::clone::Clone<merc_lts::lts::Transition>}::clone"]
+axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
+  : merc_lts.lts.Transition → Result merc_lts.lts.Transition
+
+/-- [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}::eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 115:23-115:32
+    Name pattern: [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>}::eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>}::eq"]
+axiom merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
+  : merc_lts.lts.Transition → merc_lts.lts.Transition → Result Bool
+
+/-- [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 59:4-59:38
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  merc_utilities.tagged_index.TagIndex T Tag →
+    merc_utilities.tagged_index.TagIndex T Tag → Result Bool
+
+/-- [merc_utilities::tagged_index::{core::cmp::Eq for merc_utilities::tagged_index::TagIndex<T, Tag>}::assert_receiver_is_total_eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 56:0-56:47
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::Eq<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::assert_receiver_is_total_eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::Eq<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::assert_receiver_is_total_eq"]
+axiom
+  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  merc_utilities.tagged_index.TagIndex T Tag → Result Unit
+
+/-- [merc_utilities::tagged_index::{core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 77:4-77:55
+    Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
+  {T : Type} {Tag : Type} {H : Type} (corehashHashInst : core.hash.Hash T)
+  (corehashHasherInst : core.hash.Hasher H) :
+  merc_utilities.tagged_index.TagIndex T Tag → H → Result H
+
+/-- [merc_utilities::tagged_index::{core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
+    Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
+  {T : Type} {Tag : Type} (corecloneCloneInst : core.clone.Clone T) :
+  merc_utilities.tagged_index.TagIndex T Tag → Result
+    (merc_utilities.tagged_index.TagIndex T Tag)
+
+/-- [merc_utilities::tagged_index::{core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 92:4-92:35
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
+  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  merc_utilities.tagged_index.TagIndex T Tag → T → Result Bool
+
+/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
+    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new"]
+axiom merc_utilities.tagged_index.TagIndex.new
+  {T : Type} (Tag : Type) :
+  T → Result (merc_utilities.tagged_index.TagIndex T Tag)
 

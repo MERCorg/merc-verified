@@ -5,4 +5,4 @@ version = "1.0.0"
 
 [dependencies]
 merc_lts = { path = "../3rd-party/merc/crates/lts" }
-merc_reduction = { path = "../3rd-party/merc/crates/reduction" }
+# merc_reduction = { path = "../3rd-party/merc/crates/reduction" }

@@ -2,22 +2,11 @@
 
 use std::collections::HashMap;
 
-type StateIndex = usize;
-type LabelIndex = usize;
-
-/// Represents a transition in the LTS originating from some known state.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Transition {
-    pub label: LabelIndex,
-    pub to: StateIndex,
-}
-
-impl Transition {
-    /// Constructs a new transition.
-    pub fn new(label: LabelIndex, to: StateIndex) -> Self {
-        Self { label, to }
-    }
-}
+use merc_lts::LTS;
+use merc_lts::LabelIndex;
+use merc_lts::StateIndex;
+use merc_lts::Transition;
+use merc_lts::TransitionLabel;
 
 /// Represents a labelled transition system consisting of states with directed
 /// labelled transitions between them.
@@ -29,7 +18,7 @@ impl Transition {
 #[derive(PartialEq, Eq, Clone)]
 pub struct SimpleLabelledTransitionSystem<Label> {
     /// Encodes the states and their outgoing transitions.
-    transitions: HashMap<LabelIndex, Vec<Transition>>,
+    transitions: HashMap<StateIndex, Vec<Transition>>,
 
     /// Keeps track of the labels for every index, and which of them are hidden.
     labels: Vec<Label>,
@@ -38,39 +27,51 @@ pub struct SimpleLabelledTransitionSystem<Label> {
     initial_state: StateIndex,
 }
 
-impl<Label> SimpleLabelledTransitionSystem<Label> {
-    pub fn outgoing_transitions(&self, state_index: StateIndex) -> Vec<Transition> {
+impl<Label: TransitionLabel> LTS for SimpleLabelledTransitionSystem<Label> {
+    type Label = Label;
+
+    fn outgoing_transitions(&self, state_index: StateIndex) -> Vec<Transition> {
         self.transitions
-           .get(&state_index)
-           .expect("State index out of bounds.")
-           .clone()
+            .get(&state_index)
+            .expect("State index out of bounds.")
+            .clone()
     }
 
-    pub fn initial_state_index(&self) -> StateIndex {
+    fn initial_state_index(&self) -> StateIndex {
         self.initial_state
     }
 
-    pub fn iter_states(&self) -> impl Iterator<Item = StateIndex> + '_ {
-        0..self.num_of_states()
+    fn iter_states(&self) -> Vec<StateIndex> {
+        (0..self.num_of_states()).map(StateIndex::new).collect()
     }
 
-    pub fn num_of_states(&self) -> usize {
+    fn num_of_states(&self) -> usize {
         self.transitions.len()
     }
 
-    pub fn num_of_labels(&self) -> usize {
+    fn num_of_labels(&self) -> usize {
         self.labels.len()
     }
 
-    pub fn num_of_transitions(&self) -> usize {
+    fn num_of_transitions(&self) -> usize {
         self.transitions.values().map(|v| v.len()).sum()
     }
 
-    pub fn labels(&self) -> &[Label] {
+    fn labels(&self) -> &[Label] {
         &self.labels[0..]
     }
 
-    pub fn is_hidden_label(&self, label_index: LabelIndex) -> bool {
+    fn is_hidden_label(&self, label_index: LabelIndex) -> bool {
         label_index == 0
+    }
+
+    fn merge_disjoint<L: LTS<Label = Self::Label>>(
+        self,
+        _other: &L,
+    ) -> (
+        merc_lts::LabelledTransitionSystem<Self::Label>,
+        merc_lts::StateIndex,
+    ) {
+        todo!()
     }
 }

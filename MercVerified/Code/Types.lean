@@ -32,28 +32,87 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
   HasherInst : core.hash.Hasher Self_Hasher
   build_hasher : Self → Result Self_Hasher
 
-/-- [verified::simple_labelled_transition_system::Transition]
-    Source: 'src/simple_labelled_transition_system.rs', lines 10:0-13:1
+/-- [merc_lts::lts::LabelTag]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 14:0-14:19
+    Name pattern: [merc_lts::lts::LabelTag]
     Visibility: public -/
-structure simple_labelled_transition_system.Transition where
-  label : Std.Usize
-  «to» : Std.Usize
+@[reducible, rust_type "merc_lts::lts::LabelTag"]
+def merc_lts.lts.LabelTag := Unit
+
+/-- [merc_lts::lts::StateTag]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 17:0-17:19
+    Name pattern: [merc_lts::lts::StateTag]
+    Visibility: public -/
+@[reducible, rust_type "merc_lts::lts::StateTag"]
+def merc_lts.lts.StateTag := Unit
+
+/-- [merc_lts::lts::Transition]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 116:0-116:21
+    Name pattern: [merc_lts::lts::Transition]
+    Visibility: public -/
+@[rust_type "merc_lts::lts::Transition"]
+structure merc_lts.lts.Transition where
+  label : merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag
+  «to» : merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag
+
+/-- Trait declaration: [merc_lts::lts::TransitionLabel]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 96:0-96:78
+    Name pattern: [merc_lts::lts::TransitionLabel]
+    Visibility: public -/
+@[rust_trait "merc_lts::lts::TransitionLabel"
+  (parentClauses := ["corecmpOrdInst", "corehashHashInst", "corecmpEqInst", "corecloneCloneInst", "corefmtDisplayInst", "corefmtDebugInst"])]
+structure merc_lts.lts.TransitionLabel (Self : Type) where
+  corecmpOrdInst : core.cmp.Ord Self
+  corehashHashInst : core.hash.Hash Self
+  corecmpEqInst : core.cmp.Eq Self
+  corecloneCloneInst : core.clone.Clone Self
+  corefmtDisplayInst : core.fmt.Display Self
+  corefmtDebugInst : core.fmt.Debug Self
+  tau_label : Result Self
+  matches_label : Self → Str → Result Bool
+  from_index : Std.Usize → Result Self
+
+/-- Trait declaration: [merc_lts::lts::LTS]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 30:0-30:13
+    Name pattern: [merc_lts::lts::LTS]
+    Visibility: public -/
+@[rust_trait "merc_lts::lts::LTS" (parentClauses := ["TransitionLabelInst"])]
+structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
+  TransitionLabelInst : merc_lts.lts.TransitionLabel Self_Label
+  initial_state_index : Self → Result (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag)
+  outgoing_transitions : Self → merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag → Result (alloc.vec.Vec
+    merc_lts.lts.Transition)
+  iter_states : Self → Result (alloc.vec.Vec
+    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
+  num_of_states : Self → Result Std.Usize
+  num_of_labels : Self → Result Std.Usize
+  num_of_transitions : Self → Result Std.Usize
+  labels : Self → Result (Slice Self_Label)
+  is_hidden_label : Self → merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag → Result Bool
+  merge_disjoint : forall {L : Type} (LTSInst : merc_lts.lts.LTS L Self_Label),
+    Self → L → Result
+    ((merc_lts.labelled_transition_system.LabelledTransitionSystem Self_Label)
+    × (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
 
 /-- [verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem]
-    Source: 'src/simple_labelled_transition_system.rs', lines 30:0-39:1
+    Source: 'src/simple_labelled_transition_system.rs', lines 19:0-28:1
     Visibility: public -/
 structure simple_labelled_transition_system.SimpleLabelledTransitionSystem
   (Label : Type) where
-  transitions : std.collections.hash.map.HashMap Std.Usize (alloc.vec.Vec
-    simple_labelled_transition_system.Transition) std.hash.random.RandomState
-    Global
+  transitions : std.collections.hash.map.HashMap
+    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+    (alloc.vec.Vec merc_lts.lts.Transition) std.hash.random.RandomState Global
   labels : alloc.vec.Vec Label
-  initial_state : Std.Usize
+  initial_state : merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag
 
-/-- [verified::simple_labelled_transition_system::{verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure]
-    Source: 'src/simple_labelled_transition_system.rs', lines 66:38-66:49 -/
+/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions::closure]
+    Source: 'src/simple_labelled_transition_system.rs', lines 57:38-57:49 -/
 @[reducible]
-def simple_labelled_transition_system.SimpleLabelledTransitionSystem.num_of_transitions.closure
+def simple_labelled_transition_system.LTSSimpleLabelledTransitionSystemLabel.num_of_transitions.closure
   (Label : Type) :=
 Unit
 
