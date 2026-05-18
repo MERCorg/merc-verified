@@ -47,15 +47,15 @@ cd ..
 
 ```bash
 # Generate LLBC from the Rust crate
-cd crate
-../aeneas/charon/bin/charon cargo --preset=aeneas
+cd verified
+../3rd-party/aeneas/charon/bin/charon cargo --preset=aeneas
 cd ..
 
 # Translate LLBC to Lean
-./aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=Code ./crate/test.llbc
+./3rd-party/aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=MercVerified/Code ./verified/verified.llbc
 ```
 
-The generated Lean files will appear in `MercVerified/code/`.
+The generated Lean files will appear in `MercVerified/Code/`.
 
 ### 4. Build the Lean project
 
