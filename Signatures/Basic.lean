@@ -1,2 +1,7 @@
 import Signatures.BranchingBisimilarity
+import Signatures.InductiveSignatures
 import Signatures.Signature
+
+import Signatures.Proofs.BranchingBisimilarity_Transitivity
+import Signatures.Proofs.InductiveSignatures_Proofs
+import Signatures.Proofs.Signature_Proofs
