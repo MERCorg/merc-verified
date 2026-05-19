@@ -25,10 +25,6 @@ git submodule update --init --recursive
 Charon compiles Rust to LLBC, and Aeneas translates LLBC to Lean.
 
 ```bash
-# Build Charon (Rust → LLBC compiler)
-cd aeneas
-make setup-charon
-cd ..
 
 # Install OCaml dependencies
 opam switch create 5.3.0
@@ -36,9 +32,14 @@ opam switch create 5.3.0
 opam install ppx_deriving visitors easy_logging zarith yojson core_unix odoc \
   ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
 
-# Build Aeneas (LLBC → Lean translator)
 cd aeneas
+
+# Build Charon (Rust → LLBC compiler)
 eval $(opam env)
+make setup-charon
+cd ..
+
+# Build Aeneas (LLBC → Lean translator)
 make
 cd ..
 ```
