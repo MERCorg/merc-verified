@@ -44,4 +44,20 @@ sequences of τ-transitions (equivalently, on a finite state space, no τ-cycles
 def TauLoopFree [Cslib.HasTau Label] (lts : Cslib.LTS State Label) : Prop :=
   WellFounded (fun s' s => lts.Tr s Cslib.HasTau.τ s')
 
+/-- **Fixed-point relation for the inductive branching signature.** Two states are related iff
+some partition (over which we exhibit a `sigHash` and a `sigFn` fixed point of `Sig`) is stable
+and places both states in the same block.
+
+This is the inductive analogue of `BranchingFixPoint` from `Signature.lean`; the additional
+witnesses (`Tag`, `sigHash`, `sigFn`) account for the inert-τ tag and the locally recursive
+shape of `Sig`. Equivalence with `BranchingBisimilarity` in a τ-loop-free LTS is proved in
+`Signatures.Proofs.InductiveSignatures_Proofs`. -/
+def InductiveBranchingFixPoint.{u, v} {State : Type u} {Label : Type v} [Cslib.HasTau Label]
+    (lts : Cslib.LTS State Label) : State → State → Prop :=
+  fun s s' => ∃ (Block : Type u) (partition : State → Block) (Tag : Type u) (sigHash : State → Tag)
+    (sigFn : State → Set (Label × (Block ⊕ Tag))),
+    (∀ x, sigFn x = Sig lts partition sigHash sigFn x) ∧
+    IsStable sigFn partition ∧
+    partition s = partition s'
+
 end InductiveSignatures

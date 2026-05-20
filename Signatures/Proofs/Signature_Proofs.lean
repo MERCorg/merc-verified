@@ -74,14 +74,6 @@ theorem IsStable.bisimilarity (lts : Cslib.LTS State Label)
     Cslib.LTS.Bisimilarity lts lts s₁ s₂ :=
   ⟨fun a b => partition a = partition b, hRel, h.isHomBisimulation lts partition⟩
 
--- Same-block states under a BranchingSignature-stable partition are branching bisimilar.
-theorem IsStable.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
-    (partition : State → Block)
-    (h : IsStable (fun s => BranchingSignature lts s partition) partition)
-    {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
-    BranchingBisimilarity lts s₁ s₂ :=
-  ⟨fun a b => partition a = partition b, hRel, h.isHomBranchingBisimulation lts partition⟩
-
 -- The coarsest StrongSignature-stable partition is contained in bisimilarity: FixPoint-related
 -- states are bisimilar. Partition-independent statement — the witness partition is existentially
 -- bound in StrongFixPoint.
@@ -90,13 +82,6 @@ theorem StrongFixPoint.bisimilarity (lts : Cslib.LTS State Label)
     Cslib.LTS.Bisimilarity lts lts s s' := by
   obtain ⟨_, partition, hStable, hEq⟩ := h
   exact IsStable.bisimilarity lts partition hStable hEq
-
--- The coarsest BranchingSignature-stable partition is contained in branching bisimilarity.
-theorem BranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
-    {s s' : State} (h : BranchingFixPoint lts s s') :
-    BranchingBisimilarity lts s s' := by
-  obtain ⟨_, partition, hStable, hEq⟩ := h
-  exact IsStable.branchingBisimilarity lts partition hStable hEq
 
 -- Reverse direction (strong): bisimilarity implies StrongFixPoint. We use the bisim quotient
 -- as the witness partition. Together with StrongFixPoint.bisimilarity, this makes
@@ -123,6 +108,21 @@ theorem Cslib.LTS.Bisimilarity.strongFixPoint (lts : Cslib.LTS State Label)
       have hdc : Cslib.LTS.Bisimilarity lts lts d c := ⟨r, hrDC, hrBis⟩
       exact ⟨c, hTrC, (Quotient.sound hdc).symm.trans hD⟩
   · exact Quotient.sound h
+
+-- Same-block states under a BranchingSignature-stable partition are branching bisimilar.
+theorem IsStable.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    (partition : State → Block)
+    (h : IsStable (fun s => BranchingSignature lts s partition) partition)
+    {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
+    BranchingBisimilarity lts s₁ s₂ :=
+  ⟨fun a b => partition a = partition b, hRel, h.isHomBranchingBisimulation lts partition⟩
+
+-- The coarsest BranchingSignature-stable partition is contained in branching bisimilarity.
+theorem BranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    {s s' : State} (h : BranchingFixPoint lts s s') :
+    BranchingBisimilarity lts s s' := by
+  obtain ⟨_, partition, hStable, hEq⟩ := h
+  exact IsStable.branchingBisimilarity lts partition hStable hEq
 
 -- Reverse direction (branching): branching bisimilarity implies BranchingFixPoint. Uses the
 -- ≈br-quotient as the witness partition. The inert-τ exclusion in BranchingSignature is essential
