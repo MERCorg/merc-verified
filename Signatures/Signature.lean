@@ -37,10 +37,22 @@ def FixPoint.{u, w} {State : Type u} {Sig : Type u → Type w}
   fun s s' => ∃ (Block : Type u) (partition : State → Block),
     IsStable (sigBuilder partition) partition ∧ partition s = partition s'
 
+-- SplitSignature: the per-label variant of StrongSignature.
+-- For each label μ, gives the set of target blocks reachable from s via a μ-transition.
+-- Equivalent to StrongSignature but indexed by label rather than collecting (label, block) pairs.
+def SplitSignature (lts : Cslib.LTS State Label) (s : State) (partition : State → Block) :
+    Label → Set Block :=
+  fun μ => { α | ∃ s', lts.Tr s μ s' ∧ partition s' = α }
+
 -- Strong-bisim FixPoint: FixPoint instantiated with the StrongSignature builder.
 def StrongFixPoint.{u, v} {State : Type u} {Label : Type v} (lts : Cslib.LTS State Label) :
     State → State → Prop :=
   FixPoint (fun {_} partition s => StrongSignature lts s partition)
+
+-- SplitFixPoint: FixPoint instantiated with the per-label SplitSignature builder.
+def SplitFixPoint.{u, v} {State : Type u} {Label : Type v} (lts : Cslib.LTS State Label) :
+    State → State → Prop :=
+  FixPoint (fun {_} partition s => SplitSignature lts s partition)
 
 -- Branching-bisim FixPoint: FixPoint instantiated with the (inert-τ-excluded) BranchingSignature.
 def BranchingFixPoint.{u, v} {State : Type u} {Label : Type v} [Cslib.HasTau Label]

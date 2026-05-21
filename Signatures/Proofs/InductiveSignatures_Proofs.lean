@@ -262,7 +262,73 @@ private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label
           Quotient.mk (brSetoid lts) u = Quotient.mk (brSetoid lts) x ∧
           Quotient.mk (brSetoid lts) v = Quotient.mk (brSetoid lts) x)
         x y := by
-  sorry
+  -- Strategy: double well-founded induction on (y, x) in τ-WF (lex order).
+  --   ih_y : for direct τ-succ y' of y, the result holds for all paths ending at y'.
+  --   ih_x : for direct τ-succ x' of x, the result holds for all paths starting at x'.
+  -- This lets Or.inl reduce to ih_x (shorter x), Or.inr non-trivial to ih_y (smaller y),
+  -- and Or.inr trivial to ih_x on the witness x_p'' < x produced by backward BB.
+  -- Proof skeleton (all lines prefixed -- are tactic pseudocode, not compiled):
+  -- intro x y
+  -- revert x
+  -- induction y using WellFounded.induction hWF with | _ y ih_y =>
+  -- intro x
+  -- induction x using WellFounded.induction hWF with | _ x ih_x =>
+  -- intro hPath hπ
+  --
+  -- Step 1: split path into empty or head step x →τ→ x₁ →τ*→ y.
+  -- rcases Relation.ReflTransGen.cases_head hPath with rfl | ⟨x₁, hFirst, hTail⟩
+  -- · -- Empty path: x = y, conclusion is refl.
+  --   exact Relation.ReflTransGen.refl
+  -- · -- Head step: x →τ→ x₁ →τ*→ y, with ⟦x⟧ = ⟦y⟧.
+  --   -- Step 2: extract a concrete bisimulation r witnessing x ≈br y.
+  --   obtain ⟨r, hrxy, hrBis⟩ := Quotient.exact hπ
+  --   -- Step 3: apply forward BB at (r x y, μ=τ, step x →τ→ x₁).
+  --   rcases (hrBis hrxy τ).1 x₁ hFirst with ⟨-, hrx₁y⟩ | ⟨t, t', hSTr, hTrt, hrxt, hrx₁t'⟩
+    --
+    -- CASE A — Or.inl (r x₁ y):
+    --   hπx₁ : ⟦x₁⟧ = ⟦x⟧  via  (Quotient.sound hrx₁y).symm.trans hπ
+    --   Step x →τ→ x₁ is inert.  Close tail with ih_x hFirst applied to hTail:
+    --     ih_x hFirst : ∀ y', x₁ →τ*→ y' → ⟦x₁⟧ = ⟦y'⟧ → ReflTransGen (inert_x₁) x₁ y'
+    --   Apply to (hTail, hπx₁.symm.trans hπ).  Since ⟦x₁⟧ = ⟦x⟧ the inert relation is the
+    --   same; prepend with Relation.ReflTransGen.head ⟨hFirst, rfl, hπx₁⟩.
+    --
+    -- CASE B — Or.inr (y →τ*→ t →τ→ t', r x t, r x₁ t'):
+    --   hπxt   : ⟦x⟧ = ⟦t⟧   (Quotient.sound hrxt)
+    --   hπx₁t' : ⟦x₁⟧ = ⟦t'⟧ (Quotient.sound hrx₁t')
+    --   hπyt   : ⟦y⟧ = ⟦t⟧   (hπ.symm.trans hπxt)
+    --   Convert hSTr via (lts.sTr_τSTr).mp hSTr to get hτSTr_yt : lts.τSTr y t.
+    --   Split hτSTr_yt with Relation.ReflTransGen.cases_head:
+    --
+    --   CASE B.1 — trivial prefix (t = y, so y →τ→ t'):
+    --     Apply backward BB at (r x y, μ=τ, step y →τ→ t'):
+    --       rcases (hrBis hrxy τ).2 t' hTrt with ⟨-, hrxt'⟩ | ⟨x_p, x_p'', hSTr_x, hStep_xp, hrxpy, hrxp''t'⟩
+    --     Or.inl (r x t'):
+    --       ⟦x⟧ = ⟦t'⟧; combined with hπx₁t' gives ⟦x₁⟧ = ⟦x⟧. Step is inert.
+    --       Apply ih_x hFirst to hTail. Prepend head. ✓
+    --     Or.inr (x →τ*→ x_p →τ→ x_p'', r x_p y, r x_p'' t'):
+    --       hπxpy   : ⟦x_p⟧ = ⟦y⟧ = ⟦x⟧  (Quotient.sound hrxpy)
+    --       hπxp''t': ⟦x_p''⟧ = ⟦t'⟧ = ⟦x₁⟧
+    --       Convert hSTr_x via (lts.sTr_τSTr).mp; split with cases_head:
+    --       · x_p = x (trivial x-path): hStep_xp : x →τ→ x_p'', so x_p'' < x in WF.
+    --           Apply forward BB at (r x y, step x →τ→ x_p''):
+    --             Or.inl: ⟦x_p''⟧ = ⟦y⟧ = ⟦x⟧ → ⟦x₁⟧ = ⟦x⟧. ✓
+    --             Or.inr non-trivial (y →τ→ y₂ →τ*→ ...): invoke ih_y (y →τ→ y₂). ✓
+    --             Or.inr trivial: recurses with strictly smaller x (x_p'' < x via WF). ✓
+    --       · x_p ≠ x (x →τ→ x₁_first →τ*→ x_p): x₁_first < x in WF.
+    --           Apply ih_x (x →τ→ x₁_first) to x₁_first →τ*→ x_p (if ⟦x₁_first⟧ = ⟦x_p⟧ = ⟦x⟧).
+    --           Establishes ⟦x_p''⟧ = ⟦x_p⟧ = ⟦x⟧ → ⟦x₁⟧ = ⟦x⟧. ✓
+    --
+    --   CASE B.2 — non-trivial prefix (y →τ→ y₁ →τ*→ t):
+    --     y₁ < y in τ-WF; apply outer IH ih_y (y →τ→ y₁).
+    --     Need ⟦y₁⟧ = ⟦t⟧ to invoke ih_y on path y₁ →τ*→ t.
+    --     Obtain via backward BB at (r x y, μ=τ, step y →τ→ y₁):
+    --       Or.inl (r x y₁): ⟦y₁⟧ = ⟦x⟧ = ⟦t⟧. Apply ih_y to y₁ →τ*→ t. ✓
+    --       Or.inr: gives x →τ*→ x_p →τ→ x_p'' with ⟦x_p''⟧ = ⟦y₁⟧; x_p'' < x.
+    --               Apply ih_x on x_p'' to establish ⟦y₁⟧ = ⟦x⟧, then proceed as Or.inl. ✓
+    --     Once ⟦y₁⟧ = ⟦t⟧ is known, apply BB at (r t x, μ=τ, step t →τ→ t') (t ≈br x):
+    --       Or.inl (r x t'): ⟦x⟧ = ⟦t'⟧ = ⟦x₁⟧. ✓
+    --       Or.inr: x →τ*→ x_p →τ→ x_p'' with x_p'' < x in WF; apply ih_x. ✓
+    sorry
 
 /-- **Corollary.** If a state has no inert τ-successor and a τ*-path returns to the same block,
 the path must be trivial (length 0). Direct consequence of `path_inertness`. -/
