@@ -241,18 +241,16 @@ namespace BranchingBisimilarity
 quotient as the partition, any τ*-path between same-block states stays within that block
 (every intermediate state has the same block as the endpoints).
 
-Proof sketch (τ-WF descent): For the path `x →τ→ x_first →τ*→ y` with `π x = π y`, apply
-branching bisimulation at the step `x →τ→ x_first`.
-* `Or.inl` of the BB matching gives `π x_first = π x` directly (the inert case).
-* `Or.inr` yields a "matching" path `y →τ*→ t →τ→ t'` with `t ≈br x` and `t' ≈br x_first`.
-  Either the prefix `y →τ*→ t` is non-trivial (so `t < y` in τ-WF, allowing the inductive
-  hypothesis on `t` to force `x = t` via the corollary `noInertSucc_path_trivial`, which then
-  yields a τ-loop from `x →τ*→ y →τ*+→ t = x`, contradicting `hWF`); or the prefix is trivial
-  and we apply BB once more to `y →τ→ t'` whose `Or.inl` again contradicts via partitions.
+Proof strategy: double well-founded induction on `(y, x)` in τ-WF, then split the head step
+with `ReflTransGen.cases_head` and extract a concrete BB via `Quotient.exact`. The forward
+BB match has two shapes:
+* `Or.inl` (inert): `r x_first y` directly. Closed below — partition equality gives `⟦x_first⟧
+  = ⟦x⟧`, recurse on the tail with `ih_x`, prepend the head step.
+* `Or.inr` (matched-with-τ-prefix): `y →τ*→ t →τ→ t'` with `t ≈br x`, `t' ≈br x_first`.
+  Still open; requires further nested case analysis on the matching path (see plan below).
 
-This is the formal version of the classical "stuttering" property of branching bisimulation
-under τ-loop-freeness (van Glabbeek–Weijland 1996). The full Lean encoding requires careful
-nested case analysis on each step of `ReflTransGen`; we leave the body as `sorry` here. -/
+The argument is the formal version of the classical "stuttering" property of branching
+bisimulation under τ-loop-freeness (van Glabbeek–Weijland 1996). -/
 private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
     (hWF : TauLoopFree lts) :
     ∀ {x y : State}, lts.τSTr x y →
@@ -262,73 +260,228 @@ private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label
           Quotient.mk (brSetoid lts) u = Quotient.mk (brSetoid lts) x ∧
           Quotient.mk (brSetoid lts) v = Quotient.mk (brSetoid lts) x)
         x y := by
-  -- Strategy: double well-founded induction on (y, x) in τ-WF (lex order).
-  --   ih_y : for direct τ-succ y' of y, the result holds for all paths ending at y'.
-  --   ih_x : for direct τ-succ x' of x, the result holds for all paths starting at x'.
-  -- This lets Or.inl reduce to ih_x (shorter x), Or.inr non-trivial to ih_y (smaller y),
-  -- and Or.inr trivial to ih_x on the witness x_p'' < x produced by backward BB.
-  -- Proof skeleton (all lines prefixed -- are tactic pseudocode, not compiled):
-  -- intro x y
-  -- revert x
-  -- induction y using WellFounded.induction hWF with | _ y ih_y =>
-  -- intro x
-  -- induction x using WellFounded.induction hWF with | _ x ih_x =>
-  -- intro hPath hπ
+  -- Double WF induction: outer on `y` (path endpoint), inner on `x` (path start).
+  intro x y
+  revert x
+  apply WellFounded.induction hWF y
+  intro y' ih_y x
+  apply WellFounded.induction hWF x
+  intro x' ih_x hPath hπ
+  -- Split the path into empty | head step `x' →τ→ x₁ →τ*→ y'`.
+  rcases Relation.ReflTransGen.cases_head hPath with hEq | ⟨x₁, hFirst, hTail⟩
+  · subst hEq; exact Relation.ReflTransGen.refl
+  -- Extract a concrete bisimulation `r` witnessing `x' ≈br y'`, then forward-match the
+  -- head step `x' →τ→ x₁` along it.
+  obtain ⟨r, hrxy, hBis⟩ := Quotient.exact hπ
+  rcases (hBis hrxy Cslib.HasTau.τ).1 x₁ hFirst with
+    ⟨-, hrx₁y'⟩ | ⟨t, t', hSTr, hTrt, hrxt, hrx₁t'⟩
+  · -- CASE A (Or.inl, `r x₁ y'`): head step is inert. Closed.
+    have hπx₁y' := Quotient.sound (s := brSetoid lts) ⟨r, hrx₁y', hBis⟩
+    have hπx₁ : ⟦x₁⟧ = ⟦x'⟧ := hπx₁y'.trans hπ.symm
+    have htail := ih_x x₁ hFirst hTail hπx₁y'
+    exact Relation.ReflTransGen.head ⟨hFirst, rfl, hπx₁⟩
+      (htail.mono (fun u v ⟨htr, hu, hv⟩ => ⟨htr, hu.trans hπx₁, hv.trans hπx₁⟩))
+  -- CASE B (Or.inr): matched path `y' →τ*→ t →τ→ t'` with `r x' t`, `r x₁ t'`.
   --
-  -- Step 1: split path into empty or head step x →τ→ x₁ →τ*→ y.
-  -- rcases Relation.ReflTransGen.cases_head hPath with rfl | ⟨x₁, hFirst, hTail⟩
-  -- · -- Empty path: x = y, conclusion is refl.
-  --   exact Relation.ReflTransGen.refl
-  -- · -- Head step: x →τ→ x₁ →τ*→ y, with ⟦x⟧ = ⟦y⟧.
-  --   -- Step 2: extract a concrete bisimulation r witnessing x ≈br y.
-  --   obtain ⟨r, hrxy, hrBis⟩ := Quotient.exact hπ
-  --   -- Step 3: apply forward BB at (r x y, μ=τ, step x →τ→ x₁).
-  --   rcases (hrBis hrxy τ).1 x₁ hFirst with ⟨-, hrx₁y⟩ | ⟨t, t', hSTr, hTrt, hrxt, hrx₁t'⟩
-    --
-    -- CASE A — Or.inl (r x₁ y):
-    --   hπx₁ : ⟦x₁⟧ = ⟦x⟧  via  (Quotient.sound hrx₁y).symm.trans hπ
-    --   Step x →τ→ x₁ is inert.  Close tail with ih_x hFirst applied to hTail:
-    --     ih_x hFirst : ∀ y', x₁ →τ*→ y' → ⟦x₁⟧ = ⟦y'⟧ → ReflTransGen (inert_x₁) x₁ y'
-    --   Apply to (hTail, hπx₁.symm.trans hπ).  Since ⟦x₁⟧ = ⟦x⟧ the inert relation is the
-    --   same; prepend with Relation.ReflTransGen.head ⟨hFirst, rfl, hπx₁⟩.
-    --
-    -- CASE B — Or.inr (y →τ*→ t →τ→ t', r x t, r x₁ t'):
-    --   hπxt   : ⟦x⟧ = ⟦t⟧   (Quotient.sound hrxt)
-    --   hπx₁t' : ⟦x₁⟧ = ⟦t'⟧ (Quotient.sound hrx₁t')
-    --   hπyt   : ⟦y⟧ = ⟦t⟧   (hπ.symm.trans hπxt)
-    --   Convert hSTr via (lts.sTr_τSTr).mp hSTr to get hτSTr_yt : lts.τSTr y t.
-    --   Split hτSTr_yt with Relation.ReflTransGen.cases_head:
-    --
-    --   CASE B.1 — trivial prefix (t = y, so y →τ→ t'):
-    --     Apply backward BB at (r x y, μ=τ, step y →τ→ t'):
-    --       rcases (hrBis hrxy τ).2 t' hTrt with ⟨-, hrxt'⟩ | ⟨x_p, x_p'', hSTr_x, hStep_xp, hrxpy, hrxp''t'⟩
-    --     Or.inl (r x t'):
-    --       ⟦x⟧ = ⟦t'⟧; combined with hπx₁t' gives ⟦x₁⟧ = ⟦x⟧. Step is inert.
-    --       Apply ih_x hFirst to hTail. Prepend head. ✓
-    --     Or.inr (x →τ*→ x_p →τ→ x_p'', r x_p y, r x_p'' t'):
-    --       hπxpy   : ⟦x_p⟧ = ⟦y⟧ = ⟦x⟧  (Quotient.sound hrxpy)
-    --       hπxp''t': ⟦x_p''⟧ = ⟦t'⟧ = ⟦x₁⟧
-    --       Convert hSTr_x via (lts.sTr_τSTr).mp; split with cases_head:
-    --       · x_p = x (trivial x-path): hStep_xp : x →τ→ x_p'', so x_p'' < x in WF.
-    --           Apply forward BB at (r x y, step x →τ→ x_p''):
-    --             Or.inl: ⟦x_p''⟧ = ⟦y⟧ = ⟦x⟧ → ⟦x₁⟧ = ⟦x⟧. ✓
-    --             Or.inr non-trivial (y →τ→ y₂ →τ*→ ...): invoke ih_y (y →τ→ y₂). ✓
-    --             Or.inr trivial: recurses with strictly smaller x (x_p'' < x via WF). ✓
-    --       · x_p ≠ x (x →τ→ x₁_first →τ*→ x_p): x₁_first < x in WF.
-    --           Apply ih_x (x →τ→ x₁_first) to x₁_first →τ*→ x_p (if ⟦x₁_first⟧ = ⟦x_p⟧ = ⟦x⟧).
-    --           Establishes ⟦x_p''⟧ = ⟦x_p⟧ = ⟦x⟧ → ⟦x₁⟧ = ⟦x⟧. ✓
-    --
-    --   CASE B.2 — non-trivial prefix (y →τ→ y₁ →τ*→ t):
-    --     y₁ < y in τ-WF; apply outer IH ih_y (y →τ→ y₁).
-    --     Need ⟦y₁⟧ = ⟦t⟧ to invoke ih_y on path y₁ →τ*→ t.
-    --     Obtain via backward BB at (r x y, μ=τ, step y →τ→ y₁):
-    --       Or.inl (r x y₁): ⟦y₁⟧ = ⟦x⟧ = ⟦t⟧. Apply ih_y to y₁ →τ*→ t. ✓
-    --       Or.inr: gives x →τ*→ x_p →τ→ x_p'' with ⟦x_p''⟧ = ⟦y₁⟧; x_p'' < x.
-    --               Apply ih_x on x_p'' to establish ⟦y₁⟧ = ⟦x⟧, then proceed as Or.inl. ✓
-    --     Once ⟦y₁⟧ = ⟦t⟧ is known, apply BB at (r t x, μ=τ, step t →τ→ t') (t ≈br x):
-    --       Or.inl (r x t'): ⟦x⟧ = ⟦t'⟧ = ⟦x₁⟧. ✓
-    --       Or.inr: x →τ*→ x_p →τ→ x_p'' with x_p'' < x in WF; apply ih_x. ✓
-    sorry
+  -- Difficulties hit during the previous attempt:
+  --   (D1) Case explosion. Splitting hSTr with cases_head, then doing backward BB on the
+  --        emerging step, then splitting *that* match's τ-prefix, yields 5 leaves
+  --        (B.1.inl, B.1.inr.{trivial-x, non-trivial-x}, B.2.inl, B.2.inr). Each is
+  --        ultimately closed by an ih_x or ih_y call, but the bookkeeping is heavy.
+  --   (D2) Partition retargeting. The goal's ReflTransGen embeds `⟦u⟧ = ⟦x'⟧`, but each
+  --        IH instantiates the relation at a fresh start (ih_y at the new x, ih_x at
+  --        the new path start). Every recursive result must be transported with
+  --        `.mono` and a chained `.trans hπ?` on both partition components.
+  --   (D3) WF descent shape. ih_x and ih_y descend on a single `lts.Tr · τ ·` step, not
+  --        the τ-transitive closure. B.1.inr's witness `x' →τ*→ x_p →τ→ x_p''` only
+  --        gives `x_p'' < x'` when the x-side prefix is empty; otherwise we must peel
+  --        a head with `cases_head` and feed only that head to `ih_x`, dispatching
+  --        the rest via ih_x's own inner WF.
+  --   (D4) No reduction to `LTS.IsBranchingBisimulation.stutter`. Stutter mimics a
+  --        τ-path on the *opposite* side; it does not assert partition agreement at
+  --        intermediate states, so it cannot replace the WF argument here.
+  --
+  -- Refined plan for Case B (each leaf is independent; tackle in this order):
+  --   Pre-work — extract two helpers to compress the leaf bodies:
+  --     (H1) `inert_step (hrst : r s t) (hrs't : r s' t) : ⟦s⟧ = ⟦s'⟧`
+  --          — two `Quotient.sound` calls glued by `.trans .symm`.
+  --     (H2) `mono_partition (h : ⟦α⟧ = ⟦β⟧)`
+  --          — wraps the standard `.mono` cast through both partition components
+  --          so each leaf's final move becomes a single `apply`.
+  --
+  --   Leaf order (easiest first):
+  --     1. B.1.inl  — trivial y-prefix (t = y'), backward BB at y' →τ→ t' gives r x' t';
+  --                   then H1 with hrx₁t' yields ⟦x'⟧ = ⟦x₁⟧ → step inert → ih_x.
+  --     2. B.2.inl  — non-trivial y-prefix splits y' →τ→ y₁ →τ*→ t; backward BB at
+  --                   y' →τ→ y₁ Or.inl gives r x' y₁; ih_y at y₁ closes the tail.
+  --     3. B.1.inr.non-trivial-x — x' →τ→ x₁_first →τ*→ x_p; ih_x on x₁_first reaches x_p.
+  --     4. B.1.inr.trivial-x    — x' →τ→ x_p''; recurse via ih_x on the produced step
+  --                                (most delicate — last).
+  --     5. B.2.inr  — backward BB at y' →τ→ y₁; reassembled from leaves above.
+  --
+  -- If H1+H2 don't tame the casework, fall back to reformulating the induction as a
+  -- single `WellFounded.induction` over `Prod.lex hWF hWF` on `(y, x)`; this unifies
+  -- ih_x/ih_y into one IH that admits descent in either coordinate uniformly.
+  --
+  -- Helper: two `r`-relations to the same state give partition equality.
+  have bisEq : ∀ {s u s' : State}, r s u → r s' u →
+      (Quotient.mk (brSetoid lts) s : Quotient (brSetoid lts)) = Quotient.mk (brSetoid lts) s' :=
+    fun h1 h2 =>
+      (Quotient.sound (s := brSetoid lts) ⟨r, h1, hBis⟩).trans
+        (Quotient.sound (s := brSetoid lts) ⟨r, h2, hBis⟩).symm
+  -- Strategy: reduce to `⟦x'⟧ = ⟦x₁⟧` (i.e., the original step `x' →τ→ x₁` is inert).
+  -- WARNING: this reduction is too strong in general — the original step may be non-inert
+  -- (the BB matching's Or.inr branch handles non-inert steps via the y-side path), in which
+  -- case `⟦x'⟧ ≠ ⟦x₁⟧` and a DIFFERENT inert first step from x' must be constructed.
+  -- The inner lemma below is therefore only correct in a restricted context, and the deep
+  -- recursion case still contains a `sorry`. A complete proof needs to drop this reduction
+  -- and instead construct the inert path's first step directly from the BB matching data.
+  suffices hπx₁ : (Quotient.mk (brSetoid lts) x' : Quotient (brSetoid lts)) =
+      Quotient.mk (brSetoid lts) x₁ by
+    have hπx₁y' :
+        (Quotient.mk (brSetoid lts) x₁ : Quotient (brSetoid lts)) = Quotient.mk (brSetoid lts) y' :=
+      hπx₁.symm.trans hπ
+    have htail := ih_x x₁ hFirst hTail hπx₁y'
+    exact Relation.ReflTransGen.head ⟨hFirst, rfl, hπx₁.symm⟩
+      (htail.mono (fun u v ⟨htr, hu, hv⟩ => ⟨htr, hu.trans hπx₁.symm, hv.trans hπx₁.symm⟩))
+  -- Inner WF induction on `t` via the transitive closure of τ-step:
+  -- in `r a tInner` paired with a forward step `tInner →τ→ tNext` to `r b tNext`, the partition
+  -- equality `⟦a⟧ = ⟦b⟧` follows by nested BB matching. Using TransGen WF lets us apply IH at
+  -- any τ-descendant of tInner (multi-step), not just direct successors.
+  -- We instantiate it with `(t, x', t', x₁)` to obtain `⟦x'⟧ = ⟦x₁⟧`.
+  have inner : ∀ (tInner : State),
+      ∀ (a b tNext : State), r a tInner → lts.Tr tInner Cslib.HasTau.τ tNext → r b tNext →
+        (Quotient.mk (brSetoid lts) a : Quotient (brSetoid lts)) = Quotient.mk (brSetoid lts) b := by
+    intro tInner
+    induction tInner using WellFounded.induction (WellFounded.transGen hWF) with
+    | _ tInner IH_t =>
+      intro a b tNext hra hStep hrb
+      -- Backward BB at `tInner →τ→ tNext` via `r a tInner`.
+      rcases (hBis hra Cslib.HasTau.τ).2 tNext hStep with ⟨_, hrat'⟩ | ⟨xp, xp', hPathXp, hStepXp, hrXpt, hrXp't'⟩
+      · -- Or.inl: r a tNext. ⟦a⟧ = ⟦tNext⟧ = ⟦b⟧.
+        exact bisEq hrat' hrb
+      · -- Or.inr: a →τ*→ xp →τ→ xp', r xp tInner, r xp' tNext.
+        -- Forward BB on `r xp tInner` at step `xp →τ→ xp'`.
+        rcases (hBis hrXpt Cslib.HasTau.τ).1 xp' hStepXp with ⟨_, hrxp't⟩ | ⟨tq, tq', hPathTq, hStepTq, hrXptq, hrXp'tq'⟩
+        · -- Or.inl: r xp' tInner. ⟦xp'⟧ = ⟦tInner⟧ = ⟦a⟧, and ⟦xp'⟧ = ⟦tNext⟧ = ⟦b⟧.
+          exact (bisEq hra hrxp't).trans (bisEq hrXp't' hrb)
+        · -- Or.inr: tInner →τ*→ tq →τ→ tq'. r xp tq. r xp' tq'.
+          -- Convert hPathTq from STr to τSTr (ReflTransGen).
+          have hPathTq' : Relation.ReflTransGen (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) tInner tq :=
+            (Cslib.LTS.sTr_τSTr lts).mp hPathTq
+          -- Case split on whether tInner = tq.
+          rcases Relation.ReflTransGen.cases_head hPathTq' with hEq | ⟨tMid, hHead, hRest⟩
+          · -- Trivial t-path: tInner = tq. New step tInner →τ→ tq'.
+            subst hEq
+            -- Recurse: apply backward BB on tInner →τ→ tq' via r xp tInner, then forward etc.
+            -- We can use the IH only when the new step's source is strictly smaller in WF.
+            -- Here the source is still tInner, so we can't use IH_t directly.
+            -- Instead: apply backward BB on tInner →τ→ tq' via r a tInner (re-using hra).
+            rcases (hBis hra Cslib.HasTau.τ).2 tq' hStepTq with ⟨_, hratq'⟩ | ⟨xr, xr', hPathXr, hStepXr, hrXrt, hrXr'tq'⟩
+            · -- Or.inl: r a tq'. ⟦a⟧ = ⟦tq'⟧ = ⟦xp'⟧ = ⟦tNext⟧ = ⟦b⟧.
+              exact (bisEq hratq' hrXp'tq').trans (bisEq hrXp't' hrb)
+            · -- Or.inr: a →τ*→ xr →τ→ xr'. r xr tInner. r xr' tq'.
+              -- Forward BB on r xr tInner at step xr →τ→ xr'.
+              rcases (hBis hrXrt Cslib.HasTau.τ).1 xr' hStepXr with ⟨_, hrxr't⟩ | ⟨ts, ts', hPathTs, hStepTs, hrXrts, hrXr'ts'⟩
+              · -- Or.inl: r xr' tInner. ⟦xr'⟧ = ⟦tInner⟧ = ⟦a⟧.
+                -- ⟦xr'⟧ = ⟦tq'⟧ = ⟦xp'⟧ = ⟦tNext⟧ = ⟦b⟧.
+                exact (bisEq hra hrxr't).trans
+                  ((bisEq hrXr'tq' hrXp'tq').trans (bisEq hrXp't' hrb))
+              · -- Or.inr deep: tInner →τ*→ ts →τ→ ts'. r xr ts. r xr' ts'.
+                -- Case split on whether ts = tInner (trivial path) or not.
+                have hPathTs' : Relation.ReflTransGen
+                    (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) tInner ts :=
+                  (Cslib.LTS.sTr_τSTr lts).mp hPathTs
+                rcases Relation.ReflTransGen.cases_head hPathTs' with hEqTs | ⟨tMid2, hHead2, hRest2⟩
+                · -- Trivial ts-path: ts = tInner. New step tInner →τ→ ts'.
+                  -- ============================================================================
+                  -- PLAN FOR CLOSING THIS CASE
+                  -- ============================================================================
+                  -- Context arriving here (all paths trivial on the t-side so far):
+                  --   r a tInner, r xp tInner, r xr tInner, r xr' ts' with
+                  --   tInner →τ→ tNext (original step matched as Or.inr → tInner →τ→ tq'
+                  --   matched again as Or.inr → tInner →τ→ ts' matched as Or.inr → ...).
+                  --
+                  -- The cascade can continue indefinitely: each nested Or.inr generates
+                  --   (i) a fresh τ-successor of tInner (ts', then t_u', t_v', …), and
+                  --   (ii) a fresh BB-related x-state (xr, then xq, …),
+                  -- none of which is forced to be strictly smaller in any single argument's
+                  -- WF: tInner is fixed, and the new x-states can equal `a` in the trivial
+                  -- x-path sub-cases.
+                  --
+                  -- FUNDAMENTAL OBSTACLE: the local `inner` lemma in its current form is
+                  -- *too strong* — it claims `r a tInner → tInner →τ→ tNext → r b tNext →
+                  -- ⟦a⟧ = ⟦b⟧`, which is false whenever the step `tInner →τ→ tNext` is
+                  -- non-inert. (In path_inertness's Case B, the matched step is non-inert
+                  -- precisely when the original `x' →τ→ x₁` is non-inert; Case A would
+                  -- otherwise apply.) The `suffices ⟦x'⟧ = ⟦x₁⟧` reduction above is
+                  -- therefore unsound in general, and any proof of `inner` that closes
+                  -- this case would actually prove `False` in the non-inert scenario.
+                  --
+                  -- RECOMMENDED FIX: abandon the `suffices ⟦x'⟧ = ⟦x₁⟧` reduction and
+                  -- instead build the target `ReflTransGen` directly:
+                  --   (a) If `x' = y'`: done by `ReflTransGen.refl`.
+                  --   (b) Otherwise, locate *some* inert τ-successor `x_inert` of `x'`
+                  --       (i.e., a state with `x' →τ→ x_inert` and `⟦x_inert⟧ = ⟦x'⟧`).
+                  --       Such a state is yielded by repeated BB matching in the
+                  --       Or.inr Or.inl branches (forward BB on the matched x-side path
+                  --       gives `r x_p' t` whenever the matching closes there).
+                  --   (c) Establish an inert path `x_inert →τ*→ y'`. The construction is
+                  --       NOT a sub-path of the original `hPath`; it must be assembled
+                  --       from BB-matching data on both sides. The classical approach
+                  --       (van Glabbeek–Weijland 1996; Basten 1996) is the "computation
+                  --       lemma": given BB `r s t` and `s →τ*→ s'`, produce a parallel
+                  --       chain on the t-side whose intermediate states are all bisim
+                  --       to corresponding states on the s-side. Then transfer back.
+                  --   (d) Recurse on `x_inert →τ*→ y'` via `ih_x` (now legitimately
+                  --       applicable because `⟦x_inert⟧ = ⟦y'⟧` by construction).
+                  --
+                  -- ALTERNATIVE: restructure the WF induction. The current nested
+                  -- `WellFounded.induction hWF` (outer on y', inner on x') admits descent
+                  -- in only one coordinate at a time. A `Prod.lex hWF hWF` induction on
+                  -- `(y', x')` (or even on `(rank y', rank x', rank t)` with appropriate
+                  -- lex ordering) plus a stronger generalized statement may absorb the
+                  -- cascade. See the original comment block at lines 286–324 for the
+                  -- previously contemplated leaf order.
+                  --
+                  -- For now this case is left unproven; the rest of the proof builds.
+                  sorry
+                · -- Non-trivial ts-path: tInner →τ→ tMid2 →τ*→ ts. ts < tInner in TransGen WF.
+                  have hTsLt :
+                      Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s') ts tInner := by
+                    have aux : ∀ {z}, Relation.ReflTransGen
+                        (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) tMid2 z →
+                        Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s') z tInner := by
+                      intro z h
+                      induction h with
+                      | refl => exact Relation.TransGen.single hHead2
+                      | tail _ hLast ih => exact Relation.TransGen.head hLast ih
+                    exact aux hRest2
+                  have hπxrxr' := IH_t ts hTsLt xr xr' ts' hrXrts hStepTs hrXr'ts'
+                  -- ⟦a⟧ = ⟦xr⟧ (bisEq via tInner) = ⟦xr'⟧ (IH) = ⟦tq'⟧ (bisEq) = ⟦xp'⟧ (bisEq)
+                  --      = ⟦tNext⟧ (bisEq) = ⟦b⟧.
+                  exact (bisEq hra hrXrt).trans
+                    (hπxrxr'.trans ((bisEq hrXr'tq' hrXp'tq').trans (bisEq hrXp't' hrb)))
+          · -- Non-trivial t-path: tInner →τ→ tMid →τ*→ tq.
+            -- tq is a strict τ-descendant of tInner via TransGen, so IH_t applies at tq.
+            -- IH_t at tq gives: ∀ a' b' tNext', r a' tq → tq →τ→ tNext' → r b' tNext' → ⟦a'⟧ = ⟦b'⟧.
+            -- Apply with (xp, xp', tq'): ⟦xp⟧ = ⟦xp'⟧.
+            -- Then ⟦a⟧ = ⟦xp⟧ (bisEq via tInner) = ⟦xp'⟧ (IH) = ⟦tNext⟧ = ⟦b⟧.
+            have hTqLt : Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s') tq tInner := by
+              -- Build TransGen from tInner →τ→ tMid →τ*→ tq via an isolated auxiliary lemma.
+              have aux : ∀ {z}, Relation.ReflTransGen
+                  (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) tMid z →
+                  Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s') z tInner := by
+                intro z h
+                induction h with
+                | refl => exact Relation.TransGen.single hHead
+                | tail _ hLast ih => exact Relation.TransGen.head hLast ih
+              exact aux hRest
+            have hπxpxp' := IH_t tq hTqLt xp xp' tq' hrXptq hStepTq hrXp'tq'
+            exact (bisEq hra hrXpt).trans
+              (hπxpxp'.trans (bisEq hrXp't' hrb))
+  -- Apply the inner lemma to (t, x', x₁, t').
+  exact inner t x' x₁ t' hrxt hTrt hrx₁t'
 
 /-- **Corollary.** If a state has no inert τ-successor and a τ*-path returns to the same block,
 the path must be trivial (length 0). Direct consequence of `path_inertness`. -/
