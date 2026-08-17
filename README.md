@@ -29,15 +29,14 @@ Charon compiles Rust to LLBC, and Aeneas translates LLBC to Lean.
 # Install OCaml dependencies
 opam switch create 5.3.0
 
-opam install ppx_deriving visitors easy_logging zarith yojson core_unix odoc \
+opam install ppx_deriving ppx_deriving_yojson visitors easy_logging zarith yojson core_unix odoc \
   ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
 
-cd aeneas
+cd 3rd-party/aeneas
 
 # Build Charon (Rust → LLBC compiler)
 eval $(opam env)
 make setup-charon
-cd ..
 
 # Build Aeneas (LLBC → Lean translator)
 make
