@@ -63,15 +63,9 @@ The generated Lean files will appear in `MercVerified/Code/`.
 lake build
 ```
 
-This builds both the formal definitions in `MercVerified/` and the generated code in `MercVerified/code/`, checking all proofs.
+This builds both the formal definitions in `MercVerified/` and the generated code in `MercVerified/Code/`, checking all proofs.
 
 ### 5. Proving with AI agents
-
-Install `ripgrep` for searching:
-
-```bash
-cargo install --locked ripgrep
-```
 
 Install the `uv` Python package manager for the `lean-lsp-mcp`. A `MCP` is a
 Model Context Protocol that allows AI agents to connect to external programs, in
