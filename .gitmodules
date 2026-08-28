@@ -1,6 +1,8 @@
 [submodule "aeneas"]
 	path = 3rd-party/aeneas
 	url = https://github.com/AeneasVerif/aeneas
+	branch = main
 [submodule "3rd-party/merc"]
 	path = 3rd-party/merc
 	url = https://github.com/MERCorg/merc
+	branch = main
