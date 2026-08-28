@@ -10,10 +10,14 @@ globs = ["MercVerified.*"]
 name = "Signatures"
 globs = ["Signatures.*"]
 
+[[lean_lib]]
+name = "MachineNumbers"
+globs = ["MachineNumbers.*"]
+
 [[require]]
 name = "cslib"
 scope = "leanprover"
-rev = "608cbe1b629a276abd3f2081f9b42dc766d8fd78"
+rev = "v4.31.0"
 
 [[require]]
 name = "aeneas"
