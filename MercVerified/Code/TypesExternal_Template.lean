@@ -14,7 +14,7 @@ set_option maxHeartbeats 1000000
 set_option maxRecDepth 2048
 
 /-- [std::collections::hash::map::HashMap]
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 247:0-252:1
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 245:0-250:1
     Name pattern: [std::collections::hash::map::HashMap]
     Visibility: public -/
 @[rust_type "std::collections::hash::map::HashMap"]
@@ -22,7 +22,7 @@ axiom std.collections.hash.map.HashMap (K : Type) (V : Type) (S : Type) (A :
   Type) : Type
 
 /-- [std::collections::hash::map::Values]
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1710:0-1710:35
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1750:0-1750:35
     Name pattern: [std::collections::hash::map::Values]
     Visibility: public -/
 @[rust_type "std::collections::hash::map::Values"]

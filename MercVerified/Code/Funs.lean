@@ -19,7 +19,7 @@ noncomputable section
 
 namespace verified
 
-/-- Trait implementation: [core::borrow::{core::borrow::Borrow<T> for T}]
+/-- Trait implementation: [core::borrow::{impl core::borrow::Borrow<T> for T}]
     Source: '/rustc/library/core/src/borrow.rs', lines 212:0-212:37
     Name pattern: [core::borrow::Borrow<@T, @T>] -/
 @[reducible, rust_trait_impl "core::borrow::Borrow<@T, @T>"]
@@ -27,7 +27,7 @@ def core.borrow.Borrow.Blanket (T : Type) : core.borrow.Borrow T T := {
   borrow := core.borrow.Borrow.Blanket.borrow
 }
 
-/-- Trait implementation: [core::hash::impls::{core::hash::Hash for usize}]
+/-- Trait implementation: [core::hash::impls::{impl core::hash::Hash for usize}]
     Source: '/rustc/library/core/src/hash/mod.rs', lines 810:12-810:29
     Name pattern: [core::hash::Hash<usize>] -/
 @[reducible, rust_trait_impl "core::hash::Hash<usize>"]
@@ -36,7 +36,7 @@ def Usize.Insts.CoreHashHash : core.hash.Hash Std.Usize := {
     Usize.Insts.CoreHashHash.hash HasherInst
 }
 
-/-- Trait implementation: [std::hash::random::{core::clone::Clone for std::hash::random::RandomState}]
+/-- Trait implementation: [std::hash::random::{impl core::clone::Clone for std::hash::random::RandomState}]
     Source: '/rustc/library/std/src/hash/random.rs', lines 34:9-34:14
     Name pattern: [core::clone::Clone<std::hash::random::RandomState>] -/
 @[reducible, rust_trait_impl
@@ -46,7 +46,7 @@ def std.hash.random.RandomState.Insts.CoreCloneClone : core.clone.Clone
   clone := std.hash.random.RandomState.Insts.CoreCloneClone.clone
 }
 
-/-- Trait implementation: [std::hash::random::{core::hash::Hasher for std::hash::random::DefaultHasher}]
+/-- Trait implementation: [std::hash::random::{impl core::hash::Hasher for std::hash::random::DefaultHasher}]
     Source: '/rustc/library/std/src/hash/random.rs', lines 125:0-125:29
     Name pattern: [core::hash::Hasher<std::hash::random::DefaultHasher>] -/
 @[reducible, rust_trait_impl
@@ -57,7 +57,7 @@ def std.hash.random.DefaultHasher.Insts.CoreHashHasher : core.hash.Hasher
   write := std.hash.random.DefaultHasher.Insts.CoreHashHasher.write
 }
 
-/-- Trait implementation: [std::hash::random::{core::hash::BuildHasher<std::hash::random::DefaultHasher> for std::hash::random::RandomState}]
+/-- Trait implementation: [std::hash::random::{impl core::hash::BuildHasher<std::hash::random::DefaultHasher> for std::hash::random::RandomState}]
     Source: '/rustc/library/std/src/hash/random.rs', lines 80:0-80:32
     Name pattern: [core::hash::BuildHasher<std::hash::random::RandomState, std::hash::random::DefaultHasher>] -/
 @[reducible, rust_trait_impl
@@ -70,7 +70,7 @@ def std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher :
     std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher.build_hasher
 }
 
-/-- Trait implementation: [merc_lts::lts::{core::clone::Clone for merc_lts::lts::Transition}]
+/-- Trait implementation: [merc_lts::lts::{impl core::clone::Clone for merc_lts::lts::Transition}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
     Name pattern: [core::clone::Clone<merc_lts::lts::Transition>] -/
 @[reducible, rust_trait_impl "core::clone::Clone<merc_lts::lts::Transition>"]
@@ -79,7 +79,7 @@ def merc_lts.lts.Transition.Insts.CoreCloneClone : core.clone.Clone
   clone := merc_lts.lts.Transition.Insts.CoreCloneClone.clone
 }
 
-/-- Trait implementation: [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}]
+/-- Trait implementation: [merc_lts::lts::{impl core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:23-103:32
     Name pattern: [core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>] -/
 @[reducible, rust_trait_impl
@@ -89,7 +89,7 @@ def merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition :
   eq := merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
 }
 
-/-- Trait implementation: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 58:0-58:54
     Name pattern: [core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
 @[reducible, rust_trait_impl
@@ -102,23 +102,22 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex {T :
     corecmpPartialEqInst
 }
 
-/-- Trait implementation: [merc_utilities::tagged_index::{core::cmp::Eq for merc_utilities::tagged_index::TagIndex<T, Tag>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 56:0-56:47
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::Eq for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 56:0-56:40
     Name pattern: [core::cmp::Eq<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
 @[reducible, rust_trait_impl
   "core::cmp::Eq<merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq {T : Type} (Tag :
-  Type) (corecmpPartialEqInst : core.cmp.PartialEq T T) : core.cmp.Eq
+impl_def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq {T : Type} (Tag :
+  Type) (corecmpEqInst : core.cmp.Eq T) : core.cmp.Eq
   (merc_utilities.tagged_index.TagIndex T Tag) := {
   partialEqInst :=
     merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex Tag
-    corecmpPartialEqInst
-  assert_receiver_is_total_eq :=
-    merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq.assert_receiver_is_total_eq
-    corecmpPartialEqInst
+    corecmpEqInst.partialEqInst
+  assert_fields_are_eq := core.cmp.Eq.assert_fields_are_eq.default
+    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq Tag corecmpEqInst)
 }
 
-/-- Trait implementation: [merc_utilities::tagged_index::{core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 76:0-76:44
     Name pattern: [core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
 @[reducible, rust_trait_impl
@@ -131,7 +130,7 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash {T : Type} (Tag :
     corehashHashInst corehashHasherInst
 }
 
-/-- Trait implementation: [merc_utilities::tagged_index::{core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 82:0-82:46
     Name pattern: [core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
 @[reducible, rust_trait_impl
@@ -143,16 +142,17 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone {T : Type} (Tag :
     corecloneCloneInst
 }
 
-/-- Trait implementation: [verified::simple_labelled_transition_system::{core::marker::StructuralPartialEq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
+/-- Trait implementation: [verified::simple_labelled_transition_system::{impl core::marker::StructuralPartialEq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
     Source: 'src/simple_labelled_transition_system.rs', lines 18:9-18:18 -/
 @[reducible]
 def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.CoreMarkerStructuralPartialEq
-  (Label : Type) : core.marker.StructuralPartialEq
+  {Label : Type} (corecmpPartialEqInst : core.cmp.PartialEq Label Label) :
+  core.marker.StructuralPartialEq
   (simple_labelled_transition_system.SimpleLabelledTransitionSystem Label) := {
 }
 
-/-- [verified::simple_labelled_transition_system::{core::cmp::PartialEq<verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::eq]:
+/-- [verified::simple_labelled_transition_system::{impl core::cmp::PartialEq<verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::eq]:
     Source: 'src/simple_labelled_transition_system.rs', lines 18:9-18:18
     Visibility: public -/
 def
@@ -167,7 +167,7 @@ def
   let b ←
     std.collections.hash.map.HashMap.Insts.CoreCmpPartialEqHashMap.eq
       (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
-      merc_lts.lts.StateTag core.cmp.PartialEqUsize)
+      merc_lts.lts.StateTag core.cmp.EqUsize)
       (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
       merc_lts.lts.StateTag Usize.Insts.CoreHashHash) (core.cmp.PartialEqVec
       merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition)
@@ -185,7 +185,7 @@ def
     else ok false
   else ok false
 
-/-- Trait implementation: [verified::simple_labelled_transition_system::{core::cmp::PartialEq<verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
+/-- Trait implementation: [verified::simple_labelled_transition_system::{impl core::cmp::PartialEq<verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
     Source: 'src/simple_labelled_transition_system.rs', lines 18:9-18:18 -/
 @[reducible]
 def
@@ -199,11 +199,11 @@ def
     corecmpPartialEqInst
 }
 
-/-- [verified::simple_labelled_transition_system::{core::cmp::Eq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::assert_receiver_is_total_eq]:
+/-- [verified::simple_labelled_transition_system::{impl core::cmp::Eq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::assert_fields_are_eq]:
     Source: 'src/simple_labelled_transition_system.rs', lines 18:20-18:22
     Visibility: public -/
 def
-  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.CoreCmpEq.assert_fields_are_eq
   {Label : Type} (corecmpEqInst : core.cmp.Eq Label)
   (self : simple_labelled_transition_system.SimpleLabelledTransitionSystem
   Label) :
@@ -211,7 +211,7 @@ def
   := do
   ok ()
 
-/-- Trait implementation: [verified::simple_labelled_transition_system::{core::cmp::Eq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
+/-- Trait implementation: [verified::simple_labelled_transition_system::{impl core::cmp::Eq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
     Source: 'src/simple_labelled_transition_system.rs', lines 18:20-18:22 -/
 @[reducible]
 def
@@ -221,12 +221,12 @@ def
   partialEqInst :=
     simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.CoreCmpPartialEqSimpleLabelledTransitionSystem
     corecmpEqInst.partialEqInst
-  assert_receiver_is_total_eq :=
-    simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  assert_fields_are_eq :=
+    simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.CoreCmpEq.assert_fields_are_eq
     corecmpEqInst
 }
 
-/-- [verified::simple_labelled_transition_system::{core::clone::Clone for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::clone]:
+/-- [verified::simple_labelled_transition_system::{impl core::clone::Clone for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::clone]:
     Source: 'src/simple_labelled_transition_system.rs', lines 18:24-18:29
     Visibility: public -/
 def
@@ -250,7 +250,7 @@ def
       core.clone.CloneUsize self.initial_state
   ok { transitions := hm, labels := v, initial_state := ti }
 
-/-- Trait implementation: [verified::simple_labelled_transition_system::{core::clone::Clone for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
+/-- Trait implementation: [verified::simple_labelled_transition_system::{impl core::clone::Clone for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
     Source: 'src/simple_labelled_transition_system.rs', lines 18:24-18:29 -/
 @[reducible]
 def
@@ -263,7 +263,7 @@ def
     corecloneCloneInst
 }
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::is_hidden_label]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::is_hidden_label]:
     Source: 'src/simple_labelled_transition_system.rs', lines 75:4-77:5
     Visibility: public -/
 def
@@ -279,7 +279,7 @@ def
   merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
     core.cmp.PartialEqUsize label_index 0#usize
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::labels]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::labels]:
     Source: 'src/simple_labelled_transition_system.rs', lines 71:4-73:5
     Visibility: public -/
 def
@@ -293,7 +293,7 @@ def
   alloc.vec.Vec.index (core.slice.index.SliceIndexRangeFromUsizeSlice Label)
     self.labels { start := 0#usize }
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]: loop body 0:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]: loop body 0:
     Source: 'src/simple_labelled_transition_system.rs', lines 65:8-67:9
     Visibility: public -/
 @[rust_loop_body]
@@ -316,7 +316,7 @@ def
     let total1 ← total + i
     ok (cont (iter1, total1))
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]: loop 0:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]: loop 0:
     Source: 'src/simple_labelled_transition_system.rs', lines 65:8-67:9
     Visibility: public -/
 @[rust_loop]
@@ -333,7 +333,7 @@ def
       iter1 total1)
     (iter, total)
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_transitions]:
     Source: 'src/simple_labelled_transition_system.rs', lines 63:4-69:5
     Visibility: public -/
 def
@@ -348,7 +348,7 @@ def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions_loop
     iter 0#usize
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_labels]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_labels]:
     Source: 'src/simple_labelled_transition_system.rs', lines 59:4-61:5
     Visibility: public -/
 def
@@ -361,7 +361,7 @@ def
   := do
   ok (alloc.vec.Vec.len self.labels)
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_states]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::num_of_states]:
     Source: 'src/simple_labelled_transition_system.rs', lines 55:4-57:5
     Visibility: public -/
 def
@@ -374,7 +374,7 @@ def
   := do
   std.collections.hash.map.HashMap.len self.transitions
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]: loop body 0:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]: loop body 0:
     Source: 'src/simple_labelled_transition_system.rs', lines 48:8-51:9
     Visibility: public -/
 @[rust_loop_body]
@@ -395,7 +395,7 @@ def
     ok (cont (result1, i1))
   else ok (done result)
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]: loop 0:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]: loop 0:
     Source: 'src/simple_labelled_transition_system.rs', lines 48:8-51:9
     Visibility: public -/
 @[rust_loop]
@@ -413,7 +413,7 @@ def
       n result1 i1)
     (result, i)
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::iter_states]:
     Source: 'src/simple_labelled_transition_system.rs', lines 44:4-53:5
     Visibility: public -/
 def
@@ -434,7 +434,7 @@ def
   simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop
     n result 0#usize
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::initial_state_index]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::initial_state_index]:
     Source: 'src/simple_labelled_transition_system.rs', lines 40:4-42:5
     Visibility: public -/
 def
@@ -447,7 +447,7 @@ def
   := do
   ok self.initial_state
 
-/-- [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::outgoing_transitions]:
+/-- [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}::outgoing_transitions]:
     Source: 'src/simple_labelled_transition_system.rs', lines 33:4-38:5
     Visibility: public -/
 def
@@ -463,7 +463,7 @@ def
   let o ←
     std.collections.hash.map.HashMap.get
       (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
-      merc_lts.lts.StateTag core.cmp.PartialEqUsize)
+      merc_lts.lts.StateTag core.cmp.EqUsize)
       (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
       merc_lts.lts.StateTag Usize.Insts.CoreHashHash)
       std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher
@@ -472,12 +472,11 @@ def
       (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
       merc_lts.lts.StateTag Usize.Insts.CoreHashHash)
       (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
-      merc_lts.lts.StateTag core.cmp.PartialEqUsize) self.transitions
-      state_index
+      merc_lts.lts.StateTag core.cmp.EqUsize) self.transitions state_index
   let v ← core.option.Option.expect o (toStr "State index out of bounds.")
   alloc.vec.CloneVec.clone merc_lts.lts.Transition.Insts.CoreCloneClone v
 
-/-- Trait implementation: [verified::simple_labelled_transition_system::{merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
+/-- Trait implementation: [verified::simple_labelled_transition_system::{impl merc_lts::lts::LTS<Label> for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
     Source: 'src/simple_labelled_transition_system.rs', lines 30:0-78:1 -/
 @[reducible]
 def

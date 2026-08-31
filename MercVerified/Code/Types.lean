@@ -93,6 +93,42 @@ structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
   is_hidden_label : Self → merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.LabelTag → Result Bool
 
+mutual
+
+/-- [verified::list::Link]
+    Source: 'src/list.rs', lines 8:0-11:1 -/
+@[discriminant isize]
+inductive list.Link (T : Type) where
+| Empty : list.Link T
+| More : list.Node T → list.Link T
+
+/-- [verified::list::Node]
+    Source: 'src/list.rs', lines 14:0-17:1 -/
+inductive list.Node (T : Type) where
+| mk : T → list.Link T → list.Node T
+
+end
+
+def list.Node.elem {T : Type} (x : list.Node T) :=
+  match x with | list.Node.mk x1 _ => x1
+
+def list.Node.next {T : Type} (x : list.Node T) :=
+  match x with | list.Node.mk _ x1 => x1
+
+@[simp]
+theorem list.Node.elem._simpLemma_ {T : Type} (elem : T) (next : list.Link T) :
+  (list.Node.mk elem next).elem = elem := by rfl
+
+@[simp]
+theorem list.Node.next._simpLemma_ {T : Type} (elem : T) (next : list.Link T) :
+  (list.Node.mk elem next).next = next := by rfl
+
+/-- [verified::list::List]
+    Source: 'src/list.rs', lines 3:0-5:1
+    Visibility: public -/
+structure list.List (T : Type) where
+  head : list.Link T
+
 /-- [verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem]
     Source: 'src/simple_labelled_transition_system.rs', lines 19:0-28:1
     Visibility: public -/

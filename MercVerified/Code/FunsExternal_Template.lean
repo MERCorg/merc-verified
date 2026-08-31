@@ -15,14 +15,14 @@ set_option maxHeartbeats 1000000
 set_option maxRecDepth 2048
 open verified
 
-/-- [core::borrow::{core::borrow::Borrow<T> for T}::borrow]:
+/-- [core::borrow::{impl core::borrow::Borrow<T> for T}::borrow]:
     Source: '/rustc/library/core/src/borrow.rs', lines 214:4-214:26
     Name pattern: [core::borrow::{core::borrow::Borrow<@T, @T>}::borrow]
     Visibility: public -/
 @[rust_fun "core::borrow::{core::borrow::Borrow<@T, @T>}::borrow"]
 axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
 
-/-- [core::hash::impls::{core::hash::Hash for usize}::hash]:
+/-- [core::hash::impls::{impl core::hash::Hash for usize}::hash]:
     Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
     Name pattern: [core::hash::impls::{core::hash::Hash<usize>}::hash]
     Visibility: public -/
@@ -31,7 +31,7 @@ axiom Usize.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::values]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 543:4-543:44
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 576:4-576:44
     Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::values]
     Visibility: public -/
 @[rust_fun
@@ -42,7 +42,7 @@ axiom std.collections.hash.map.HashMap.values
     (std.collections.hash.map.Values K V)
 
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::len]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 690:4-690:30
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 727:4-727:30
     Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::len]
     Visibility: public -/
 @[rust_fun
@@ -52,7 +52,7 @@ axiom std.collections.hash.map.HashMap.len
   std.collections.hash.map.HashMap K V S A → Result Std.Usize
 
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::get]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 997:4-1000:21
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1034:4-1037:21
     Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::get]
     Visibility: public -/
 @[rust_fun
@@ -65,8 +65,8 @@ axiom std.collections.hash.map.HashMap.get
   core.hash.Hash Q) (corecmpEqInst1 : core.cmp.Eq Q) :
   std.collections.hash.map.HashMap K V S A → Q → Result (Option V)
 
-/-- [std::collections::hash::map::{core::clone::Clone for std::collections::hash::map::HashMap<K, V, S, A>}::clone]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1397:4-1397:27
+/-- [std::collections::hash::map::{impl core::clone::Clone for std::collections::hash::map::HashMap<K, V, S, A>}::clone]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1437:4-1437:27
     Name pattern: [std::collections::hash::map::{core::clone::Clone<std::collections::hash::map::HashMap<@K, @V, @S, @A>>}::clone]
     Visibility: public -/
 @[rust_fun
@@ -79,8 +79,8 @@ axiom std.collections.hash.map.HashMap.Insts.CoreCloneClone.clone
   std.collections.hash.map.HashMap K V S A → Result
     (std.collections.hash.map.HashMap K V S A)
 
-/-- [std::collections::hash::map::{core::cmp::PartialEq<std::collections::hash::map::HashMap<K, V, S, A>> for std::collections::hash::map::HashMap<K, V, S, A>}::eq]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1415:4-1415:53
+/-- [std::collections::hash::map::{impl core::cmp::PartialEq<std::collections::hash::map::HashMap<K, V, S, A>> for std::collections::hash::map::HashMap<K, V, S, A>}::eq]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1455:4-1455:53
     Name pattern: [std::collections::hash::map::{core::cmp::PartialEq<std::collections::hash::map::HashMap<@K, @V, @S, @A>, std::collections::hash::map::HashMap<@K, @V, @S, @A>>}::eq]
     Visibility: public -/
 @[rust_fun
@@ -93,8 +93,8 @@ axiom std.collections.hash.map.HashMap.Insts.CoreCmpPartialEqHashMap.eq
   std.collections.hash.map.HashMap K V S A → std.collections.hash.map.HashMap
     K V S A → Result Bool
 
-/-- [std::collections::hash::map::{core::iter::traits::iterator::Iterator<&'a (V)> for std::collections::hash::map::Values<'a, K, V>}::next]:
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2236:4-2236:39
+/-- [std::collections::hash::map::{impl core::iter::traits::iterator::Iterator<&'a V> for std::collections::hash::map::Values<'a, K, V>}::next]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2264:4-2264:39
     Name pattern: [std::collections::hash::map::{core::iter::traits::iterator::Iterator<std::collections::hash::map::Values<'a, @K, @V>, &'a @V>}::next]
     Visibility: public -/
 @[rust_fun
@@ -105,7 +105,7 @@ axiom
   std.collections.hash.map.Values K V → Result ((Option V) ×
     (std.collections.hash.map.Values K V))
 
-/-- [std::hash::random::{core::clone::Clone for std::hash::random::RandomState}::clone]:
+/-- [std::hash::random::{impl core::clone::Clone for std::hash::random::RandomState}::clone]:
     Source: '/rustc/library/std/src/hash/random.rs', lines 34:9-34:14
     Name pattern: [std::hash::random::{core::clone::Clone<std::hash::random::RandomState>}::clone]
     Visibility: public -/
@@ -114,7 +114,7 @@ axiom
 axiom std.hash.random.RandomState.Insts.CoreCloneClone.clone
   : std.hash.random.RandomState → Result std.hash.random.RandomState
 
-/-- [std::hash::random::{core::hash::Hasher for std::hash::random::DefaultHasher}::finish]:
+/-- [std::hash::random::{impl core::hash::Hasher for std::hash::random::DefaultHasher}::finish]:
     Source: '/rustc/library/std/src/hash/random.rs', lines 140:4-140:27
     Name pattern: [std::hash::random::{core::hash::Hasher<std::hash::random::DefaultHasher>}::finish]
     Visibility: public -/
@@ -123,7 +123,7 @@ axiom std.hash.random.RandomState.Insts.CoreCloneClone.clone
 axiom std.hash.random.DefaultHasher.Insts.CoreHashHasher.finish
   : std.hash.random.DefaultHasher → Result Std.U64
 
-/-- [std::hash::random::{core::hash::Hasher for std::hash::random::DefaultHasher}::write]:
+/-- [std::hash::random::{impl core::hash::Hasher for std::hash::random::DefaultHasher}::write]:
     Source: '/rustc/library/std/src/hash/random.rs', lines 130:4-130:35
     Name pattern: [std::hash::random::{core::hash::Hasher<std::hash::random::DefaultHasher>}::write]
     Visibility: public -/
@@ -134,7 +134,7 @@ axiom std.hash.random.DefaultHasher.Insts.CoreHashHasher.write
   std.hash.random.DefaultHasher → Slice Std.U8 → Result
     std.hash.random.DefaultHasher
 
-/-- [std::hash::random::{core::hash::BuildHasher<std::hash::random::DefaultHasher> for std::hash::random::RandomState}::build_hasher]:
+/-- [std::hash::random::{impl core::hash::BuildHasher<std::hash::random::DefaultHasher> for std::hash::random::RandomState}::build_hasher]:
     Source: '/rustc/library/std/src/hash/random.rs', lines 83:4-83:43
     Name pattern: [std::hash::random::{core::hash::BuildHasher<std::hash::random::RandomState, std::hash::random::DefaultHasher>}::build_hasher]
     Visibility: public -/
@@ -144,7 +144,7 @@ axiom
   std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher.build_hasher
   : std.hash.random.RandomState → Result std.hash.random.DefaultHasher
 
-/-- [merc_lts::lts::{core::clone::Clone for merc_lts::lts::Transition}::clone]:
+/-- [merc_lts::lts::{impl core::clone::Clone for merc_lts::lts::Transition}::clone]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
     Name pattern: [merc_lts::lts::{core::clone::Clone<merc_lts::lts::Transition>}::clone]
     Visibility: public -/
@@ -153,7 +153,7 @@ axiom
 axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
   : merc_lts.lts.Transition → Result merc_lts.lts.Transition
 
-/-- [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}::eq]:
+/-- [merc_lts::lts::{impl core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}::eq]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:23-103:32
     Name pattern: [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>}::eq]
     Visibility: public -/
@@ -162,7 +162,7 @@ axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
 axiom merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
   : merc_lts.lts.Transition → merc_lts.lts.Transition → Result Bool
 
-/-- [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 59:4-59:38
     Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
     Visibility: public -/
@@ -173,18 +173,7 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
   merc_utilities.tagged_index.TagIndex T Tag →
     merc_utilities.tagged_index.TagIndex T Tag → Result Bool
 
-/-- [merc_utilities::tagged_index::{core::cmp::Eq for merc_utilities::tagged_index::TagIndex<T, Tag>}::assert_receiver_is_total_eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 56:0-56:47
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::Eq<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::assert_receiver_is_total_eq]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::Eq<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::assert_receiver_is_total_eq"]
-axiom
-  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq.assert_receiver_is_total_eq
-  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
-  merc_utilities.tagged_index.TagIndex T Tag → Result Unit
-
-/-- [merc_utilities::tagged_index::{core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
+/-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 77:4-77:55
     Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
     Visibility: public -/
@@ -195,7 +184,7 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
   (corehashHasherInst : core.hash.Hasher H) :
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
 
-/-- [merc_utilities::tagged_index::{core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
+/-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
     Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
     Visibility: public -/
@@ -206,7 +195,7 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
   merc_utilities.tagged_index.TagIndex T Tag → Result
     (merc_utilities.tagged_index.TagIndex T Tag)
 
-/-- [merc_utilities::tagged_index::{core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 92:4-92:35
     Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq]
     Visibility: public -/
