@@ -32,6 +32,13 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
   HasherInst : core.hash.Hasher Self_Hasher
   build_hasher : Self → Result Self_Hasher
 
+/-- [merc_collections::indexed_partition::BlockTag]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/indexed_partition.rs', lines 6:0-6:19
+    Name pattern: [merc_collections::indexed_partition::BlockTag]
+    Visibility: public -/
+@[reducible, rust_type "merc_collections::indexed_partition::BlockTag"]
+def merc_collections.indexed_partition.BlockTag := Unit
+
 /-- [merc_lts::lts::LabelTag]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 12:0-12:19
     Name pattern: [merc_lts::lts::LabelTag]
@@ -92,6 +99,49 @@ structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
   labels : Self → Result (Slice Self_Label)
   is_hidden_label : Self → merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.LabelTag → Result Bool
+
+/-- [merc_reduction::block_partition::Block]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 437:0-437:16
+    Name pattern: [merc_reduction::block_partition::Block]
+    Visibility: public -/
+@[rust_type "merc_reduction::block_partition::Block"]
+structure merc_reduction.block_partition.Block where
+  begin : Std.Usize
+  marked_split : Std.Usize
+  «end» : Std.Usize
+
+/-- [merc_reduction::block_partition::BlockPartition]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 16:0-16:25
+    Name pattern: [merc_reduction::block_partition::BlockPartition]
+    Visibility: public -/
+@[rust_type "merc_reduction::block_partition::BlockPartition"]
+structure merc_reduction.block_partition.BlockPartition where
+  elements : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)
+  blocks : alloc.vec.Vec merc_reduction.block_partition.Block
+  element_to_block : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_collections.indexed_partition.BlockTag)
+  element_offset : alloc.vec.Vec Std.Usize
+
+/-- Trait declaration: [merc_reduction::partition::Partition]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/partition.rs', lines 10:0-10:19
+    Name pattern: [merc_reduction::partition::Partition]
+    Visibility: public -/
+@[rust_trait "merc_reduction::partition::Partition"]
+structure merc_reduction.partition.Partition (Self : Type) where
+  block_number : Self → merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag → Result (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_collections.indexed_partition.BlockTag)
+  num_of_blocks : Self → Result Std.Usize
+  len : Self → Result Std.Usize
+  is_empty : Self → Result Bool
+
+/-- [rustc_hash::FxBuildHasher]
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 346:0-346:24
+    Name pattern: [rustc_hash::FxBuildHasher]
+    Visibility: public -/
+@[reducible, rust_type "rustc_hash::FxBuildHasher"]
+def rustc_hash.FxBuildHasher := Unit
 
 mutual
 

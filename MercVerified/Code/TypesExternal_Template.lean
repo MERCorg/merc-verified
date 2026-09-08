@@ -28,6 +28,13 @@ axiom std.collections.hash.map.HashMap (K : Type) (V : Type) (S : Type) (A :
 @[rust_type "std::collections::hash::map::Values"]
 axiom std.collections.hash.map.Values (K : Type) (V : Type) : Type
 
+/-- [std::collections::hash::set::HashSet]
+    Source: '/rustc/library/std/src/collections/hash/set.rs', lines 126:0-130:1
+    Name pattern: [std::collections::hash::set::HashSet]
+    Visibility: public -/
+@[rust_type "std::collections::hash::set::HashSet"]
+axiom std.collections.hash.set.HashSet (T : Type) (S : Type) (A : Type) : Type
+
 /-- [std::hash::random::RandomState]
     Source: '/rustc/library/std/src/hash/random.rs', lines 35:0-35:22
     Name pattern: [std::hash::random::RandomState]
@@ -48,4 +55,11 @@ axiom std.hash.random.DefaultHasher : Type
     Visibility: public -/
 @[rust_type "merc_utilities::tagged_index::TagIndex"]
 axiom merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) : Type
+
+/-- [rustc_hash::FxHasher]
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 63:0-63:19
+    Name pattern: [rustc_hash::FxHasher]
+    Visibility: public -/
+@[rust_type "rustc_hash::FxHasher"]
+axiom rustc_hash.FxHasher : Type
 

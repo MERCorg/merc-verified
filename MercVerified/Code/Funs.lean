@@ -36,6 +36,53 @@ def Usize.Insts.CoreHashHash : core.hash.Hash Std.Usize := {
     Usize.Insts.CoreHashHash.hash HasherInst
 }
 
+/-- Trait implementation: [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}]
+    Source: '/rustc/library/core/src/tuple.rs', lines 28:12-28:74
+    Name pattern: [core::cmp::PartialEq<(@U, @T), (@U, @T)>] -/
+@[reducible, rust_trait_impl "core::cmp::PartialEq<(@U, @T), (@U, @T)>"]
+def Pair.Insts.CoreCmpPartialEqPair {U : Type} {T : Type} (cmpPartialEqInst :
+  core.cmp.PartialEq U U) (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
+  core.cmp.PartialEq (U × T) (U × T) := {
+  eq := Pair.Insts.CoreCmpPartialEqPair.eq cmpPartialEqInst cmpPartialEqInst1
+}
+
+/-- Trait implementation: [core::tuple::{impl core::cmp::Eq for (U, T)}]
+    Source: '/rustc/library/core/src/tuple.rs', lines 44:12-44:60
+    Name pattern: [core::cmp::Eq<(@U, @T)>] -/
+@[reducible, rust_trait_impl "core::cmp::Eq<(@U, @T)>"]
+impl_def Pair.Insts.CoreCmpEq {U : Type} {T : Type} (cmpEqInst : core.cmp.Eq U)
+  (cmpEqInst1 : core.cmp.Eq T) : core.cmp.Eq (U × T) := {
+  partialEqInst := Pair.Insts.CoreCmpPartialEqPair cmpEqInst.partialEqInst
+    cmpEqInst1.partialEqInst
+  assert_fields_are_eq := core.cmp.Eq.assert_fields_are_eq.default
+    (Pair.Insts.CoreCmpEq cmpEqInst cmpEqInst1)
+}
+
+/-- Trait implementation: [core::tuple::{impl core::cmp::PartialOrd<(U, T)> for (U, T)}]
+    Source: '/rustc/library/core/src/tuple.rs', lines 66:12-66:76
+    Name pattern: [core::cmp::PartialOrd<(@U, @T), (@U, @T)>] -/
+@[reducible, rust_trait_impl "core::cmp::PartialOrd<(@U, @T), (@U, @T)>"]
+def Pair.Insts.CoreCmpPartialOrdPair {U : Type} {T : Type} (cmpPartialOrdInst :
+  core.cmp.PartialOrd U U) (cmpPartialOrdInst1 : core.cmp.PartialOrd T T) :
+  core.cmp.PartialOrd (U × T) (U × T) := {
+  partialEqInst := Pair.Insts.CoreCmpPartialEqPair
+    cmpPartialOrdInst.partialEqInst cmpPartialOrdInst1.partialEqInst
+  partial_cmp := Pair.Insts.CoreCmpPartialOrdPair.partial_cmp cmpPartialOrdInst
+    cmpPartialOrdInst1
+}
+
+/-- Trait implementation: [core::tuple::{impl core::cmp::Ord for (U, T)}]
+    Source: '/rustc/library/core/src/tuple.rs', lines 111:12-111:62
+    Name pattern: [core::cmp::Ord<(@U, @T)>] -/
+@[reducible, rust_trait_impl "core::cmp::Ord<(@U, @T)>"]
+def Pair.Insts.CoreCmpOrd {U : Type} {T : Type} (cmpOrdInst : core.cmp.Ord U)
+  (cmpOrdInst1 : core.cmp.Ord T) : core.cmp.Ord (U × T) := {
+  eqInst := Pair.Insts.CoreCmpEq cmpOrdInst.eqInst cmpOrdInst1.eqInst
+  partialOrdInst := Pair.Insts.CoreCmpPartialOrdPair cmpOrdInst.partialOrdInst
+    cmpOrdInst1.partialOrdInst
+  cmp := Pair.Insts.CoreCmpOrd.cmp cmpOrdInst cmpOrdInst1
+}
+
 /-- Trait implementation: [std::hash::random::{impl core::clone::Clone for std::hash::random::RandomState}]
     Source: '/rustc/library/std/src/hash/random.rs', lines 34:9-34:14
     Name pattern: [core::clone::Clone<std::hash::random::RandomState>] -/
@@ -89,6 +136,79 @@ def merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition :
   eq := merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
 }
 
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 300:4-300:64
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked]
+    Visibility: public -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked"]
+def merc_reduction.block_partition.BlockPartition.is_element_marked
+  (self : merc_reduction.block_partition.BlockPartition)
+  (element : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) :
+  Result Bool
+  := do
+  let block_index ←
+    alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice
+      (merc_utilities.tagged_index.TagIndex Std.Usize
+      merc_collections.indexed_partition.BlockTag)) self.element_to_block
+      element
+  let offset ←
+    alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice Std.Usize) self.element_offset
+      element
+  let b ←
+    alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice
+      merc_reduction.block_partition.Block) self.blocks block_index
+  ok (offset >= b.marked_split)
+
+/-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::block_number]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 391:4-391:61
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::block_number]
+    Visibility: public -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::block_number"]
+def
+  merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+  (self : merc_reduction.block_partition.BlockPartition)
+  (element : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) :
+  Result (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+  := do
+  let i ←
+    merc_utilities.tagged_index.TagIndex.value core.marker.CopyUsize element
+  alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+    (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)) self.element_to_block i
+
+/-- [merc_reduction::partition::Partition::is_empty]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/partition.rs', lines 21:4-21:30
+    Name pattern: [merc_reduction::partition::Partition::is_empty]
+    Visibility: public -/
+@[trait_default, rust_fun "merc_reduction::partition::Partition::is_empty"]
+def merc_reduction.partition.Partition.is_empty.default
+  {Self : Type} (PartitionInst : merc_reduction.partition.Partition Self)
+  (self : Self) :
+  Result Bool
+  := do
+  let i ← PartitionInst.len self
+  ok (i = 0#usize)
+
+/-- [merc_reduction::signatures::tau_hat]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 101:0-101:41
+    Name pattern: [merc_reduction::signatures::tau_hat] -/
+@[rust_fun "merc_reduction::signatures::tau_hat"]
+def merc_reduction.signatures.tau_hat
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) (lts : L) :
+  Result (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
+  := do
+  let i ← merc_ltsltsLTSInst.num_of_labels lts
+  merc_utilities.tagged_index.TagIndex.new merc_lts.lts.LabelTag i
+
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 58:0-58:54
     Name pattern: [core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
@@ -100,6 +220,23 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex {T :
   (merc_utilities.tagged_index.TagIndex T Tag) := {
   eq := merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
     corecmpPartialEqInst
+}
+
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 70:0-70:56
+    Name pattern: [core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
+@[reducible, rust_trait_impl
+  "core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex {T :
+  Type} (Tag : Type) (corecmpPartialOrdInst : core.cmp.PartialOrd T T) :
+  core.cmp.PartialOrd (merc_utilities.tagged_index.TagIndex T Tag)
+  (merc_utilities.tagged_index.TagIndex T Tag) := {
+  partialEqInst :=
+    merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex Tag
+    corecmpPartialOrdInst.partialEqInst
+  partial_cmp :=
+    merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex.partial_cmp
+    corecmpPartialOrdInst
 }
 
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::Eq for merc_utilities::tagged_index::TagIndex<T, Tag>}]
@@ -117,6 +254,133 @@ impl_def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq {T : Type} (Tag :
     (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq Tag corecmpEqInst)
 }
 
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::Ord for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 64:0-64:42
+    Name pattern: [core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
+@[reducible, rust_trait_impl
+  "core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd {T : Type} (Tag :
+  Type) (corecmpOrdInst : core.cmp.Ord T) : core.cmp.Ord
+  (merc_utilities.tagged_index.TagIndex T Tag) := {
+  eqInst := merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq Tag
+    corecmpOrdInst.eqInst
+  partialOrdInst :=
+    merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex Tag
+    corecmpOrdInst.partialOrdInst
+  cmp := merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd.cmp
+    corecmpOrdInst
+}
+
+/-- [merc_reduction::signatures::strong_bisim_signature]: loop body 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 118:4-120:5
+    Name pattern: [merc_reduction::signatures::strong_bisim_signature]
+    Visibility: public -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::signatures::strong_bisim_signature"]
+def merc_reduction.signatures.strong_bisim_signature_loop.body
+  {P : Type} (partitionPartitionInst : merc_reduction.partition.Partition P)
+  (partition : P) (iter : alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (ControlFlow ((alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+    × (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))) (alloc.vec.Vec
+    ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+    (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))))
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done builder)
+  | some transition =>
+    let ti ← partitionPartitionInst.block_number partition transition.to
+    let builder1 ← alloc.vec.Vec.push builder (transition.label, ti)
+    ok (cont (iter1, builder1))
+
+/-- [merc_reduction::signatures::strong_bisim_signature]: loop 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 118:4-120:5
+    Name pattern: [merc_reduction::signatures::strong_bisim_signature]
+    Visibility: public -/
+@[rust_loop, rust_fun "merc_reduction::signatures::strong_bisim_signature"]
+def merc_reduction.signatures.strong_bisim_signature_loop
+  {P : Type} (partitionPartitionInst : merc_reduction.partition.Partition P)
+  (iter : alloc.vec.into_iter.IntoIter merc_lts.lts.Transition) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  loop
+    (fun (iter1, builder1) =>
+      merc_reduction.signatures.strong_bisim_signature_loop.body
+      partitionPartitionInst partition iter1 builder1)
+    (iter, builder)
+
+/-- [merc_reduction::signatures::strong_bisim_signature]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 110:0-115:1
+    Name pattern: [merc_reduction::signatures::strong_bisim_signature]
+    Visibility: public -/
+@[rust_fun "merc_reduction::signatures::strong_bisim_signature"]
+def merc_reduction.signatures.strong_bisim_signature
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (partitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  let builder1 ← alloc.vec.Vec.clear Global builder
+  let v ← merc_ltsltsLTSInst.outgoing_transitions lts state_index
+  let iter ← alloc.vec.IntoIteratorVec.into_iter v
+  let builder2 ←
+    merc_reduction.signatures.strong_bisim_signature_loop
+      partitionPartitionInst iter partition builder1
+  let (s, deref_mut_back) ← lift (alloc.vec.Vec.deref_mut builder2)
+  let s1 ←
+    core.slice.Slice.sort_unstable (Pair.Insts.CoreCmpOrd
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd
+      merc_lts.lts.LabelTag core.cmp.OrdUsize)
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd
+      merc_collections.indexed_partition.BlockTag core.cmp.OrdUsize)) s
+  let builder3 := deref_mut_back s1
+  alloc.vec.Vec.dedup Global (Pair.Insts.CoreCmpPartialEqPair
+    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+    merc_lts.lts.LabelTag core.cmp.PartialEqUsize)
+    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+    merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize))
+    builder3
+
+/-- Trait implementation: [rustc_hash::{impl core::hash::Hasher for rustc_hash::FxHasher}]
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 128:0-128:24
+    Name pattern: [core::hash::Hasher<rustc_hash::FxHasher>] -/
+@[reducible, rust_trait_impl "core::hash::Hasher<rustc_hash::FxHasher>"]
+def rustc_hash.FxHasher.Insts.CoreHashHasher : core.hash.Hasher
+  rustc_hash.FxHasher := {
+  finish := rustc_hash.FxHasher.Insts.CoreHashHasher.finish
+  write := rustc_hash.FxHasher.Insts.CoreHashHasher.write
+}
+
+/-- Trait implementation: [rustc_hash::{impl core::hash::BuildHasher<rustc_hash::FxHasher> for rustc_hash::FxBuildHasher}]
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 348:0-348:34
+    Name pattern: [core::hash::BuildHasher<rustc_hash::FxBuildHasher, rustc_hash::FxHasher>] -/
+@[reducible, rust_trait_impl
+  "core::hash::BuildHasher<rustc_hash::FxBuildHasher, rustc_hash::FxHasher>"]
+def rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher :
+  core.hash.BuildHasher rustc_hash.FxBuildHasher rustc_hash.FxHasher := {
+  HasherInst := rustc_hash.FxHasher.Insts.CoreHashHasher
+  build_hasher :=
+    rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher.build_hasher
+}
+
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 76:0-76:44
     Name pattern: [core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
@@ -130,6 +394,406 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash {T : Type} (Tag :
     corehashHashInst corehashHasherInst
 }
 
+/-- [merc_reduction::signatures::branching_bisim_signature]: loop body 1:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 151:8-167:9
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature]
+    Visibility: public -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::signatures::branching_bisim_signature"]
+def merc_reduction.signatures.branching_bisim_signature_loop0_loop0.body
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (partitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (iter : alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))
+  (visited : std.collections.hash.set.HashSet
+  (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  rustc_hash.FxBuildHasher Global)
+  (stack : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag)) :
+  Result (ControlFlow ((alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+    × (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag))) ((alloc.vec.Vec
+    ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+    (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag))))
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done (builder, visited, stack))
+  | some transition =>
+    let b ← merc_ltsltsLTSInst.is_hidden_label lts transition.label
+    if b
+    then
+      let ti ← partitionPartitionInst.block_number partition state_index
+      let ti1 ← partitionPartitionInst.block_number partition transition.to
+      let b1 ←
+        merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+          core.cmp.PartialEqUsize ti ti1
+      if b1
+      then
+        let b2 ←
+          std.collections.hash.set.HashSet.contains
+            (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
+            merc_lts.lts.StateTag core.cmp.EqUsize)
+            (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
+            merc_lts.lts.StateTag Usize.Insts.CoreHashHash)
+            rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher
+            (core.borrow.Borrow.Blanket (merc_utilities.tagged_index.TagIndex
+            Std.Usize merc_lts.lts.StateTag))
+            (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
+            merc_lts.lts.StateTag Usize.Insts.CoreHashHash)
+            (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
+            merc_lts.lts.StateTag core.cmp.EqUsize) visited transition.to
+        if b2
+        then ok (cont (iter1, builder, visited, stack))
+        else
+          let (_, visited1) ←
+            std.collections.hash.set.HashSet.insert
+              (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
+              merc_lts.lts.StateTag core.cmp.EqUsize)
+              (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
+              merc_lts.lts.StateTag Usize.Insts.CoreHashHash)
+              rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher
+              visited transition.to
+          let stack1 ← alloc.vec.Vec.push stack transition.to
+          ok (cont (iter1, builder, visited1, stack1))
+      else
+        let builder1 ← alloc.vec.Vec.push builder (transition.label, ti1)
+        ok (cont (iter1, builder1, visited, stack))
+    else
+      let ti ← partitionPartitionInst.block_number partition transition.to
+      let builder1 ← alloc.vec.Vec.push builder (transition.label, ti)
+      ok (cont (iter1, builder1, visited, stack))
+
+/-- [merc_reduction::signatures::branching_bisim_signature]: loop 1:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 151:8-167:9
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature]
+    Visibility: public -/
+@[rust_loop, rust_fun "merc_reduction::signatures::branching_bisim_signature"]
+def merc_reduction.signatures.branching_bisim_signature_loop0_loop0
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (partitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (iter : alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))
+  (visited : std.collections.hash.set.HashSet
+  (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  rustc_hash.FxBuildHasher Global)
+  (stack : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag)) :
+  Result ((alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)))
+  := do
+  loop
+    (fun (iter1, builder1, visited1, stack1) =>
+      merc_reduction.signatures.branching_bisim_signature_loop0_loop0.body
+      merc_ltsltsLTSInst partitionPartitionInst state_index lts partition iter1
+      builder1 visited1 stack1)
+    (iter, builder, visited, stack)
+
+/-- [merc_reduction::signatures::branching_bisim_signature]: loop body 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 148:4-168:5
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature]
+    Visibility: public -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::signatures::branching_bisim_signature"]
+def merc_reduction.signatures.branching_bisim_signature_loop0.body
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (partitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (stack : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))
+  (visited : std.collections.hash.set.HashSet
+  (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  rustc_hash.FxBuildHasher Global) :
+  Result (ControlFlow ((alloc.vec.Vec (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag)) × (alloc.vec.Vec
+    ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+    (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global))
+    ((alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag))))
+  := do
+  let (o, stack1) ← alloc.vec.Vec.pop Global stack
+  match o with
+  | none => ok (done (builder, visited, stack1))
+  | some inner_state_index =>
+    let (_, visited1) ←
+      std.collections.hash.set.HashSet.insert
+        (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq
+        merc_lts.lts.StateTag core.cmp.EqUsize)
+        (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash
+        merc_lts.lts.StateTag Usize.Insts.CoreHashHash)
+        rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher visited
+        inner_state_index
+    let v ← merc_ltsltsLTSInst.outgoing_transitions lts inner_state_index
+    let iter ← alloc.vec.IntoIteratorVec.into_iter v
+    let (builder1, visited2, stack2) ←
+      merc_reduction.signatures.branching_bisim_signature_loop0_loop0
+        merc_ltsltsLTSInst partitionPartitionInst iter state_index lts
+        partition builder visited1 stack1
+    ok (cont (stack2, builder1, visited2))
+
+/-- [merc_reduction::signatures::branching_bisim_signature]: loop 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 148:4-168:5
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature]
+    Visibility: public -/
+@[rust_loop, rust_fun "merc_reduction::signatures::branching_bisim_signature"]
+def merc_reduction.signatures.branching_bisim_signature_loop0
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (partitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (stack : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))
+  (visited : std.collections.hash.set.HashSet
+  (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  rustc_hash.FxBuildHasher Global) :
+  Result ((alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)))
+  := do
+  loop
+    (fun (stack1, builder1, visited1) =>
+      merc_reduction.signatures.branching_bisim_signature_loop0.body
+      merc_ltsltsLTSInst partitionPartitionInst state_index lts partition
+      stack1 builder1 visited1)
+    (stack, builder, visited)
+
+/-- [merc_reduction::signatures::branching_bisim_signature]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 132:0-139:1
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature]
+    Visibility: public -/
+@[rust_fun "merc_reduction::signatures::branching_bisim_signature"]
+def merc_reduction.signatures.branching_bisim_signature
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (partitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))
+  (visited : std.collections.hash.set.HashSet
+  (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  rustc_hash.FxBuildHasher Global)
+  (stack : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag)) :
+  Result ((alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)))
+  := do
+  let builder1 ← alloc.vec.Vec.clear Global builder
+  let visited1 ← std.collections.hash.set.HashSet.clear visited
+  let b ← alloc.vec.Vec.is_empty Global stack
+  massert b
+  let stack1 ← alloc.vec.Vec.push stack state_index
+  let (builder2, visited2, stack2) ←
+    merc_reduction.signatures.branching_bisim_signature_loop0
+      merc_ltsltsLTSInst partitionPartitionInst stack1 state_index lts
+      partition builder1 visited1
+  let (s, deref_mut_back) ← lift (alloc.vec.Vec.deref_mut builder2)
+  let s1 ←
+    core.slice.Slice.sort_unstable (Pair.Insts.CoreCmpOrd
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd
+      merc_lts.lts.LabelTag core.cmp.OrdUsize)
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd
+      merc_collections.indexed_partition.BlockTag core.cmp.OrdUsize)) s
+  let builder3 := deref_mut_back s1
+  let builder4 ←
+    alloc.vec.Vec.dedup Global (Pair.Insts.CoreCmpPartialEqPair
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+      merc_lts.lts.LabelTag core.cmp.PartialEqUsize)
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+      merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize))
+      builder3
+  ok (builder4, visited2, stack2)
+
+/-- [merc_reduction::signatures::branching_bisim_signature_inductive]: loop body 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 218:4-232:5
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature_inductive]
+    Visibility: public -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::signatures::branching_bisim_signature_inductive"]
+def merc_reduction.signatures.branching_bisim_signature_inductive_loop.body
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L)
+  (partition : merc_reduction.block_partition.BlockPartition)
+  (state_to_key : Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))
+  (iter : alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (ControlFlow ((alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+    × (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))) (alloc.vec.Vec
+    ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+    (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))))
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done builder)
+  | some transition =>
+    let to_block ←
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+        partition transition.to
+    let ti ←
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+        partition state_index
+    let b ←
+      merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+        core.cmp.PartialEqUsize ti to_block
+    if b
+    then
+      let b1 ← merc_ltsltsLTSInst.is_hidden_label lts transition.label
+      if b1
+      then
+        let b2 ←
+          merc_reduction.block_partition.BlockPartition.is_element_marked
+            partition transition.to
+        if b2
+        then
+          let ti1 ← merc_reduction.signatures.tau_hat merc_ltsltsLTSInst lts
+          let ti2 ←
+            Slice.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+              (core.slice.index.SliceIndexUsizeSlice
+              (merc_utilities.tagged_index.TagIndex Std.Usize
+              merc_collections.indexed_partition.BlockTag)) state_to_key
+              transition.to
+          let builder1 ← alloc.vec.Vec.push builder (ti1, ti2)
+          ok (cont (iter1, builder1))
+        else
+          let builder1 ←
+            alloc.vec.Vec.push builder (transition.label, to_block)
+          ok (cont (iter1, builder1))
+      else
+        let builder1 ←
+          alloc.vec.Vec.push builder (transition.label, to_block)
+        ok (cont (iter1, builder1))
+    else
+      let builder1 ← alloc.vec.Vec.push builder (transition.label, to_block)
+      ok (cont (iter1, builder1))
+
+/-- [merc_reduction::signatures::branching_bisim_signature_inductive]: loop 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 218:4-232:5
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature_inductive]
+    Visibility: public -/
+@[rust_loop, rust_fun
+  "merc_reduction::signatures::branching_bisim_signature_inductive"]
+def merc_reduction.signatures.branching_bisim_signature_inductive_loop
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) (iter : alloc.vec.into_iter.IntoIter merc_lts.lts.Transition)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L)
+  (partition : merc_reduction.block_partition.BlockPartition)
+  (state_to_key : Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  loop
+    (fun (iter1, builder1) =>
+      merc_reduction.signatures.branching_bisim_signature_inductive_loop.body
+      merc_ltsltsLTSInst state_index lts partition state_to_key iter1 builder1)
+    (iter, builder)
+
+/-- [merc_reduction::signatures::branching_bisim_signature_inductive]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 209:0-215:1
+    Name pattern: [merc_reduction::signatures::branching_bisim_signature_inductive]
+    Visibility: public -/
+@[rust_fun "merc_reduction::signatures::branching_bisim_signature_inductive"]
+def merc_reduction.signatures.branching_bisim_signature_inductive
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L)
+  (partition : merc_reduction.block_partition.BlockPartition)
+  (state_to_key : Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  let builder1 ← alloc.vec.Vec.clear Global builder
+  let v ← merc_ltsltsLTSInst.outgoing_transitions lts state_index
+  let iter ← alloc.vec.IntoIteratorVec.into_iter v
+  let builder2 ←
+    merc_reduction.signatures.branching_bisim_signature_inductive_loop
+      merc_ltsltsLTSInst iter state_index lts partition state_to_key builder1
+  let (s, deref_mut_back) ← lift (alloc.vec.Vec.deref_mut builder2)
+  let s1 ←
+    core.slice.Slice.sort_unstable (Pair.Insts.CoreCmpOrd
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd
+      merc_lts.lts.LabelTag core.cmp.OrdUsize)
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd
+      merc_collections.indexed_partition.BlockTag core.cmp.OrdUsize)) s
+  let builder3 := deref_mut_back s1
+  alloc.vec.Vec.dedup Global (Pair.Insts.CoreCmpPartialEqPair
+    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+    merc_lts.lts.LabelTag core.cmp.PartialEqUsize)
+    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+    merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize))
+    builder3
+
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 82:0-82:46
     Name pattern: [core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
@@ -141,6 +805,75 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone {T : Type} (Tag :
   clone := merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
     corecloneCloneInst
 }
+
+/-- [verified::reduction_bridge::strong_bisim_signature]:
+    Source: 'src/reduction_bridge.rs', lines 33:0-40:1
+    Visibility: public -/
+def reduction_bridge.strong_bisim_signature
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (merc_reductionpartitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  merc_reduction.signatures.strong_bisim_signature merc_ltsltsLTSInst
+    merc_reductionpartitionPartitionInst state_index lts partition builder
+
+/-- [verified::reduction_bridge::branching_bisim_signature]:
+    Source: 'src/reduction_bridge.rs', lines 42:0-51:1
+    Visibility: public -/
+def reduction_bridge.branching_bisim_signature
+  {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause0_Label) (merc_reductionpartitionPartitionInst :
+  merc_reduction.partition.Partition P)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L) (partition : P)
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))
+  (visited : std.collections.hash.set.HashSet
+  (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  rustc_hash.FxBuildHasher Global)
+  (stack : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag)) :
+  Result ((alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))) ×
+    (std.collections.hash.set.HashSet (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.StateTag) rustc_hash.FxBuildHasher Global) ×
+    (alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)))
+  := do
+  merc_reduction.signatures.branching_bisim_signature merc_ltsltsLTSInst
+    merc_reductionpartitionPartitionInst state_index lts partition builder
+    visited stack
+
+/-- [verified::reduction_bridge::branching_bisim_signature_inductive]:
+    Source: 'src/reduction_bridge.rs', lines 53:0-61:1
+    Visibility: public -/
+def reduction_bridge.branching_bisim_signature_inductive
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) (lts : L)
+  (partition : merc_reduction.block_partition.BlockPartition)
+  (state_to_key : Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))
+  (builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  merc_reduction.signatures.branching_bisim_signature_inductive
+    merc_ltsltsLTSInst state_index lts partition state_to_key builder
 
 /-- Trait implementation: [verified::simple_labelled_transition_system::{impl core::marker::StructuralPartialEq for verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem<Label>}]
     Source: 'src/simple_labelled_transition_system.rs', lines 18:9-18:18 -/
