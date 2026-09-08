@@ -1,1 +1,2 @@
-import MachineNumbers.Basic
+import MachineNumbers.Pos
+import MachineNumbers.NatSort
