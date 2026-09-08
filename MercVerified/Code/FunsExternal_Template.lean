@@ -30,6 +30,45 @@ axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
 axiom Usize.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
+/-- [core::slice::{[T]}::sort_unstable]:
+    Source: '/rustc/library/core/src/slice/mod.rs', lines 3148:4-3150:15
+    Name pattern: [core::slice::{[@T]}::sort_unstable]
+    Visibility: public -/
+@[rust_fun "core::slice::{[@T]}::sort_unstable"]
+axiom core.slice.Slice.sort_unstable
+  {T : Type} (cmpOrdInst : core.cmp.Ord T) : Slice T → Result (Slice T)
+
+/-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::eq]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 30:16-30:55
+    Name pattern: [core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq]
+    Visibility: public -/
+@[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq"]
+axiom Pair.Insts.CoreCmpPartialEqPair.eq
+  {U : Type} {T : Type} (cmpPartialEqInst : core.cmp.PartialEq U U)
+  (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
+  (U × T) → (U × T) → Result Bool
+
+/-- [core::tuple::{impl core::cmp::PartialOrd<(U, T)> for (U, T)}::partial_cmp]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 69:16-69:76
+    Name pattern: [core::tuple::{core::cmp::PartialOrd<(@U, @T), (@U, @T)>}::partial_cmp]
+    Visibility: public -/
+@[rust_fun
+  "core::tuple::{core::cmp::PartialOrd<(@U, @T), (@U, @T)>}::partial_cmp"]
+axiom Pair.Insts.CoreCmpPartialOrdPair.partial_cmp
+  {U : Type} {T : Type} (cmpPartialOrdInst : core.cmp.PartialOrd U U)
+  (cmpPartialOrdInst1 : core.cmp.PartialOrd T T) :
+  (U × T) → (U × T) → Result (Option Ordering)
+
+/-- [core::tuple::{impl core::cmp::Ord for (U, T)}::cmp]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 114:16-114:60
+    Name pattern: [core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp]
+    Visibility: public -/
+@[rust_fun "core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp"]
+axiom Pair.Insts.CoreCmpOrd.cmp
+  {U : Type} {T : Type} (cmpOrdInst : core.cmp.Ord U) (cmpOrdInst1 :
+  core.cmp.Ord T) :
+  (U × T) → (U × T) → Result Ordering
+
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::values]:
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 576:4-576:44
     Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::values]
@@ -105,6 +144,44 @@ axiom
   std.collections.hash.map.Values K V → Result ((Option V) ×
     (std.collections.hash.map.Values K V))
 
+/-- [std::collections::hash::set::{std::collections::hash::set::HashSet<T, S, A>}::clear]:
+    Source: '/rustc/library/std/src/collections/hash/set.rs', lines 539:4-539:27
+    Name pattern: [std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::clear]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::clear"]
+axiom std.collections.hash.set.HashSet.clear
+  {T : Type} {S : Type} {A : Type} :
+  std.collections.hash.set.HashSet T S A → Result
+    (std.collections.hash.set.HashSet T S A)
+
+/-- [std::collections::hash::set::{std::collections::hash::set::HashSet<T, S, A>}::contains]:
+    Source: '/rustc/library/std/src/collections/hash/set.rs', lines 806:4-809:21
+    Name pattern: [std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::contains]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::contains"]
+axiom std.collections.hash.set.HashSet.contains
+  {T : Type} {S : Type} {A : Type} {Q : Type} {Clause2_Hasher : Type}
+  (corecmpEqInst : core.cmp.Eq T) (corehashHashInst : core.hash.Hash T)
+  (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher)
+  (coreborrowBorrowInst : core.borrow.Borrow T Q) (corehashHashInst1 :
+  core.hash.Hash Q) (corecmpEqInst1 : core.cmp.Eq Q) :
+  std.collections.hash.set.HashSet T S A → Q → Result Bool
+
+/-- [std::collections::hash::set::{std::collections::hash::set::HashSet<T, S, A>}::insert]:
+    Source: '/rustc/library/std/src/collections/hash/set.rs', lines 1034:4-1034:46
+    Name pattern: [std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::insert]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::insert"]
+axiom std.collections.hash.set.HashSet.insert
+  {T : Type} {S : Type} {A : Type} {Clause2_Hasher : Type} (corecmpEqInst :
+  core.cmp.Eq T) (corehashHashInst : core.hash.Hash T) (corehashBuildHasherInst
+  : core.hash.BuildHasher S Clause2_Hasher) :
+  std.collections.hash.set.HashSet T S A → T → Result (Bool ×
+    (std.collections.hash.set.HashSet T S A))
+
 /-- [std::hash::random::{impl core::clone::Clone for std::hash::random::RandomState}::clone]:
     Source: '/rustc/library/std/src/hash/random.rs', lines 34:9-34:14
     Name pattern: [std::hash::random::{core::clone::Clone<std::hash::random::RandomState>}::clone]
@@ -144,6 +221,40 @@ axiom
   std.hash.random.RandomState.Insts.CoreHashBuildHasherDefaultHasher.build_hasher
   : std.hash.random.RandomState → Result std.hash.random.DefaultHasher
 
+/-- [alloc::vec::{alloc::vec::Vec<T>}::pop]:
+    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 2872:4-2872:38
+    Name pattern: [alloc::vec::{alloc::vec::Vec<@T>}::pop]
+    Visibility: public -/
+@[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::pop"]
+axiom alloc.vec.Vec.pop
+  {T : Type} (A : Type) :
+  alloc.vec.Vec T → Result ((Option T) × (alloc.vec.Vec T))
+
+/-- [alloc::vec::{alloc::vec::Vec<T>}::clear]:
+    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3068:4-3068:27
+    Name pattern: [alloc::vec::{alloc::vec::Vec<@T>}::clear]
+    Visibility: public -/
+@[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::clear"]
+axiom alloc.vec.Vec.clear
+  {T : Type} (A : Type) : alloc.vec.Vec T → Result (alloc.vec.Vec T)
+
+/-- [alloc::vec::{alloc::vec::Vec<T>}::is_empty]:
+    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3125:4-3125:40
+    Name pattern: [alloc::vec::{alloc::vec::Vec<@T>}::is_empty]
+    Visibility: public -/
+@[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::is_empty"]
+axiom alloc.vec.Vec.is_empty
+  {T : Type} (A : Type) : alloc.vec.Vec T → Result Bool
+
+/-- [alloc::vec::{alloc::vec::Vec<T>}::dedup]:
+    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3762:4-3762:27
+    Name pattern: [alloc::vec::{alloc::vec::Vec<@T>}::dedup]
+    Visibility: public -/
+@[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::dedup"]
+axiom alloc.vec.Vec.dedup
+  {T : Type} (A : Type) (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  alloc.vec.Vec T → Result (alloc.vec.Vec T)
+
 /-- [merc_lts::lts::{impl core::clone::Clone for merc_lts::lts::Transition}::clone]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
     Name pattern: [merc_lts::lts::{core::clone::Clone<merc_lts::lts::Transition>}::clone]
@@ -162,6 +273,50 @@ axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
 axiom merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
   : merc_lts.lts.Transition → merc_lts.lts.Transition → Result Bool
 
+/-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 137:4-137:61
+    Name pattern: [merc_utilities::tagged_index::{core::ops::index::Index<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::ops::index::Index<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index"]
+axiom alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
+  {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
+  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice
+  U) U) :
+  alloc.vec.Vec U → merc_utilities.tagged_index.TagIndex T Tag → Result U
+
+/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::value]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 116:4-116:28
+    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::value]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::value"]
+axiom merc_utilities.tagged_index.TagIndex.value
+  {T : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T) :
+  merc_utilities.tagged_index.TagIndex T Tag → Result T
+
+/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
+    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new"]
+axiom merc_utilities.tagged_index.TagIndex.new
+  {T : Type} (Tag : Type) :
+  T → Result (merc_utilities.tagged_index.TagIndex T Tag)
+
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::partial_cmp]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 71:4-71:69
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp"]
+axiom
+  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex.partial_cmp
+  {T : Type} {Tag : Type} (corecmpPartialOrdInst : core.cmp.PartialOrd T T) :
+  merc_utilities.tagged_index.TagIndex T Tag →
+    merc_utilities.tagged_index.TagIndex T Tag → Result (Option Ordering)
+
 /-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 59:4-59:38
     Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
@@ -173,6 +328,42 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
   merc_utilities.tagged_index.TagIndex T Tag →
     merc_utilities.tagged_index.TagIndex T Tag → Result Bool
 
+/-- [merc_utilities::tagged_index::{impl core::cmp::Ord for merc_utilities::tagged_index::TagIndex<T, Tag>}::cmp]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 65:4-65:53
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd.cmp
+  {T : Type} {Tag : Type} (corecmpOrdInst : core.cmp.Ord T) :
+  merc_utilities.tagged_index.TagIndex T Tag →
+    merc_utilities.tagged_index.TagIndex T Tag → Result Ordering
+
+/-- [rustc_hash::{impl core::hash::BuildHasher<rustc_hash::FxHasher> for rustc_hash::FxBuildHasher}::build_hasher]:
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 350:4-350:38
+    Name pattern: [rustc_hash::{core::hash::BuildHasher<rustc_hash::FxBuildHasher, rustc_hash::FxHasher>}::build_hasher]
+    Visibility: public -/
+@[rust_fun
+  "rustc_hash::{core::hash::BuildHasher<rustc_hash::FxBuildHasher, rustc_hash::FxHasher>}::build_hasher"]
+axiom rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher.build_hasher
+  : rustc_hash.FxBuildHasher → Result rustc_hash.FxHasher
+
+/-- [rustc_hash::{impl core::hash::Hasher for rustc_hash::FxHasher}::finish]:
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 192:4-192:27
+    Name pattern: [rustc_hash::{core::hash::Hasher<rustc_hash::FxHasher>}::finish]
+    Visibility: public -/
+@[rust_fun "rustc_hash::{core::hash::Hasher<rustc_hash::FxHasher>}::finish"]
+axiom rustc_hash.FxHasher.Insts.CoreHashHasher.finish
+  : rustc_hash.FxHasher → Result Std.U64
+
+/-- [rustc_hash::{impl core::hash::Hasher for rustc_hash::FxHasher}::write]:
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 130:4-130:37
+    Name pattern: [rustc_hash::{core::hash::Hasher<rustc_hash::FxHasher>}::write]
+    Visibility: public -/
+@[rust_fun "rustc_hash::{core::hash::Hasher<rustc_hash::FxHasher>}::write"]
+axiom rustc_hash.FxHasher.Insts.CoreHashHasher.write
+  : rustc_hash.FxHasher → Slice Std.U8 → Result rustc_hash.FxHasher
+
 /-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 77:4-77:55
     Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
@@ -183,6 +374,18 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
   {T : Type} {Tag : Type} {H : Type} (corehashHashInst : core.hash.Hash T)
   (corehashHasherInst : core.hash.Hasher H) :
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
+
+/-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for [U]}::index]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 145:4-145:61
+    Name pattern: [merc_utilities::tagged_index::{core::ops::index::Index<[@U], merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::ops::index::Index<[@U], merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index"]
+axiom Slice.Insts.CoreOpsIndexIndexTagIndexU.index
+  {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
+  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice
+  U) U) :
+  Slice U → merc_utilities.tagged_index.TagIndex T Tag → Result U
 
 /-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
@@ -204,14 +407,4 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
 axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
   {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
   merc_utilities.tagged_index.TagIndex T Tag → T → Result Bool
-
-/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
-    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new"]
-axiom merc_utilities.tagged_index.TagIndex.new
-  {T : Type} (Tag : Type) :
-  T → Result (merc_utilities.tagged_index.TagIndex T Tag)
 

@@ -4,5 +4,26 @@ edition = "2024"
 version = "1.0.0"
 
 [dependencies]
+merc_collections = { path = "../3rd-party/merc/crates/collections" }
 merc_lts = { path = "../3rd-party/merc/crates/lts" }
 merc_reduction = { path = "../3rd-party/merc/crates/reduction" }
+rustc-hash = "2.1"
+
+# `src/reduction_bridge.rs` forwards into merc_reduction's partition-refinement
+# signature functions (now `pub`, see the merc submodule) with a real local
+# call site, so they're reachable the normal way. `include` overrides their
+# default Foreign opacity so Charon extracts bodies instead of stubs as it
+# walks the call graph from that call site.
+[package.metadata.charon]
+include = [
+  "merc_reduction::signatures",
+  "merc_reduction::partition",
+  "merc_reduction::block_partition",
+]
+# `tau_cycle_elimination_and_reorder` pulls in `merc_collections::graph::Graph`
+# (via quotient_lts_naive / tau_scc_decomposition_iterative / sort_topological),
+# which uses a GAT that Aeneas's `--lift-associated-types` (implied by
+# `--preset=aeneas`) cannot handle - it crashes translation outright rather
+# than degrading to opaque. The rest of `signatures` (the actual signature
+# computations) does not touch Graph, so exclude just this one function.
+exclude = ["merc_reduction::signatures::tau_cycle_elimination_and_reorder"]
