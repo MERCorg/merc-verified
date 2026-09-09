@@ -1,7 +1,7 @@
 import MachineNumbers.Pos
 
 /-!
-# Soundness of the `Nat` sort against `Nat`
+# Definitions of the `Nat` sort
 
 Lean port of mCRL2's `Nat` data sort (`3rd-party/merc/crates/syntax/spec/nat.mcrl2`), built on
 top of `Pos` (see `MachineNumbers.Pos`).
@@ -12,11 +12,13 @@ cons @c0 : Nat;
 ```
 
 `@c0` is `.zero`, `@cNat(p)` is `.ofPos p`. As with `Pos`, every `map` operator gets a
-structurally-recursive Lean function following its `eqn` block and a soundness theorem against
-`Nat`'s abstraction `MNat.toNat` (`α_n`). The same "ignore rewriting" remark from
-`MachineNumbers.Pos` applies throughout.
+structurally-recursive Lean function following its `eqn` block. The same "ignore rewriting" remark
+from `MachineNumbers.Pos` applies throughout.
 
 We use `MNat` rather than `Nat` for the type name to avoid shadowing Lean's own `Nat`.
+
+Soundness theorems relating each operation to `Nat` via `MNat.toNat` (`α_n`) are in
+`MachineNumbers.Proofs.NatSortProofs`.
 -/
 
 /-- Lean port of mCRL2's `Nat` sort. -/
@@ -26,6 +28,51 @@ inductive MNat where
   /-- `@cNat`. -/
   | ofPos (p : Pos) : MNat
   deriving DecidableEq, Repr
+
+/-- Lean port of mCRL2's auxilliary `@NatPair` sort (`nat.mcrl2`): a pair of `Nat`s.
+```
+cons @cPair : Nat # Nat -> @NatPair;
+```
+`@cPair(m, n)` is `.pair m n`.
+```
+@cPair(m, n) == @cPair(u, v) = (m == u) && (n == v);
+@cPair(m, n) < @cPair(u, v)  = (m < u) || ((m == u) && (n < v));
+@cPair(m, n) <= @cPair(u, v) = (m < u) || ((m == u) && (n <= v));
+```
+As for `Nat`, `==` is the derived equality of the inductive type. The `<`/`<=` pair-order rules
+are quoted here for completeness but no translated operation needs them, so they are not ported. -/
+inductive MNatPair where
+  /-- `@cPair`. -/
+  | pair (m n : MNat) : MNatPair
+  deriving DecidableEq, Repr
+
+namespace MNatPair
+
+/-- `@first`.
+```
+@first(@cPair(m, n)) = m;
+```
+-/
+@[simp] def first : MNatPair → MNat
+  | .pair m _ => m
+
+/-- `@last`.
+```
+@last(@cPair(m, n)) = n;
+```
+-/
+@[simp] def last : MNatPair → MNat
+  | .pair _ n => n
+
+/-- The `first` projection agrees with the `.1` projector generated for `pair`. -/
+@[simp] theorem first_eq_proj (m : MNatPair) : first m = m.1 := by
+  cases m <;> rfl
+
+/-- The `last` projection agrees with the `.2` projector generated for `pair`. -/
+@[simp] theorem last_eq_proj (m : MNatPair) : last m = m.2 := by
+  cases m <;> rfl
+
+end MNatPair
 
 namespace MNat
 
@@ -37,26 +84,16 @@ def toNat : MNat → Nat
 @[simp] theorem toNat_zero : toNat .zero = 0 := rfl
 @[simp] theorem toNat_ofPos (p : Pos) : toNat (.ofPos p) = p.toNat := rfl
 
-theorem toNat_injective {m n : MNat} (h : m.toNat = n.toNat) : m = n := by
-  cases m with
-  | zero =>
-    cases n with
-    | zero => rfl
-    | ofPos p => exact absurd h (by have := Pos.toNat_pos p; simp; omega)
-  | ofPos p =>
-    cases n with
-    | zero => exact absurd h (by have := Pos.toNat_pos p; simp; omega)
-    | ofPos q => simp only [toNat_ofPos] at h; rw [Pos.toNat_injective h]
+/-! ## `Pos2Nat` / `Nat2Pos`
 
-theorem toNat_inj {m n : MNat} : m.toNat = n.toNat ↔ m = n :=
-  ⟨toNat_injective, fun h => h ▸ rfl⟩
-
-/-! ## `Pos2Nat` / `Nat2Pos` -/
+```
+Pos2Nat(p)        = @cNat(p);
+Nat2Pos(@cNat(p)) = p;
+```
+-/
 
 /-- `Pos2Nat`. -/
 def ofPosNat (p : Pos) : MNat := .ofPos p
-
-theorem ofPosNat_toNat (p : Pos) : (ofPosNat p).toNat = p.toNat := rfl
 
 /-- `Nat2Pos`. The equational theory has no rule for `Nat2Pos(@c0)`: `Nat2Pos` is partial,
 defined only on `@cNat(p)` terms. Lean requires totality, so we pin the `@c0` case at `Pos.one` —
@@ -71,7 +108,18 @@ def toPos : MNat → Pos
 
 @[simp] theorem toPos_ofPos (p : Pos) : toPos (.ofPos p) = p := rfl
 
-/-! ## Order -/
+/-! ## Order
+
+```
+@c0 < @cNat(p)         = true;
+n < @c0                = false;
+@cNat(p) < @cNat(q)    = p < q;
+
+@c0 <= n               = true;
+@cNat(p) <= @c0        = false;
+@cNat(p) <= @cNat(q)   = p <= q;
+```
+-/
 
 /-- `<`. -/
 def lt : MNat → MNat → Bool
@@ -85,29 +133,20 @@ def le : MNat → MNat → Bool
   | .ofPos _, .zero => false
   | .ofPos p, .ofPos q => Pos.le p q
 
-theorem lt_iff {m n : MNat} : lt m n = true ↔ m.toNat < n.toNat := by
-  cases m with
-  | zero =>
-    cases n with
-    | zero => simp [lt]
-    | ofPos p => have := Pos.toNat_pos p; simp [lt]; omega
-  | ofPos p =>
-    cases n with
-    | zero => simp [lt]
-    | ofPos q => simp [lt, Pos.lt_iff]
-
-theorem le_iff {m n : MNat} : le m n = true ↔ m.toNat ≤ n.toNat := by
-  cases m with
-  | zero => simp [le]
-  | ofPos p =>
-    cases n with
-    | zero => have := Pos.toNat_pos p; simp [le]; omega
-    | ofPos q => simp [le, Pos.le_iff]
-
 /-! ## `max` / `min`
 
 mCRL2 overloads `max` at `Pos # Nat`, `Nat # Pos` and `Nat # Nat`; Lean needs three distinct
-names. -/
+names.
+```
+max(p, @c0)                  = p;
+max(p, @cNat(q))             = if(p <= q, q, p);
+max(@c0, p)                  = p;
+max(@cNat(p), q)             = if(p <= q, q, p);
+max(m, n)                    = if(m <= n, n, m);
+min(m, n)                    = if(m <= n, m, n);
+```
+Also `n == m` on `Nat` is the derived equality of the inductive type (`@c0 == @cNat(p) = false`,
+`@cNat(p) == @cNat(q) = p == q`), same as for `Pos`. -/
 
 /-- `max : Pos # Nat -> Pos`. -/
 def maxPN (p : Pos) : MNat → Pos
@@ -127,61 +166,30 @@ def max : MNat → MNat → MNat
 def min : MNat → MNat → MNat
   | m, n => if le m n then m else n
 
-theorem maxPN_toNat (p : Pos) (n : MNat) : (maxPN p n).toNat = Nat.max p.toNat n.toNat := by
-  cases n with
-  | zero => simp [maxPN]
-  | ofPos q =>
-    simp only [maxPN]
-    split_ifs with h
-    · exact (Nat.max_eq_right (Pos.le_iff.mp h)).symm
-    · have hnle : ¬ p.toNat ≤ q.toNat := fun hc => h (Pos.le_iff.mpr hc)
-      have hle : q.toNat ≤ p.toNat := by omega
-      exact (Nat.max_eq_left hle).symm
+/-! ## Successor, predecessor, `@dub`, `@dubsucc`
 
-theorem maxNP_toNat (m : MNat) (p : Pos) : (maxNP m p).toNat = Nat.max m.toNat p.toNat := by
-  cases m with
-  | zero => simp [maxNP]
-  | ofPos q =>
-    simp only [maxNP]
-    split_ifs with h
-    · exact (Nat.max_eq_right (Pos.le_iff.mp h)).symm
-    · have hnle : ¬ q.toNat ≤ p.toNat := fun hc => h (Pos.le_iff.mpr hc)
-      have hle : p.toNat ≤ q.toNat := by omega
-      exact (Nat.max_eq_left hle).symm
-
-theorem max_toNat (m n : MNat) : (max m n).toNat = Nat.max m.toNat n.toNat := by
-  simp only [max]
-  split_ifs with h
-  · exact (Nat.max_eq_right (le_iff.mp h)).symm
-  · have hnle : ¬ m.toNat ≤ n.toNat := fun hc => h (le_iff.mpr hc)
-    have hle : n.toNat ≤ m.toNat := by omega
-    exact (Nat.max_eq_left hle).symm
-
-theorem min_toNat (m n : MNat) : (min m n).toNat = Nat.min m.toNat n.toNat := by
-  simp only [min]
-  split_ifs with h
-  · exact (Nat.min_eq_left (le_iff.mp h)).symm
-  · have hnle : ¬ m.toNat ≤ n.toNat := fun hc => h (le_iff.mpr hc)
-    have hle : n.toNat ≤ m.toNat := by omega
-    exact (Nat.min_eq_right hle).symm
-
-/-! ## Successor, predecessor, `@dub`, `@dubsucc` -/
+```
+succ(@c0)              = @c1;
+succ(@cNat(p))         = succ(p);
+@dubsucc(@c0)          = @c1;
+@dubsucc(@cNat(p))     = @cDub(true, p);
+pred(@c1)              = @c0;
+pred(@cDub(b, p))      = @cNat(if(b, @cDub(false, p), @dubsucc(pred(p))));
+@dub(false, @c0)       = @c0;
+@dub(true, @c0)        = @cNat(@c1);
+@dub(b, @cNat(p))      = @cNat(@cDub(b, p));
+```
+-/
 
 /-- `succ : Nat -> Pos`. -/
 def succ : MNat → Pos
   | .zero => .one
   | .ofPos p => Pos.succ p
 
-theorem succ_toNat (n : MNat) : (succ n).toNat = n.toNat + 1 := by
-  cases n <;> simp [succ, Pos.succ_toNat]
-
 /-- `@dubsucc : Nat -> Pos` ("double and add 1"). -/
 def dubsucc : MNat → Pos
   | .zero => .one
   | .ofPos p => .dub true p
-
-theorem dubsucc_toNat (n : MNat) : (dubsucc n).toNat = 2 * n.toNat + 1 := by
-  cases n <;> simp [dubsucc]
 
 /-- `pred : Pos -> Nat`. Exact predecessor: total and always correct, since every `Pos` value is
 `≥ 1`. -/
@@ -189,33 +197,24 @@ def pred : Pos → MNat
   | .one => .zero
   | .dub b p => .ofPos (if b then .dub false p else dubsucc (pred p))
 
-theorem pred_toNat (p : Pos) : (pred p).toNat = p.toNat - 1 := by
-  induction p with
-  | one => simp [pred]
-  | dub b p ih =>
-    cases b with
-    | true => simp [pred]
-    | false =>
-      have := Pos.toNat_pos p
-      simp [pred, dubsucc_toNat, ih]
-      omega
-
-/-- `pred (dubsucc n) = 2 * n` numerically, regardless of whether `n` is `zero` or `ofPos _`:
-`dubsucc n` is always odd, and taking its predecessor always lands back on the even `2 * n`. Used
-by `gtesubtb_toNat`. -/
-theorem pred_dubsucc_toNat (n : MNat) : (pred (dubsucc n)).toNat = 2 * n.toNat := by
-  cases n <;> simp [dubsucc, pred]
-
 /-- `@dub : Bool # Nat -> Nat` ("double and conditionally add 1"). -/
 def dub : Bool → MNat → MNat
   | false, .zero => .zero
   | true, .zero => .ofPos .one
   | b, .ofPos p => .ofPos (.dub b p)
 
-theorem dub_toNat (b : Bool) (n : MNat) : (dub b n).toNat = 2 * n.toNat + (if b then 1 else 0) := by
-  cases b <;> cases n <;> simp [dub]
+/-! ## Addition
 
-/-! ## Addition -/
+```
+p + @c0                    = p;
+p + @cNat(q)               = @addc(false, p, q);
+@c0 + p                    = p;
+@cNat(p) + q               = @addc(false, p, q);
+@c0 + n                    = n;
+n + @c0                    = n;
+@cNat(p) + @cNat(q)        = @cNat(@addc(false, p, q));
+```
+-/
 
 /-- `+ : Pos # Nat -> Pos`. -/
 def addPN (p : Pos) : MNat → Pos
@@ -233,15 +232,6 @@ def add : MNat → MNat → MNat
   | m, .zero => m
   | .ofPos p, .ofPos q => .ofPos (Pos.addc false p q)
 
-theorem addPN_toNat (p : Pos) (n : MNat) : (addPN p n).toNat = p.toNat + n.toNat := by
-  cases n <;> simp [addPN, Pos.addc_toNat]
-
-theorem addNP_toNat (m : MNat) (p : Pos) : (addNP m p).toNat = m.toNat + p.toNat := by
-  cases m <;> simp [addNP, Pos.addc_toNat]
-
-theorem add_toNat (m n : MNat) : (add m n).toNat = m.toNat + n.toNat := by
-  cases m <;> cases n <;> simp [add, Pos.addc_toNat]
-
 /-! ## `@gtesubtb` and `@monus`
 
 `@gtesubtb(b, p, q)` computes `p - q - (b ? 1 : 0)` (truncated at `0`) via a bitwise
@@ -252,7 +242,15 @@ needed (e.g. `@monus(@cNat(1), @cNat(2))` routes through it) so we complete it w
 the mathematically correct answer (`p ≤ q` here, so the truncated result is always `0`). This
 completion is additional to the spec, not derived from it; flagged here as the `@monus`
 counterpart of the `div_word`/`div_doubleword` precondition gaps already tracked in
-`docs/plans/machine-numbers-verification.md`. -/
+`docs/plans/machine-numbers-verification.md`.
+```
+@gtesubtb(false, p, @c1)                = pred(p);
+@gtesubtb(true, p, @c1)                 = pred(Nat2Pos(pred(p)));
+@gtesubtb(b, @cDub(c, p), @cDub(c, q))  = @dub(b, @gtesubtb(b, p, q));
+@gtesubtb(b, @cDub(false, p), @cDub(true, q)) = @dub(!(b), @gtesubtb(true, p, q));
+@gtesubtb(b, @cDub(true, p), @cDub(false, q)) = @dub(!(b), @gtesubtb(false, p, q));
+```
+(The missing `b, @c1, @cDub(c, q)` clause lives at the end below.) -/
 def gtesubtb : Bool → Pos → Pos → MNat
   | false, p, .one => pred p
   | true, p, .one => pred (toPos (pred p))
@@ -262,108 +260,250 @@ def gtesubtb : Bool → Pos → Pos → MNat
   | b, .dub true p, .dub false q => dub (!b) (gtesubtb false p q)
   | _, .one, .dub _ _ => .zero -- completion: `p ≤ q`, see the docstring above.
 
-/-- **Precondition finding**: unlike `Pos`'s operations, `@gtesubtb` (and hence `@monus`) is only
-correct on the domain its recursion actually maintains: `q.toNat + (borrow) ≤ p.toNat`. Outside
-it, the given equations are not merely partial (as flagged above) but, on some inputs, resolve to
-a well-defined value that is *not* the truncated difference: e.g. `gtesubtb true 2 2` (reachable
-as an internal recursion step from a top-level call with `p < q`, never from one with `p ≥ q`)
-evaluates to `1`, not `0`. So `gtesubtb_toNat`/`monus_toNat` below are stated conditionally on
-`p ≥ q + borrow`, mirroring the `div_word`-style conditional theorems in
-`docs/plans/machine-numbers-verification.md` §3.5 item 5. -/
-theorem gtesubtb_toNat (p : Pos) : ∀ b q, q.toNat + (if b then 1 else 0) ≤ p.toNat →
-    (gtesubtb b p q).toNat = p.toNat - q.toNat - (if b then 1 else 0) := by
-  induction p with
-  | one =>
-    intro b q h
-    cases q with
-    | one => cases b <;> simp [gtesubtb, pred, toPos]
-    | dub c q =>
-      exfalso
-      have := Pos.toNat_pos q
-      simp only [Pos.toNat_dub, Pos.toNat_one] at h
-      cases b <;> cases c <;> omega
-  | dub c p ih =>
-    intro b q hle
-    cases q with
-    | one =>
-      have := Pos.toNat_pos p
-      cases b <;> cases c <;>
-        simp [gtesubtb, pred, toPos, pred_toNat, dubsucc_toNat, pred_dubsucc_toNat] <;> omega
-    | dub c' q =>
-      have hp := Pos.toNat_pos p
-      have hq := Pos.toNat_pos q
-      simp only [Pos.toNat_dub] at hle
-      cases c with
-      | false =>
-        cases c' with
-        | false =>
-          have hpre : q.toNat + (if b then 1 else 0) ≤ p.toNat := by cases b <;> omega
-          have hstep := ih b q hpre
-          simp [gtesubtb, dub_toNat, hstep]
-          omega
-        | true =>
-          have hpre : q.toNat + 1 ≤ p.toNat := by cases b <;> omega
-          have hstep := ih true q hpre
-          cases b <;> simp [gtesubtb, dub_toNat, hstep] <;> omega
-      | true =>
-        cases c' with
-        | false =>
-          have hpre : q.toNat ≤ p.toNat := by cases b <;> omega
-          have hstep := ih false q hpre
-          cases b <;> simp [gtesubtb, dub_toNat, hstep] <;> omega
-        | true =>
-          have hpre : q.toNat + (if b then 1 else 0) ≤ p.toNat := by cases b <;> omega
-          have hstep := ih b q hpre
-          simp [gtesubtb, dub_toNat, hstep]
-          omega
-
-/-- `@monus`. -/
+/-- `@monus`.
+```
+@monus(@c0, n)               = @c0;
+@monus(n, @c0)               = n;
+@monus(@cNat(p), @cNat(q))   = @gtesubtb(false, p, q);
+```
+-/
 def monus : MNat → MNat → MNat
   | .zero, _ => .zero
   | n, .zero => n
   | .ofPos p, .ofPos q => gtesubtb false p q
 
-/-- Conditional, for the reason documented at `gtesubtb_toNat`: the given equations only compute
-truncated subtraction when `n ≤ m`. -/
-theorem monus_toNat (m n : MNat) (h : n.toNat ≤ m.toNat) :
-    (monus m n).toNat = m.toNat - n.toNat := by
-  cases m with
-  | zero =>
-    cases n with
-    | zero => simp [monus]
-    | ofPos q => exact absurd h (by have := Pos.toNat_pos q; simp; omega)
-  | ofPos p =>
-    cases n with
-    | zero => simp [monus]
-    | ofPos q =>
-      simp only [monus, toNat_ofPos] at h ⊢
-      exact gtesubtb_toNat p false q (by simpa using h)
-
 /-! ## Multiplication -/
 
-/-- `* : Nat # Nat -> Nat`. -/
+/-- `* : Nat # Nat -> Nat`.
+```
+@c0 * n                    = @c0;
+n * @c0                    = @c0;
+@cNat(p) * @cNat(q)        = @cNat(p * q);
+```
+-/
 def mul : MNat → MNat → MNat
   | .zero, _ => .zero
   | _, .zero => .zero
   | .ofPos p, .ofPos q => .ofPos (Pos.mul p q)
 
-theorem mul_toNat (m n : MNat) : (mul m n).toNat = m.toNat * n.toNat := by
-  cases m <;> cases n <;> simp [mul, Pos.mul_toNat]
-
 /-! ## `@even` -/
 
-/-- `@even`. -/
+/-- `@even`.
+```
+@even(@c0)             = true;
+@even(@cNat(@c1))      = false;
+@even(@cNat(@cDub(b, p))) = !(b);
+```
+-/
 def even : MNat → Bool
   | .zero => true
   | .ofPos .one => false
   | .ofPos (.dub b _) => !b
 
-theorem even_iff (n : MNat) : even n = true ↔ n.toNat % 2 = 0 := by
-  cases n with
-  | zero => simp [even]
-  | ofPos p =>
-    cases p with
-    | one => simp [even]
-    | dub b p => cases b <;> simp [even] <;> omega
+/-! ## Exponentiation -/
+
+/-- `exp : Pos # Nat -> Pos` (exponentiation by repeated squaring, reading the exponent from the
+LSB up).
+```
+exp(p, @c0)                    = @c1;
+exp(p, @cNat(@c1))             = p;
+exp(p, @cNat(@cDub(false, q))) = exp(p * p, @cNat(q));
+exp(p, @cNat(@cDub(true, q)))  = p * exp(p * p, @cNat(q));
+```
+-/
+def expPN : Pos → MNat → Pos
+  | _, .zero => .one
+  | p, .ofPos .one => p
+  | p, .ofPos (.dub false q) => expPN (Pos.mul p p) (.ofPos q)
+  | p, .ofPos (.dub true q) => Pos.mul p (expPN (Pos.mul p p) (.ofPos q))
+
+/-- `exp : Nat # Nat -> Nat`.
+```
+exp(n, @c0)       = @cNat(@c1);
+exp(@c0, @cNat(p)) = @c0;
+exp(@cNat(p), n)  = @cNat(exp(p, n));
+```
+-/
+def expNN : MNat → MNat → MNat
+  | _, .zero => .ofPos .one
+  | .zero, _ => .zero
+  | .ofPos p, n => .ofPos (expPN p n)
+
+/-! ## `div` / `mod`
+
+`@div`, `@mod` and the `@NatPair` machinery below implement long division of `Pos`es: `@divmod`
+is the quotient/remainder pair, `@gdivmod` shifts in one bit at a time, and `@ggdivmod` does the
+single long-division step (subtracting one copy of the divisor when it fits).
+```
+@c0 div p      = @c0;
+@cNat(p) div q = @first(@divmod(p, q));
+@c0 mod p      = @c0;
+@cNat(p) mod q = @last(@divmod(p, q));
+
+@divmod(@c1, @c1)      = @cPair(@cNat(@c1), @c0);
+@divmod(@c1, @cDub(b, p)) = @cPair(@c0, @cNat(@c1));
+@divmod(@cDub(b, p), q)   = @gdivmod(@divmod(p, q), b, q);
+
+@gdivmod(@cPair(m, n), b, p) = @ggdivmod(@dub(b, n), m, p);
+
+@ggdivmod(@c0, n, p)                              = @cPair(@dub(false, n), @c0);
+p < q  ->  @ggdivmod(@cNat(p), n, q)              = @cPair(@dub(false, n), @cNat(p));
+q <= p ->  @ggdivmod(@cNat(p), n, q)              = @cPair(@dub(true, n), @gtesubtb(false, p, q));
+```
+The two conditional `@ggdivmod` rules are exhaustive and mutually exclusive, so we fold them into
+an `if Pos.lt p q`. The definitions are given bottom-up (`@ggdivmod`, `@gdivmod`, `@divmod`) to
+respect dependency order. -/
+
+/-- `@ggdivmod`: one long-division step. `g` is the current high part (`@dub(b,n)` after a shift),
+`n` the quotient built so far, and `q` the divisor. -/
+def ggdivmod : MNat → MNat → Pos → MNatPair
+  | .zero, n, _ => .pair (dub false n) .zero
+  | .ofPos p, n, q =>
+    if Pos.lt p q then .pair (dub false n) (.ofPos p)
+    else .pair (dub true n) (gtesubtb false p q)
+
+/-- `@gdivmod`: shift bit `b` into the remainder and continue the division. -/
+def gdivmod : MNatPair → Bool → Pos → MNatPair
+  | .pair m n, b, p => ggdivmod (dub b n) m p
+
+/-- `@divmod`: quotient/remainder of two `Pos`es (left-to-right long division, reading the
+divisor-position bits from the MSB). -/
+def divmod : Pos → Pos → MNatPair
+  | .one, .one => .pair (.ofPos .one) .zero
+  | .one, .dub _ _ => .pair .zero (.ofPos .one)
+  | .dub b p, q => gdivmod (divmod p q) b q
+
+/-- `div : Nat # Pos -> Nat`.
+```
+@c0 div p      = @c0;
+@cNat(p) div q = @first(@divmod(p, q));
+```
+-/
+def div : MNat → Pos → MNat
+  | .zero, _ => .zero
+  | .ofPos p, q => MNatPair.first (divmod p q)
+
+/-- `mod : Nat # Pos -> Nat`.
+```
+@c0 mod p      = @c0;
+@cNat(p) mod q = @last(@divmod(p, q));
+```
+-/
+def mod : MNat → Pos → MNat
+  | .zero, _ => .zero
+  | .ofPos p, q => MNatPair.last (divmod p q)
+
+/-! ## `@swap_zero` and friends
+
+`@swap_zero` is an auxiliary used by merc's newsort/extensional-recovery computations. Its
+overlapping equations define: `swapZero(m, n) = if m = n then 0 else (if n = 0 then m else n)`.
+```
+@swap_zero(m, @c0)               = m;
+@swap_zero(@c0, n)               = n;
+@swap_zero(@cNat(p), @cNat(p))   = @c0;
+p != q ->
+
+@swap_zero(@cNat(p), @cNat(q))   = @cNat(q);
+```
+The `@swap_zero_add`/`_min`/`_monus` families distribute `+`/`min`/`@monus` over the swap, giving
+a sort of "sum if unequal, else zero" arithmetic used by the enumeration machinery. -/
+
+/-- `@swap_zero`. -/
+def swapZero : MNat → MNat → MNat
+  | m, .zero => m
+  | .zero, n => n
+  | .ofPos p, .ofPos q => if p == q then .zero else .ofPos q
+
+/-- `@swap_zero_add`.
+```
+@swap_zero_add(@c0, @c0, m, n)              = m + n;
+@swap_zero_add(@cNat(p), @c0, m, @c0)       = m;
+@swap_zero_add(@cNat(p), @c0, m, @cNat(q))  = @swap_zero(@cNat(p), @swap_zero(@cNat(p), m) + @cNat(q));
+@swap_zero_add(@c0, @cNat(p), @c0, n)       = n;
+@swap_zero_add(@c0, @cNat(p), @cNat(q), n)  = @swap_zero(@cNat(p), @cNat(q) + @swap_zero(@cNat(p), n));
+@swap_zero_add(@cNat(p), @cNat(q), m, n)    = @swap_zero(@cNat(p) + @cNat(q), @swap_zero(@cNat(p), m) + @swap_zero(@cNat(q), n));
+```
+-/
+def swapZeroAdd : MNat → MNat → MNat → MNat → MNat
+  | .zero, .zero, m, n => add m n
+  | .ofPos _, .zero, m, .zero => m
+  | .ofPos p, .zero, m, .ofPos q => swapZero (.ofPos p) (add (swapZero (.ofPos p) m) (.ofPos q))
+  | .zero, .ofPos _, .zero, n => n
+  | .zero, .ofPos p, .ofPos q, n => swapZero (.ofPos p) (add (.ofPos q) (swapZero (.ofPos p) n))
+  | .ofPos p, .ofPos q, m, n =>
+    swapZero (add (.ofPos p) (.ofPos q)) (add (swapZero (.ofPos p) m) (swapZero (.ofPos q) n))
+
+/-- `@swap_zero_min`.
+```
+@swap_zero_min(@c0, @c0, m, n)              = min(m, n);
+@swap_zero_min(@cNat(p), @c0, m, @c0)       = @c0;
+@swap_zero_min(@cNat(p), @c0, m, @cNat(q))  = min(@swap_zero(@cNat(p), m), @cNat(q));
+@swap_zero_min(@c0, @cNat(p), @c0, n)       = @c0;
+@swap_zero_min(@c0, @cNat(p), @cNat(q), n)  = min(@cNat(q), @swap_zero(@cNat(p), n));
+@swap_zero_min(@cNat(p), @cNat(q), m, n)    = @swap_zero(min(@cNat(p), @cNat(q)), min(@swap_zero(@cNat(p), m), @swap_zero(@cNat(q), n)));
+```
+-/
+def swapZeroMin : MNat → MNat → MNat → MNat → MNat
+  | .zero, .zero, m, n => min m n
+  | .ofPos _, .zero, _, .zero => .zero
+  | .ofPos p, .zero, m, .ofPos q => min (swapZero (.ofPos p) m) (.ofPos q)
+  | .zero, .ofPos _, .zero, _ => .zero
+  | .zero, .ofPos p, .ofPos q, n => min (.ofPos q) (swapZero (.ofPos p) n)
+  | .ofPos p, .ofPos q, m, n =>
+    swapZero (min (.ofPos p) (.ofPos q)) (min (swapZero (.ofPos p) m) (swapZero (.ofPos q) n))
+
+/-- `@swap_zero_monus`.
+```
+@swap_zero_monus(@c0, @c0, m, n)            = @monus(m, n);
+@swap_zero_monus(@cNat(p), @c0, m, @c0)     = m;
+@swap_zero_monus(@cNat(p), @c0, m, @cNat(q))= @swap_zero(@cNat(p), @monus(@swap_zero(@cNat(p), m), @cNat(q)));
+@swap_zero_monus(@c0, @cNat(p), @c0, n)     = @c0;
+@swap_zero_monus(@c0, @cNat(p), @cNat(q), n)= @monus(@cNat(q), @swap_zero(@cNat(p), n));
+@swap_zero_monus(@cNat(p), @cNat(q), m, n)  = @swap_zero(@monus(@cNat(p), @cNat(q)), @monus(@swap_zero(@cNat(p), m), @swap_zero(@cNat(q), n)));
+```
+-/
+def swapZeroMonus : MNat → MNat → MNat → MNat → MNat
+  | .zero, .zero, m, n => monus m n
+  | .ofPos _, .zero, m, .zero => m
+  | .ofPos p, .zero, m, .ofPos q => swapZero (.ofPos p) (monus (swapZero (.ofPos p) m) (.ofPos q))
+  | .zero, .ofPos _, .zero, _ => .zero
+  | .zero, .ofPos p, .ofPos q, n => monus (.ofPos q) (swapZero (.ofPos p) n)
+  | .ofPos p, .ofPos q, m, n =>
+    swapZero (monus (.ofPos p) (.ofPos q)) (monus (swapZero (.ofPos p) m) (swapZero (.ofPos q) n))
+
+/-! ## `sqrt` -/
+
+/-- `@sqrt_nat`: binary (digit-by-digit) square root. `n` is the remaining radicand, `m` twice the
+approximation formed by the bits chosen *above* the current level, and `p` the current candidate
+bit. The identity `(x + m) · x = x² + m·x` is what a binary search on `sqrt` needs: when the
+candidate `x = @cNat(@cDub(b, p))` fits (`(x + m)·x ≤ n`) it is kept and `n` and `m` are updated
+so that `n ≡ N − (result)²` and `m = 2·result` remain true; otherwise the bit is dropped.
+```
+@sqrt_nat(n, m, @c1) = if(n <= m, @c0, @cNat(@c1));
+@sqrt_nat(n, m, @cDub(b, p)) =
+    if((@cNat(@cDub(b, p)) + m) * @cNat(@cDub(b, p)) > n,
+       @sqrt_nat(n, m, p),
+       @cNat(@cDub(b, p)) + @sqrt_nat(@monus(n, (@cNat(@cDub(b, p)) + m) * @cNat(@cDub(b, p))),
+                                      m + @cNat(@cDub(false, @cDub(b, p))), p));
+```
+-/
+def sqrtNat : MNat → MNat → Pos → MNat
+  | n, m, .one => if le n m then .zero else .ofPos .one
+  | n, m, .dub b p =>
+    let x : MNat := .ofPos (.dub b p)
+    let s : MNat := mul (add x m) x
+    if lt n s then sqrtNat n m p
+    else add x (sqrtNat (monus n s) (add m (dub false x)) p)
+
+/-- `sqrt`.
+```
+sqrt(@c0)      = @c0;
+sqrt(@cNat(p)) = @sqrt_nat(@cNat(p), @c0, @powerlog2(p));
+```
+The third argument `@powerlog2(p)` is the largest power of two whose square does not exceed `p`
+(see `Pos.powerlog2` / `Pos.powerlog2_toNat`), giving the estimate the binary search refines. -/
+def sqrt : MNat → MNat
+  | .zero => .zero
+  | .ofPos p => sqrtNat (.ofPos p) .zero (Pos.powerlog2 p)
 
 end MNat
