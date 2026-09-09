@@ -4,7 +4,7 @@ public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.Bisimulation
 public import Signatures.BranchingBisimilarity
 public import Signatures.Signature
-public import Signatures.Proofs.BranchingBisimilarity_Transitivity
+public import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section SignatureProofs
 

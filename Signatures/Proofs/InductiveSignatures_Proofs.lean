@@ -5,7 +5,7 @@ public import Cslib.Foundations.Semantics.LTS.Bisimulation
 public import Signatures.BranchingBisimilarity
 public import Signatures.Signature
 public import Signatures.InductiveSignatures
-public import Signatures.Proofs.BranchingBisimilarity_Transitivity
+public import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section InductiveSignaturesProofs
 
