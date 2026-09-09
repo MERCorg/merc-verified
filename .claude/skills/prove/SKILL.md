@@ -1,3 +1,8 @@
+---
+name: prove
+description: lean-lsp MCP workflow, key tools, and definitions for interactive Lean proving. Use when writing or fixing Lean proofs, inspecting proof states, or searching for lemmas.
+---
+
 ## AI Agent Workflow (lean-lsp MCP)
 
 The `.mcp.json` configures a `lean-lsp` MCP server for interactive proving. Key tools:

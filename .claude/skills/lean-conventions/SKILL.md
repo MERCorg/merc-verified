@@ -1,3 +1,8 @@
+---
+name: lean-conventions
+description: Lean 4 coding and proof conventions used in this repository. Use when writing or editing `.lean` files, proofs, tactics, or structures in `Signatures/` or `MercVerified/`.
+---
+
 ## Lean 4 Conventions
 
 - Toolchain: `leanprover/lean4:v4.30.0-rc2` (see `lean-toolchain`).

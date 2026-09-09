@@ -1,3 +1,8 @@
+---
+name: regenerate
+description: Regenerate Lean code from Rust sources using Charon and Aeneas. Use when the user asks to regenerate `MercVerified/Code/`, rerun Aeneas, or update generated Lean after changing `verified/`.
+---
+
 ## Regenerating Code from Rust
 
 Run after changing `verified/` source:
