@@ -24,8 +24,8 @@ jobs:
         dune-cache: true
 
     - name: Install OCaml Dependencies
-      run: opam install -y ppx_deriving visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
-
+      run: opam install -y ppx_deriving ppx_deriving_yojson visitors easy_logging zarith yojson core_unix odoc ocamlgraph menhir ocamlformat.0.27.0 unionFind zarith progress domainslib
+    
     - name: Build charon
       run: |
         eval $(opam env)
