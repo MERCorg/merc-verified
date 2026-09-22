@@ -4,6 +4,8 @@
 - **`MercVerified/Code/*External.lean`** — Hand-written stubs for external functions (e.g. HashMap ops). Edit as needed.
 - **`Signatures/`** — Human-vetted: `Basic.lean`, `BranchingBisimilarity.lean`, `Signature.lean`, `InductiveSignatures.lean`. Make only minimal, targeted changes.
 - **`Signatures/Proofs/`** — Machine-generated proofs. May be freely edited or regenerated.
+- **`MercVerified/Signatures/`** — Human-vetted contract specs for the translated code (e.g. `Refinement.lean`, `StrongSignature.lean`). Same split as `Signatures/`: each file states a claim as a named `def ... : Prop`, never a theorem. Make only minimal, targeted changes.
+- **`MercVerified/Signatures/Proofs/`** — Machine-generated proofs of the specs above, plus a pinned `example` per proved theorem guarding its signature against drift. May be freely edited or regenerated. See the lean-conventions skill for the full spec/Proofs/pin pattern.
 
 ## Skills
 
