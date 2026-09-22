@@ -6,6 +6,9 @@ open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
 set_option linter.unusedVariables false
+set_option linter.style.whitespace false
+set_option linter.style.setOption false
+set_option linter.style.longLine false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
@@ -39,19 +42,19 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
 @[reducible, rust_type "merc_collections::indexed_partition::BlockTag"]
 def merc_collections.indexed_partition.BlockTag := Unit
 
-/-- [merc_lts::lts::LabelTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 12:0-12:19
-    Name pattern: [merc_lts::lts::LabelTag]
-    Visibility: public -/
-@[reducible, rust_type "merc_lts::lts::LabelTag"]
-def merc_lts.lts.LabelTag := Unit
-
 /-- [merc_lts::lts::StateTag]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 15:0-15:19
     Name pattern: [merc_lts::lts::StateTag]
     Visibility: public -/
 @[reducible, rust_type "merc_lts::lts::StateTag"]
 def merc_lts.lts.StateTag := Unit
+
+/-- [merc_lts::lts::LabelTag]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 12:0-12:19
+    Name pattern: [merc_lts::lts::LabelTag]
+    Visibility: public -/
+@[reducible, rust_type "merc_lts::lts::LabelTag"]
+def merc_lts.lts.LabelTag := Unit
 
 /-- [merc_lts::lts::Transition]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 104:0-104:21
@@ -101,7 +104,7 @@ structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
     merc_lts.lts.LabelTag → Result Bool
 
 /-- [merc_reduction::block_partition::Block]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 437:0-437:16
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 514:0-514:16
     Name pattern: [merc_reduction::block_partition::Block]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::Block"]
@@ -123,6 +126,17 @@ structure merc_reduction.block_partition.BlockPartition where
     Std.Usize merc_collections.indexed_partition.BlockTag)
   element_offset : alloc.vec.Vec Std.Usize
 
+/-- [merc_reduction::block_partition::BlockPartitionBuilder]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 450:0-450:39
+    Name pattern: [merc_reduction::block_partition::BlockPartitionBuilder] -/
+@[rust_type "merc_reduction::block_partition::BlockPartitionBuilder"]
+structure merc_reduction.block_partition.BlockPartitionBuilder where
+  index_to_block : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_collections.indexed_partition.BlockTag)
+  block_sizes : alloc.vec.Vec Std.Usize
+  old_elements : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)
+
 /-- Trait declaration: [merc_reduction::partition::Partition]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/partition.rs', lines 10:0-10:19
     Name pattern: [merc_reduction::partition::Partition]
@@ -135,6 +149,72 @@ structure merc_reduction.partition.Partition (Self : Type) where
   num_of_blocks : Self → Result Std.Usize
   len : Self → Result Std.Usize
   is_empty : Self → Result Bool
+
+/-- [merc_reduction::signatures::Signature]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 26:0-26:24
+    Name pattern: [merc_reduction::signatures::Signature]
+    Visibility: public -/
+@[reducible, rust_type "merc_reduction::signatures::Signature"]
+def merc_reduction.signatures.Signature :=
+  Slice ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
+  × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))
+
+/-- [merc_reduction::signature_refinement::WorklistContext]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 629:0-629:28
+    Name pattern: [merc_reduction::signature_refinement::WorklistContext] -/
+@[rust_type "merc_reduction::signature_refinement::WorklistContext"]
+structure merc_reduction.signature_refinement.WorklistContext (F : Type) (G :
+  Type) where
+  partition : merc_reduction.block_partition.BlockPartition
+  worklist : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+  states : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)
+  builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))
+  split_builder : merc_reduction.block_partition.BlockPartitionBuilder
+  state_to_key : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+  signature : F
+  renumber : G
+
+/-- [merc_reduction::signature_refinement::signature_refinement::{closure}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Name pattern: [merc_reduction::signature_refinement::signature_refinement::closure] -/
+@[reducible, rust_type
+  "merc_reduction::signature_refinement::signature_refinement::closure"]
+def merc_reduction.signature_refinement.signature_refinement.closure (F : Type)
+  (G : Type) (L : Type) (Clause2_Label : Type) (BRANCHING : Bool) :=
+Unit
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1] -/
+@[reducible, rust_type
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1"]
+def merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1
+  (L : Type) (Clause0_Label : Type) :=
+Unit
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure] -/
+@[reducible, rust_type
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure"]
+def merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure (L
+  : Type) (Clause0_Label : Type) :=
+  L
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 56:48-56:50
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure] -/
+@[rust_type
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure"]
+def merc_reduction.signature_refinement.strong_bisim_sigref.closure (L : Type)
+  (Clause0_Label : Type) :=
+  L × merc_lts.incoming_transitions.IncomingTransitions
 
 /-- [rustc_hash::FxBuildHasher]
     Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 346:0-346:24

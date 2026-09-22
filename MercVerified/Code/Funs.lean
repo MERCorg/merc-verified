@@ -7,6 +7,9 @@ open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
 set_option linter.unusedVariables false
+set_option linter.style.whitespace false
+set_option linter.style.setOption false
+set_option linter.style.longLine false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
@@ -28,12 +31,64 @@ def core.borrow.Borrow.Blanket (T : Type) : core.borrow.Borrow T T := {
 }
 
 /-- Trait implementation: [core::hash::impls::{impl core::hash::Hash for usize}]
-    Source: '/rustc/library/core/src/hash/mod.rs', lines 810:12-810:29
+    Source: '/rustc/library/core/src/hash/mod.rs', lines 811:12-811:29
     Name pattern: [core::hash::Hash<usize>] -/
 @[reducible, rust_trait_impl "core::hash::Hash<usize>"]
 def Usize.Insts.CoreHashHash : core.hash.Hash Std.Usize := {
   hash := fun {H : Type} (HasherInst : core.hash.Hasher H) =>
     Usize.Insts.CoreHashHash.hash HasherInst
+}
+
+/-- Trait implementation: [core::iter::adapters::map::{impl core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}]
+    Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
+    Name pattern: [core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>] -/
+@[reducible, rust_trait_impl
+  "core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>"]
+impl_def core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator {B :
+  Type} {I : Type} {F : Type} {Clause0_Item : Type} (traitsiteratorIteratorInst
+  : core.iter.traits.iterator.Iterator I Clause0_Item)
+  (opsfunctionFnMutFTupleClause0_ItemBInst : core.ops.function.FnMut F
+  Clause0_Item B) : core.iter.traits.iterator.Iterator
+  (core.iter.adapters.map.Map I F) B := {
+  next := core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.next
+    traitsiteratorIteratorInst opsfunctionFnMutFTupleClause0_ItemBInst
+  map := fun {B1 : Type} {F1 : Type} (opsfunctionFnMutPTupleBPInst :
+    core.ops.function.FnMut F1 B B1) =>
+    core.iter.traits.iterator.Iterator.map.default
+    (core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator
+    traitsiteratorIteratorInst opsfunctionFnMutFTupleClause0_ItemBInst)
+    opsfunctionFnMutPTupleBPInst
+  collect := fun {B1 : Type} (collectFromIteratorInst :
+    core.iter.traits.collect.FromIterator B1 B) =>
+    core.iter.traits.iterator.Iterator.collect.default
+    (core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator
+    traitsiteratorIteratorInst opsfunctionFnMutFTupleClause0_ItemBInst)
+    collectFromIteratorInst
+}
+
+/-- Trait implementation: [core::iter::sources::repeat_n::{impl core::iter::traits::iterator::Iterator<A> for core::iter::sources::repeat_n::RepeatN<A>}]
+    Source: '/rustc/library/core/src/iter/sources/repeat_n.rs', lines 115:0-115:38
+    Name pattern: [core::iter::traits::iterator::Iterator<core::iter::sources::repeat_n::RepeatN<@A>, @A>] -/
+@[reducible, rust_trait_impl
+  "core::iter::traits::iterator::Iterator<core::iter::sources::repeat_n::RepeatN<@A>, @A>"]
+impl_def
+  core.iter.sources.repeat_n.RepeatN.Insts.CoreIterTraitsIteratorIterator {A :
+  Type} (cloneCloneInst : core.clone.Clone A) :
+  core.iter.traits.iterator.Iterator (core.iter.sources.repeat_n.RepeatN A) A
+  := {
+  next :=
+    core.iter.sources.repeat_n.RepeatN.Insts.CoreIterTraitsIteratorIterator.next
+    cloneCloneInst
+  map := fun {B : Type} {F : Type} (opsfunctionFnMutPTupleBPInst :
+    core.ops.function.FnMut F A B) =>
+    core.iter.traits.iterator.Iterator.map.default
+    (core.iter.sources.repeat_n.RepeatN.Insts.CoreIterTraitsIteratorIterator
+    cloneCloneInst) opsfunctionFnMutPTupleBPInst
+  collect := fun {B : Type} (collectFromIteratorInst :
+    core.iter.traits.collect.FromIterator B A) =>
+    core.iter.traits.iterator.Iterator.collect.default
+    (core.iter.sources.repeat_n.RepeatN.Insts.CoreIterTraitsIteratorIterator
+    cloneCloneInst) collectFromIteratorInst
 }
 
 /-- Trait implementation: [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}]
@@ -136,8 +191,109 @@ def merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition :
   eq := merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
 }
 
+/-- Trait implementation: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::{impl core::ops::function::FnOnce<(T,), merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
+    Name pattern: [core::ops::function::FnOnce<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnOnce<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
+def P.Insts.CoreOpsFunctionFnOnceTupleTTagIndex (T : Type) (Tag : Type) :
+  core.ops.function.FnOnce (T → Result (merc_utilities.tagged_index.TagIndex
+  T Tag)) T (merc_utilities.tagged_index.TagIndex T Tag) := {
+  call_once := P.Insts.CoreOpsFunctionFnOnceTupleTTagIndex.call_once
+}
+
+/-- Trait implementation: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::{impl core::ops::function::FnMut<(T,), merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
+    Name pattern: [core::ops::function::FnMut<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnMut<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
+def P.Insts.CoreOpsFunctionFnMutTupleTTagIndex (T : Type) (Tag : Type) :
+  core.ops.function.FnMut (T → Result (merc_utilities.tagged_index.TagIndex T
+  Tag)) T (merc_utilities.tagged_index.TagIndex T Tag) := {
+  FnOnceInst := P.Insts.CoreOpsFunctionFnOnceTupleTTagIndex T Tag
+  call_mut := P.Insts.CoreOpsFunctionFnMutTupleTTagIndex.call_mut
+}
+
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 82:0-82:46
+    Name pattern: [core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
+@[reducible, rust_trait_impl
+  "core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone {T : Type} (Tag :
+  Type) (corecloneCloneInst : core.clone.Clone T) : core.clone.Clone
+  (merc_utilities.tagged_index.TagIndex T Tag) := {
+  clone := merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
+    corecloneCloneInst
+}
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 522:4-522:56
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new"]
+def merc_reduction.block_partition.Block.new
+  (begin : Std.Usize) («end» : Std.Usize) :
+  Result merc_reduction.block_partition.Block
+  := do
+  massert (begin < «end»)
+  ok { begin, marked_split := begin, «end» }
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 31:4-31:63
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new"]
+def merc_reduction.block_partition.BlockPartition.new
+  (num_of_elements : Std.Usize) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  massert (num_of_elements > 0#usize)
+  let b ← merc_reduction.block_partition.Block.new 0#usize num_of_elements
+  let blocks ← alloc.vec.FromVecArray.from (Array.make 1#usize [ b ])
+  let m ←
+    core.iter.traits.iterator.Iterator.map.default
+      (core.iter.traits.iterator.IteratorRange core.iter.range.StepUsize)
+      (P.Insts.CoreOpsFunctionFnMutTupleTTagIndex Std.Usize
+      merc_lts.lts.StateTag) { start := 0#usize, «end» := num_of_elements }
+      (merc_utilities.tagged_index.TagIndex.new merc_lts.lts.StateTag)
+  let elements ←
+    core.iter.traits.iterator.Iterator.collect.default
+      (core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator
+      (core.iter.traits.iterator.IteratorRange core.iter.range.StepUsize)
+      (P.Insts.CoreOpsFunctionFnMutTupleTTagIndex Std.Usize
+      merc_lts.lts.StateTag)) (core.iter.traits.collect.FromIteratorVec
+      (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)) m
+  let ti ←
+    merc_utilities.tagged_index.TagIndex.new
+      merc_collections.indexed_partition.BlockTag 0#usize
+  let rn ←
+    core.iter.sources.repeat_n.repeat_n
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone
+      merc_collections.indexed_partition.BlockTag core.clone.CloneUsize) ti
+      num_of_elements
+  let element_to_block ←
+    core.iter.traits.iterator.Iterator.collect.default
+      (core.iter.sources.repeat_n.RepeatN.Insts.CoreIterTraitsIteratorIterator
+      (merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone
+      merc_collections.indexed_partition.BlockTag core.clone.CloneUsize))
+      (core.iter.traits.collect.FromIteratorVec
+      (merc_utilities.tagged_index.TagIndex Std.Usize
+      merc_collections.indexed_partition.BlockTag)) rn
+  let element_to_block_offset ←
+    core.iter.traits.iterator.Iterator.collect.default
+      (core.iter.traits.iterator.IteratorRange core.iter.range.StepUsize)
+      (core.iter.traits.collect.FromIteratorVec Std.Usize)
+      { start := 0#usize, «end» := num_of_elements }
+  ok
+    {
+      elements,
+      blocks,
+      element_to_block,
+      element_offset := element_to_block_offset
+    }
+
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 300:4-300:64
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 365:4-365:64
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked]
     Visibility: public -/
 @[rust_fun
@@ -164,8 +320,66 @@ def merc_reduction.block_partition.BlockPartition.is_element_marked
       merc_reduction.block_partition.Block) self.blocks block_index
   ok (offset >= b.marked_split)
 
+/-- [merc_reduction::block_partition::{impl core::default::Default for merc_reduction::block_partition::BlockPartitionBuilder}::default]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 449:9-449:16
+    Name pattern: [merc_reduction::block_partition::{core::default::Default<merc_reduction::block_partition::BlockPartitionBuilder>}::default]
+    Visibility: public -/
+@[rust_fun
+  "merc_reduction::block_partition::{core::default::Default<merc_reduction::block_partition::BlockPartitionBuilder>}::default"]
+def
+  merc_reduction.block_partition.BlockPartitionBuilder.Insts.CoreDefaultDefault.default
+  : Result merc_reduction.block_partition.BlockPartitionBuilder := do
+  let v ←
+    alloc.vec.Vec.Insts.CoreDefaultDefault.default
+      (merc_utilities.tagged_index.TagIndex Std.Usize
+      merc_collections.indexed_partition.BlockTag)
+  let v1 ← alloc.vec.Vec.Insts.CoreDefaultDefault.default Std.Usize
+  let v2 ←
+    alloc.vec.Vec.Insts.CoreDefaultDefault.default
+      (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  ok { index_to_block := v, block_sizes := v1, old_elements := v2 }
+
+/-- [merc_reduction::partition::Partition::is_empty]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/partition.rs', lines 21:4-21:30
+    Name pattern: [merc_reduction::partition::Partition::is_empty]
+    Visibility: public -/
+@[trait_default, rust_fun "merc_reduction::partition::Partition::is_empty"]
+def merc_reduction.partition.Partition.is_empty.default
+  {Self : Type} (PartitionInst : merc_reduction.partition.Partition Self)
+  (self : Self) :
+  Result Bool
+  := do
+  let i ← PartitionInst.len self
+  ok (i = 0#usize)
+
+/-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::len]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 476:4-476:26
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::len]
+    Visibility: public -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::len"]
+def
+  merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.len
+  (self : merc_reduction.block_partition.BlockPartition) :
+  Result Std.Usize
+  := do
+  ok (alloc.vec.Vec.len self.elements)
+
+/-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::num_of_blocks]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 472:4-472:36
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::num_of_blocks]
+    Visibility: public -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::num_of_blocks"]
+def
+  merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.num_of_blocks
+  (self : merc_reduction.block_partition.BlockPartition) :
+  Result Std.Usize
+  := do
+  ok (alloc.vec.Vec.len self.blocks)
+
 /-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::block_number]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 391:4-391:61
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 468:4-468:61
     Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::block_number]
     Visibility: public -/
 @[rust_fun
@@ -184,30 +398,331 @@ def
     (merc_utilities.tagged_index.TagIndex Std.Usize
     merc_collections.indexed_partition.BlockTag)) self.element_to_block i
 
-/-- [merc_reduction::partition::Partition::is_empty]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/partition.rs', lines 21:4-21:30
-    Name pattern: [merc_reduction::partition::Partition::is_empty]
-    Visibility: public -/
-@[trait_default, rust_fun "merc_reduction::partition::Partition::is_empty"]
-def merc_reduction.partition.Partition.is_empty.default
-  {Self : Type} (PartitionInst : merc_reduction.partition.Partition Self)
-  (self : Self) :
-  Result Bool
-  := do
-  let i ← PartitionInst.len self
-  ok (i = 0#usize)
+/-- Trait implementation: [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 467:0-467:33
+    Name pattern: [merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>] -/
+@[reducible, rust_trait_impl
+  "merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>"]
+impl_def
+  merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition
+  : merc_reduction.partition.Partition
+  merc_reduction.block_partition.BlockPartition := {
+  block_number :=
+    merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+  num_of_blocks :=
+    merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.num_of_blocks
+  len :=
+    merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.len
+  is_empty := merc_reduction.partition.Partition.is_empty.default
+    merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition
+}
 
-/-- [merc_reduction::signatures::tau_hat]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 101:0-101:41
-    Name pattern: [merc_reduction::signatures::tau_hat] -/
-@[rust_fun "merc_reduction::signatures::tau_hat"]
-def merc_reduction.signatures.tau_hat
-  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
-  Clause0_Label) (lts : L) :
-  Result (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
+/-- [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnMut<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}::call_mut]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Name pattern: [merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_mut] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_mut"]
+def
+  merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag.call_mut
+  {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} {BRANCHING : Bool}
+  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+  : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit)
+  (coreopsfunctionFnMutGPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+  : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause2_Label)
+  (c : merc_reduction.signature_refinement.signature_refinement.closure F G L
+  Clause2_Label BRANCHING) (_ : Unit) :
+  Result ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag) ×
+    (merc_reduction.signature_refinement.signature_refinement.closure F G L
+    Clause2_Label BRANCHING))
   := do
-  let i ← merc_ltsltsLTSInst.num_of_labels lts
-  merc_utilities.tagged_index.TagIndex.new merc_lts.lts.LabelTag i
+  let ti ←
+    merc_utilities.tagged_index.TagIndex.new
+      merc_collections.indexed_partition.BlockTag 0#usize
+  ok (ti, c)
+
+/-- [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnOnce<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}::call_once]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Name pattern: [merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_once] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_once"]
+def
+  merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeBlockTag.call_once
+  {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} {BRANCHING : Bool}
+  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+  : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit)
+  (coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+  : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause2_Label)
+  (c : merc_reduction.signature_refinement.signature_refinement.closure F G L
+  Clause2_Label BRANCHING) (_ : Unit) :
+  Result (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+  := do
+  let (ti, _) ←
+    merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag.call_mut
+      coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+      coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+      merc_ltsltsLTSInst c ()
+  ok ti
+
+/-- Trait implementation: [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnOnce<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>"]
+def
+  merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeBlockTag
+  {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} (BRANCHING : Bool)
+  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+  : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit)
+  (coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+  : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause2_Label) : core.ops.function.FnOnce
+  (merc_reduction.signature_refinement.signature_refinement.closure F G L
+  Clause2_Label BRANCHING) Unit (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag) := {
+  call_once :=
+    merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeBlockTag.call_once
+    coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+    coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+    merc_ltsltsLTSInst
+}
+
+/-- Trait implementation: [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnMut<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Name pattern: [core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>"]
+def
+  merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
+  {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} (BRANCHING : Bool)
+  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+  : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit)
+  (coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+  : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause2_Label) : core.ops.function.FnMut
+  (merc_reduction.signature_refinement.signature_refinement.closure F G L
+  Clause2_Label BRANCHING) Unit (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag) := {
+  FnOnceInst :=
+    merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeBlockTag
+    BRANCHING
+    coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+    coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+    merc_ltsltsLTSInst
+  call_mut :=
+    merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag.call_mut
+    coreopsfunctionFnMutFTupleTagIndexUsizeStateTagSharedBlockPartitionSharedSliceTagIndexUsizeBlockTagMutVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+    coreopsfunctionFnMutGPairSharedSlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagSharedVecSignatureOptionTagIndexUsizeBlockTagInst
+    merc_ltsltsLTSInst
+}
+
+/-- [merc_reduction::signature_refinement::signature_refinement]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 746:0-755:11
+    Name pattern: [merc_reduction::signature_refinement::signature_refinement] -/
+@[rust_fun "merc_reduction::signature_refinement::signature_refinement"]
+def merc_reduction.signature_refinement.signature_refinement
+  {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} (BRANCHING : Bool)
+  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionShared1SliceTagIndexUsizeBlockTagMut2VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+  : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit)
+  (coreopsfunctionFnMutGPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTagInst
+  : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
+  Std.Usize merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) (merc_ltsltsLTSInst :
+  merc_lts.lts.LTS L Clause2_Label) (lts : L)
+  (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+  (signature : F) (renumber : G) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  let i ← merc_ltsltsLTSInst.num_of_states lts
+  let state_to_key ←
+    alloc.vec.Vec.resize_with Global
+      (merc_reduction.signature_refinement.signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
+      BRANCHING
+      coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionShared1SliceTagIndexUsizeBlockTagMut2VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+      coreopsfunctionFnMutGPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTagInst
+      merc_ltsltsLTSInst) (alloc.vec.Vec.new
+      (merc_utilities.tagged_index.TagIndex Std.Usize
+      merc_collections.indexed_partition.BlockTag)) i ()
+  let bp ← merc_reduction.block_partition.BlockPartition.new i
+  let ti ←
+    merc_utilities.tagged_index.TagIndex.new
+      merc_collections.indexed_partition.BlockTag 0#usize
+  let v ← alloc.vec.FromVecArray.from (Array.make 1#usize [ ti ])
+  let v1 ←
+    alloc.vec.Vec.Insts.CoreDefaultDefault.default
+      ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
+      × (merc_utilities.tagged_index.TagIndex Std.Usize
+      merc_collections.indexed_partition.BlockTag))
+  let bpb ←
+    merc_reduction.block_partition.BlockPartitionBuilder.Insts.CoreDefaultDefault.default
+  let ctx ←
+    merc_reduction.signature_refinement.run_worklist_loop BRANCHING
+      coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionShared1SliceTagIndexUsizeBlockTagMut2VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+      coreopsfunctionFnMutGPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTagInst
+      merc_ltsltsLTSInst lts incoming
+      {
+        partition := bp,
+        worklist := v,
+        states :=
+          (alloc.vec.Vec.new
+            (merc_utilities.tagged_index.TagIndex
+            Std.Usize
+            merc_lts.lts.StateTag)),
+        builder := v1,
+        split_builder := bpb,
+        state_to_key,
+        signature,
+        renumber
+      }
+  ok ctx.partition
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}::call_mut]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_mut] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_mut"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnMutPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag.call_mut
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (c :
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1 L
+  Clause0_Label)
+  (tupled_args : ((Slice ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature))) :
+  Result ((Option (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)) ×
+    (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1
+    L Clause0_Label))
+  := do
+  ok (none, c)
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}::call_once]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_once] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_once"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnOncePairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag.call_once
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (c :
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1 L
+  Clause0_Label)
+  (p : ((Slice ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature))) :
+  Result (Option (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))
+  := do
+  let (o, _) ←
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnMutPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag.call_mut
+      merc_ltsltsLTSInst c p
+  ok o
+
+/-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnOncePairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) : core.ops.function.FnOnce
+  (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1 L
+  Clause0_Label) ((Slice ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) := {
+  call_once :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnOncePairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag.call_once
+    merc_ltsltsLTSInst
+}
+
+/-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Name pattern: [core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnMutPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) : core.ops.function.FnMut
+  (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1 L
+  Clause0_Label) ((Slice ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
+  merc_reduction.signatures.Signature)) (Option
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) := {
+  FnOnceInst :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnOncePairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag
+    merc_ltsltsLTSInst
+  call_mut :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnMutPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag.call_mut
+    merc_ltsltsLTSInst
+}
 
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 58:0-58:54
@@ -358,6 +873,178 @@ def merc_reduction.signatures.strong_bisim_signature
     (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
     merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize))
     builder3
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}::call_mut]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_mut] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_mut"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple.call_mut
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (c : merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure
+  L Clause0_Label)
+  (tupled_args : ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))))) :
+  Result
+    ((merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure L
+    Clause0_Label) × (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
+    Std.Usize merc_collections.indexed_partition.BlockTag))))
+  := do
+  let (state_index, partition, _, builder) := tupled_args
+  let builder1 ←
+    merc_reduction.signatures.strong_bisim_signature merc_ltsltsLTSInst
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition
+      state_index c partition builder
+  ok (c, builder1)
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}::call_once]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_once] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_once"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple.call_once
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (c : merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure
+  L Clause0_Label)
+  (t : ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  × merc_reduction.block_partition.BlockPartition × (Slice
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))))) :
+  Result (alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)))
+  := do
+  let (_, v) ←
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple.call_mut
+      merc_ltsltsLTSInst c t
+  ok v
+
+/-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) : core.ops.function.FnOnce
+  (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure L
+  Clause0_Label) ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit := {
+  call_once :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple.call_once
+    merc_ltsltsLTSInst
+}
+
+/-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Name pattern: [core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) : core.ops.function.FnMut
+  (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure L
+  Clause0_Label) ((merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
+  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)))) Unit := {
+  FnOnceInst :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnOnceTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple
+    merc_ltsltsLTSInst
+  call_mut :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple.call_mut
+    merc_ltsltsLTSInst
+}
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref::{impl core::ops::function::FnOnce<(), merc_reduction::block_partition::BlockPartition> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}<'_0, '_1, '_2, L, Clause0_Label>}::call_once]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 56:48-56:50
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>}::call_once] -/
+@[rust_fun
+  "merc_reduction::signature_refinement::strong_bisim_sigref::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>}::call_once"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label)
+  (c : merc_reduction.signature_refinement.strong_bisim_sigref.closure L
+  Clause0_Label) (_ : Unit) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  let (t, it) := c
+  merc_reduction.signature_refinement.signature_refinement false
+    (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeStateTagShared1BlockPartitionShared2SliceTagIndexUsizeBlockTagMut3VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTuple
+    merc_ltsltsLTSInst)
+    (merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1.Insts.CoreOpsFunctionFnMutPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTag
+    merc_ltsltsLTSInst) merc_ltsltsLTSInst t it t ()
+
+/-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{impl core::ops::function::FnOnce<(), merc_reduction::block_partition::BlockPartition> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}<'_0, '_1, '_2, L, Clause0_Label>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 56:48-56:50
+    Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>] -/
+@[reducible, rust_trait_impl
+  "core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>"]
+def
+  merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) : core.ops.function.FnOnce
+  (merc_reduction.signature_refinement.strong_bisim_sigref.closure L
+  Clause0_Label) Unit merc_reduction.block_partition.BlockPartition := {
+  call_once :=
+    merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once
+    merc_ltsltsLTSInst
+}
+
+/-- [merc_reduction::signature_refinement::strong_bisim_sigref]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 43:0-43:82
+    Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref]
+    Visibility: public -/
+@[rust_fun "merc_reduction::signature_refinement::strong_bisim_sigref"]
+def merc_reduction.signature_refinement.strong_bisim_sigref
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) (lts : L) (timing : merc_utilities.timing.Timing) :
+  Result (L × merc_reduction.block_partition.BlockPartition)
+  := do
+  let incoming ←
+    merc_lts.incoming_transitions.IncomingTransitions.new merc_ltsltsLTSInst
+      lts
+  let partition ←
+    merc_utilities.timing.Timing.measure
+      (merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
+      merc_ltsltsLTSInst) timing (toStr "reduction") (lts, incoming)
+  ok (lts, partition)
+
+/-- [merc_reduction::signatures::tau_hat]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signatures.rs', lines 101:0-101:41
+    Name pattern: [merc_reduction::signatures::tau_hat] -/
+@[rust_fun "merc_reduction::signatures::tau_hat"]
+def merc_reduction.signatures.tau_hat
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) (lts : L) :
+  Result (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
+  := do
+  let i ← merc_ltsltsLTSInst.num_of_labels lts
+  merc_utilities.tagged_index.TagIndex.new merc_lts.lts.LabelTag i
 
 /-- Trait implementation: [rustc_hash::{impl core::hash::Hasher for rustc_hash::FxHasher}]
     Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 128:0-128:24
@@ -794,20 +1481,19 @@ def merc_reduction.signatures.branching_bisim_signature_inductive
     merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize))
     builder3
 
-/-- Trait implementation: [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 82:0-82:46
-    Name pattern: [core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
-@[reducible, rust_trait_impl
-  "core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone {T : Type} (Tag :
-  Type) (corecloneCloneInst : core.clone.Clone T) : core.clone.Clone
-  (merc_utilities.tagged_index.TagIndex T Tag) := {
-  clone := merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
-    corecloneCloneInst
-}
+/-- [verified::reduction_bridge::strong_bisim_sigref]:
+    Source: 'src/reduction_bridge.rs', lines 34:0-36:1
+    Visibility: public -/
+def reduction_bridge.strong_bisim_sigref
+  {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L
+  Clause0_Label) (lts : L) (timing : merc_utilities.timing.Timing) :
+  Result (L × merc_reduction.block_partition.BlockPartition)
+  := do
+  merc_reduction.signature_refinement.strong_bisim_sigref merc_ltsltsLTSInst
+    lts timing
 
 /-- [verified::reduction_bridge::strong_bisim_signature]:
-    Source: 'src/reduction_bridge.rs', lines 33:0-40:1
+    Source: 'src/reduction_bridge.rs', lines 38:0-45:1
     Visibility: public -/
 def reduction_bridge.strong_bisim_signature
   {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
@@ -826,7 +1512,7 @@ def reduction_bridge.strong_bisim_signature
     merc_reductionpartitionPartitionInst state_index lts partition builder
 
 /-- [verified::reduction_bridge::branching_bisim_signature]:
-    Source: 'src/reduction_bridge.rs', lines 42:0-51:1
+    Source: 'src/reduction_bridge.rs', lines 47:0-56:1
     Visibility: public -/
 def reduction_bridge.branching_bisim_signature
   {L : Type} {P : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst :
@@ -855,7 +1541,7 @@ def reduction_bridge.branching_bisim_signature
     visited stack
 
 /-- [verified::reduction_bridge::branching_bisim_signature_inductive]:
-    Source: 'src/reduction_bridge.rs', lines 53:0-61:1
+    Source: 'src/reduction_bridge.rs', lines 58:0-66:1
     Visibility: public -/
 def reduction_bridge.branching_bisim_signature_inductive
   {L : Type} {Clause0_Label : Type} (merc_ltsltsLTSInst : merc_lts.lts.LTS L

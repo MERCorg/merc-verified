@@ -6,12 +6,22 @@ open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
 set_option linter.unusedVariables false
+set_option linter.style.whitespace false
+set_option linter.style.setOption false
+set_option linter.style.longLine false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
 
 /- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
 set_option maxRecDepth 2048
+
+/-- [core::iter::sources::repeat_n::RepeatN]
+    Source: '/rustc/library/core/src/iter/sources/repeat_n.rs', lines 82:0-82:21
+    Name pattern: [core::iter::sources::repeat_n::RepeatN]
+    Visibility: public -/
+@[rust_type "core::iter::sources::repeat_n::RepeatN"]
+axiom core.iter.sources.repeat_n.RepeatN (A : Type) : Type
 
 /-- [std::collections::hash::map::HashMap]
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 245:0-250:1
@@ -49,12 +59,26 @@ axiom std.hash.random.RandomState : Type
 @[rust_type "std::hash::random::DefaultHasher"]
 axiom std.hash.random.DefaultHasher : Type
 
+/-- [merc_lts::incoming_transitions::IncomingTransitions]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 13:0-13:34
+    Name pattern: [merc_lts::incoming_transitions::IncomingTransitions]
+    Visibility: public -/
+@[rust_type "merc_lts::incoming_transitions::IncomingTransitions"]
+axiom merc_lts.incoming_transitions.IncomingTransitions : Type
+
 /-- [merc_utilities::tagged_index::TagIndex]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 32:0-32:27
     Name pattern: [merc_utilities::tagged_index::TagIndex]
     Visibility: public -/
 @[rust_type "merc_utilities::tagged_index::TagIndex"]
 axiom merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) : Type
+
+/-- [merc_utilities::timing::Timing]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 12:0-12:17
+    Name pattern: [merc_utilities::timing::Timing]
+    Visibility: public -/
+@[rust_type "merc_utilities::timing::Timing"]
+axiom merc_utilities.timing.Timing : Type
 
 /-- [rustc_hash::FxHasher]
     Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 63:0-63:19
