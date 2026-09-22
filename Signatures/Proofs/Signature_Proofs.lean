@@ -101,6 +101,15 @@ theorem IsStable.bisimilarity (lts : Cslib.LTS State Label)
     Cslib.LTS.Bisimilarity lts lts s₁ s₂ :=
   ⟨fun a b => partition a = partition b, hRel, h.isHomBisimulation lts partition⟩
 
+-- Contract pin (human-reviewed): fails to compile if IsStable.bisimilarity's signature drifts
+-- (e.g. gains an unapproved extra hypothesis).
+example (lts : Cslib.LTS State Label)
+    (partition : State → Block)
+    (h : IsStable (fun s => StrongSignature lts s partition) partition)
+    {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
+    Cslib.LTS.Bisimilarity lts lts s₁ s₂ :=
+  IsStable.bisimilarity lts partition h hRel
+
 -- The coarsest StrongSignature-stable partition is contained in bisimilarity: FixPoint-related
 -- states are bisimilar. Partition-independent statement — the witness partition is existentially
 -- bound in StrongFixPoint.
@@ -109,6 +118,13 @@ theorem StrongFixPoint.bisimilarity (lts : Cslib.LTS State Label)
     Cslib.LTS.Bisimilarity lts lts s s' := by
   obtain ⟨_, partition, hStable, hEq⟩ := h
   exact IsStable.bisimilarity lts partition hStable hEq
+
+-- Contract pin (human-reviewed): fails to compile if StrongFixPoint.bisimilarity's signature
+-- drifts (e.g. gains an unapproved extra hypothesis).
+example (lts : Cslib.LTS State Label)
+    {s s' : State} (h : StrongFixPoint lts s s') :
+    Cslib.LTS.Bisimilarity lts lts s s' :=
+  StrongFixPoint.bisimilarity lts h
 
 -- Reverse direction (strong): bisimilarity implies StrongFixPoint. We use the bisim quotient
 -- as the witness partition. Together with StrongFixPoint.bisimilarity, this makes
@@ -135,6 +151,13 @@ theorem Cslib.LTS.Bisimilarity.strongFixPoint (lts : Cslib.LTS State Label)
       have hdc : Cslib.LTS.Bisimilarity lts lts d c := ⟨r, hrDC, hrBis⟩
       exact ⟨c, hTrC, (Quotient.sound hdc).symm.trans hD⟩
   · exact Quotient.sound h
+
+-- Contract pin (human-reviewed): fails to compile if Bisimilarity.strongFixPoint's signature
+-- drifts (e.g. gains an unapproved extra hypothesis).
+example (lts : Cslib.LTS State Label)
+    {s s' : State} (h : Cslib.LTS.Bisimilarity lts lts s s') :
+    StrongFixPoint lts s s' :=
+  Cslib.LTS.Bisimilarity.strongFixPoint lts h
 
 -- SplitFixPoint implies bisimilarity.
 theorem SplitFixPoint.bisimilarity (lts : Cslib.LTS State Label)
@@ -219,6 +242,15 @@ theorem IsStable.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS Sta
     {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
     BranchingBisimilarity lts s₁ s₂ :=
   ⟨fun a b => partition a = partition b, hRel, h.isHomBranchingBisimulation lts partition⟩
+
+-- Contract pin (human-reviewed): fails to compile if IsStable.branchingBisimilarity's signature
+-- drifts (e.g. gains an unapproved extra hypothesis).
+example [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    (partition : State → Block)
+    (h : IsStable (fun s => BranchingSignature lts s partition) partition)
+    {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
+    BranchingBisimilarity lts s₁ s₂ :=
+  IsStable.branchingBisimilarity lts partition h hRel
 
 -- The coarsest BranchingSignature-stable partition is contained in branching bisimilarity.
 theorem BranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
