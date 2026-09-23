@@ -7,23 +7,24 @@ version = "1.0.0"
 merc_collections = { path = "../3rd-party/merc/crates/collections" }
 merc_lts = { path = "../3rd-party/merc/crates/lts" }
 merc_reduction = { path = "../3rd-party/merc/crates/reduction" }
+merc_utilities = { path = "../3rd-party/merc/crates/utilities" }
 rustc-hash = "2.1"
 
-# `src/reduction_bridge.rs` forwards into merc_reduction's partition-refinement
-# signature functions (now `pub`, see the merc submodule) with a real local
-# call site, so they're reachable the normal way. `include` overrides their
-# default Foreign opacity so Charon extracts bodies instead of stubs as it
-# walks the call graph from that call site.
+# The list of foreign functions that charon should actually translate.
 [package.metadata.charon]
 include = [
   "merc_reduction::signatures",
   "merc_reduction::partition",
   "merc_reduction::block_partition",
+  "merc_reduction::signature_refinement::strong_bisim_sigref",
+  "merc_reduction::signature_refinement::signature_refinement",
+  "merc_reduction::signature_refinement::WorklistContext",
 ]
 # `tau_cycle_elimination_and_reorder` pulls in `merc_collections::graph::Graph`
 # (via quotient_lts_naive / tau_scc_decomposition_iterative / sort_topological),
-# which uses a GAT that Aeneas's `--lift-associated-types` (implied by
-# `--preset=aeneas`) cannot handle - it crashes translation outright rather
-# than degrading to opaque. The rest of `signatures` (the actual signature
-# computations) does not touch Graph, so exclude just this one function.
+# which uses a GAT that Aeneas's `--lift-associated-types` cannot handle.
 exclude = ["merc_reduction::signatures::tau_cycle_elimination_and_reorder"]
+opaque = [
+  "merc_reduction::block_partition::_::mark_backward_closure",
+  "merc_reduction::block_partition::_::assert_consistent",
+]

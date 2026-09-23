@@ -1332,6 +1332,7 @@ dependencies = [
  "merc_collections",
  "merc_lts",
  "merc_reduction",
+ "merc_utilities",
  "rustc-hash",
 ]
 

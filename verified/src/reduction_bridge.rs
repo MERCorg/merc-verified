@@ -10,17 +10,7 @@
 //! Each wrapper stays fully polymorphic (same `L`/`P` type parameters as the
 //! wrapped function) so Charon keeps translating the dictionary-passing,
 //! non-monomorphized form - this file changes reachability only, not shape.
-//!
-//! Not wrapped: `branching_bisim_signature_sorted`, `weak_bisim_presignature_sorted`,
-//! `weak_bisim_signature_sorted_full`, `weak_bisim_signature_sorted`,
-//! `weak_bisim_signature_sorted_taus`. Each indexes a `&[Signature]` slice by
-//! a `StateIndex` and immediately calls a method on the result (e.g.
-//! `state_to_taus[transition.to].as_slice()`); Aeneas hits an internal error
-//! ("Internal error, please file an issue", `interp/Interp.ml:617`) on that
-//! shape and drops the function body, which would leave these wrappers
-//! calling something that doesn't exist in the generated Lean. Needs an
-//! upstream Aeneas fix (or a source-level workaround in merc_reduction)
-//! before these can be added back.
+
 
 use merc_collections::BlockIndex;
 use merc_lts::LTS;
@@ -28,7 +18,12 @@ use merc_lts::StateIndex;
 use merc_reduction::BlockPartition;
 use merc_reduction::Partition;
 use merc_reduction::SignatureBuilder;
+use merc_utilities::Timing;
 use rustc_hash::FxHashSet;
+
+pub fn strong_bisim_sigref<L: LTS>(lts: L, timing: &Timing) -> (L, BlockPartition) {
+    merc_reduction::strong_bisim_sigref(lts, timing)
+}
 
 pub fn strong_bisim_signature<L: LTS, P: Partition>(
     state_index: StateIndex,
