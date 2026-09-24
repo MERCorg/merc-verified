@@ -48,7 +48,7 @@ open merc_utilities.timing (Timing)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)
-open merc_reduction.signature_refinement (strong_bisim_sigref)
+open verified.merc_reduction.signature_refinement (strong_bisim_sigref)
 open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
 open verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem (toLTS)
 

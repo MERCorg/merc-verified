@@ -22,6 +22,7 @@ open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.partition (Partition)
 open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
+open MercVerified.Signatures (StrongBisimSignatureSpec)
 
 -- Contract pin: fails to compile if `strong_bisim_signature_spec`'s signature drifts.
 example :

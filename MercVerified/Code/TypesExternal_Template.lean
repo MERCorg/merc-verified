@@ -16,13 +16,6 @@ set_option maxHeartbeats 1000000
 /- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
 set_option maxRecDepth 2048
 
-/-- [core::iter::sources::repeat_n::RepeatN]
-    Source: '/rustc/library/core/src/iter/sources/repeat_n.rs', lines 82:0-82:21
-    Name pattern: [core::iter::sources::repeat_n::RepeatN]
-    Visibility: public -/
-@[rust_type "core::iter::sources::repeat_n::RepeatN"]
-axiom core.iter.sources.repeat_n.RepeatN (A : Type) : Type
-
 /-- [std::collections::hash::map::HashMap]
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 245:0-250:1
     Name pattern: [std::collections::hash::map::HashMap]

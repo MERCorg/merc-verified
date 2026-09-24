@@ -33,53 +33,6 @@ axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
 axiom Usize.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
-/-- [core::iter::traits::iterator::Iterator::map]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 845:4-848:34
-    Name pattern: [core::iter::traits::iterator::Iterator::map]
-    Visibility: public -/
-@[trait_default, rust_fun "core::iter::traits::iterator::Iterator::map"]
-axiom core.iter.traits.iterator.Iterator.map.default
-  {Self : Type} {B : Type} {F : Type} {Clause0_Item : Type} (IteratorInst :
-  core.iter.traits.iterator.Iterator Self Clause0_Item)
-  (opsfunctionFnMutFTupleClause0_ItemBInst : core.ops.function.FnMut F
-  Clause0_Item B) :
-  Self → F → Result (core.iter.adapters.map.Map Self F)
-
-/-- [core::iter::adapters::map::{impl core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::next]:
-    Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 106:4-106:35
-    Name pattern: [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::next]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::next"]
-axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.next
-  {B : Type} {I : Type} {F : Type} {Clause0_Item : Type}
-  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator I
-  Clause0_Item) (opsfunctionFnMutFTupleClause0_ItemBInst :
-  core.ops.function.FnMut F Clause0_Item B) :
-  core.iter.adapters.map.Map I F → Result ((Option B) ×
-    (core.iter.adapters.map.Map I F))
-
-/-- [core::iter::sources::repeat_n::repeat_n]:
-    Source: '/rustc/library/core/src/iter/sources/repeat_n.rs', lines 59:0-59:65
-    Name pattern: [core::iter::sources::repeat_n::repeat_n]
-    Visibility: public -/
-@[rust_fun "core::iter::sources::repeat_n::repeat_n"]
-axiom core.iter.sources.repeat_n.repeat_n
-  {T : Type} (cloneCloneInst : core.clone.Clone T) :
-  T → Std.Usize → Result (core.iter.sources.repeat_n.RepeatN T)
-
-/-- [core::iter::sources::repeat_n::{impl core::iter::traits::iterator::Iterator<A> for core::iter::sources::repeat_n::RepeatN<A>}::next]:
-    Source: '/rustc/library/core/src/iter/sources/repeat_n.rs', lines 119:4-119:35
-    Name pattern: [core::iter::sources::repeat_n::{core::iter::traits::iterator::Iterator<core::iter::sources::repeat_n::RepeatN<@A>, @A>}::next]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::sources::repeat_n::{core::iter::traits::iterator::Iterator<core::iter::sources::repeat_n::RepeatN<@A>, @A>}::next"]
-axiom
-  core.iter.sources.repeat_n.RepeatN.Insts.CoreIterTraitsIteratorIterator.next
-  {A : Type} (cloneCloneInst : core.clone.Clone A) :
-  core.iter.sources.repeat_n.RepeatN A → Result ((Option A) ×
-    (core.iter.sources.repeat_n.RepeatN A))
-
 /-- [core::slice::{[T]}::sort_unstable]:
     Source: '/rustc/library/core/src/slice/mod.rs', lines 3150:4-3152:15
     Name pattern: [core::slice::{[@T]}::sort_unstable]
@@ -363,40 +316,6 @@ axiom merc_utilities.tagged_index.TagIndex.new
   {T : Type} (Tag : Type) :
   T → Result (merc_utilities.tagged_index.TagIndex T Tag)
 
-/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::{impl core::ops::function::FnMut<(T,), merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new<T, Tag>}::call_mut]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
-    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::{core::ops::function::FnMut<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::call_mut]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::{core::ops::function::FnMut<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::call_mut"]
-axiom P.Insts.CoreOpsFunctionFnMutTupleTTagIndex.call_mut
-  {T : Type} {Tag : Type} :
-  T → Result (merc_utilities.tagged_index.TagIndex T Tag) → T → Result
-    ((merc_utilities.tagged_index.TagIndex T Tag) × (T → Result
-    (merc_utilities.tagged_index.TagIndex T Tag)))
-
-/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::{impl core::ops::function::FnOnce<(T,), merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new<T, Tag>}::call_once]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
-    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::{core::ops::function::FnOnce<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::call_once]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::{core::ops::function::FnOnce<@, (@T), merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::call_once"]
-axiom P.Insts.CoreOpsFunctionFnOnceTupleTTagIndex.call_once
-  {T : Type} {Tag : Type} :
-  T → Result (merc_utilities.tagged_index.TagIndex T Tag) → T → Result
-    (merc_utilities.tagged_index.TagIndex T Tag)
-
-/-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
-    Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
-  {T : Type} {Tag : Type} (corecloneCloneInst : core.clone.Clone T) :
-  merc_utilities.tagged_index.TagIndex T Tag → Result
-    (merc_utilities.tagged_index.TagIndex T Tag)
-
 /-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 137:4-137:61
     Name pattern: [merc_utilities::tagged_index::{core::ops::index::Index<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index]
@@ -430,19 +349,22 @@ axiom merc_utilities.timing.Timing.measure
   merc_utilities.timing.Timing → Str → F → Result O
 
 /-- [merc_reduction::signature_refinement::run_worklist_loop]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 783:0-787:11
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 796:0-800:11
     Name pattern: [merc_reduction::signature_refinement::run_worklist_loop] -/
 @[rust_fun "merc_reduction::signature_refinement::run_worklist_loop"]
 axiom merc_reduction.signature_refinement.run_worklist_loop
   {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} (BRANCHING : Bool)
-  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionShared1SliceTagIndexUsizeBlockTagMut2VecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagTupleInst
+  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionShared1SliceTagIndexUsizeBlockTagVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagInst
   : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
   merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
   (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
   merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
   ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
   (merc_utilities.tagged_index.TagIndex Std.Usize
-  merc_collections.indexed_partition.BlockTag)))) Unit)
+  merc_collections.indexed_partition.BlockTag)))) (alloc.vec.Vec
+  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
+  (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag))))
   (coreopsfunctionFnMutGPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTagInst
   : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
   Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
@@ -536,6 +458,17 @@ axiom Slice.Insts.CoreOpsIndexIndexTagIndexU.index
   (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice
   U) U) :
   Slice U → merc_utilities.tagged_index.TagIndex T Tag → Result U
+
+/-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
+    Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
+  {T : Type} {Tag : Type} (corecloneCloneInst : core.clone.Clone T) :
+  merc_utilities.tagged_index.TagIndex T Tag → Result
+    (merc_utilities.tagged_index.TagIndex T Tag)
 
 /-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 92:4-92:35

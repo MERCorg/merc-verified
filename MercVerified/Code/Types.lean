@@ -104,7 +104,7 @@ structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
     merc_lts.lts.LabelTag → Result Bool
 
 /-- [merc_reduction::block_partition::Block]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 514:0-514:16
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:0-532:16
     Name pattern: [merc_reduction::block_partition::Block]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::Block"]
@@ -127,7 +127,7 @@ structure merc_reduction.block_partition.BlockPartition where
   element_offset : alloc.vec.Vec Std.Usize
 
 /-- [merc_reduction::block_partition::BlockPartitionBuilder]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 450:0-450:39
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 468:0-468:39
     Name pattern: [merc_reduction::block_partition::BlockPartitionBuilder] -/
 @[rust_type "merc_reduction::block_partition::BlockPartitionBuilder"]
 structure merc_reduction.block_partition.BlockPartitionBuilder where
@@ -161,7 +161,7 @@ def merc_reduction.signatures.Signature :=
   merc_collections.indexed_partition.BlockTag))
 
 /-- [merc_reduction::signature_refinement::WorklistContext]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 619:0-619:28
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 632:0-632:28
     Name pattern: [merc_reduction::signature_refinement::WorklistContext] -/
 @[rust_type "merc_reduction::signature_refinement::WorklistContext"]
 structure merc_reduction.signature_refinement.WorklistContext (F : Type) (G :
@@ -181,7 +181,7 @@ structure merc_reduction.signature_refinement.WorklistContext (F : Type) (G :
   renumber : G
 
 /-- [merc_reduction::signature_refinement::signature_refinement::{closure}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 748:50-748:52
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 761:50-761:52
     Name pattern: [merc_reduction::signature_refinement::signature_refinement::closure] -/
 @[reducible, rust_type
   "merc_reduction::signature_refinement::signature_refinement::closure"]
@@ -190,7 +190,7 @@ def merc_reduction.signature_refinement.signature_refinement.closure (F : Type)
 Unit
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 53:12-53:18
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 54:12-54:18
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1] -/
 @[reducible, rust_type
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1"]
@@ -199,7 +199,7 @@ def merc_reduction.signature_refinement.strong_bisim_sigref.closure.closure_1
 Unit
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 50:12-50:48
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 50:12-50:52
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure] -/
 @[reducible, rust_type
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure"]

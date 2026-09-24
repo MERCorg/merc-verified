@@ -21,6 +21,7 @@ open merc_utilities.tagged_index (TagIndex)
 open merc_utilities.timing (Timing)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel)
 open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
+open MercVerified.Signatures (StrongBisimSigrefCorrectSpec)
 
 -- Contract pin: fails to compile if `strong_bisim_sigref_correct`'s signature drifts.
 example : ∀ {Label : Type} (TLInst : TransitionLabel Label)
