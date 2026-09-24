@@ -9,6 +9,9 @@ public import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section InductiveSignaturesProofs
 
+/-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Contract pins for the
+"headline" theorems below live in `Signatures/InductiveSignatures_Pins.lean` (human-vetted). -/
+
 /-! ## Inductive signatures and branching bisimilarity for τ-loop-free LTSs
 
 The `Sig` operator is a one-step recurrence. Its full fixed point exists when the
@@ -143,18 +146,6 @@ theorem IsStable.branchingBisimilarity_inductive [Cslib.HasTau Label]
     BranchingBisimilarity lts s₁ s₂ :=
   ⟨fun a b => partition a = partition b, hRel,
     IsStable.isHomBranchingBisimulation_inductive hWF partition sigHash sigFn hFix hStable⟩
-
--- Contract pin (human-reviewed): fails to compile if IsStable.branchingBisimilarity_inductive's
--- signature drifts (e.g. gains an unapproved extra hypothesis).
-example [Cslib.HasTau Label]
-    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
-    (partition : State → Block) {Tag : Type _} (sigHash : State → Tag)
-    (sigFn : State → Set (Label × (Block ⊕ Tag)))
-    (hFix : ∀ s, sigFn s = Sig lts partition sigHash sigFn s)
-    (hStable : IsStable sigFn partition)
-    {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
-    BranchingBisimilarity lts s₁ s₂ :=
-  IsStable.branchingBisimilarity_inductive hWF partition sigHash sigFn hFix hStable hRel
 
 /-! ## Converse direction: branching bisimilarity yields a Sig fixed point
 
@@ -581,15 +572,6 @@ theorem InductiveBranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label]
   obtain ⟨_, partition, _, sigHash, sigFn, hFix, hStable, hEq⟩ := h
   exact IsStable.branchingBisimilarity_inductive hWF partition sigHash sigFn hFix hStable hEq
 
--- Contract pin (human-reviewed): fails to compile if
--- InductiveBranchingFixPoint.branchingBisimilarity's signature drifts (e.g. gains an unapproved
--- extra hypothesis).
-example [Cslib.HasTau Label]
-    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
-    {s s' : State} (h : InductiveBranchingFixPoint lts s s') :
-    BranchingBisimilarity lts s s' :=
-  InductiveBranchingFixPoint.branchingBisimilarity hWF h
-
 /-- **Reverse direction.** Every pair of branching bisimilar states in a τ-loop-free LTS lies in
 some `Sig`-stable fixed-point partition.
 
@@ -615,14 +597,5 @@ theorem BranchingBisimilarity.inductiveBranchingFixPoint.{u, v}
   · -- Stability
     intro a b hab
     exact BranchingBisimilarity.buildSig_stable hWF a b hab
-
--- Contract pin (human-reviewed): fails to compile if
--- BranchingBisimilarity.inductiveBranchingFixPoint's signature drifts (e.g. gains an unapproved
--- extra hypothesis).
-example {State : Type u} {Label : Type v} [Cslib.HasTau Label]
-    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
-    {s₁ s₂ : State} (h : BranchingBisimilarity lts s₁ s₂) :
-    InductiveBranchingFixPoint lts s₁ s₂ :=
-  BranchingBisimilarity.inductiveBranchingFixPoint hWF h
 
 end InductiveSignaturesProofs

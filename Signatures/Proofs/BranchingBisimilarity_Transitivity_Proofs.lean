@@ -8,6 +8,9 @@ open Cslib (LTS HasTau)
 
 @[expose] public section BranchingBisimilarityTransitivity
 
+/-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Contract pins for the
+"headline" theorems below live in `Signatures/BranchingBisimilarity_Pins.lean` (human-vetted). -/
+
 /-- Stuttering lemma: under a branching bisimulation `r`, every τ*-path on the left can be
 mimicked by a τ*-path on the right that ends in a related state. -/
 theorem LTS.IsBranchingBisimulation.stutter [HasTau Label] {lts : LTS State Label}
@@ -46,12 +49,6 @@ theorem BranchingBisimilarity.refl [HasTau Label] {lts : LTS State Label} (s : S
   · intro s' hTr
     exact Or.inr ⟨a, s', (LTS.sTr_τSTr lts).mpr Relation.ReflTransGen.refl, hTr, rfl, rfl⟩
 
--- Contract pin (human-reviewed): fails to compile if BranchingBisimilarity.refl's signature
--- drifts (e.g. gains an unapproved extra hypothesis).
-example [HasTau Label] {lts : LTS State Label} (s : State) :
-    s ≈br[lts] s :=
-  BranchingBisimilarity.refl s
-
 /-- The inverse of a branching bisimulation is a branching bisimulation. -/
 theorem LTS.IsBranchingBisimulation.flip [HasTau Label] {lts : LTS State Label}
     {r : State → State → Prop} (hr : LTS.IsBranchingBisimulation lts r) :
@@ -72,12 +69,6 @@ theorem BranchingBisimilarity.symm [HasTau Label] {lts : LTS State Label}
     {s s' : State} (h : s ≈br[lts] s') : s' ≈br[lts] s := by
   obtain ⟨r, hr12, hr⟩ := h
   exact ⟨fun a b => r b a, hr12, LTS.IsBranchingBisimulation.flip hr⟩
-
--- Contract pin (human-reviewed): fails to compile if BranchingBisimilarity.symm's signature
--- drifts (e.g. gains an unapproved extra hypothesis).
-example [HasTau Label] {lts : LTS State Label}
-    {s s' : State} (h : s ≈br[lts] s') : s' ≈br[lts] s :=
-  BranchingBisimilarity.symm h
 
 /-! ## Semi-branching bisimulation
 
@@ -333,12 +324,5 @@ theorem BranchingBisimilarity.trans [HasTau Label] {lts : LTS State Label}
     (SemiBranchingBisimilarity.trans
       (BranchingBisimilarity.toSemi h12)
       (BranchingBisimilarity.toSemi h23))
-
--- Contract pin (human-reviewed): fails to compile if BranchingBisimilarity.trans's signature
--- drifts (e.g. gains an unapproved extra hypothesis).
-example [HasTau Label] {lts : LTS State Label}
-    {s1 s2 s3 : State} (h12 : s1 ≈br[lts] s2) (h23 : s2 ≈br[lts] s3) :
-    s1 ≈br[lts] s3 :=
-  BranchingBisimilarity.trans h12 h23
 
 end BranchingBisimilarityTransitivity

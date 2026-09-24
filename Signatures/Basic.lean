@@ -5,3 +5,7 @@ import Signatures.Signature
 import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 import Signatures.Proofs.InductiveSignatures_Proofs
 import Signatures.Proofs.Signature_Proofs
+
+import Signatures.Pins.BranchingBisimilarity_Transitivity_Pins
+import Signatures.Pins.InductiveSignatures_Pins
+import Signatures.Pins.Signature_Pins
