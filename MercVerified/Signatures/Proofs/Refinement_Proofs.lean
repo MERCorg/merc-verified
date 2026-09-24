@@ -5,11 +5,10 @@ import MercVerified.Signatures.Refinement
 Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
 `strong_bisim_sigref_correct` proves the `StrongBisimSigrefCorrectSpec`
-contract stated in `MercVerified/Signatures/Refinement.lean`. The
-`example` right after it pins the theorem's exact closed signature (no extra
-hypotheses, no narrowed generality) against that spec: `lake build` fails if
-a regeneration of this theorem drifts from the pinned shape, forcing a
-deliberate, reviewed change to the pin instead of a silent contract change.
+contract stated in `MercVerified/Signatures/Refinement.lean`. Its contract pin
+(the `example` re-stating its exact closed signature, so `lake build` fails
+if a regeneration drifts from the pinned shape) lives in the human-vetted
+`MercVerified/Signatures/Refinement_Pins.lean`, not in this file.
 
 Its proof is not yet done: it requires unfolding the translated `do`-blocks of
 `strong_bisim_sigref`/`signature_refinement` down to the `run_worklist_loop`
@@ -44,15 +43,6 @@ theorem strong_bisim_sigref_correct
     (sys : SimpleLabelledTransitionSystem Label) (timing : Timing) :
     StrongBisimSigrefCorrectSpec TLInst sys timing := by
   sorry
-
-/-- Contract pin (human-reviewed): fails to compile if
-    `strong_bisim_sigref_correct`'s signature drifts from
-    `StrongBisimSigrefCorrectSpec` (e.g. gains an unapproved extra
-    hypothesis). See the module doc comment. -/
-example : ∀ {Label : Type} (TLInst : TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label) (timing : Timing),
-    StrongBisimSigrefCorrectSpec TLInst sys timing :=
-  strong_bisim_sigref_correct
 
 /-- Any partition that is stable for the strong signature witnesses the
     `StrongFixPoint` semantic: two states that end up in the same block are

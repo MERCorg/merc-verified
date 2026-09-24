@@ -418,7 +418,7 @@ impl_def
 }
 
 /-- [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnMut<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}::call_mut]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 748:50-748:52
     Name pattern: [merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_mut] -/
 @[rust_fun
   "merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_mut"]
@@ -454,7 +454,7 @@ def
   ok (ti, c)
 
 /-- [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnOnce<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}::call_once]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 748:50-748:52
     Name pattern: [merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_once] -/
 @[rust_fun
   "merc_reduction::signature_refinement::signature_refinement::{core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>}::call_once"]
@@ -490,7 +490,7 @@ def
   ok ti
 
 /-- Trait implementation: [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnOnce<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 748:50-748:52
     Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnOnce<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>"]
@@ -524,7 +524,7 @@ def
 }
 
 /-- Trait implementation: [merc_reduction::signature_refinement::signature_refinement::{impl core::ops::function::FnMut<(), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>> for merc_reduction::signature_refinement::signature_refinement::{closure}<F, G, L, Clause2_Label, BRANCHING>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 758:50-758:52
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 748:50-748:52
     Name pattern: [core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnMut<merc_reduction::signature_refinement::signature_refinement::closure<@F, @G, @L, @Clause2_Label, @BRANCHING>, (), merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>"]
@@ -564,7 +564,7 @@ def
 }
 
 /-- [merc_reduction::signature_refinement::signature_refinement]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 746:0-755:11
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 736:0-745:11
     Name pattern: [merc_reduction::signature_refinement::signature_refinement] -/
 @[rust_fun "merc_reduction::signature_refinement::signature_refinement"]
 def merc_reduction.signature_refinement.signature_refinement
@@ -633,7 +633,7 @@ def merc_reduction.signature_refinement.signature_refinement
   ok ctx.partition
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}::call_mut]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 53:12-53:18
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_mut] -/
 @[rust_fun
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_mut"]
@@ -656,7 +656,7 @@ def
   ok (none, c)
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}::call_once]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 53:12-53:18
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_once] -/
 @[rust_fun
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>}::call_once"]
@@ -680,7 +680,7 @@ def
   ok o
 
 /-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 53:12-53:18
     Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>"]
@@ -701,7 +701,7 @@ def
 }
 
 /-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(&'_0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'_1 alloc::vec::Vec<merc_reduction::signatures::Signature<'_2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure#1}<L, Clause0_Label>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 63:12-63:18
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 53:12-53:18
     Name pattern: [core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure#1<@L, @Clause0_Label>, (&'0 [(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)], &'1 alloc::vec::Vec<merc_reduction::signatures::Signature<'2>>), core::option::Option<merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>>>"]
@@ -875,7 +875,7 @@ def merc_reduction.signatures.strong_bisim_signature
     builder3
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}::call_mut]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 50:12-50:48
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_mut] -/
 @[rust_fun
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_mut"]
@@ -906,7 +906,7 @@ def
   ok (c, builder1)
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}::call_once]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 50:12-50:48
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_once] -/
 @[rust_fun
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>}::call_once"]
@@ -933,7 +933,7 @@ def
   ok v
 
 /-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnOnce<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 50:12-50:48
     Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>"]
@@ -955,7 +955,7 @@ def
 }
 
 /-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{impl core::ops::function::FnMut<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'_1 merc_reduction::block_partition::BlockPartition, &'_2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'_3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}::{closure}<'_0, L, Clause0_Label>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 60:12-60:48
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 50:12-50:48
     Name pattern: [core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnMut<merc_reduction::signature_refinement::strong_bisim_sigref::closure::closure<'0, @L, @Clause0_Label>, (merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>, &'1 merc_reduction::block_partition::BlockPartition, &'2 [merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>], &'3 mut alloc::vec::Vec<(merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::LabelTag>, merc_utilities::tagged_index::TagIndex<usize, merc_collections::indexed_partition::BlockTag>)>), ()>"]
@@ -980,7 +980,7 @@ def
 }
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{impl core::ops::function::FnOnce<(), merc_reduction::block_partition::BlockPartition> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}<'_0, '_1, '_2, L, Clause0_Label>}::call_once]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 56:48-56:50
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 46:48-46:50
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>}::call_once] -/
 @[rust_fun
   "merc_reduction::signature_refinement::strong_bisim_sigref::{core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>}::call_once"]
@@ -1000,7 +1000,7 @@ def
     merc_ltsltsLTSInst) merc_ltsltsLTSInst t it t ()
 
 /-- Trait implementation: [merc_reduction::signature_refinement::strong_bisim_sigref::{impl core::ops::function::FnOnce<(), merc_reduction::block_partition::BlockPartition> for merc_reduction::signature_refinement::strong_bisim_sigref::{closure}<'_0, '_1, '_2, L, Clause0_Label>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 56:48-56:50
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 46:48-46:50
     Name pattern: [core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>] -/
 @[reducible, rust_trait_impl
   "core::ops::function::FnOnce<merc_reduction::signature_refinement::strong_bisim_sigref::closure<'0, '1, '2, @L, @Clause0_Label>, (), merc_reduction::block_partition::BlockPartition>"]

@@ -8,11 +8,10 @@ Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
 `strong_bisim_signature_spec` proves the `StrongBisimSignatureSpec` contract
 stated in `MercVerified/Signatures/StrongSignature.lean`, using the private
-helper lemmas below it. The `example` right after it pins the theorem's exact
-closed signature (no extra hypotheses, no narrowed generality) against that
-spec: `lake build` fails if a regeneration of this theorem drifts from the
-pinned shape, forcing a deliberate, reviewed change to the pin instead of a
-silent contract change.
+helper lemmas below it. Its contract pin (the `example` re-stating its exact
+closed signature, so `lake build` fails if a regeneration drifts from the
+pinned shape) lives in the human-vetted
+`MercVerified/Signatures/StrongSignature_Pins.lean`, not in this file.
 -/
 
 open Aeneas Aeneas.Std Aeneas.Std.WP Result
@@ -285,24 +284,5 @@ theorem strong_bisim_signature_spec
             simp
       _ ↔ (μ, β) ∈ StrongSignature (toLTS TLInst sys) s blockNumber :=
             sigEntry_mem_iff TLInst sys s blockNumber ts houtgoing μ β
-
-/-- Contract pin (human-reviewed): fails to compile if
-    `strong_bisim_signature_spec`'s signature drifts from
-    `StrongBisimSignatureSpec` (e.g. gains an unapproved extra hypothesis).
-    See the module doc comment. -/
-example :
-    ∀ {Label P : Type}
-      (TLInst : TransitionLabel Label) (PInst : Partition P)
-      (sys : SimpleLabelledTransitionSystem Label) (partition : P)
-      (s : TagIndex Std.Usize StateTag)
-      (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
-      (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
-      (hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
-      (ts : alloc.vec.Vec Transition)
-      (houtgoing :
-        (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS
-            TLInst).outgoing_transitions sys s = ok ts),
-      StrongBisimSignatureSpec TLInst PInst sys partition s builder0 blockNumber hblock ts houtgoing :=
-  strong_bisim_signature_spec
 
 end MercVerified.Signatures.Proofs

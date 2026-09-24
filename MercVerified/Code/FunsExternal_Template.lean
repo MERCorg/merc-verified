@@ -430,7 +430,7 @@ axiom merc_utilities.timing.Timing.measure
   merc_utilities.timing.Timing → Str → F → Result O
 
 /-- [merc_reduction::signature_refinement::run_worklist_loop]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 793:0-797:11
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 783:0-787:11
     Name pattern: [merc_reduction::signature_refinement::run_worklist_loop] -/
 @[rust_fun "merc_reduction::signature_refinement::run_worklist_loop"]
 axiom merc_reduction.signature_refinement.run_worklist_loop
