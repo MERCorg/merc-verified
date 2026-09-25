@@ -16,6 +16,13 @@ set_option maxHeartbeats 1000000
 /- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
 set_option maxRecDepth 2048
 
+/-- [core::sync::atomic::private::Align8]
+    Source: '/rustc/library/core/src/sync/atomic.rs', lines 270:4-270:24
+    Name pattern: [core::sync::atomic::private::Align8]
+    Visibility: public -/
+@[rust_type "core::sync::atomic::private::Align8"]
+axiom core.sync.atomic.private.Align8 (T : Type) : Type
+
 /-- [std::collections::hash::map::HashMap]
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 245:0-250:1
     Name pattern: [std::collections::hash::map::HashMap]
@@ -52,8 +59,15 @@ axiom std.hash.random.RandomState : Type
 @[rust_type "std::hash::random::DefaultHasher"]
 axiom std.hash.random.DefaultHasher : Type
 
+/-- [merc_io::progress::TimeProgress]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/io/src/progress.rs', lines 9:0-9:26
+    Name pattern: [merc_io::progress::TimeProgress]
+    Visibility: public -/
+@[rust_type "merc_io::progress::TimeProgress"]
+axiom merc_io.progress.TimeProgress (T : Type) : Type
+
 /-- [merc_lts::incoming_transitions::IncomingTransitions]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 13:0-13:34
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 23:0-23:30
     Name pattern: [merc_lts::incoming_transitions::IncomingTransitions]
     Visibility: public -/
 @[rust_type "merc_lts::incoming_transitions::IncomingTransitions"]
@@ -62,9 +76,15 @@ axiom merc_lts.incoming_transitions.IncomingTransitions : Type
 /-- [merc_utilities::tagged_index::TagIndex]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 32:0-32:27
     Name pattern: [merc_utilities::tagged_index::TagIndex]
-    Visibility: public -/
-@[rust_type "merc_utilities::tagged_index::TagIndex"]
-axiom merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) : Type
+    Visibility: public -
+
+Model of `TagIndex<T, Tag>`: a phantom-tagged wrapper around `T` (the `Tag`
+parameter is erased at runtime in Rust). Giving it this concrete meaning makes
+every tagged operation (construction, extraction, comparison, indexed access)
+definitional arithmetic on the payload, which is what the array-level proofs of
+the worklist loop need. `new`/`value`/`cmp`/indexing are still extern
+operations, but they now act on real values. -/
+def merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) : Type := T
 
 /-- [merc_utilities::timing::Timing]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 12:0-12:17

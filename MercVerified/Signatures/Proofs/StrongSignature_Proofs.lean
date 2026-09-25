@@ -6,22 +6,24 @@ import Aeneas.Std.WP
 
 Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
-`strong_bisim_signature_spec` proves the `StrongBisimSignatureSpec` contract
-stated in `MercVerified/Signatures/StrongSignature.lean`, using the private
-helper lemmas below it. Its contract pin (the `example` re-stating its exact
-closed signature, so `lake build` fails if a regeneration drifts from the
-pinned shape) lives in the human-vetted
+`strong_bisim_signature_spec_general` proves the `StrongBisimSignatureSpec`
+contract stated in `MercVerified/Signatures/StrongSignature.lean`, generically
+for any `LTS` trait implementor, using the private helper lemmas below it.
+`strong_bisim_signature_spec` specializes it to
+`SimpleLabelledTransitionSystem`. Their contract pins (the `example`s
+re-stating their exact closed signatures, so `lake build` fails if a
+regeneration drifts from the pinned shape) live in the human-vetted
 `MercVerified/Signatures/StrongSignature_Pins.lean`, not in this file.
 -/
 
 open Aeneas Aeneas.Std Aeneas.Std.WP Result
 open merc_utilities.tagged_index (TagIndex)
-open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition)
+open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.signatures (strong_bisim_signature strong_bisim_signature_loop)
 open verified.merc_reduction.partition (Partition)
 open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
-open verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem (toLTS toLTS_Tr tr)
+open verified.merc_lts.lts.LTS (toLTS toLTS_Tr tr)
 
 namespace MercVerified.Signatures.Proofs
 
@@ -169,17 +171,17 @@ private abbrev Entry := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize Blo
     mathematical `StrongSignature`, given that `ts` is the transition list of
     `s` (i.e. `outgoing_transitions sys s` succeeds with `ts`). -/
 private theorem sigEntry_mem_iff
-    {Label : Type}
-    (TLInst : TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label)
+    {L Label : Type}
+    (LTSInst : LTS L Label)
+    (sys : L)
     (s : TagIndex Std.Usize StateTag)
     (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
     (ts : alloc.vec.Vec Transition)
-    (houtgoing : (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).outgoing_transitions sys s = ok ts) :
+    (houtgoing : LTSInst.outgoing_transitions sys s = ok ts) :
     ∀ μ β, (μ, β) ∈ List.map (sigEntry blockNumber) ts.val ↔
-      (μ, β) ∈ StrongSignature (toLTS TLInst sys) s blockNumber := by
+      (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber := by
   intro μ β
-  have htr : ∀ s', tr TLInst sys s μ s' ↔ { label := μ, «to» := s' } ∈ ts.val := by
+  have htr : ∀ s', tr LTSInst sys s μ s' ↔ { label := μ, «to» := s' } ∈ ts.val := by
     intro s'
     constructor
     · intro h
@@ -204,7 +206,7 @@ private theorem sigEntry_mem_iff
             refine ⟨{ label := μ, «to» := s' }, hmem, ?_, ?_⟩
             · rfl
             · simpa using hsb
-    _ ↔ ∃ s', tr TLInst sys s μ s' ∧ blockNumber s' = β := by
+    _ ↔ ∃ s', tr LTSInst sys s μ s' ∧ blockNumber s' = β := by
           apply exists_congr
           intro s'
           constructor
@@ -212,32 +214,34 @@ private theorem sigEntry_mem_iff
             exact ⟨(htr s').mpr hmem, hsb⟩
           · rintro ⟨htm, hsb⟩
             exact ⟨(htr s').mp htm, hsb⟩
-    _ ↔ ∃ s', (toLTS TLInst sys).Tr s μ s' ∧ blockNumber s' = β := by
+    _ ↔ ∃ s', (toLTS LTSInst sys).Tr s μ s' ∧ blockNumber s' = β := by
           apply exists_congr
           intro s'
           constructor
           · rintro ⟨htm, hsb⟩
-            exact ⟨(toLTS_Tr TLInst sys s μ s').mp htm, hsb⟩
+            exact ⟨(toLTS_Tr LTSInst sys s μ s').mp htm, hsb⟩
           · rintro ⟨htm, hsb⟩
-            exact ⟨(toLTS_Tr TLInst sys s μ s').mpr htm, hsb⟩
-    _ ↔ (μ, β) ∈ StrongSignature (toLTS TLInst sys) s blockNumber := by
+            exact ⟨(toLTS_Tr LTSInst sys s μ s').mpr htm, hsb⟩
+    _ ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber := by
           simp [StrongSignature]
 
-theorem strong_bisim_signature_spec
-    {Label P : Type}
-    (TLInst : TransitionLabel Label)
+/-- Contract pin theorem: for any `LTS` trait implementor `L`/`LTSInst`,
+    `strong_bisim_signature` computes exactly the mathematical
+    `StrongSignature`, given that `outgoing_transitions s` and every
+    `block_number` lookup it needs succeed. -/
+theorem strong_bisim_signature_spec_general
+    {L Label P : Type}
+    (LTSInst : LTS L Label)
     (PInst : Partition P)
-    (sys : SimpleLabelledTransitionSystem Label)
+    (sys : L)
     (partition : P)
     (s : TagIndex Std.Usize StateTag)
     (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
     (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
     (hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
     (ts : alloc.vec.Vec Transition)
-    (houtgoing :
-      (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS
-          TLInst).outgoing_transitions sys s = ok ts) :
-    StrongBisimSignatureSpec TLInst PInst sys partition s builder0 blockNumber hblock ts houtgoing := by
+    (houtgoing : LTSInst.outgoing_transitions sys s = ok ts) :
+    StrongBisimSignatureSpec LTSInst PInst sys partition s builder0 blockNumber hblock ts houtgoing := by
   unfold StrongBisimSignatureSpec
   rw [strong_bisim_signature]
   rcases (alloc.vec.Vec.clear_spec (T := Entry) Global builder0) with ⟨builder1, hb1, hb1val⟩
@@ -258,12 +262,9 @@ theorem strong_bisim_signature_spec
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
       builder3) with ⟨result, hdedup, hdedupmem⟩
   refine ⟨result, ?_, ?_⟩
-  · have houtgoing' :
-        SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS.outgoing_transitions TLInst sys s = ok ts := by
-        simpa using houtgoing
-    rw [hb1]
+  · rw [hb1]
     simp
-    rw [houtgoing']
+    rw [houtgoing]
     simp
     simp [alloc.vec.IntoIteratorVec.into_iter]
     rw [hb2]
@@ -282,7 +283,31 @@ theorem strong_bisim_signature_spec
       _ ↔ (μ, β) ∈ List.map (sigEntry blockNumber) ts.val := by
             rw [hb2val, hb1val]
             simp
-      _ ↔ (μ, β) ∈ StrongSignature (toLTS TLInst sys) s blockNumber :=
-            sigEntry_mem_iff TLInst sys s blockNumber ts houtgoing μ β
+      _ ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber :=
+            sigEntry_mem_iff LTSInst sys s blockNumber ts houtgoing μ β
+
+/-- `SimpleLabelledTransitionSystem`'s `LTS` instance is a specific `LTS`
+    implementor, so its correctness result is a corollary of the generic
+    `strong_bisim_signature_spec_general`. -/
+theorem strong_bisim_signature_spec
+    {Label P : Type}
+    (TLInst : TransitionLabel Label)
+    (PInst : Partition P)
+    (sys : SimpleLabelledTransitionSystem Label)
+    (partition : P)
+    (s : TagIndex Std.Usize StateTag)
+    (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
+    (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
+    (hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
+    (ts : alloc.vec.Vec Transition)
+    (houtgoing :
+      (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS
+          TLInst).outgoing_transitions sys s = ok ts) :
+    StrongBisimSignatureSpec
+      (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+      PInst sys partition s builder0 blockNumber hblock ts houtgoing :=
+  strong_bisim_signature_spec_general
+    (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+    PInst sys partition s builder0 blockNumber hblock ts houtgoing
 
 end MercVerified.Signatures.Proofs

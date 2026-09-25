@@ -33,6 +33,16 @@ axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
 axiom Usize.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
+/-- [core::hash::impls::{impl core::hash::Hash for (T, B)}::hash]:
+    Source: '/rustc/library/core/src/hash/mod.rs', lines 894:20-894:60
+    Name pattern: [core::hash::impls::{core::hash::Hash<(@T, @B)>}::hash]
+    Visibility: public -/
+@[rust_fun "core::hash::impls::{core::hash::Hash<(@T, @B)>}::hash"]
+axiom Pair.Insts.CoreHashHash.hash
+  {T : Type} {B : Type} {S : Type} (HashInst : core.hash.Hash T) (HashInst1 :
+  core.hash.Hash B) (HasherInst : core.hash.Hasher S) :
+  (T × B) → S → Result S
+
 /-- [core::slice::{[T]}::sort_unstable]:
     Source: '/rustc/library/core/src/slice/mod.rs', lines 3150:4-3152:15
     Name pattern: [core::slice::{[@T]}::sort_unstable]
@@ -40,6 +50,16 @@ axiom Usize.Insts.CoreHashHash.hash
 @[rust_fun "core::slice::{[@T]}::sort_unstable"]
 axiom core.slice.Slice.sort_unstable
   {T : Type} (cmpOrdInst : core.cmp.Ord T) : Slice T → Result (Slice T)
+
+/-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::ne]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 34:16-34:55
+    Name pattern: [core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne]
+    Visibility: public -/
+@[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne"]
+axiom Pair.Insts.CoreCmpPartialEqPair.ne
+  {U : Type} {T : Type} (cmpPartialEqInst : core.cmp.PartialEq U U)
+  (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
+  (U × T) → (U × T) → Result Bool
 
 /-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::eq]:
     Source: '/rustc/library/core/src/tuple.rs', lines 30:16-30:55
@@ -107,6 +127,33 @@ axiom std.collections.hash.map.HashMap.get
   core.hash.Hash Q) (corecmpEqInst1 : core.cmp.Eq Q) :
   std.collections.hash.map.HashMap K V S A → Q → Result (Option V)
 
+/-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::get_key_value]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1092:4-1095:21
+    Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::get_key_value]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::get_key_value"]
+axiom std.collections.hash.map.HashMap.get_key_value
+  {K : Type} {V : Type} {S : Type} {A : Type} {Q : Type} {Clause2_Hasher :
+  Type} (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+  (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher)
+  (coreborrowBorrowInst : core.borrow.Borrow K Q) (corehashHashInst1 :
+  core.hash.Hash Q) (corecmpEqInst1 : core.cmp.Eq Q) :
+  std.collections.hash.map.HashMap K V S A → Q → Result (Option (K × V))
+
+/-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::insert]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1332:4-1332:53
+    Name pattern: [std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::insert]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::insert"]
+axiom std.collections.hash.map.HashMap.insert
+  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
+  (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+  (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher) :
+  std.collections.hash.map.HashMap K V S A → K → V → Result ((Option V)
+    × (std.collections.hash.map.HashMap K V S A))
+
 /-- [std::collections::hash::map::{impl core::clone::Clone for std::collections::hash::map::HashMap<K, V, S, A>}::clone]:
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1437:4-1437:27
     Name pattern: [std::collections::hash::map::{core::clone::Clone<std::collections::hash::map::HashMap<@K, @V, @S, @A>>}::clone]
@@ -134,6 +181,18 @@ axiom std.collections.hash.map.HashMap.Insts.CoreCmpPartialEqHashMap.eq
   core.hash.BuildHasher S Clause3_Hasher) :
   std.collections.hash.map.HashMap K V S A → std.collections.hash.map.HashMap
     K V S A → Result Bool
+
+/-- [std::collections::hash::map::{impl core::default::Default for std::collections::hash::map::HashMap<K, V, S, alloc::alloc::Global>}::default]:
+    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1494:4-1494:36
+    Name pattern: [std::collections::hash::map::{core::default::Default<std::collections::hash::map::HashMap<@K, @V, @S, alloc::alloc::Global>>}::default]
+    Visibility: public -/
+@[rust_fun
+  "std::collections::hash::map::{core::default::Default<std::collections::hash::map::HashMap<@K, @V, @S, alloc::alloc::Global>>}::default"]
+axiom
+  std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default
+  (K : Type) (V : Type) {S : Type} (coredefaultDefaultInst :
+  core.default.Default S) :
+  Result (std.collections.hash.map.HashMap K V S Global)
 
 /-- [std::collections::hash::map::{impl core::iter::traits::iterator::Iterator<&'a V> for std::collections::hash::map::Values<'a, K, V>}::next]:
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 2264:4-2264:39
@@ -268,6 +327,28 @@ axiom alloc.vec.Vec.dedup
   {T : Type} (A : Type) (corecmpPartialEqInst : core.cmp.PartialEq T T) :
   alloc.vec.Vec T → Result (alloc.vec.Vec T)
 
+/-- [alloc::vec::{impl core::hash::Hash for alloc::vec::Vec<T>}::hash]:
+    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3965:4-3965:44
+    Name pattern: [alloc::vec::{core::hash::Hash<alloc::vec::Vec<@T>>}::hash]
+    Visibility: public -/
+@[rust_fun "alloc::vec::{core::hash::Hash<alloc::vec::Vec<@T>>}::hash"]
+axiom alloc.vec.Vec.Insts.CoreHashHash.hash
+  {T : Type} (A : Type) {H : Type} (corehashHashInst : core.hash.Hash T)
+  (corehashHasherInst : core.hash.Hasher H) :
+  alloc.vec.Vec T → H → Result H
+
+/-- [alloc::vec::{impl core::iter::traits::collect::Extend<T> for alloc::vec::Vec<T>}::extend]:
+    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 4107:4-4107:60
+    Name pattern: [alloc::vec::{core::iter::traits::collect::Extend<alloc::vec::Vec<@T>, @T>}::extend]
+    Visibility: public -/
+@[rust_fun
+  "alloc::vec::{core::iter::traits::collect::Extend<alloc::vec::Vec<@T>, @T>}::extend"]
+axiom alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend
+  {T : Type} (A : Type) {I : Type} {Clause0_IntoIter : Type}
+  (coreitertraitscollectIntoIteratorInst :
+  core.iter.traits.collect.IntoIterator I T Clause0_IntoIter) :
+  alloc.vec.Vec T → I → Result (alloc.vec.Vec T)
+
 /-- [alloc::vec::{impl core::default::Default for alloc::vec::Vec<T>}::default]:
     Source: '/rustc/library/alloc/src/vec/mod.rs', lines 4417:4-4417:26
     Name pattern: [alloc::vec::{core::default::Default<alloc::vec::Vec<@T>>}::default]
@@ -277,16 +358,36 @@ axiom alloc.vec.Vec.dedup
 axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
   (T : Type) : Result (alloc.vec.Vec T)
 
-/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions<'a>}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 28:4-28:42
-    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions<'a>}::new]
+/-- [merc_io::progress::{merc_io::progress::TimeProgress<T>}::print]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/io/src/progress.rs', lines 38:4-38:34
+    Name pattern: [merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print]
+    Visibility: public -/
+@[rust_fun "merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print"]
+axiom merc_io.progress.TimeProgress.print
+  {T : Type} : merc_io.progress.TimeProgress T → T → Result Unit
+
+/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::new]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 35:4-35:39
+    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::new]
     Visibility: public -/
 @[rust_fun
-  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions<'a>}::new"]
+  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::new"]
 axiom merc_lts.incoming_transitions.IncomingTransitions.new
   {L : Type} {Clause0_Label : Type} (ltsLTSInst : merc_lts.lts.LTS L
   Clause0_Label) :
   L → Result merc_lts.incoming_transitions.IncomingTransitions
+
+/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_transitions]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 108:4-108:86
+    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_transitions]
+    Visibility: public -/
+@[rust_fun
+  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_transitions"]
+axiom merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions
+  :
+  merc_lts.incoming_transitions.IncomingTransitions →
+    merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag →
+    Result (alloc.vec.Vec merc_lts.incoming_transitions.FromTransition)
 
 /-- [merc_lts::lts::{impl core::clone::Clone for merc_lts::lts::Transition}::clone]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
@@ -312,9 +413,10 @@ axiom merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
     Visibility: public -/
 @[rust_fun
   "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new"]
-axiom merc_utilities.tagged_index.TagIndex.new
+def merc_utilities.tagged_index.TagIndex.new
   {T : Type} (Tag : Type) :
-  T → Result (merc_utilities.tagged_index.TagIndex T Tag)
+  T → Result (merc_utilities.tagged_index.TagIndex T Tag) :=
+  fun i => ok i
 
 /-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 137:4-137:61
@@ -322,11 +424,82 @@ axiom merc_utilities.tagged_index.TagIndex.new
     Visibility: public -/
 @[rust_fun
   "merc_utilities::tagged_index::{core::ops::index::Index<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index"]
-axiom alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
+def alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
   {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
-  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice
-  U) U) :
-  alloc.vec.Vec U → merc_utilities.tagged_index.TagIndex T Tag → Result U
+  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice U) U) :
+  alloc.vec.Vec U → merc_utilities.tagged_index.TagIndex T Tag → Result U :=
+  fun v t => coresliceindexSliceIndexTSliceUInst.index (t : T) v.slice
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 630:4-630:31
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent"]
+axiom merc_reduction.block_partition.Block.assert_consistent
+  : merc_reduction.block_partition.Block → Result Unit
+
+/-- [merc_utilities::tagged_index::{impl core::ops::index::IndexMut<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index_mut]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 151:4-151:73
+    Name pattern: [merc_utilities::tagged_index::{core::ops::index::IndexMut<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index_mut]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::ops::index::IndexMut<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index_mut"]
+def alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+  {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
+  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice U) U) :
+  alloc.vec.Vec U → merc_utilities.tagged_index.TagIndex T Tag → Result
+    (U × (U → alloc.vec.Vec U)) :=
+  fun v t => do
+    let (x, f) ← coresliceindexSliceIndexTSliceUInst.index_mut (t : T) v.slice
+    ok (x, fun u => ({ slice := f u } : alloc.vec.Vec U))
+
+/-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
+    Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
+  {T : Type} {Tag : Type} (corecloneCloneInst : core.clone.Clone T) :
+  merc_utilities.tagged_index.TagIndex T Tag → Result
+    (merc_utilities.tagged_index.TagIndex T Tag)
+
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::partial_cmp]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 71:4-71:69
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp"]
+def
+  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex.partial_cmp
+  {T : Type} {Tag : Type} (corecmpPartialOrdInst : core.cmp.PartialOrd T T) :
+  merc_utilities.tagged_index.TagIndex T Tag →
+    merc_utilities.tagged_index.TagIndex T Tag → Result (Option Ordering) :=
+  fun a b => corecmpPartialOrdInst.partial_cmp a b
+
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 59:4-59:38
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  merc_utilities.tagged_index.TagIndex T Tag →
+    merc_utilities.tagged_index.TagIndex T Tag → Result Bool :=
+  fun a b => corecmpPartialEqInst.eq a b
+
+/-- [merc_utilities::tagged_index::{impl core::cmp::Ord for merc_utilities::tagged_index::TagIndex<T, Tag>}::cmp]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 65:4-65:53
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd.cmp
+  {T : Type} {Tag : Type} (corecmpOrdInst : core.cmp.Ord T) :
+  merc_utilities.tagged_index.TagIndex T Tag →
+    merc_utilities.tagged_index.TagIndex T Tag → Result Ordering :=
+  fun a b => corecmpOrdInst.cmp a b
 
 /-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::value]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 116:4-116:28
@@ -334,9 +507,42 @@ axiom alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
     Visibility: public -/
 @[rust_fun
   "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::value"]
-axiom merc_utilities.tagged_index.TagIndex.value
+def merc_utilities.tagged_index.TagIndex.value
   {T : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T) :
-  merc_utilities.tagged_index.TagIndex T Tag → Result T
+  merc_utilities.tagged_index.TagIndex T Tag → Result T :=
+  fun t => ok t
+
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 92:4-92:35
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
+  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  merc_utilities.tagged_index.TagIndex T Tag → T → Result Bool :=
+  fun a b => corecmpPartialEqInst.eq a b
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 425:4-425:39
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent"]
+axiom merc_reduction.block_partition.BlockPartition.assert_consistent
+  : merc_reduction.block_partition.BlockPartition → Result Bool
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 311:4-315:5
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+axiom merc_reduction.block_partition.BlockPartition.mark_backward_closure
+  :
+  merc_reduction.block_partition.BlockPartition →
+    merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag →
+    merc_lts.incoming_transitions.IncomingTransitions → Result
+    merc_reduction.block_partition.BlockPartition
 
 /-- [merc_utilities::timing::{merc_utilities::timing::Timing}::measure]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 37:4-39:25
@@ -348,68 +554,14 @@ axiom merc_utilities.timing.Timing.measure
   core.ops.function.FnOnce F Unit O) :
   merc_utilities.timing.Timing → Str → F → Result O
 
-/-- [merc_reduction::signature_refinement::run_worklist_loop]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 796:0-800:11
-    Name pattern: [merc_reduction::signature_refinement::run_worklist_loop] -/
-@[rust_fun "merc_reduction::signature_refinement::run_worklist_loop"]
-axiom merc_reduction.signature_refinement.run_worklist_loop
-  {F : Type} {G : Type} {L : Type} {Clause2_Label : Type} (BRANCHING : Bool)
-  (coreopsfunctionFnMutFTupleTagIndexUsizeStateTagShared0BlockPartitionShared1SliceTagIndexUsizeBlockTagVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagVecPairTagIndexUsizeLabelTagTagIndexUsizeBlockTagInst
-  : core.ops.function.FnMut F ((merc_utilities.tagged_index.TagIndex Std.Usize
-  merc_lts.lts.StateTag) × merc_reduction.block_partition.BlockPartition ×
-  (Slice (merc_utilities.tagged_index.TagIndex Std.Usize
-  merc_collections.indexed_partition.BlockTag)) × (alloc.vec.Vec
-  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
-  (merc_utilities.tagged_index.TagIndex Std.Usize
-  merc_collections.indexed_partition.BlockTag)))) (alloc.vec.Vec
-  ((merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag) ×
-  (merc_utilities.tagged_index.TagIndex Std.Usize
-  merc_collections.indexed_partition.BlockTag))))
-  (coreopsfunctionFnMutGPairShared0SlicePairTagIndexUsizeLabelTagTagIndexUsizeBlockTagShared1VecSignatureOptionTagIndexUsizeBlockTagInst
-  : core.ops.function.FnMut G ((Slice ((merc_utilities.tagged_index.TagIndex
-  Std.Usize merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex
-  Std.Usize merc_collections.indexed_partition.BlockTag))) × (alloc.vec.Vec
-  merc_reduction.signatures.Signature)) (Option
-  (merc_utilities.tagged_index.TagIndex Std.Usize
-  merc_collections.indexed_partition.BlockTag))) (merc_ltsltsLTSInst :
-  merc_lts.lts.LTS L Clause2_Label) :
-  L → merc_lts.incoming_transitions.IncomingTransitions →
-    merc_reduction.signature_refinement.WorklistContext F G → Result
-    (merc_reduction.signature_refinement.WorklistContext F G)
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::partial_cmp]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 71:4-71:69
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp]
+/-- [rustc_hash::{impl core::default::Default for rustc_hash::FxBuildHasher}::default]:
+    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 344:44-344:51
+    Name pattern: [rustc_hash::{core::default::Default<rustc_hash::FxBuildHasher>}::default]
     Visibility: public -/
 @[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp"]
-axiom
-  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex.partial_cmp
-  {T : Type} {Tag : Type} (corecmpPartialOrdInst : core.cmp.PartialOrd T T) :
-  merc_utilities.tagged_index.TagIndex T Tag →
-    merc_utilities.tagged_index.TagIndex T Tag → Result (Option Ordering)
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 59:4-59:38
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
-  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
-  merc_utilities.tagged_index.TagIndex T Tag →
-    merc_utilities.tagged_index.TagIndex T Tag → Result Bool
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::Ord for merc_utilities::tagged_index::TagIndex<T, Tag>}::cmp]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 65:4-65:53
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd.cmp
-  {T : Type} {Tag : Type} (corecmpOrdInst : core.cmp.Ord T) :
-  merc_utilities.tagged_index.TagIndex T Tag →
-    merc_utilities.tagged_index.TagIndex T Tag → Result Ordering
+  "rustc_hash::{core::default::Default<rustc_hash::FxBuildHasher>}::default"]
+axiom rustc_hash.FxBuildHasher.Insts.CoreDefaultDefault.default
+  : Result rustc_hash.FxBuildHasher
 
 /-- [rustc_hash::{impl core::hash::BuildHasher<rustc_hash::FxHasher> for rustc_hash::FxBuildHasher}::build_hasher]:
     Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.2/src/lib.rs', lines 350:4-350:38
@@ -447,6 +599,13 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
   (corehashHasherInst : core.hash.Hasher H) :
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
 
+/-- [merc_reduction::signature_refinement::new_worklist_progress]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 719:0-719:58
+    Name pattern: [merc_reduction::signature_refinement::new_worklist_progress] -/
+@[rust_fun "merc_reduction::signature_refinement::new_worklist_progress"]
+axiom merc_reduction.signature_refinement.new_worklist_progress
+  : Result (merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
+
 /-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for [U]}::index]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 145:4-145:61
     Name pattern: [merc_utilities::tagged_index::{core::ops::index::Index<[@U], merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index]
@@ -458,25 +617,4 @@ axiom Slice.Insts.CoreOpsIndexIndexTagIndexU.index
   (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice
   U) U) :
   Slice U → merc_utilities.tagged_index.TagIndex T Tag → Result U
-
-/-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
-    Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
-  {T : Type} {Tag : Type} (corecloneCloneInst : core.clone.Clone T) :
-  merc_utilities.tagged_index.TagIndex T Tag → Result
-    (merc_utilities.tagged_index.TagIndex T Tag)
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 92:4-92:35
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
-  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
-  merc_utilities.tagged_index.TagIndex T Tag → T → Result Bool
 
