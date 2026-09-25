@@ -1,6 +1,6 @@
 name = "merc-verified"
 version = "0.1.0"
-defaultTargets = ["MercVerified", "Signatures"]
+defaultTargets = ["MercVerified", "Signatures", "Rewriting"]
 
 [[lean_lib]]
 name = "MercVerified"
@@ -9,6 +9,10 @@ globs = ["MercVerified.*"]
 [[lean_lib]]
 name = "Signatures"
 globs = ["Signatures.*"]
+
+[[lean_lib]]
+name = "Rewriting"
+globs = ["Rewriting.*"]
 
 [[require]]
 name = "cslib"
