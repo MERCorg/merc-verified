@@ -100,22 +100,21 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "bindgen"
-version = "0.72.1"
+version = "0.73.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "993776b509cfb49c750f11b8f07a46fa23e0a1386ffc01fb1e7d343efc387895"
+checksum = "787ef8ef523575546b106a58213d6e6b06198a05c2f757258c68a74273670cfa"
 dependencies = [
  "bitflags",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
  "log",
- "prettyplease",
+ "prettyplease 0.3.0",
  "proc-macro2",
  "quote",
  "regex",
  "rustc-hash",
- "shlex",
- "syn 2.0.117",
+ "shlex 2.0.1",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -164,7 +163,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1dce859f0832a7d088c4f1119888ab94ef4b5d6795d1ce05afb7fe159d79f98"
 dependencies = [
  "find-msvc-tools",
- "shlex",
+ "shlex 1.3.0",
 ]
 
 [[package]]
@@ -433,24 +432,6 @@ checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
 
 [[package]]
 name = "itertools"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
@@ -574,7 +555,7 @@ dependencies = [
  "allocator-api2 0.4.0",
  "delegate",
  "equivalent",
- "itertools 0.15.0",
+ "itertools",
  "log",
  "merc_collections",
  "merc_io",
@@ -599,7 +580,7 @@ dependencies = [
  "bitvec",
  "delegate",
  "hashbrown 0.17.1",
- "itertools 0.15.0",
+ "itertools",
  "log",
  "merc_io",
  "merc_utilities",
@@ -643,7 +624,7 @@ dependencies = [
  "bumpalo",
  "cargo-emit",
  "delegate",
- "itertools 0.15.0",
+ "itertools",
  "log",
  "merc_aterm",
  "merc_collections",
@@ -679,10 +660,10 @@ dependencies = [
 
 [[package]]
 name = "merc_pest_consume"
-version = "2.0.0"
-source = "git+https://github.com/MERCorg/pest_consume#85a78b26809c63d84c5605ec8f408d04bae5f53f"
+version = "2.1.0"
+source = "git+https://github.com/MERCorg/pest_consume#3e52337cbc414ae4212eb445469b44f90f3ee03c"
 dependencies = [
- "itertools 0.14.0",
+ "itertools",
  "merc_pest_consume_macros",
  "pest",
  "pest_derive",
@@ -690,12 +671,12 @@ dependencies = [
 
 [[package]]
 name = "merc_pest_consume_macros"
-version = "2.0.0"
-source = "git+https://github.com/MERCorg/pest_consume#85a78b26809c63d84c5605ec8f408d04bae5f53f"
+version = "2.1.0"
+source = "git+https://github.com/MERCorg/pest_consume#3e52337cbc414ae4212eb445469b44f90f3ee03c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.117",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -705,7 +686,7 @@ dependencies = [
  "bitvec",
  "bumpalo",
  "delegate",
- "itertools 0.15.0",
+ "itertools",
  "log",
  "merc_collections",
  "merc_io",
@@ -734,7 +715,7 @@ dependencies = [
  "dashmap",
  "equivalent",
  "hashbrown 0.17.1",
- "itertools 0.15.0",
+ "itertools",
  "log",
  "merc_collections",
  "merc_io",
@@ -973,6 +954,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "prettyplease"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bfe0f4c752e450fc2faf62654f1c134747922825d5b04ca717b8874f41a40c0"
+dependencies = [
+ "proc-macro2",
+ "syn 3.0.4",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1163,6 +1154,12 @@ name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
+
+[[package]]
+name = "shlex"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "smallvec"
@@ -1453,7 +1450,7 @@ dependencies = [
  "anyhow",
  "heck",
  "indexmap",
- "prettyplease",
+ "prettyplease 0.2.37",
  "syn 2.0.117",
  "wasm-metadata",
  "wit-bindgen-core",
@@ -1467,7 +1464,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c0f9bfd77e6a48eccf51359e3ae77140a7f50b1e2ebfe62422d8afdaffab17a"
 dependencies = [
  "anyhow",
- "prettyplease",
+ "prettyplease 0.2.37",
  "proc-macro2",
  "quote",
  "syn 2.0.117",

@@ -438,6 +438,12 @@ def alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
 axiom merc_reduction.block_partition.Block.assert_consistent
   : merc_reduction.block_partition.Block → Result Unit
 
+/-- Vetted boundary fact: `assert_consistent` always runs to completion (returns
+    `ok`). The Rust code calls it purely for its consistency side-effect. -/
+axiom merc_reduction.block_partition.Block.assert_consistent_ok
+  (self : merc_reduction.block_partition.Block) : ∃ u : Unit,
+    merc_reduction.block_partition.Block.assert_consistent self = ok u
+
 /-- [merc_utilities::tagged_index::{impl core::ops::index::IndexMut<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index_mut]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 151:4-151:73
     Name pattern: [merc_utilities::tagged_index::{core::ops::index::IndexMut<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index_mut]

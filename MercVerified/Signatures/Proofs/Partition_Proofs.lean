@@ -54,8 +54,80 @@ theorem block_partition_block_val
     vec_tagged_index_val p.blocks b h,
   ]
 
-/-!
-## `BlockPartition::new_loop` semantics
+/-- `BlockPartition::blocks` is indexed by the tag's payload via `index_mut`
+    (the mutating variant of `vec_tagged_index_val`): it reads
+    `blocks[block_index]` and yields the "back" writer `Slice.set`. -/
+theorem blocks_index_mut_contract
+    (p : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex)
+    (h : block_index.val < p.blocks.slice.val.length) :
+    alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        (core.slice.index.SliceIndexUsizeSlice verified.merc_reduction.block_partition.Block)
+        p.blocks block_index =
+      ok (p.blocks.slice.val[block_index.val]'h,
+          fun u => ({ slice := p.blocks.slice.set block_index u } : alloc.vec.Vec
+                  verified.merc_reduction.block_partition.Block)) := by
+  have hg : p.blocks.slice.val[block_index.val]? = some (p.blocks.slice.val[block_index.val]'h) :=
+    List.getElem?_eq_getElem h
+  simp only [alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut,
+    core.slice.index.Usize.index_mut, Slice.index_mut_usize, Slice.index_usize]
+  simp [hg]
+
+/-- `Block::len` is the derived length `end - begin`: the `assert_consistent`
+    integrity check always completes (vetted boundary axiom), so the result is
+    the scalar subtraction (which may itself fail on underflow). -/
+theorem block_len_contract
+    (b : verified.merc_reduction.block_partition.Block) :
+    verified.merc_reduction.block_partition.Block.len b = b.end - b.begin := by
+  unfold verified.merc_reduction.block_partition.Block.len
+  rcases merc_reduction.block_partition.Block.assert_consistent_ok b with ⟨u, hu⟩
+  rw [hu]
+  simp
+
+/-- `BlockPartition::is_trivially_partitioned` reads `blocks[block_index]` and
+    reports whether its derived length is exactly `1`: the do-mirror equation. -/
+theorem is_trivially_partitioned_contract
+    (self : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) :
+    verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned self block_index =
+      (do
+        let b ←
+          alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+            (core.slice.index.SliceIndexUsizeSlice
+              verified.merc_reduction.block_partition.Block) self.blocks block_index
+        let i ← verified.merc_reduction.block_partition.Block.len b
+        ok (i = 1#usize)) := by
+  rfl
+
+/-- Value form of `is_trivially_partitioned` once the read of `blocks[block_index]`
+    is resolved: the pending `Block::len` call on the indexed block. -/
+theorem is_trivially_partitioned_after_ok
+    (self : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) (h : block_index.val < self.blocks.val.length) :
+    verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned self block_index =
+      (do
+        let b ← ok (self.blocks.val[block_index.val]'h)
+        let i ← verified.merc_reduction.block_partition.Block.len b
+        ok (i = 1#usize)) := by
+  unfold verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned
+  rw [vec_tagged_index_val self.blocks block_index h]
+  rfl
+
+private abbrev PartitionSigKey := alloc.vec.Vec ((TagIndex Std.Usize verified.merc_lts.lts.LabelTag) × BlockIndex)
+private abbrev PartitionInternMap :=
+  std.collections.hash.map.HashMap PartitionSigKey BlockIndex verified.rustc_hash.FxBuildHasher Global
+
+private abbrev PPBuilder := verified.merc_reduction.block_partition.BlockPartitionBuilder
+
+/-- `block_index`'s block with its whole suffix marked (applied by
+    `trivial_partition_marked`). -/
+private def mark_all (self : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) (h : block_index.val < self.blocks.val.length) :
+    verified.merc_reduction.block_partition.Block :=
+  { self.blocks.val[block_index.val]'h with
+      marked_split := (self.blocks.val[block_index.val]'h).«end» }
+
+/-- `BlockPartition::new_loop` semantics
 
 `new_loop` fills `elements`/`element_to_block`/`element_offset` for a fresh
 partition over `[0, num)`: `elements` and `element_offset` enumerate the range,
@@ -99,6 +171,143 @@ lemma sz_val_le_max (x : Sz) : x.val ≤ Usize.max := by
   have h := sz_val_lt_two_pow x
   simp [Usize.max, Usize.numBits] at h ⊢
   omega
+
+/-- `1`, the length of a singleton list, fits in `usize`. -/
+private lemma one_le_max : (1 : Nat) ≤ Usize.max := by
+  simp [Usize.max, Usize.numBits]
+  cases System.Platform.numBits_eq with
+  | inl h => rw [h]; norm_num
+  | inr h => rw [h]; norm_num
+
+/-- `BlockPartition::trivial_partition_marked` returns the singleton marked list
+    `[block_index]` and updates `blocks[block_index]` to be unconditionally
+    marked (`unmark_all`: its `marked_split` suffix is pulled up to `end`). -/
+theorem trivial_partition_marked_contract
+    (self : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) (h : block_index.val < self.blocks.val.length) :
+    ∃ (v : alloc.vec.Vec BlockIndex)
+      (p : verified.merc_reduction.block_partition.BlockPartition),
+      verified.merc_reduction.block_partition.BlockPartition.trivial_partition_marked self block_index = ok (v, p) ∧
+      v.val = [block_index] ∧
+      p.blocks.val =
+        self.blocks.val.set block_index.val
+          ({ self.blocks.val[block_index.val]'h with
+              marked_split := (self.blocks.val[block_index.val]'h).«end» }) := by
+  have hb : block_index.val < self.blocks.slice.val.length := by exact h
+  refine ⟨alloc.vec.Vec.from [block_index] one_le_max,
+    ({ self with
+       blocks := alloc.vec.Vec.mk (self.blocks.slice.set block_index
+         ({ (self.blocks.slice.val[block_index.val]'hb) with
+             marked_split := (self.blocks.slice.val[block_index.val]'hb).«end» })) }),
+    ?_, ?_, ?_⟩
+  · rw [verified.merc_reduction.block_partition.BlockPartition.trivial_partition_marked]
+    simp only [alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut,
+      core.slice.index.Usize.index_mut, Slice.index_mut_usize, Slice.index_usize]
+    simp [List.getElem?_eq_getElem hb, verified.merc_reduction.block_partition.Block.unmark_all,
+      alloc.vec.FromVecArray.from, Aeneas.Std.Array.make]
+  · simp [alloc.vec.Vec.from_val]
+  · change (self.blocks.slice.set block_index
+        ({ (self.blocks.slice.val[block_index.val]'hb) with
+            marked_split := (self.blocks.slice.val[block_index.val]'hb).«end» })).val =
+      self.blocks.val.set block_index.val
+        ({ (self.blocks.val[block_index.val]'h) with
+            marked_split := (self.blocks.val[block_index.val]'h).«end» })
+    rw [Slice.set_val_eq]
+    rfl
+
+/-!
+## `signature_refinement::strong_partition_marked`
+
+`strong_partition_marked` probes `is_trivially_partitioned`: a partition whose
+indexed block has derived length `1` takes the cheap singleton path
+(`trivial_partition_marked`), everything else flows through
+`marked_elements_sorted`/`strong_process_marked_elements`/
+`finish_partition_marked`. The two branch contracts below mirror that
+decision point; the `true` branch is closed to a concrete value, the `false`
+branch stays a do-mirror (its three calls are contracted away by the worklist
+loop proof that consumes them).
+-/
+
+theorem strong_partition_marked_trivial_contract {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    (partition : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) (id : PartitionInternMap)
+    (key_to_signature : alloc.vec.Vec PartitionSigKey)
+    (signature_builder : PartitionSigKey) (split_builder : PPBuilder)
+    (state_to_key : alloc.vec.Vec BlockIndex)
+    (hAll : verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned partition block_index = ok true) :
+    verified.merc_reduction.signature_refinement.strong_partition_marked LTSInst sys partition block_index
+        id key_to_signature signature_builder split_builder state_to_key =
+      (do
+        let (v, partition1) ←
+          verified.merc_reduction.block_partition.BlockPartition.trivial_partition_marked partition block_index
+        ok (v, partition1, id, key_to_signature, signature_builder, split_builder, state_to_key)) := by
+  unfold verified.merc_reduction.signature_refinement.strong_partition_marked
+  rw [hAll]
+  simp
+
+/-- The singleton partition case closes fully: the fresh index list is
+    `[block_index]` and `blocks[block_index]` becomes unconditionally marked. -/
+theorem strong_partition_marked_trivial {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    (partition : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) (id : PartitionInternMap)
+    (key_to_signature : alloc.vec.Vec PartitionSigKey)
+    (signature_builder : PartitionSigKey) (split_builder : PPBuilder)
+    (state_to_key : alloc.vec.Vec BlockIndex)
+    (hAll : verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned partition block_index = ok true)
+    (hIdx : block_index.val < partition.blocks.val.length) :
+    ∃ (v : alloc.vec.Vec BlockIndex)
+      (p : verified.merc_reduction.block_partition.BlockPartition),
+      verified.merc_reduction.signature_refinement.strong_partition_marked LTSInst sys partition block_index
+        id key_to_signature signature_builder split_builder state_to_key =
+          ok (v, p, id, key_to_signature, signature_builder, split_builder, state_to_key) ∧
+      v.val = [block_index] ∧
+      p.blocks.val = partition.blocks.val.set block_index.val (mark_all partition block_index hIdx) := by
+  have hb : block_index.val < partition.blocks.slice.val.length := by exact hIdx
+  rw [strong_partition_marked_trivial_contract LTSInst sys partition block_index id key_to_signature
+    signature_builder split_builder state_to_key hAll]
+  rcases trivial_partition_marked_contract partition block_index hIdx with ⟨v0, p0, heq, hv, hp⟩
+  refine ⟨v0, p0, ?_, ?_, ?_⟩
+  · rw [heq]
+    simp
+  · exact hv
+  · rw [hp]
+    change (partition.blocks.slice.set block_index
+        ({ (partition.blocks.slice.val[block_index.val]'hb) with
+           marked_split := (partition.blocks.slice.val[block_index.val]'hb).«end» })).val =
+      partition.blocks.val.set block_index.val
+        ({ partition.blocks.val[block_index.val]'hIdx with
+           marked_split := (partition.blocks.val[block_index.val]'hIdx).«end» })
+    rw [Slice.set_val_eq]
+    rfl
+
+/-- The non-singleton path: `strong_partition_marked` chains the three
+    refinement helpers; this do-mirror defers their individual contracts. -/
+theorem strong_partition_marked_nontrivial_contract {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    (partition : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : BlockIndex) (id : PartitionInternMap)
+    (key_to_signature : alloc.vec.Vec PartitionSigKey)
+    (signature_builder : PartitionSigKey) (split_builder : PPBuilder)
+    (state_to_key : alloc.vec.Vec BlockIndex)
+    (hAll : verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned partition block_index = ok false) :
+    verified.merc_reduction.signature_refinement.strong_partition_marked LTSInst sys partition block_index
+        id key_to_signature signature_builder split_builder state_to_key =
+      (do
+        let split_builder1 ←
+          verified.merc_reduction.block_partition.BlockPartition.marked_elements_sorted
+            partition block_index split_builder
+        let (id1, key_to_signature1, signature_builder1, split_builder2, state_to_key1) ←
+          verified.merc_reduction.signature_refinement.strong_process_marked_elements
+            LTSInst sys partition id key_to_signature signature_builder split_builder1 state_to_key
+        let (v, partition1, split_builder3) ←
+          verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked
+            partition block_index split_builder2
+        ok (v, partition1, id1, key_to_signature1, signature_builder1, split_builder3, state_to_key1)) := by
+  unfold verified.merc_reduction.signature_refinement.strong_partition_marked
+  rw [hAll]
+  simp
 
 lemma map_range_concat (s : Nat) :
     (List.range s).map uTotal ++ [uTotal s] = (List.range (s + 1)).map uTotal := by

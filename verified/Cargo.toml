@@ -5,8 +5,8 @@ version = "1.0.0"
 
 [dependencies]
 merc_collections = { path = "../3rd-party/merc/crates/collections" }
-merc_lts = { path = "../3rd-party/merc/crates/lts" }
-merc_reduction = { path = "../3rd-party/merc/crates/reduction" }
+merc_lts = { path = "../3rd-party/merc/crates/lts", features = ["lean"] }
+merc_reduction = { path = "../3rd-party/merc/crates/reduction", features = ["lean"] }
 merc_utilities = { path = "../3rd-party/merc/crates/utilities" }
 rustc-hash = "2.1"
 

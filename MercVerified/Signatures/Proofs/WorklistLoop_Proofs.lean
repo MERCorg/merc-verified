@@ -1,4 +1,5 @@
 import MercVerified.Signatures.Refinement
+import MercVerified.Signatures.Proofs.StrongSignature_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -1309,6 +1310,245 @@ theorem spme_step_next {L : Type} {Label : Type}
   rw [hc] at hstep
   exact hstep
 
+/-- `LoopElementOk` at a state yields a fully-pinned `LoopStepEq` to the
+    concrete successor state produced by the body.  This is the bridge from the
+    element-level invariant to the reachability table `spmeTable`. -/
+theorem loopStepEq_of_elementOk {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    (st : SpmeState)
+    (hok : LoopElementOk LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1
+      st.2.2.2.2.1 st.2.2.2.2.2) :
+    ∃ c : SpmeState, LoopStepEq LTSInst sys partition st c := by
+  rcases hok with ⟨hlt, state_index, ts, hsid, hout, sigb1, index, id1, kts1, hsig, hintern,
+    hmut1, hmut1ok, v, hcount, hmut2, hmut2ok, ei1, hadd⟩
+  refine ⟨(id1, kts1, sigb1, { st.2.2.2.1 with index_to_block := hmut1 index, block_sizes := v },
+    hmut2 index, ei1), ?_⟩
+  refine ⟨state_index, ts, sigb1, index, id1, kts1, hmut1, v, hmut2, ei1, hlt, hsid, hout, hsig,
+    hintern, hmut1ok, hcount, hmut2ok, hadd, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> rfl
+
+/-- A `LoopStepEq` step advances the drop-remainder exactly one element: the
+    successor's remaining list is the tail of the current one. -/
+theorem LoopStepEq.successor_drop {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    {st c : SpmeState} (h : LoopStepEq LTSInst sys partition st c) :
+    (st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val).tail
+      = c.2.2.2.1.old_elements.val.drop c.2.2.2.2.2.val := by
+  rcases h with ⟨state_index, ts, sigb1, index, id1, kts1, hmut1, v, hmut2, ei1, hlt, hsid, hout,
+    hsig, hintern, hmut1ok, hcount, hmut2ok, hadd, h1, h2, h3, h4, h5, h6⟩
+  have hold : c.2.2.2.1.old_elements.val = st.2.2.2.1.old_elements.val := by rw [h4]
+  have hc5 : c.2.2.2.2.2.val = st.2.2.2.2.2.val + 1 := by
+    rw [h6]
+    exact usize_add_one_val st.2.2.2.2.2 ei1 hadd
+  rw [hold, hc5, list_drop_succ]
+
+/-- `x + 1` (as an overflowing-capable `usize` addition) always succeeds provided
+    `x.val < max`: the failing case is exactly `max + 1`. -/
+theorem add1_ok_of_lt_max (a : Sz) (h : a.val < Usize.max) : ∃ b : Sz, a + 1#usize = ok b := by
+  have hb : a.val + 1 < 2 ^ System.Platform.numBits := by
+    have hmax_lt : Usize.max < 2 ^ System.Platform.numBits := by
+      simp [Usize.max, Usize.numBits]
+    omega
+  refine ⟨Usize.ofNatCore (a.val + 1) hb, ?_⟩
+  rw [show a + 1#usize = UScalar.add a 1#usize by rfl]
+  simp only [UScalar.add, UScalar.tryMk, UScalar.tryMkOpt]
+  split_ifs with hif
+  · rfl
+  · exfalso
+    apply hif
+    simp [UScalar.check_bounds]
+    exact hb
+
+/-- Equal-length vectors produce equal `get` values at the same index, for
+    possibly-different length proofs. -/
+theorem vec_val_getElem_congr {α : Type} (v w : VecTy α) (h : v = w) (i : Nat)
+    (hv : i < v.val.length) (hw : i < w.val.length) :
+    v.val.get ⟨i, hv⟩ = w.val.get ⟨i, hw⟩ := by
+  have hg : (v.val[i]? = w.val[i]? : Prop) := by rw [h]
+  have hq1 : v.val[i]? = some (v.val.get ⟨i, hv⟩) := by
+    simpa using (List.getElem?_eq_getElem hv)
+  have hq2 : w.val[i]? = some (w.val.get ⟨i, hw⟩) := by
+    simpa using (List.getElem?_eq_getElem hw)
+  exact Option.some_inj.mp (hq1.symm.trans hg ▸ hq2)
+
+/-- The `state_to_key` mutation produced by `index_mut` in the loop body does not
+    change the length of the vector. -/
+theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
+    (back : BT → VecTy BT) (h : i.val < v.val.length)
+    (hw : v.index_mut_usize i = ok (x, back)) :
+    (back y).val.length = v.val.length := by
+  rcases spec_imp_exists (alloc.vec.Vec.index_mut_usize_spec v i h) with ⟨w, hw2, hpost⟩
+  have hpair : w = (x, back) := Result.ok.injEq.mp (hw2.symm.trans hw)
+  have hb : back = v.set i := by
+    simpa [hpair] using hpost.2
+  rw [hb]
+  simpa using alloc.vec.Vec.set_length v i y
+
+/-- The `Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut` mutation of
+    `state_to_key` (the Slice-level bridge used by the loop body) preserves
+    the length of the vector. -/
+theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
+    (hmut2 : BT → VecTy BT)
+    (hw : alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = ok (x, hmut2)) :
+    (hmut2 u).val.length = stk.val.length := by
+  by_cases hb : state_index.val < stk.slice.length
+  · rcases spec_imp_exists (Slice.index_mut_usize_spec stk.slice state_index hb) with ⟨w, hw2, hpost⟩
+    rcases w with ⟨x0, f⟩
+    rcases hpost with ⟨hx0, hf⟩
+    have hnice :
+        alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+          (core.slice.index.SliceIndexUsizeSlice BT) stk state_index
+          = ok (x0, fun u : BT => ({ slice := f u } : VecTy BT)) := by
+      unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+      simp only [core.slice.index.Usize.index_mut]
+      rw [hw2]
+      simp
+    have hpair : (x0, (fun u : BT => ({ slice := f u } : VecTy BT))) = (x, hmut2) :=
+      Result.ok.injEq.mp (hnice.symm.trans hw)
+    have hhmut : hmut2 = fun u : BT => ({ slice := f u } : VecTy BT) := by
+      have hhmut' : (fun u : BT => ({ slice := f u } : VecTy BT)) = hmut2 :=
+        congrArg Prod.snd hpair
+      exact hhmut'.symm
+    rw [hhmut, hf]
+    change (stk.slice.set state_index u).val.length = stk.slice.val.length
+    rw [Slice.set]
+    exact Slice.setAtNat_length stk.slice state_index.val u
+  · have hn : stk.slice.val[state_index.val]? = none := by
+      rw [List.getElem?_eq_none_iff]
+      exact Nat.not_lt.mp hb
+    have hfail : Slice.index_mut_usize stk.slice state_index = .fail .arrayOutOfBounds := by
+      simp [Slice.index_mut_usize, Slice.index_usize, Slice.getElem?_Usize_eq, hn]
+    have hfull :
+        alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+          (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = .fail .arrayOutOfBounds := by
+      unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+      simp only [core.slice.index.Usize.index_mut]
+      rw [hfail]
+      simp
+    exfalso
+    have hfailok : (Result.fail (Error.arrayOutOfBounds : Error) : Result (BT × (BT → VecTy BT))) = ok (x, hmut2) := by
+      rw [← hfull]
+      exact hw
+    exact fail_not_ok hfailok
+
+/-- The element-level invariant of `strong_process_marked_elements_loop` at its
+    entry: with `olds`/`stk0` the entry's `old_elements`/`state_to_key`, every
+    reachable state pinning those is `LoopElementOk`, and (for the discharge)
+    each visiting state's `index_to_block` has the same length as its
+    `old_elements`. -/
+abbrev SpmeInvariant {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (partition : BlockPartition) (olds : VecTy ST) (stk0 : VecTy BT) : Prop :=
+  ∀ (st' : SpmeState) (r : List ST),
+    st'.2.2.2.1.old_elements = olds →
+    st'.2.2.2.2.1.val.length = stk0.val.length →
+    st'.2.2.2.1.index_to_block.val.length = st'.2.2.2.1.old_elements.val.length →
+    r = st'.2.2.2.1.old_elements.val.drop st'.2.2.2.2.2.val →
+    r ≠ [] →
+    LoopElementOk LTSInst sys partition st'.1 st'.2.1 st'.2.2.1 st'.2.2.2.1 st'.2.2.2.2.1
+      st'.2.2.2.2.2
+
+/-- The invariant is discharged once the global facts hold: the LTS's
+    `outgoing_transitions` is total (`hout`), the partition's `block_number` is
+    total (`hblock`), the intern `id` map answers every query (with
+    `key_to_signature` below capacity on a miss), every `usize` index/counter
+    stays below `max` (`hbt`/`hcnt`/`hlen`/`hstklen`), and each reached state's
+    `index_to_block` keeps the length of `old_elements`. -/
+theorem loopElementOk_of_reach {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    (olds : VecTy ST) (stk0 : VecTy BT)
+    (blockNumber : ST → BT)
+    (hblock : ∀ t : ST,
+        verified.merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+          partition t = ok (blockNumber t))
+    (hout : ∀ s : ST, ∃ ts : alloc.vec.Vec Transition, LTSInst.outgoing_transitions sys s = ok ts)
+    (hintern : ∀ (id : InternMap) (kts : VecTy SigKey) (sb : SigKey),
+        (∃ idx : BT,
+          std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
+            internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
+            internEqInst id sb = ok (some (sb, idx))) ∨
+        (std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
+          internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
+          internEqInst id sb = ok none ∧ kts.val.length < Usize.max))
+    (hbt : ∀ b : BT, b.val < Usize.max)
+    (hcnt : ∀ (bs : VecTy Sz) (i : Nat) (hi : i < bs.val.length),
+        (bs.val.get ⟨i, hi⟩).val < Usize.max)
+    (hlen : olds.val.length < Usize.max)
+    (hstklen : ∀ i (hi : i < olds.val.length), (olds.val[i]).val < stk0.val.length) :
+    SpmeInvariant LTSInst sys partition olds stk0 := by
+  intro st' r hold hstk hIdx hdrop hne
+  have hdropne : st'.2.2.2.1.old_elements.val.drop st'.2.2.2.2.2.val ≠ [] := by
+    intro hn
+    apply hne
+    rw [hdrop]
+    exact hn
+  have hlt : st'.2.2.2.2.2.val < st'.2.2.2.1.old_elements.val.length := by
+    have hnotle : ¬ st'.2.2.2.1.old_elements.val.length ≤ st'.2.2.2.2.2.val := by
+      intro hle
+      exact hdropne ((list_drop_eq_nil_iff st'.2.2.2.1.old_elements.val st'.2.2.2.2.2.val).mpr hle)
+    omega
+  refine ⟨hlt, ?_⟩
+  rcases spec_imp_exists (alloc.vec.Vec.index_usize_spec st'.2.2.2.1.old_elements
+      st'.2.2.2.2.2 hlt) with ⟨state_index, hsid, hsval⟩
+  refine ⟨state_index, ?_⟩
+  rcases hout state_index with ⟨ts, houtq⟩
+  refine ⟨ts, hsid, houtq, ?_⟩
+  have hspec := strong_bisim_signature_spec_general LTSInst
+    (verified.merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition)
+    sys partition state_index st'.2.2.1 blockNumber hblock ts houtq
+  unfold StrongBisimSignatureSpec at hspec
+  rcases hspec with ⟨signature_builder1, hsig, _⟩
+  refine ⟨signature_builder1, ?_⟩
+  rcases strong_intern_signature_total st'.1 st'.2.1 signature_builder1
+    (hintern st'.1 st'.2.1 signature_builder1) with ⟨index, id1, kts1, hinternok⟩
+  refine ⟨index, id1, kts1, hsig, hinternok, ?_⟩
+  have hbound_idx : st'.2.2.2.2.2.val < st'.2.2.2.1.index_to_block.val.length := by
+    rw [hIdx]
+    exact hlt
+  rcases spec_imp_exists (alloc.vec.Vec.index_mut_usize_spec st'.2.2.2.1.index_to_block
+      st'.2.2.2.2.2 hbound_idx) with ⟨w, hmut1ok, _⟩
+  refine ⟨w.2, ⟨w.1, hmut1ok⟩, ?_⟩
+  rcases count_block_occurrence_spec_ok st'.2.2.2.1.block_sizes index
+    (add1_ok_of_lt_max index (hbt index))
+    (by
+      intro hb
+      exact add1_ok_of_lt_max (st'.2.2.2.1.block_sizes.val.get ⟨index.val, hb⟩)
+        (hcnt st'.2.2.2.1.block_sizes index.val hb)) with ⟨v, hcount⟩
+  refine ⟨v, hcount, ?_⟩
+  have hbound_stk : state_index.val < st'.2.2.2.2.1.val.length := by
+    rw [hstk]
+    have hsval' : state_index.val = (st'.2.2.2.1.old_elements.val.get ⟨st'.2.2.2.2.2.val, hlt⟩).val := by
+      exact congrArg (fun z : ST => z.val) hsval
+    rw [hsval']
+    have hlt_olds : st'.2.2.2.2.2.val < olds.val.length := by
+      rw [← hold]
+      exact hlt
+    have hbridge : st'.2.2.2.1.old_elements.val.get ⟨st'.2.2.2.2.2.val, hlt⟩ =
+        olds.val.get ⟨st'.2.2.2.2.2.val, hlt_olds⟩ := by
+      exact vec_val_getElem_congr st'.2.2.2.1.old_elements olds hold
+        (st'.2.2.2.2.2.val) hlt hlt_olds
+    rw [hbridge]
+    exact hstklen st'.2.2.2.2.2.val hlt_olds
+  rcases spec_imp_exists (Slice.index_mut_usize_spec st'.2.2.2.2.1.slice state_index hbound_stk)
+    with ⟨w, hwslice, hpost⟩
+  rcases w with ⟨x0, f⟩
+  rcases hpost with ⟨hx0, hf⟩
+  have hok :
+      alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        (core.slice.index.SliceIndexUsizeSlice BT) st'.2.2.2.2.1 state_index
+        = ok (x0, fun u : BT => ({ slice := f u } : VecTy BT)) := by
+    unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+    simp only [core.slice.index.Usize.index_mut]
+    rw [hwslice]
+    simp
+  refine ⟨fun u : BT => ({ slice := f u } : VecTy BT), ⟨x0, hok⟩, ?_⟩
+  have heimax : st'.2.2.2.2.2.val < Usize.max := by
+    have hlen' : st'.2.2.2.1.old_elements.val.length < Usize.max := by
+      rw [hold]
+      exact hlen
+    omega
+  rcases add1_ok_of_lt_max st'.2.2.2.2.2 heimax with ⟨ei1, haddok⟩
+  refine ⟨ei1, haddok⟩
+
 /-- Reachability table of `strong_process_marked_elements_loop`: a sequence of
     visitable states whose successive moves exhaust exactly the remaining list
     `rest` (intended to be `old_elements.val.drop element_index.val`).  `base`
@@ -1321,6 +1561,58 @@ inductive spmeTable {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.L
       spmeTable LTSInst sys partition c rest →
       spmeTable LTSInst sys partition st (head :: rest)
 
+/-- Build the reachability table by induction on the remaining list, assuming
+    every state whose remainder is that list is `LoopElementOk`.  This isolates
+    the per-element processability (the caller-side invariant) from the
+    table/loop machinery. -/
+theorem spmeTable_of_all_ok {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    (olds : VecTy ST) (stk0 : VecTy BT)
+    (h : SpmeInvariant LTSInst sys partition olds stk0)
+    (st : SpmeState) (rest : List ST)
+    (hold : st.2.2.2.1.old_elements = olds)
+    (hstk : st.2.2.2.2.1.val.length = stk0.val.length)
+    (hIdx : st.2.2.2.1.index_to_block.val.length = st.2.2.2.1.old_elements.val.length)
+    (hdrop : rest = st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val) :
+    spmeTable LTSInst sys partition st rest := by
+  induction rest generalizing st with
+  | nil => exact spmeTable.base st
+  | cons head tail ih =>
+      have hne : head :: tail ≠ [] := by simp
+      rcases loopStepEq_of_elementOk LTSInst sys partition st
+        (h st (head :: tail) hold hstk hIdx hdrop hne) with ⟨c, hstepEq⟩
+      have hd : (st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val).tail
+          = c.2.2.2.1.old_elements.val.drop c.2.2.2.2.2.val :=
+        LoopStepEq.successor_drop LTSInst sys partition hstepEq
+      have hd2 : (st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val).tail = tail :=
+        congrArg List.tail hdrop.symm
+      rw [hd2] at hd
+      have hstepEq' := hstepEq
+      rcases hstepEq with ⟨state_index, ts, sigb1, index, id1, kts1, hmut1, v, hmut2, ei1, hlt,
+        hsid, hout, hsig, hintern, hmut1ok, hcount, hmut2ok, hadd, h1, h2, h3, h4, h5, h6⟩
+      have hold' : c.2.2.2.1.old_elements = olds := by
+        rw [h4]
+        change st.2.2.2.1.old_elements = olds
+        exact hold
+      have hstk' : c.2.2.2.2.1.val.length = stk0.val.length := by
+        rw [h5]
+        rcases hmut2ok with ⟨x0, hmmut2ok⟩
+        rw [stk_back_preserves_length st.2.2.2.2.1 state_index index x0 hmut2 hmmut2ok]
+        exact hstk
+      have hIdx' : c.2.2.2.1.index_to_block.val.length = c.2.2.2.1.old_elements.val.length := by
+        rw [h4]
+        change (hmut1 index).val.length = st.2.2.2.1.old_elements.val.length
+        rcases hmut1ok with ⟨xw, hmmut1ok⟩
+        have hei_idx : st.2.2.2.2.2.val < st.2.2.2.1.index_to_block.val.length := by
+          rw [hIdx]
+          exact hlt
+        have hlen1 : (hmut1 index).val.length = st.2.2.2.1.index_to_block.val.length :=
+          vec_index_mut_preserves_length st.2.2.2.1.index_to_block st.2.2.2.2.2 index xw hmut1
+            hei_idx hmmut1ok
+        rw [hlen1]
+        exact hIdx
+      exact spmeTable.step st c head tail hstepEq' (ih c hold' hstk' hIdx' hd)
+
 /-- If the reachability table for the remaining elements is provided, the loop
     and the structural fold agree on the result value. -/
 theorem strong_process_marked_elements_loop_trace
@@ -1329,11 +1621,9 @@ theorem strong_process_marked_elements_loop_trace
     (sys : L) (partition : BlockPartition) (st : SpmeState) {rest : List ST}
     (hdrop : rest = st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val)
     (htable : spmeTable LTSInst sys partition st rest) :
-    ∃ y : SpmeFinal,
-      verified.merc_reduction.signature_refinement.strong_process_marked_elements_loop
-        LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1 st.2.2.2.2.1 st.2.2.2.2.2
-        = ok y ∧
-      ok y = spmeAcc LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1 st.2.2.2.2.1
+    verified.merc_reduction.signature_refinement.strong_process_marked_elements_loop
+      LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1 st.2.2.2.2.1 st.2.2.2.2.2
+      = spmeAcc LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1 st.2.2.2.2.1
         st.2.2.2.2.2 rest := by
   let ul : SpmeState → Result (ControlFlow SpmeState SpmeFinal) :=
     fun (i1, k1, s1, b1, k2, e1) =>
@@ -1382,7 +1672,6 @@ theorem strong_process_marked_elements_loop_trace
                   rw [hdrop]
             _ = rest := by simp
         exact hc.symm
-      rcases ih hdrop' with ⟨y, hloop, hy⟩
       have hbodyapp :
           ul (st'.1, st'.2.1, st'.2.2.1, st'.2.2.2.1, st'.2.2.2.2.1, st'.2.2.2.2.2) =
             verified.merc_reduction.signature_refinement.strong_process_marked_elements_loop.body
@@ -1392,18 +1681,71 @@ theorem strong_process_marked_elements_loop_trace
       rw [← hloop_unfold st']
       rw [loop_eq_bind ul (st'.1, st'.2.1, st'.2.2.1, st'.2.2.2.1, st'.2.2.2.2.1, st'.2.2.2.2.2)]
       rw [hbodyapp, hb]
-      simp only [bind_ok]
-      refine ⟨y, ?_, ?_⟩
-      · have hctuple :
-            (c.1, c.2.1, c.2.2.1, c.2.2.2.1, c.2.2.2.2.1, c.2.2.2.2.2) = c := by
-            cases c <;> rfl
-        rw [← hctuple]
-        rw [hloop_unfold c]
-        exact hloop
-      · rw [spmeAcc_step LTSInst sys partition st'.1 st'.2.1 st'.2.2.1 st'.2.2.2.1
+      simp
+      rw [spmeAcc_step LTSInst sys partition st'.1 st'.2.1 st'.2.2.1 st'.2.2.2.1
             st'.2.2.2.2.1 st'.2.2.2.2.2 head rest]
-        rw [hbodyapp, hb]
-        simp only [bind_ok]
-        exact hy
+      rw [hb]
+      simp
+      have hctuple :
+          (c.1, c.2.1, c.2.2.1, c.2.2.2.1, c.2.2.2.2.1, c.2.2.2.2.2) = c := by
+        cases c
+        rfl
+      rw [← hctuple]
+      rw [hloop_unfold c]
+      exact ih hdrop'
+
+/-- Loop spec in terms of the element-level invariant: if every state whose
+    remainder is `rest` is `LoopElementOk`, the loop agrees with the fold. -/
+theorem strong_process_marked_elements_loop_spec {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    (olds : VecTy ST) (stk0 : VecTy BT)
+    (st : SpmeState) {rest : List ST}
+    (hold : st.2.2.2.1.old_elements = olds)
+    (hstk : st.2.2.2.2.1.val.length = stk0.val.length)
+    (hIdx : st.2.2.2.1.index_to_block.val.length = st.2.2.2.1.old_elements.val.length)
+    (hdrop : rest = st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val)
+    (h : SpmeInvariant LTSInst sys partition olds stk0) :
+    verified.merc_reduction.signature_refinement.strong_process_marked_elements_loop
+      LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1 st.2.2.2.2.1 st.2.2.2.2.2
+      = spmeAcc LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1 st.2.2.2.2.1
+        st.2.2.2.2.2 rest :=
+  strong_process_marked_elements_loop_trace LTSInst sys partition st hdrop
+    (spmeTable_of_all_ok LTSInst sys partition olds stk0 h st rest hold hstk hIdx hdrop)
+
+/-- Loop spec at the initial `element_index = 0`: the remaining list is the
+    whole `old_elements`, exactly as called by `strong_process_marked_elements`. -/
+theorem strong_process_marked_elements_loop_spec_zero {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey) (spb : BlockPartitionBuilder)
+    (stk : VecTy BT)
+    (hIdx0 : spb.index_to_block.val.length = spb.old_elements.val.length)
+    (h : SpmeInvariant LTSInst sys partition spb.old_elements stk) :
+    verified.merc_reduction.signature_refinement.strong_process_marked_elements_loop
+      LTSInst sys partition id kts sigb spb stk 0#usize
+      = spmeAcc LTSInst sys partition id kts sigb spb stk 0#usize spb.old_elements.val := by
+  have hdrop : spb.old_elements.val = spb.old_elements.val.drop (0#usize).val := by
+    simp
+  exact strong_process_marked_elements_loop_spec LTSInst sys partition spb.old_elements stk
+    (id, kts, sigb, spb, stk, 0#usize) rfl rfl hIdx0 hdrop h
+
+/-- The wrapper `strong_process_marked_elements` repacks the final loop state:
+    with `SpmeInvariant` satisfied for the whole `old_elements`, running the
+    loop from `element_index = 0` and repacking into a fresh
+    `BlockPartitionBuilder` gives exactly the `spmeAcc` fold value. -/
+theorem strong_process_marked_elements_contract {L : Type} {Label : Type}
+    (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
+    (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey)
+    (spb : BlockPartitionBuilder) (stk : VecTy BT)
+    (hIdx0 : spb.index_to_block.val.length = spb.old_elements.val.length)
+    (h : SpmeInvariant LTSInst sys partition spb.old_elements stk) :
+    (do
+      let (id1, kts1, sigb1, v, v1, v2, stk1) ← spmeAcc LTSInst sys partition id kts sigb spb stk 0#usize spb.old_elements.val
+      Result.ok (id1, kts1, sigb1,
+        ({ index_to_block := v, block_sizes := v1, old_elements := v2 } : BlockPartitionBuilder),
+        stk1))
+    = verified.merc_reduction.signature_refinement.strong_process_marked_elements
+        LTSInst sys partition id kts sigb spb stk := by
+  rw [verified.merc_reduction.signature_refinement.strong_process_marked_elements]
+  rw [strong_process_marked_elements_loop_spec_zero LTSInst sys partition id kts sigb spb stk hIdx0 h]
 
 end MercVerified.Signatures.Proofs
