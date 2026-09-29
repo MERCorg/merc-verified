@@ -553,7 +553,7 @@ theorem block_partition_new_spec (num : Sz) (hpos : 0 < num.val) :
       verified.merc_reduction.block_partition.Block.new,
       alloc.vec.FromVecArray.from, Aeneas.Std.Array.make]
   refine ⟨p, hnew_eq, ?_, ?_, ?_, ?_⟩
-  · simp [p, alloc.vec.Vec.from_val, Slice.from_val]
+  · simp [p, alloc.vec.Vec.from_val]
   · rw [hes]
   · rw [hbs]
   · rw [hos]

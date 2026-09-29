@@ -25,6 +25,8 @@ def StrongBisimSigrefCorrectSpec
     strong_bisim_sigref LTSInst sys timing = ok (sys, partition) ∧
     (∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val →
         blockOf s = b) ∧
+    (∀ n, LTSInst.num_of_states sys = ok n →
+        ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ partition.elements.val) ∧
     IsStable (fun s => StrongSignature (toLTS LTSInst sys) s blockOf) blockOf ∧
     ∀ s s', StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s'
 

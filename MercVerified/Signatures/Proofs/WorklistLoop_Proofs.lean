@@ -242,7 +242,7 @@ abbrev tagEqInst : core.cmp.PartialEq BT BT :=
 
 lemma tagEq_spec (a b : BT) :
     tagEqInst.eq a b = ok (decide (a = b)) := by
-  simp [liftFun2]
+  simp
   rfl
 
 lemma neq_tag (a b : BT) :
@@ -322,7 +322,7 @@ theorem markDirtyAcc_cons (BRANCHING : Bool) {L : Type} {Label : Type}
       = (do
           let r ← markDirtyStep BRANCHING ltsInst lts incoming block_index num_blocks nb p w s
           markDirtyAcc BRANCHING ltsInst lts incoming block_index num_blocks r.1 r.2.1 r.2.2 tl) := by
-  simp only [markDirtyAcc, markDirtyStep, neq_bind, bind_assoc_eq]
+  simp only [markDirtyAcc, markDirtyStep, neq_bind]
   by_cases hab : block_index = nb
   · have hx : (!decide (block_index = nb)) = false := by
       have hx_true : decide (block_index = nb) = true := by
@@ -581,7 +581,7 @@ theorem strong_process_worklist_block_contract {L : Type} {Label : Type}
           std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default
             (VecTy ((TagIndex Std.Usize LabelTag) × BT)) (TagIndex Std.Usize BlockTag)
             verified.rustc_hash.FxBuildHasher.Insts.CoreDefaultDefault
-        let bk ← ok b0
+        let _bk ← ok b0
         let b1 ← ok (decide ((b0.marked_split : Nat) < (b0.«end» : Nat)))
         massert b1
         let bp ←
@@ -1366,7 +1366,7 @@ theorem spme_step_next {L : Type} {Label : Type}
           = (c.1, c.2.1, c.2.2.1, c.2.2.2.1, c.2.2.2.2.1, c.2.2.2.2.2) := by
             simp [h1, h2, h3, h4, h5, h6]
       _ = c := by
-            cases c <;> rfl
+            cases c; rfl
   rw [hc] at hstep
   exact hstep
 
@@ -1425,9 +1425,9 @@ theorem vec_val_getElem_congr {α : Type} (v w : VecTy α) (h : v = w) (i : Nat)
     v.val.get ⟨i, hv⟩ = w.val.get ⟨i, hw⟩ := by
   have hg : (v.val[i]? = w.val[i]? : Prop) := by rw [h]
   have hq1 : v.val[i]? = some (v.val.get ⟨i, hv⟩) := by
-    simpa using (List.getElem?_eq_getElem hv)
+    simp
   have hq2 : w.val[i]? = some (w.val.get ⟨i, hw⟩) := by
-    simpa using (List.getElem?_eq_getElem hw)
+    simp
   exact Option.some_inj.mp (hq1.symm.trans hg ▸ hq2)
 
 /-- The `state_to_key` mutation produced by `index_mut` in the loop body does not
@@ -1441,7 +1441,7 @@ theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
   have hb : back = v.set i := by
     simpa [hpair] using hpost.2
   rw [hb]
-  simpa using alloc.vec.Vec.set_length v i y
+  simp
 
 /-- The `Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut` mutation of
     `state_to_key` (the Slice-level bridge used by the loop body) preserves

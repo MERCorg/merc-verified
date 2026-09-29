@@ -111,8 +111,10 @@ axiom slts_num_of_states_pos {Label : Type}
     `WorklistContextStrong`, it succeeds and returns a context whose partition
     is *stable* for the strong signature (states in the same block have
     identical `StrongSignature`), its block map agrees with the concrete
-    partition (coherence), and it is complete w.r.t. `StrongFixPoint`
-    (strongly bisimilar states are placed in the same block).
+    partition (coherence), covers every state index of `sys` (every
+    `s < num_of_states sys` appears among `ctx.partition.elements`), and is
+    complete w.r.t. `StrongFixPoint` (strongly bisimilar states are placed in
+    the same block).
 
     Stated generically over any `LTS` implementor `L`/`LTSInst`, not just
     `SimpleLabelledTransitionSystem`: the Rust `strong_run_worklist_loop` is itself
@@ -133,6 +135,9 @@ axiom run_worklist_loop_spec
         LTSInst
         sys incoming ctx0 = ok ctx ∧
       (∀ s b, (s, b) ∈ List.zip ctx.partition.elements.val ctx.partition.element_to_block.val → blockOf s = b) ∧
+      (∀ n, LTSInst.num_of_states sys = ok n →
+        ∀ s : TagIndex Std.Usize verified.merc_lts.lts.StateTag, s.val < n.val →
+          s ∈ ctx.partition.elements.val) ∧
       IsStable (fun s => StrongSignature
         (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf) blockOf ∧
       ∀ s s', StrongFixPoint

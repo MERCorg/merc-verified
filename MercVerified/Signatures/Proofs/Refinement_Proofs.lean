@@ -100,6 +100,8 @@ private theorem signature_refinement_spec
       verified.merc_reduction.signature_refinement.strong_signature_refinement LTSInst
         sys incoming = ok partition ∧
       (∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val → blockOf s = b) ∧
+      (∀ n, LTSInst.num_of_states sys = ok n →
+        ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ partition.elements.val) ∧
       IsStable (fun s => StrongSignature (toLTS LTSInst sys) s blockOf) blockOf ∧
       ∀ s s', StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s' := by
   rcases (alloc.vec.Vec.resize_with_spec Global (resizeFnMut LTSInst)
@@ -115,8 +117,8 @@ private theorem signature_refinement_spec
       states := alloc.vec.Vec.new (TagIndex Std.Usize StateTag),
       builder := v1, split_builder := bpb, state_to_key := state_to_key }
   rcases (run_worklist_loop_spec LTSInst sys incoming ctx0)
-    with ⟨ctx, blockOf, hloop, hcohloop, hstabloop, hcomplloop⟩
-  refine ⟨ctx.partition, blockOf, ?_, hcohloop, hstabloop, hcomplloop⟩
+    with ⟨ctx, blockOf, hloop, hcohloop, hcovloop, hstabloop, hcomplloop⟩
+  refine ⟨ctx.partition, blockOf, ?_, hcohloop, hcovloop, hstabloop, hcomplloop⟩
   unfold verified.merc_reduction.signature_refinement.strong_signature_refinement
   rw [hns]
   simp
@@ -151,7 +153,7 @@ theorem strong_bisim_sigref_correct_general
   rcases (merc_utilities.timing.Timing.measure_spec (fnOnceInst LTSInst) timing (toStr "reduction") (sys, incoming))
     with ⟨partition, hmeasure, hcall⟩
   rcases (signature_refinement_spec LTSInst sys incoming n hns hnpos)
-    with ⟨partition', blockOf, hsr, hcoh, hstab, hcomplete⟩
+    with ⟨partition', blockOf, hsr, hcoh, hcov, hstab, hcomplete⟩
   have hcall' :
       verified.merc_reduction.signature_refinement.strong_signature_refinement LTSInst
         sys incoming = ok partition := by
@@ -164,7 +166,11 @@ theorem strong_bisim_sigref_correct_general
   have hcoh' : ∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val → blockOf s = b := by
     intro s b hz
     exact hcoh s b (by simpa [hp'] using hz)
-  refine ⟨partition, blockOf, ?_, hcoh', hstab, hcomplete⟩
+  have hcov' : ∀ n, LTSInst.num_of_states sys = ok n →
+      ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ partition.elements.val := by
+    intro n hns s hlt
+    simpa [hp'] using hcov n hns s hlt
+  refine ⟨partition, blockOf, ?_, hcoh', hcov', hstab, hcomplete⟩
   unfold strong_bisim_sigref
   rw [hincoming]
   simp
@@ -210,7 +216,7 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
       ∀ s s', blockOf s = blockOf s' → StrongFixPoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
   have hspec := strong_bisim_sigref_correct TLInst sys timing
   unfold StrongBisimSigrefCorrectSpec at hspec
-  rcases hspec with ⟨partition, blockOf, hret, hcoh, hstab, _hcomplete⟩
+  rcases hspec with ⟨partition, blockOf, hret, hcoh, hcov, hstab, _hcomplete⟩
   refine ⟨partition, blockOf, ?_, ?_⟩
   · simpa using hret
   · intro s s' hbb
@@ -231,7 +237,7 @@ theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
       ∀ s s', blockOf s = blockOf s' ↔ StrongFixPoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
   have hspec := strong_bisim_sigref_correct TLInst sys timing
   unfold StrongBisimSigrefCorrectSpec at hspec
-  rcases hspec with ⟨partition, blockOf, hret, hcoh, hstab, hcomplete⟩
+  rcases hspec with ⟨partition, blockOf, hret, hcoh, hcov, hstab, hcomplete⟩
   refine ⟨partition, blockOf, ?_, ?_⟩
   · simpa using hret
   · intro s s'
