@@ -1808,4 +1808,94 @@ theorem strong_process_marked_elements_contract {L : Type} {Label : Type}
   rw [verified.merc_reduction.signature_refinement.strong_process_marked_elements]
   rw [strong_process_marked_elements_loop_spec_zero LTSInst sys partition id kts sigb spb stk hIdx0 h]
 
+/-!
+## Contract of `strong_run_worklist_loop`
+
+The loop is only correct when started from the context that `strong_signature_refinement` builds
+(all elements in block `0`, which alone is on the worklist; empty `states`/`builder`; a
+`state_to_key` of the right length) over a well-formed LTS and its own `IncomingTransitions`.
+`InitialWorklistContext` captures exactly that context. The contract is split into
+
+- `strong_run_worklist_loop_partial_correct`: *if* the loop returns, the result is correct
+  (proved by induction on the loop with an invariant; no termination argument needed), and
+- `strong_run_worklist_loop_terminates`: under well-formedness the loop does return
+  (the refinement-rank argument described above),
+
+and `run_worklist_loop_spec` is their conjunction. The two component theorems are still `sorry`:
+they are the open proof obligations that replaced the former `run_worklist_loop_spec` axiom.
+-/
+
+/-- `ctx0` is the initial worklist context that `strong_signature_refinement` builds for a system
+    with `n` states. -/
+def InitialWorklistContext {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (n : Std.Usize) (ctx0 : WorklistContextStrong) : Prop :=
+  ∃ ti : TagIndex Std.Usize BlockTag,
+    merc_utilities.tagged_index.TagIndex.new BlockTag 0#usize = ok ti ∧
+    alloc.vec.FromVecArray.from (Array.make 1#usize [ti]) = ok ctx0.worklist ∧
+    BlockPartition.new n = ok ctx0.partition ∧
+    alloc.vec.Vec.resize_with Global
+      (verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
+        LTSInst)
+      (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n () = ok ctx0.state_to_key ∧
+    alloc.vec.Vec.Insts.CoreDefaultDefault.default
+      ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)) = ok ctx0.builder ∧
+    BlockPartitionBuilder.Insts.CoreDefaultDefault.default = ok ctx0.split_builder ∧
+    ctx0.states = alloc.vec.Vec.new (TagIndex Std.Usize StateTag)
+
+/-- The postcondition of the loop: the returned context's partition, read through `blockOf`, is
+    coherent, covers all states, is stable for the strong signature and is complete w.r.t.
+    `StrongFixPoint`. -/
+def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (ctx : WorklistContextStrong)
+    (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag) : Prop :=
+  (∀ s b, (s, b) ∈ List.zip ctx.partition.elements.val ctx.partition.element_to_block.val →
+      blockOf s = b) ∧
+  (∀ n, LTSInst.num_of_states sys = ok n →
+    ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ ctx.partition.elements.val) ∧
+  IsStable (fun s => StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf)
+    blockOf ∧
+  ∀ s s', StrongFixPoint (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s'
+
+/-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/
+theorem strong_run_worklist_loop_partial_correct
+    {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (hwf : LTSInst.WellFormed sys)
+    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (hinc : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
+    (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0)
+    (ctx : WorklistContextStrong)
+    (hrun : verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
+      LTSInst sys incoming ctx0 = ok ctx) :
+    ∃ blockOf, WorklistLoopCorrect LTSInst sys ctx blockOf := by
+  sorry
+
+/-- Termination of `strong_run_worklist_loop` from the initial context of a well-formed LTS. -/
+theorem strong_run_worklist_loop_terminates
+    {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (hwf : LTSInst.WellFormed sys)
+    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (hinc : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
+    (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0) :
+    ∃ ctx, verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
+      LTSInst sys incoming ctx0 = ok ctx := by
+  sorry
+
+/-- Contract of `strong_run_worklist_loop` from the initial context of a well-formed LTS: it
+    returns a context whose partition is correct (see `WorklistLoopCorrect`). -/
+theorem run_worklist_loop_spec
+    {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (hwf : LTSInst.WellFormed sys)
+    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (hinc : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
+    (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0) :
+    ∃ ctx blockOf,
+      verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
+        LTSInst sys incoming ctx0 = ok ctx ∧ WorklistLoopCorrect LTSInst sys ctx blockOf := by
+  obtain ⟨ctx, hctx⟩ := strong_run_worklist_loop_terminates LTSInst sys hwf incoming hinc n hns ctx0 hinit
+  obtain ⟨blockOf, hb⟩ := strong_run_worklist_loop_partial_correct LTSInst sys hwf incoming hinc n hns ctx0 hinit ctx hctx
+  exact ⟨ctx, blockOf, hctx, hb⟩
+
 end MercVerified.Signatures.Proofs

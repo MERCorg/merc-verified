@@ -10,8 +10,8 @@ open MercVerified.Signatures (StrongBisimSigrefCorrectSpec)
 
 -- Contract pin: fails to compile if `strong_bisim_sigref_correct_general`'s signature drifts.
 example : ∀ {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hne : LTSInst.NonEmpty sys) (timing : Timing),
-    StrongBisimSigrefCorrectSpec LTSInst sys hne timing :=
+    (sys : L) (hwf : LTSInst.WellFormed sys) (timing : Timing),
+    StrongBisimSigrefCorrectSpec LTSInst sys hwf timing :=
   MercVerified.Signatures.Proofs.strong_bisim_sigref_correct_general
 
 -- Contract pin: fails to compile if `strong_bisim_sigref_correct`'s signature drifts.
@@ -19,5 +19,5 @@ example : ∀ {Label : Type} (TLInst : TransitionLabel Label)
     (sys : SimpleLabelledTransitionSystem Label) (timing : Timing),
     StrongBisimSigrefCorrectSpec
       (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
-      (slts_num_of_states_pos TLInst sys) timing :=
+      (slts_wellFormed TLInst sys) timing :=
   MercVerified.Signatures.Proofs.strong_bisim_sigref_correct

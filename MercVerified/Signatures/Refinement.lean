@@ -13,14 +13,15 @@ open verified.merc_lts.lts.LTS (toLTS)
 namespace MercVerified.Signatures
 
 /-- Correctness of `strong_bisim_sigref` for any `LTS` trait implementor `L` (via its dictionary
-    `LTSInst`), given the one requirement that isn't implied by the trait's type signature alone:
-    a non-empty state space (`hne`). `SimpleLabelledTransitionSystem` satisfies `hne` via
-    `slts_num_of_states_pos` (`MercVerified/Basic.lean`), making its correctness result
+    `LTSInst`), given the requirement that isn't implied by the trait's type signature alone:
+    well-formedness (`hwf`, see `LTS.WellFormed`: a non-empty state space on which
+    `outgoing_transitions` succeeds with in-range targets). `SimpleLabelledTransitionSystem`
+    satisfies `hwf` via `slts_wellFormed` (`MercVerified/Basic.lean`), making its correctness result
     (`Proofs.strong_bisim_sigref_correct`) a corollary of this general spec's proof
     (`Proofs.strong_bisim_sigref_correct_general`). -/
 def StrongBisimSigrefCorrectSpec
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (_hne : LTSInst.NonEmpty sys) (timing : Timing) : Prop :=
+    (sys : L) (_hwf : LTSInst.WellFormed sys) (timing : Timing) : Prop :=
   ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
     strong_bisim_sigref LTSInst sys timing = ok (sys, partition) ∧
     (∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val →

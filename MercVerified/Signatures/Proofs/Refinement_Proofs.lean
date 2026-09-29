@@ -1,5 +1,6 @@
 import MercVerified.Signatures.Refinement
 import Signatures.Proofs.Signature_Proofs
+import MercVerified.Signatures.Proofs.WorklistLoop_Proofs
 /-!
 # Proofs for the `strong_bisim_sigref` correctness contract
 
@@ -19,10 +20,10 @@ The proof unfolds the translated `do`-blocks of `strong_bisim_sigref` /
   `MercVerified/Code/FunsExternal.lean` (`IncomingTransitions::new`,
   `Timing::measure`, `HashMap::len`, `Vec::resize_with`, `Vec::default`,
   `TagIndex::new`), plus `BlockPartition::new` (positive element count);
-- the `hne : LTSInst.NonEmpty sys` hypothesis (for `SimpleLabelledTransitionSystem`,
-  discharged by the domain axiom `slts_num_of_states_pos` - never empty,
-  mirroring the Rust `initial_state ∈ transitions` invariant), without which
-  `BlockPartition::new`'s `assert!(num_of_elements > 0)` fails;
+- the `hwf : LTSInst.WellFormed sys` hypothesis (for `SimpleLabelledTransitionSystem`,
+  discharged by the domain axiom `slts_wellFormed`, mirroring the Rust
+  `transitions` key/target invariant), without which `BlockPartition::new`'s
+  `assert!(num_of_elements > 0)` or `outgoing_transitions` may fail;
 - the hand-written `run_worklist_loop` contract axiom `run_worklist_loop_spec`
   (declared in `MercVerified/Basic.lean`, where `toLTS` is defined, generic
   over any `LTS` implementor), which provides the partition coherence,
@@ -93,6 +94,8 @@ private theorem signature_refinement_spec
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L)
     (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (hincoming : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (hwf : LTSInst.WellFormed sys)
     (n : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n)
     (hnpos : 0 < n.val) :
@@ -116,7 +119,9 @@ private theorem signature_refinement_spec
     { partition := bp, worklist := v,
       states := alloc.vec.Vec.new (TagIndex Std.Usize StateTag),
       builder := v1, split_builder := bpb, state_to_key := state_to_key }
-  rcases (run_worklist_loop_spec LTSInst sys incoming ctx0)
+  have hinit : InitialWorklistContext LTSInst n ctx0 :=
+    ⟨ti, hti, hv, hbp, hstate_to_key, hv1, hbpb, rfl⟩
+  rcases (run_worklist_loop_spec LTSInst sys hwf incoming hincoming n hns ctx0 hinit)
     with ⟨ctx, blockOf, hloop, hcohloop, hcovloop, hstabloop, hcomplloop⟩
   refine ⟨ctx.partition, blockOf, ?_, hcohloop, hcovloop, hstabloop, hcomplloop⟩
   unfold verified.merc_reduction.signature_refinement.strong_signature_refinement
@@ -138,21 +143,21 @@ private theorem signature_refinement_spec
   simp
 
 /-- Contract pin theorem: for any `LTS` trait implementor `L`/`LTSInst` with a
-    non-empty state space (`hne`), `strong_bisim_sigref` returns a partition
+    well-formed state space (`hwf`), `strong_bisim_sigref` returns a partition
     of the input LTS that is stable for the strong signature (sound) and
     complete w.r.t. `StrongFixPoint`, and whose block map agrees with the
     concrete `BlockPartition` representation. -/
 theorem strong_bisim_sigref_correct_general
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hne : LTSInst.NonEmpty sys) (timing : Timing) :
-    StrongBisimSigrefCorrectSpec LTSInst sys hne timing := by
+    (sys : L) (hwf : LTSInst.WellFormed sys) (timing : Timing) :
+    StrongBisimSigrefCorrectSpec LTSInst sys hwf timing := by
   unfold StrongBisimSigrefCorrectSpec
-  rcases hne with ⟨n, hns, hnpos⟩
+  obtain ⟨n, hns, hnpos⟩ := hwf.1
   rcases (merc_lts.incoming_transitions.IncomingTransitions.new_spec LTSInst sys)
     with ⟨incoming, hincoming⟩
   rcases (merc_utilities.timing.Timing.measure_spec (fnOnceInst LTSInst) timing (toStr "reduction") (sys, incoming))
     with ⟨partition, hmeasure, hcall⟩
-  rcases (signature_refinement_spec LTSInst sys incoming n hns hnpos)
+  rcases (signature_refinement_spec LTSInst sys incoming hincoming hwf n hns hnpos)
     with ⟨partition', blockOf, hsr, hcoh, hcov, hstab, hcomplete⟩
   have hcall' :
       verified.merc_reduction.signature_refinement.strong_signature_refinement LTSInst
@@ -177,18 +182,18 @@ theorem strong_bisim_sigref_correct_general
   rw [hmeasure]
   simp
 
-/-- `SimpleLabelledTransitionSystem` satisfies the `LTS.NonEmpty` requirement
-    (via `slts_num_of_states_pos`), so its correctness result is a corollary
+/-- `SimpleLabelledTransitionSystem` satisfies the `LTS.WellFormed` requirement
+    (via `slts_wellFormed`), so its correctness result is a corollary
     of the generic `strong_bisim_sigref_correct_general`. -/
 theorem strong_bisim_sigref_correct
     {Label : Type} (TLInst : TransitionLabel Label)
     (sys : SimpleLabelledTransitionSystem Label) (timing : Timing) :
     StrongBisimSigrefCorrectSpec
       (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
-      (slts_num_of_states_pos TLInst sys) timing :=
+      (slts_wellFormed TLInst sys) timing :=
   strong_bisim_sigref_correct_general
     (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
-    (slts_num_of_states_pos TLInst sys) timing
+    (slts_wellFormed TLInst sys) timing
 
 /-- Any partition that is stable for the strong signature witnesses the
     `StrongFixPoint` semantic: two states that end up in the same block are
