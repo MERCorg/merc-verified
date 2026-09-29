@@ -1863,6 +1863,123 @@ def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
     blockOf ∧
   ∀ s s', StrongFixPoint (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s'
 
+/-!
+## The running invariant for partial correctness
+
+`WorklistLoopCorrect` is the *final* specification. To prove partial correctness
+by induction on `strong_run_worklist_loop_loop`, we carry a running invariant
+that relaxes the stability conjunct to exactly the blocks that are *not* on the
+worklist. Blocks on the worklist may still be split, so they need not be settled
+yet; every other block is.
+
+- `BlockSettled`: every state currently mapped to a block has the same strong
+  signature (`IsStable`, restricted to one block).
+- `WorklistInv`: coherence and coverage of the current partition, plus
+  "non-worklist blocks are settled" and "`blockOf` never separates
+  `StrongFixPoint`-related states". The last conjunct is the completeness
+  invariant: refinement must not split bisimilar states.
+
+When the worklist is empty the settled condition becomes `IsStable`, so
+`WorklistInv` yields `WorklistLoopCorrect` directly (`WorklistInv.toCorrect`).
+The remaining obligation is that one iteration (popping `b` and running
+`strong_process_worklist_block`) preserves `WorklistInv`.
+-/
+
+/-- A block is settled when all states currently mapped into it share the same
+    strong signature, i.e. `IsStable` restricted to that block. -/
+def BlockSettled {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
+    (b : TagIndex Std.Usize BlockTag) : Prop :=
+  ∀ s s', blockOf s = b → blockOf s' = b →
+    StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf =
+    StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s' blockOf
+
+/-- The running invariant of the worklist loop. `blockOf` is the block map read
+    off the current partition; the first two conjuncts are the coherence and
+    coverage parts of `WorklistLoopCorrect`, the third admits that blocks still
+    on the worklist may be unstable, and the fourth records that refinement
+    keeps `StrongFixPoint`-related states together. -/
+def WorklistInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    (ctx : WorklistContextStrong)
+    (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag) : Prop :=
+  (∀ s b, (s, b) ∈ List.zip ctx.partition.elements.val ctx.partition.element_to_block.val →
+      blockOf s = b) ∧
+  (∀ n, LTSInst.num_of_states sys = ok n →
+    ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ ctx.partition.elements.val) ∧
+  (∀ b, b ∉ ctx.worklist.val → BlockSettled LTSInst sys blockOf b) ∧
+  (∀ s s', StrongFixPoint (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s')
+
+/-- `WorklistInv` implies the final specification once the worklist is empty:
+    every block is then off the worklist, so the settled condition is exactly
+    the `IsStable` conjunct of `WorklistLoopCorrect`. -/
+theorem WorklistInv.toCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (ctx : WorklistContextStrong)
+    (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
+    (h : WorklistInv LTSInst sys ctx blockOf) (hwl : ctx.worklist.val = []) :
+    WorklistLoopCorrect LTSInst sys ctx blockOf := by
+  obtain ⟨hcoh, hcov, hsettled, hcomp⟩ := h
+  refine ⟨hcoh, hcov, ?_, hcomp⟩
+  intro s s' hbb
+  exact hsettled (blockOf s) (by simp [hwl]) s s' rfl hbb.symm
+
+/-- The initial context of a well-formed system satisfies `WorklistInv`: the
+    partition is the single block `uTag 0` over all `n` states, and only that
+    block is on the worklist, so no *off-worklist* block needs to be settled
+    yet. `blockOf` is the constant map to `uTag 0`. -/
+theorem initial_worklistInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+    (sys : L) (n : Sz) (hns : LTSInst.num_of_states sys = ok n) (hnpos : 0 < n.val)
+    (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0) :
+    ∃ blockOf, WorklistInv LTSInst sys ctx0 blockOf := by
+  obtain ⟨ti, hti, hwl, hbp, _, _, _, _⟩ := hinit
+  obtain ⟨p, hnew, _hblocks, helements, he2b, _heoffset⟩ := block_partition_new_spec n hnpos
+  have hp : p = ctx0.partition := by
+    rw [hnew] at hbp
+    simpa only [Result.ok.injEq] using hbp
+  have helements' : ctx0.partition.elements.val = (List.range n.val).map uTag := by
+    rw [← hp]; exact helements
+  have he2b' : ctx0.partition.element_to_block.val
+      = List.replicate n.val (uTag (Tag := BlockTag) 0) := by
+    rw [← hp]; exact he2b
+  have hwl_val : ctx0.worklist.val = [ti] := by
+    rw [alloc.vec.FromVecArray.from] at hwl
+    simp only [Result.ok.injEq] at hwl
+    rw [← hwl]
+    simp only [alloc.vec.Vec.from_val, Aeneas.Std.Array.make_val]
+  have hti_val : ti = uTag (Tag := BlockTag) 0 := by
+    rw [merc_utilities.tagged_index.TagIndex.new_eq] at hti
+    simp only [Result.ok.injEq] at hti
+    rw [← hti]
+    unfold uTag
+    rw [uTotal_zero]
+  refine ⟨fun _ => uTag (Tag := BlockTag) 0, ?_, ?_, ?_, ?_⟩
+  · intro s b hmem
+    have hb : b ∈ ctx0.partition.element_to_block.val := (List.of_mem_zip hmem).2
+    rw [he2b'] at hb
+    have hb0 : b = uTag (Tag := BlockTag) 0 := List.eq_of_mem_replicate hb
+    rw [hb0]
+  · intro m hm s hs
+    have hmn : m = n := by
+      rw [hns] at hm
+      simpa only [Result.ok.injEq] using hm.symm
+    rw [helements', List.mem_map]
+    refine ⟨s.index.val, List.mem_range.mpr ?_, ?_⟩
+    · simpa [hmn] using hs
+    · cases s with
+      | mk index marker =>
+        cases marker
+        have hidx : uTotal index.val = index :=
+          sz_eq_from_val (by rw [uTotal_val_of_lt (sz_val_lt_two_pow index)])
+        unfold uTag
+        rw [hidx]
+  · intro b hbnot
+    rw [hwl_val] at hbnot
+    have hbne : b ≠ ti := by simpa [List.mem_singleton] using hbnot
+    rw [hti_val] at hbne
+    intro s s' hs _
+    exact absurd hs.symm hbne
+  · intro s s' _
+    rfl
+
 /-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/
 theorem strong_run_worklist_loop_partial_correct
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)

@@ -558,16 +558,17 @@ stable under marking.
 private abbrev StateIdx := TagIndex Std.Usize verified.merc_lts.lts.StateTag
 private abbrev BP := verified.merc_reduction.block_partition.BlockPartition
 
-/-- Auxiliary well-formedness: the three per-state vectors agree in length, so
-    any state index occurring in `elements` has a slot in `element_to_block` and
-    `element_offset`; and every block satisfies `begin ≤ marked_split ≤ end`,
+/-- Auxiliary well-formedness: the three per-state vectors agree in length,
+    every state index occurring in `elements` has a slot in `element_offset`,
+    and every block satisfies `begin ≤ marked_split ≤ end`,
     the invariant `assert_consistent` checks. -/
 private def PartWF (p : BP) : Prop :=
   p.elements.val.length = p.element_to_block.val.length ∧
   p.elements.val.length = p.element_offset.val.length ∧
-  (∀ i, i < p.blocks.val.length →
-    (p.blocks.val[i].begin : Nat) ≤ (p.blocks.val[i].marked_split : Nat) ∧
-    (p.blocks.val[i].marked_split : Nat) ≤ (p.blocks.val[i].end : Nat))
+  (∀ x ∈ p.elements.val, x.index.val < p.element_offset.val.length) ∧
+  (∀ (i : Nat) (hi : i < p.blocks.val.length),
+    (p.blocks.val[i]'hi).begin.val ≤ (p.blocks.val[i]'hi).marked_split.val ∧
+    (p.blocks.val[i]'hi).marked_split.val ≤ (p.blocks.val[i]'hi).«end».val)
 
 /-- `swap_elements` exchanges two entries of `elements`, repairs their
     `element_offset` entries, and leaves `blocks` and `element_to_block`
@@ -579,13 +580,75 @@ theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
       PartWF p' ∧
       p'.blocks = p.blocks ∧
       p'.element_to_block = p.element_to_block ∧
-      p'.elements.val[a.val] = p.elements.val[b.val] ∧
-      p'.elements.val[b.val] = p.elements.val[a.val] ∧
-      (∀ i, i < p.elements.val.length → i ≠ a.val → i ≠ b.val →
-          p'.elements.val[i] = p.elements.val[i]) ∧
-      p'.element_offset.val =
-        (p.element_offset.val.set (p.elements.val[b.val]).index.val a.val).set
-          (p.elements.val[a.val]).index.val b.val := by
-  sorry
+      p'.elements.val.length = p.elements.val.length ∧
+      p'.element_offset.val.length = p.element_offset.val.length := by
+  obtain ⟨h1, h2, h3, h4⟩ := hwf
+  unfold verified.merc_reduction.block_partition.BlockPartition.swap_elements
+  have haS : a.val < p.elements.slice.length := ha
+  have hbS : b.val < p.elements.slice.length := hb
+  obtain ⟨s1, hs1, hl1, hA, hB, hO⟩ :=
+    spec_imp_exists (core.slice.Slice.swap_spec p.elements.slice a b haS hbS)
+  have hsa : a.val < s1.length := by rw [hl1]; exact haS
+  have hsb : b.val < s1.length := by rw [hl1]; exact hbS
+  obtain ⟨xa, hxa, hxa'⟩ := spec_imp_exists (Slice.index_usize_spec s1 a hsa)
+  obtain ⟨xb, hxb, hxb'⟩ := spec_imp_exists (Slice.index_usize_spec s1 b hsb)
+  have hxa_eq : xa = p.elements.val[b.val] := by
+    rw [hxa']
+    have := hA
+    simp only [getElem!_pos, hsa, hbS] at this
+    exact this
+  have hxb_eq : xb = p.elements.val[a.val] := by
+    rw [hxb']
+    have := hB
+    simp only [getElem!_pos, hsb, haS] at this
+    exact this
+  have hmem_b : p.elements.val[b.val] ∈ p.elements.val := List.getElem_mem hb
+  have hmem_a : p.elements.val[a.val] ∈ p.elements.val := List.getElem_mem ha
+  have hbnd_a : (p.elements.val[b.val]).index.val < p.element_offset.slice.length :=
+    h3 _ hmem_b
+  have hbnd_b : (p.elements.val[a.val]).index.val < p.element_offset.slice.length :=
+    h3 _ hmem_a
+  obtain ⟨⟨_, back1⟩, hm1, _, hb1⟩ := spec_imp_exists
+    (Slice.index_mut_usize_spec p.element_offset.slice (p.elements.val[b.val]).index hbnd_a)
+  have hbnd2 : (p.elements.val[a.val]).index.val <
+      (p.element_offset.slice.set (p.elements.val[b.val]).index a).length := by
+    rw [Slice.set_length]; exact hbnd_b
+  obtain ⟨⟨_, back2⟩, hm2, _, hb2⟩ := spec_imp_exists
+    (Slice.index_mut_usize_spec (p.element_offset.slice.set (p.elements.val[b.val]).index a)
+      (p.elements.val[a.val]).index hbnd2)
+  refine ⟨{ elements := ⟨s1⟩, blocks := p.blocks, element_to_block := p.element_to_block,
+            element_offset := ⟨back2 b⟩ }, ?_, ?_⟩
+  · simp [alloc.vec.Vec.deref_mut, lift, hs1, alloc.vec.Vec.index, core.slice.index.Usize.index,
+      hxa, hxb, hxa_eq, hxb_eq, vec_tagged_index_mut_eq, hm1, hm2, hb1]
+  · have hlen : (back2 b).length = p.element_offset.slice.length := by
+      rw [hb2]; simp
+    refine ⟨⟨?_, ?_, ?_, h4⟩, rfl, rfl, ?_, ?_⟩
+    · show s1.length = _; rw [hl1]; exact h1
+    · show s1.length = (back2 b).length; rw [hl1, hlen]; exact h2
+    · intro x hx
+      obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hx
+      change (s1.val[i]).index.val < (back2 b).length
+      rw [hlen]
+      have hi' : i < p.elements.val.length := by
+        have : i < s1.length := hi
+        rw [hl1] at this; exact this
+      by_cases hia : i = a.val
+      · subst hia
+        have e : s1.val[a.val] = p.elements.val[b.val] := by
+          have := hA; simp only [getElem!_pos, hsa, hbS] at this; exact this
+        rw [e]; exact hbnd_a
+      · by_cases hib : i = b.val
+        · subst hib
+          have e : s1.val[b.val] = p.elements.val[a.val] := by
+            have := hB; simp only [getElem!_pos, hsb, haS] at this; exact this
+          rw [e]; exact hbnd_b
+        · have e : s1.val[i] = p.elements.val[i] := by
+            have hi2 : i < s1.val.length := hi
+            have hi3 : i < p.elements.slice.val.length := hi'
+            have := hO i hia hib
+            simp only [getElem!_pos, hi2, hi3] at this; exact this
+          rw [e]; exact h3 _ (List.getElem_mem hi')
+    · show s1.length = _; rw [hl1]; rfl
+    · show (back2 b).length = _; rw [hlen]; rfl
 
 end MercVerified.Signatures.Proofs
