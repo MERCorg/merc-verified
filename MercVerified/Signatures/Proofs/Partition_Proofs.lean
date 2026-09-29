@@ -84,6 +84,26 @@ theorem block_len_contract
   rw [hu]
   simp
 
+/-- `Block::has_marked` probes whether the marked suffix is non-empty: the
+    `assert_consistent` integrity check always completes and the predicate is
+    `marked_split < end` (decided into `Bool`). -/
+theorem block_has_marked_contract
+    (b : verified.merc_reduction.block_partition.Block) :
+    verified.merc_reduction.block_partition.Block.has_marked b =
+      ok (decide ((b.marked_split : Nat) < (b.«end» : Nat))) := by
+  unfold verified.merc_reduction.block_partition.Block.has_marked
+  rcases merc_reduction.block_partition.Block.assert_consistent_ok b with ⟨u, hu⟩
+  rw [hu]
+  simp
+
+/-- `BlockPartition::num_of_blocks` is just the length of `blocks`. -/
+theorem num_of_blocks_contract
+    (p : verified.merc_reduction.block_partition.BlockPartition) :
+    verified.merc_reduction.block_partition.BlockPartition.num_of_blocks p =
+      ok (alloc.vec.Vec.len p.blocks) := by
+  unfold verified.merc_reduction.block_partition.BlockPartition.num_of_blocks
+  rfl
+
 /-- `BlockPartition::is_trivially_partitioned` reads `blocks[block_index]` and
     reports whether its derived length is exactly `1`: the do-mirror equation. -/
 theorem is_trivially_partitioned_contract
@@ -264,7 +284,6 @@ theorem strong_partition_marked_trivial {L : Type} {Label : Type}
           ok (v, p, id, key_to_signature, signature_builder, split_builder, state_to_key) ∧
       v.val = [block_index] ∧
       p.blocks.val = partition.blocks.val.set block_index.val (mark_all partition block_index hIdx) := by
-  have hb : block_index.val < partition.blocks.slice.val.length := by exact hIdx
   rw [strong_partition_marked_trivial_contract LTSInst sys partition block_index id key_to_signature
     signature_builder split_builder state_to_key hAll]
   rcases trivial_partition_marked_contract partition block_index hIdx with ⟨v0, p0, heq, hv, hp⟩
@@ -273,13 +292,6 @@ theorem strong_partition_marked_trivial {L : Type} {Label : Type}
     simp
   · exact hv
   · rw [hp]
-    change (partition.blocks.slice.set block_index
-        ({ (partition.blocks.slice.val[block_index.val]'hb) with
-           marked_split := (partition.blocks.slice.val[block_index.val]'hb).«end» })).val =
-      partition.blocks.val.set block_index.val
-        ({ partition.blocks.val[block_index.val]'hIdx with
-           marked_split := (partition.blocks.val[block_index.val]'hIdx).«end» })
-    rw [Slice.set_val_eq]
     rfl
 
 /-- The non-singleton path: `strong_partition_marked` chains the three

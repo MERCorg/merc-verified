@@ -1,5 +1,6 @@
 import MercVerified.Signatures.Refinement
 import MercVerified.Signatures.Proofs.StrongSignature_Proofs
+import MercVerified.Signatures.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -542,6 +543,65 @@ theorem mark_dirty_new_blocks_loop_spec (BRANCHING : Bool) {L : Type} {Label : T
           exact ih it1 p1 w1 s1 hlen1
   rw [show verified.merc_reduction.signature_refinement.mark_dirty_new_blocks_loop BRANCHING ltsInst iter lts partition incoming worklist states block_index num_blocks = loopF iter partition worklist states from by rfl]
   exact hw (iter.val.length) iter partition worklist states rfl
+
+/-- `mark_dirty_new_blocks` iterates `new_block_indices` end-to-end; its
+    wrapper frame is exactly the `markDirtyAcc` accumulator. -/
+theorem mark_dirty_new_blocks_contract (BRANCHING : Bool) {L : Type} {Label : Type}
+    (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (block_index : BT) (num_blocks : Sz)
+    (partition : BlockPartition) (worklist : VecTy BT) (states : VecTy ST)
+    (nbi : VecTy BT) :
+    verified.merc_reduction.signature_refinement.mark_dirty_new_blocks BRANCHING ltsInst lts
+      partition incoming worklist states block_index nbi num_blocks =
+      markDirtyAcc BRANCHING ltsInst lts incoming block_index num_blocks partition worklist states nbi.val := by
+  rw [verified.merc_reduction.signature_refinement.mark_dirty_new_blocks]
+  rw [alloc.vec.IntoIteratorVec.into_iter]
+  simp
+  rw [mark_dirty_new_blocks_loop_spec BRANCHING ltsInst lts incoming block_index
+    num_blocks nbi partition worklist states]
+
+/-- `strong_process_worklist_block` passes a fresh `id` map, reads block
+    `b = blocks[b.val]`, asserts its marked suffix is non-empty (the loop
+    invariant), closes the backward closure, then runs
+    `strong_partition_marked` and `mark_dirty_new_blocks`. The do-mirror
+    records every step with the leaf contracts already rewritten in. -/
+theorem strong_process_worklist_block_contract {L : Type} {Label : Type}
+    (BRANCHING : Bool) (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (ctx : WorklistContextStrong) (b : BT)
+    (hIdx : b.val < ctx.partition.blocks.val.length)
+    (b0 : verified.merc_reduction.block_partition.Block)
+    (hb0 : ctx.partition.blocks.slice.val[b.val] = b0)
+    (hMark : (b0.marked_split : Nat) < (b0.«end» : Nat)) :
+    verified.merc_reduction.signature_refinement.strong_process_worklist_block
+      BRANCHING LTSInst sys incoming ctx b =
+      (do
+        let id ←
+          std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default
+            (VecTy ((TagIndex Std.Usize LabelTag) × BT)) (TagIndex Std.Usize BlockTag)
+            verified.rustc_hash.FxBuildHasher.Insts.CoreDefaultDefault
+        let bk ← ok b0
+        let b1 ← ok (decide ((b0.marked_split : Nat) < (b0.«end» : Nat)))
+        massert b1
+        let bp ←
+          verified.merc_reduction.signature_refinement.maybe_mark_backward_closure
+            BRANCHING ctx.partition b incoming
+        let num_blocks ← ok (alloc.vec.Vec.len bp.blocks)
+        let (nbi, bp1, _, _, v, bpb, v1) ←
+          verified.merc_reduction.signature_refinement.strong_partition_marked
+            LTSInst sys bp b id (alloc.vec.Vec.new (VecTy ((TagIndex Std.Usize LabelTag) × BT)))
+            ctx.builder ctx.split_builder ctx.state_to_key
+        let (bp2, v2, v3) ←
+          verified.merc_reduction.signature_refinement.mark_dirty_new_blocks
+            BRANCHING LTSInst sys bp1 incoming ctx.worklist ctx.states b nbi
+            num_blocks
+        ok { partition := bp2, worklist := v2, states := v3, builder := v,
+             split_builder := bpb, state_to_key := v1 }) := by
+  unfold verified.merc_reduction.signature_refinement.strong_process_worklist_block
+  rw [block_partition_block_val ctx.partition b hIdx]
+  rw [hb0]
+  simp [block_has_marked_contract, num_of_blocks_contract, hMark, bind_tc_ok]
 
 /-!
 # `strong_process_marked_elements` internals
