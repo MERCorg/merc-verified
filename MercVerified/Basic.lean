@@ -5,6 +5,7 @@ import Signatures.Signature
 import MercVerified.Code.Funs
 import MercVerified.Code.FunsExternal_Template
 import MercVerified.Code.FunsExternal
+import MercVerified.Code.FunsExternalSpecs
 import MercVerified.Code.Types
 import MercVerified.Code.TypesExternal_Template
 import MercVerified.Code.TypesExternal
@@ -67,6 +68,18 @@ def toLTS {L Label : Type}
 def NonEmpty {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
   ∃ n : Std.Usize, LTSInst.num_of_states sys = ok n ∧ 0 < n.val
 
+/-- Well-formedness of an `LTS` implementor's concrete representation: a non-empty state space
+    of `n` states in which `outgoing_transitions` succeeds on every state `< n` and only yields
+    transitions whose target is again `< n`. The trait's type signature does not imply any of
+    this (`outgoing_transitions` may `fail`, and its targets are arbitrary indices), so
+    algorithms over `LTS` implementors are only trusted under this hypothesis. -/
+def WellFormed {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
+  LTSInst.NonEmpty sys ∧
+  ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+    ∀ s : TagIndex Std.Usize StateTag, s.val < n.val →
+      ∃ ts : alloc.vec.Vec Transition,
+        LTSInst.outgoing_transitions sys s = ok ts ∧ ∀ t ∈ ts.val, t.to.val < n.val
+
 end verified.merc_lts.lts.LTS
 
 /-- The Rust method `is_hidden_label` declares the hidden (τ) label to be
@@ -87,108 +100,18 @@ axiom BlockPartition.new_spec
   (num_of_elements : Std.Usize) (hpos : 0 < num_of_elements.val) :
   ∃ bp, verified.merc_reduction.block_partition.BlockPartition.new num_of_elements = ok bp
 
-/-- The translated `SimpleLabelledTransitionSystem` is never empty: Rust's type
-    invariant keeps the `initial_state` in the `transitions` map (the
-    constructor guarantees it), so `num_of_states` (= `transitions.len()`) is
-    always at least `1`. Without this, the translated `BlockPartition::new`
-    `assert!(num_of_elements > 0)` would fail on the empty system, so the
-    `strong_bisim_sigref` contract would hold for no system at all.
+/-- The translated `SimpleLabelledTransitionSystem` is well-formed: Rust's type invariant is that
+    `transitions` has exactly the keys `0..n` (`n = transitions.len()`, and `n ≥ 1` since the
+    constructor keeps `initial_state` in the map) and every transition target is such a key.
+    Hence `outgoing_transitions` (a `HashMap::get(..).expect(..)`) succeeds on every state `< n`
+    with in-range targets, and the state space is non-empty (otherwise the translated
+    `BlockPartition::new` `assert!(num_of_elements > 0)` would fail).
 
     This is the witness that `SimpleLabelledTransitionSystem`'s `LTS` instance satisfies the
-    `LTS.NonEmpty` requirement, making `strong_bisim_sigref_correct` (in
+    `LTS.WellFormed` requirement, making `strong_bisim_sigref_correct` (in
     `MercVerified/Signatures/Proofs/Refinement_Proofs.lean`) a corollary of the generic
     `strong_bisim_sigref_correct_general`. -/
-axiom slts_num_of_states_pos {Label : Type}
+axiom slts_wellFormed {Label : Type}
     (TLInst : verified.merc_lts.lts.TransitionLabel Label)
     (sys : SimpleLabelledTransitionSystem Label) :
-    (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).NonEmpty sys
-
-/-- Contract of `strong_run_worklist_loop` (a real translated `def` in
-    `MercVerified/Code/Funs.lean` - not yet proven from its body, so still
-    trusted as an axiom here). On the strong-bisimulation specialization (the
-    `signature`/`renumber` closures of `strong_bisim_sigref`, now fully
-    specialised away into `WorklistContextStrong`), and any initial
-    `WorklistContextStrong`, it succeeds and returns a context whose partition
-    is *stable* for the strong signature (states in the same block have
-    identical `StrongSignature`), its block map agrees with the concrete
-    partition (coherence), covers every state index of `sys` (every
-    `s < num_of_states sys` appears among `ctx.partition.elements`), and is
-    complete w.r.t. `StrongFixPoint` (strongly bisimilar states are placed in
-    the same block).
-
-    Stated generically over any `LTS` implementor `L`/`LTSInst`, not just
-    `SimpleLabelledTransitionSystem`: the Rust `strong_run_worklist_loop` is itself
-    generic over the `LTS` trait and never downcasts to a concrete type (see
-    its generic signature in `MercVerified/Code/Funs.lean`), so trusting its
-    correctness for any implementor - not just the one Rust type currently in
-    the codebase - faithfully reflects what is actually being trusted at this
-    boundary. -/
-axiom run_worklist_loop_spec
-    {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
-    (ctx0 : verified.merc_reduction.signature_refinement.WorklistContextStrong) :
-    ∃ (ctx : verified.merc_reduction.signature_refinement.WorklistContextStrong)
-      (blockOf : TagIndex Std.Usize verified.merc_lts.lts.StateTag →
-        TagIndex Std.Usize verified.merc_collections.indexed_partition.BlockTag),
-      verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
-        LTSInst
-        sys incoming ctx0 = ok ctx ∧
-      (∀ s b, (s, b) ∈ List.zip ctx.partition.elements.val ctx.partition.element_to_block.val → blockOf s = b) ∧
-      (∀ n, LTSInst.num_of_states sys = ok n →
-        ∀ s : TagIndex Std.Usize verified.merc_lts.lts.StateTag, s.val < n.val →
-          s ∈ ctx.partition.elements.val) ∧
-      IsStable (fun s => StrongSignature
-        (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf) blockOf ∧
-      ∀ s s', StrongFixPoint
-        (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s'
-
-/-!
-# `HashMap` boundary semantics
-
-The `std::collections::hash::map::HashMap` type and its operations are opaque
-externals (axioms in `MercVerified/Code/FunsExternal_Template.lean`). To prove
-value-level specs of the strong interning pipeline (`strong_intern_signature`
-uses `get_key_value`/`insert` on the signature→block-index map) the two
-*observable* semantics below are added at the boundary, exactly mirroring how
-`std::collections::hash::map::HashMap` is used there: keys looked up through the
-blanket `Borrow` (`verified.core.borrow.Borrow.Blanket`) and the passed-through
-`Eq`/`Hash` instances.
--/
-
-/-- `HashMap::insert` never fails, and immediately afterwards a lookup of the
-    freshly inserted key (through the same equality/hash instances) returns
-    exactly that `(key, value)` pair - the observable semantics of
-    `std::collections::hash::map::HashMap::<K, V>::insert` that the strong
-    interning (`strong_intern_signature`) relies on. The previous value
-    associated with `k` is returned but left under-specified. -/
-axiom std.collections.hash.map.HashMap.insert_spec
-  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
-  (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
-  (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
-  (m : std.collections.hash.map.HashMap K V S A) (k : K) (v : V) :
-  ∃ old : Option V, ∃ m' : std.collections.hash.map.HashMap K V S A,
-    std.collections.hash.map.HashMap.insert corecmpEqInst corehashHashInst
-      corehashBuildHasherInst m k v = ok (old, m') ∧
-    std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
-      corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
-      corehashHashInst corecmpEqInst m' k = ok (some (k, v))
-
-/-- Inserting `k ↦ v` leaves all lookups of keys the map's own equality test
-    reports as *different* from `k` untouched - the `HashMap::insert` behaviour
-    that lets interning accumulate distinct signatures independently. -/
-axiom std.collections.hash.map.HashMap.insert_get_key_value_other
-  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
-  (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
-  (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
-  (m : std.collections.hash.map.HashMap K V S A) (k : K) (v : V) (q : K)
-  (hneq : corecmpEqInst.partialEqInst.eq k q = ok false) :
-  ∃ old : Option V, ∃ m' : std.collections.hash.map.HashMap K V S A,
-    std.collections.hash.map.HashMap.insert corecmpEqInst corehashHashInst
-      corehashBuildHasherInst m k v = ok (old, m') ∧
-    std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
-      corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
-      corehashHashInst corecmpEqInst m' q =
-    std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
-      corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
-      corehashHashInst corecmpEqInst m q
+    (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).WellFormed sys
