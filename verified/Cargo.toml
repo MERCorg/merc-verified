@@ -16,15 +16,19 @@ include = [
   "merc_reduction::signatures",
   "merc_reduction::partition",
   "merc_reduction::block_partition",
-  "merc_reduction::signature_refinement::strong_bisim_sigref",
-  "merc_reduction::signature_refinement::signature_refinement",
-  "merc_reduction::signature_refinement::WorklistContext",
+  "merc_reduction::signature_refinement",
+  "merc_lts::incoming_transitions",
+  "merc_utilities::tagged_index",
 ]
 # `tau_cycle_elimination_and_reorder` pulls in `merc_collections::graph::Graph`
 # (via quotient_lts_naive / tau_scc_decomposition_iterative / sort_topological),
 # which uses a GAT that Aeneas's `--lift-associated-types` cannot handle.
-exclude = ["merc_reduction::signatures::tau_cycle_elimination_and_reorder"]
+exclude = [
+  "merc_reduction::signatures::tau_cycle_elimination_and_reorder",
+  "merc_reduction::signature_refinement::branching_bisim_sigref_impl",
+]
 opaque = [
+  "merc_reduction::signature_refinement::new_worklist_progress",
   "merc_reduction::block_partition::_::mark_backward_closure",
   "merc_reduction::block_partition::_::assert_consistent",
 ]

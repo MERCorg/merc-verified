@@ -66,26 +66,6 @@ axiom std.hash.random.DefaultHasher : Type
 @[rust_type "merc_io::progress::TimeProgress"]
 axiom merc_io.progress.TimeProgress (T : Type) : Type
 
-/-- [merc_lts::incoming_transitions::IncomingTransitions]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 23:0-23:30
-    Name pattern: [merc_lts::incoming_transitions::IncomingTransitions]
-    Visibility: public -/
-@[rust_type "merc_lts::incoming_transitions::IncomingTransitions"]
-axiom merc_lts.incoming_transitions.IncomingTransitions : Type
-
-/-- [merc_utilities::tagged_index::TagIndex]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 32:0-32:27
-    Name pattern: [merc_utilities::tagged_index::TagIndex]
-    Visibility: public -
-
-Model of `TagIndex<T, Tag>`: a phantom-tagged wrapper around `T` (the `Tag`
-parameter is erased at runtime in Rust). Giving it this concrete meaning makes
-every tagged operation (construction, extraction, comparison, indexed access)
-definitional arithmetic on the payload, which is what the array-level proofs of
-the worklist loop need. `new`/`value`/`cmp`/indexing are still extern
-operations, but they now act on real values. -/
-def merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) : Type := T
-
 /-- [merc_utilities::timing::Timing]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 12:0-12:17
     Name pattern: [merc_utilities::timing::Timing]

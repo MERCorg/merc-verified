@@ -366,31 +366,8 @@ axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
 axiom merc_io.progress.TimeProgress.print
   {T : Type} : merc_io.progress.TimeProgress T → T → Result Unit
 
-/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 35:4-35:39
-    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::new]
-    Visibility: public -/
-@[rust_fun
-  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::new"]
-axiom merc_lts.incoming_transitions.IncomingTransitions.new
-  {L : Type} {Clause0_Label : Type} (ltsLTSInst : merc_lts.lts.LTS L
-  Clause0_Label) :
-  L → Result merc_lts.incoming_transitions.IncomingTransitions
-
-/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_transitions]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 108:4-108:86
-    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_transitions]
-    Visibility: public -/
-@[rust_fun
-  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_transitions"]
-axiom merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions
-  :
-  merc_lts.incoming_transitions.IncomingTransitions →
-    merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag →
-    Result (alloc.vec.Vec merc_lts.incoming_transitions.FromTransition)
-
 /-- [merc_lts::lts::{impl core::clone::Clone for merc_lts::lts::Transition}::clone]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:9-103:14
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 132:9-132:14
     Name pattern: [merc_lts::lts::{core::clone::Clone<merc_lts::lts::Transition>}::clone]
     Visibility: public -/
 @[rust_fun
@@ -399,7 +376,7 @@ axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
   : merc_lts.lts.Transition → Result merc_lts.lts.Transition
 
 /-- [merc_lts::lts::{impl core::cmp::PartialEq<merc_lts::lts::Transition> for merc_lts::lts::Transition}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 103:23-103:32
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 132:23-132:32
     Name pattern: [merc_lts::lts::{core::cmp::PartialEq<merc_lts::lts::Transition, merc_lts::lts::Transition>}::eq]
     Visibility: public -/
 @[rust_fun
@@ -407,138 +384,8 @@ axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
 axiom merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
   : merc_lts.lts.Transition → merc_lts.lts.Transition → Result Bool
 
-/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 106:4-106:32
-    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::new"]
-def merc_utilities.tagged_index.TagIndex.new
-  {T : Type} (Tag : Type) :
-  T → Result (merc_utilities.tagged_index.TagIndex T Tag) :=
-  fun i => ok i
-
-/-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 137:4-137:61
-    Name pattern: [merc_utilities::tagged_index::{core::ops::index::Index<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::ops::index::Index<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index"]
-def alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
-  {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
-  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice U) U) :
-  alloc.vec.Vec U → merc_utilities.tagged_index.TagIndex T Tag → Result U :=
-  fun v t => coresliceindexSliceIndexTSliceUInst.index (t : T) v.slice
-
-/-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 630:4-630:31
-    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent] -/
-@[rust_fun
-  "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent"]
-axiom merc_reduction.block_partition.Block.assert_consistent
-  : merc_reduction.block_partition.Block → Result Unit
-
-/-- Vetted boundary fact: `assert_consistent` always runs to completion (returns
-    `ok`). The Rust code calls it purely for its consistency side-effect. -/
-axiom merc_reduction.block_partition.Block.assert_consistent_ok
-  (self : merc_reduction.block_partition.Block) : ∃ u : Unit,
-    merc_reduction.block_partition.Block.assert_consistent self = ok u
-
-/-- [merc_utilities::tagged_index::{impl core::ops::index::IndexMut<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for alloc::vec::Vec<U>}::index_mut]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 151:4-151:73
-    Name pattern: [merc_utilities::tagged_index::{core::ops::index::IndexMut<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index_mut]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::ops::index::IndexMut<alloc::vec::Vec<@U>, merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index_mut"]
-def alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
-  {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
-  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice U) U) :
-  alloc.vec.Vec U → merc_utilities.tagged_index.TagIndex T Tag → Result
-    (U × (U → alloc.vec.Vec U)) :=
-  fun v t => do
-    let (x, f) ← coresliceindexSliceIndexTSliceUInst.index_mut (t : T) v.slice
-    ok (x, fun u => ({ slice := f u } : alloc.vec.Vec U))
-
-/-- [merc_utilities::tagged_index::{impl core::clone::Clone for merc_utilities::tagged_index::TagIndex<T, Tag>}::clone]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:27
-    Name pattern: [merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::clone::Clone<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::clone"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone
-  {T : Type} {Tag : Type} (corecloneCloneInst : core.clone.Clone T) :
-  merc_utilities.tagged_index.TagIndex T Tag → Result
-    (merc_utilities.tagged_index.TagIndex T Tag)
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::partial_cmp]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 71:4-71:69
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::partial_cmp"]
-def
-  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialOrdTagIndex.partial_cmp
-  {T : Type} {Tag : Type} (corecmpPartialOrdInst : core.cmp.PartialOrd T T) :
-  merc_utilities.tagged_index.TagIndex T Tag →
-    merc_utilities.tagged_index.TagIndex T Tag → Result (Option Ordering) :=
-  fun a b => corecmpPartialOrdInst.partial_cmp a b
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 59:4-59:38
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
-  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
-  merc_utilities.tagged_index.TagIndex T Tag →
-    merc_utilities.tagged_index.TagIndex T Tag → Result Bool :=
-  fun a b => corecmpPartialEqInst.eq a b
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::Ord for merc_utilities::tagged_index::TagIndex<T, Tag>}::cmp]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 65:4-65:53
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::Ord<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::cmp"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd.cmp
-  {T : Type} {Tag : Type} (corecmpOrdInst : core.cmp.Ord T) :
-  merc_utilities.tagged_index.TagIndex T Tag →
-    merc_utilities.tagged_index.TagIndex T Tag → Result Ordering :=
-  fun a b => corecmpOrdInst.cmp a b
-
-/-- [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<T, Tag>}::value]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 116:4-116:28
-    Name pattern: [merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::value]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{merc_utilities::tagged_index::TagIndex<@T, @Tag>}::value"]
-def merc_utilities.tagged_index.TagIndex.value
-  {T : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T) :
-  merc_utilities.tagged_index.TagIndex T Tag → Result T :=
-  fun t => ok t
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<T> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 92:4-92:35
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, @T>}::eq"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
-  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T) :
-  merc_utilities.tagged_index.TagIndex T Tag → T → Result Bool :=
-  fun a b => corecmpPartialEqInst.eq a b
-
-/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 425:4-425:39
-    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent] -/
-@[rust_fun
-  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent"]
-axiom merc_reduction.block_partition.BlockPartition.assert_consistent
-  : merc_reduction.block_partition.BlockPartition → Result Bool
-
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 311:4-315:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 232:4-236:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
@@ -549,6 +396,22 @@ axiom merc_reduction.block_partition.BlockPartition.mark_backward_closure
     merc_collections.indexed_partition.BlockTag →
     merc_lts.incoming_transitions.IncomingTransitions → Result
     merc_reduction.block_partition.BlockPartition
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 531:4-531:31
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent"]
+axiom merc_reduction.block_partition.Block.assert_consistent
+  : merc_reduction.block_partition.Block → Result Unit
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 898:4-898:39
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent"]
+axiom merc_reduction.block_partition.BlockPartition.assert_consistent
+  : merc_reduction.block_partition.BlockPartition → Result Bool
 
 /-- [merc_utilities::timing::{merc_utilities::timing::Timing}::measure]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 37:4-39:25
@@ -594,33 +457,10 @@ axiom rustc_hash.FxHasher.Insts.CoreHashHasher.finish
 axiom rustc_hash.FxHasher.Insts.CoreHashHasher.write
   : rustc_hash.FxHasher → Slice Std.U8 → Result rustc_hash.FxHasher
 
-/-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 77:4-77:55
-    Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash"]
-axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
-  {T : Type} {Tag : Type} {H : Type} (corehashHashInst : core.hash.Hash T)
-  (corehashHasherInst : core.hash.Hasher H) :
-  merc_utilities.tagged_index.TagIndex T Tag → H → Result H
-
 /-- [merc_reduction::signature_refinement::new_worklist_progress]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 719:0-719:58
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1655:0-1655:58
     Name pattern: [merc_reduction::signature_refinement::new_worklist_progress] -/
 @[rust_fun "merc_reduction::signature_refinement::new_worklist_progress"]
 axiom merc_reduction.signature_refinement.new_worklist_progress
   : Result (merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
-
-/-- [merc_utilities::tagged_index::{impl core::ops::index::Index<merc_utilities::tagged_index::TagIndex<T, Tag>, U> for [U]}::index]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 145:4-145:61
-    Name pattern: [merc_utilities::tagged_index::{core::ops::index::Index<[@U], merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::ops::index::Index<[@U], merc_utilities::tagged_index::TagIndex<@T, @Tag>, @U>}::index"]
-axiom Slice.Insts.CoreOpsIndexIndexTagIndexU.index
-  {T : Type} {U : Type} {Tag : Type} (coremarkerCopyInst : core.marker.Copy T)
-  (coresliceindexSliceIndexTSliceUInst : core.slice.index.SliceIndex T (Slice
-  U) U) :
-  Slice U → merc_utilities.tagged_index.TagIndex T Tag → Result U
 
