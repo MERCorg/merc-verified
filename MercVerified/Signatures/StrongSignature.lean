@@ -1,7 +1,7 @@
 import MercVerified.Basic
 
 open Aeneas Aeneas.Std Result
-open merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag Transition LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.partition (Partition)

@@ -15,7 +15,7 @@ Machine-generated proofs; may be freely edited or regenerated (see CLAUDE.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
-open merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_collections.indexed_partition (BlockTag)
 
 namespace MercVerified.Signatures.Proofs

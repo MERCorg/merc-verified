@@ -17,7 +17,7 @@ regeneration drifts from the pinned shape) live in the human-vetted
 -/
 
 open Aeneas Aeneas.Std Aeneas.Std.WP Result
-open merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.signatures (strong_bisim_signature strong_bisim_signature_loop)

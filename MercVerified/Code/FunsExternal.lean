@@ -1,14 +1,7 @@
 import MercVerified.Code.FunsExternal_Template
 
 open Aeneas Aeneas.Std Result
-
-def
-  merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq.assert_fields_are_eq
-  {T : Type} (Tag : Type) (_corecmpEqInst : core.cmp.Eq T)
-  (_self : merc_utilities.tagged_index.TagIndex T Tag) :
-  Result Unit
-  := do
-  ok ()
+open verified
 
 /-- `[T]::sort_unstable` never fails, and its result is a permutation of its
     input - the only property of sorting that `MercVerified/Signatures/`
@@ -76,21 +69,6 @@ axiom alloc.vec.Vec.resize_with_spec
 axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec
   (T : Type) : ∃ v : alloc.vec.Vec T,
     alloc.vec.Vec.Insts.CoreDefaultDefault.default T = ok v
-
-/-- `IncomingTransitions::new` never fails (it just indexes the transitions of
-    the LTS). -/
-axiom merc_lts.incoming_transitions.IncomingTransitions.new_spec
-  {L : Type} {Clause0_Label : Type} (ltsLTSInst : verified.merc_lts.lts.LTS L Clause0_Label) :
-  (lts : L) → ∃ incoming,
-    merc_lts.incoming_transitions.IncomingTransitions.new ltsLTSInst lts = ok incoming
-
-/-- `TagIndex::new` never fails (and returns exactly its argument under the
-    `TagIndex := T` model). -/
-theorem merc_utilities.tagged_index.TagIndex.new_spec
-  {T : Type} (Tag : Type) :
-  (i : T) → ∃ t, merc_utilities.tagged_index.TagIndex.new Tag i = ok t := by
-  intro i
-  exact ⟨i, rfl⟩
 
 /-- `Timing::measure(name, f)` runs the closure and returns its result - the
     only way `strong_bisim_sigref`'s timing wrapper is used. -/

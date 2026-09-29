@@ -23,7 +23,7 @@ record `⟨μ, s'⟩`.
 -/
 
 open Aeneas Aeneas.Std Result
-open merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (Transition StateTag LabelTag TransitionLabel LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)

@@ -2,8 +2,8 @@ import MercVerified.Signatures.Refinement
 import MercVerified.Signatures.Proofs.Refinement_Proofs
 
 open Aeneas Aeneas.Std Result
-open merc_utilities.tagged_index (TagIndex)
-open merc_utilities.timing (Timing)
+open verified.merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.timing (Timing)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel LTS)
 open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
 open MercVerified.Signatures (StrongBisimSigrefCorrectSpec)

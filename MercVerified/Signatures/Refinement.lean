@@ -2,8 +2,8 @@ import MercVerified.Basic
 import MercVerified.Signatures.StrongSignature
 
 open Aeneas Aeneas.Std Result
-open merc_utilities.tagged_index (TagIndex)
-open merc_utilities.timing (Timing)
+open verified.merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.timing (Timing)
 open verified.merc_lts.lts (StateTag LabelTag LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)

@@ -2,7 +2,7 @@ import MercVerified.Signatures.StrongSignature
 import MercVerified.Signatures.Proofs.StrongSignature_Proofs
 
 open Aeneas Aeneas.Std Result
-open merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.partition (Partition)

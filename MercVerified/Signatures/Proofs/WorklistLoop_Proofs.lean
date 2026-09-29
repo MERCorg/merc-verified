@@ -20,7 +20,7 @@ The goal is to replace that axiom with a proof.
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
-open merc_utilities.tagged_index (TagIndex)
+open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag Transition)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition BlockPartitionBuilder)
