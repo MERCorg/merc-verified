@@ -43,7 +43,7 @@ pinned contract):
 
 open Aeneas Aeneas.Std Result
 open verified.merc_utilities.tagged_index (TagIndex)
-open verified.merc_utilities.timing (Timing)
+open merc_utilities.timing (Timing)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)
@@ -84,7 +84,8 @@ private theorem BlockPartitionBuilder_default_ok :
   rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec (TagIndex Std.Usize BlockTag)) with ⟨b0, hb0⟩
   rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec Std.Usize) with ⟨b1, hb1⟩
   rw [hb0, hb1]
-  simp
+  exact ⟨({ index_to_block := b0, block_sizes := b1, old_elements := b0 } :
+    verified.merc_reduction.block_partition.BlockPartitionBuilder), by simp⟩
 
 /-- The `strong_signature_refinement` call at the heart of `strong_bisim_sigref`,
     on the strong-bisimulation specialization, succeeds for every non-empty
@@ -93,8 +94,8 @@ private theorem BlockPartitionBuilder_default_ok :
 private theorem signature_refinement_spec
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
-    (hincoming : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
+    (hincoming : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (hwf : LTSInst.WellFormed sys)
     (n : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n)
@@ -104,14 +105,17 @@ private theorem signature_refinement_spec
         sys incoming = ok partition ∧
       (∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val → blockOf s = b) ∧
       (∀ n, LTSInst.num_of_states sys = ok n →
-        ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ partition.elements.val) ∧
+        ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ partition.elements.val) ∧
       IsStable (fun s => StrongSignature (toLTS LTSInst sys) s blockOf) blockOf ∧
       ∀ s s', StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s' := by
   rcases (alloc.vec.Vec.resize_with_spec Global (resizeFnMut LTSInst)
       (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n ()) with ⟨state_to_key, hstate_to_key⟩
   rcases (BlockPartition.new_spec n hnpos) with ⟨bp, hbp⟩
   rcases (merc_utilities.tagged_index.TagIndex.new_spec (T := Std.Usize) BlockTag 0#usize) with ⟨ti, hti⟩
-  rcases (FromVecArray_from_ok (Array.make 1#usize [ti])) with ⟨v, hv⟩
+  have hti' := hti
+  simp at hti'
+  subst hti'
+  rcases (FromVecArray_from_ok (Array.make 1#usize [({ index := 0#usize, marker := () } : TagIndex Std.Usize BlockTag)])) with ⟨v, hv⟩
   rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec
       ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag))) with ⟨v1, hv1⟩
   rcases (BlockPartitionBuilder_default_ok) with ⟨bpb, hbpb⟩
@@ -120,7 +124,7 @@ private theorem signature_refinement_spec
       states := alloc.vec.Vec.new (TagIndex Std.Usize StateTag),
       builder := v1, split_builder := bpb, state_to_key := state_to_key }
   have hinit : InitialWorklistContext LTSInst n ctx0 :=
-    ⟨ti, hti, hv, hbp, hstate_to_key, hv1, hbpb, rfl⟩
+    ⟨_, hti, hv, hbp, hstate_to_key, hv1, hbpb, rfl⟩
   rcases (run_worklist_loop_spec LTSInst sys hwf incoming hincoming n hns ctx0 hinit)
     with ⟨ctx, blockOf, hloop, hcohloop, hcovloop, hstabloop, hcomplloop⟩
   refine ⟨ctx.partition, blockOf, ?_, hcohloop, hcovloop, hstabloop, hcomplloop⟩
@@ -130,8 +134,6 @@ private theorem signature_refinement_spec
   rw [hstate_to_key]
   simp
   rw [hbp]
-  simp
-  rw [hti]
   simp
   rw [hv]
   simp
@@ -172,7 +174,7 @@ theorem strong_bisim_sigref_correct_general
     intro s b hz
     exact hcoh s b (by simpa [hp'] using hz)
   have hcov' : ∀ n, LTSInst.num_of_states sys = ok n →
-      ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ partition.elements.val := by
+      ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ partition.elements.val := by
     intro n hns s hlt
     simpa [hp'] using hcov n hns s hlt
   refine ⟨partition, blockOf, ?_, hcoh', hcov', hstab, hcomplete⟩

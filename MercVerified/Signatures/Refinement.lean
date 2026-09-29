@@ -3,7 +3,7 @@ import MercVerified.Signatures.StrongSignature
 
 open Aeneas Aeneas.Std Result
 open verified.merc_utilities.tagged_index (TagIndex)
-open verified.merc_utilities.timing (Timing)
+open merc_utilities.timing (Timing)
 open verified.merc_lts.lts (StateTag LabelTag LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)
@@ -27,7 +27,7 @@ def StrongBisimSigrefCorrectSpec
     (∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val →
         blockOf s = b) ∧
     (∀ n, LTSInst.num_of_states sys = ok n →
-        ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ partition.elements.val) ∧
+        ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ partition.elements.val) ∧
     IsStable (fun s => StrongSignature (toLTS LTSInst sys) s blockOf) blockOf ∧
     ∀ s s', StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s'
 

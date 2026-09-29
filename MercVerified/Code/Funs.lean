@@ -2760,20 +2760,6 @@ def rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher :
     rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher.build_hasher
 }
 
-/-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:55
-    Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
-  {T : Type} {Tag : Type} {H : Type} (corehashHashInst : core.hash.Hash T)
-  (corehashHasherInst : core.hash.Hasher H)
-  (self : merc_utilities.tagged_index.TagIndex T Tag) (state : H) :
-  Result H
-  := do
-  corehashHashInst.hash corehashHasherInst self.index state
-
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 82:0-82:44
     Name pattern: [core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/

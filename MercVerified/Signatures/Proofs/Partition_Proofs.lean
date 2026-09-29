@@ -1,4 +1,5 @@
 import MercVerified.Signatures.Refinement
+import MercVerified.Code.FunsExternalSpecs
 import Aeneas.Std.WP
 
 /-!
@@ -25,53 +26,14 @@ set_option maxRecDepth 10000
 
 private abbrev BlockIndex := TagIndex Std.Usize BlockTag
 
-/-- `TagIndex::value` is a no-op under the model. -/
-theorem tag_value_id {T : Type} {Tag : Type} (CopyInst : core.marker.Copy T)
-    (t : merc_utilities.tagged_index.TagIndex T Tag) :
-    merc_utilities.tagged_index.TagIndex.value CopyInst t = ok t := by
-  rfl
-
-/-- Bit vectors indexing by a tagged `usize` is list indexing by the payload. -/
-theorem vec_tagged_index_val {U : Type} {Tag : Type}
-    (v : alloc.vec.Vec U) (t : merc_utilities.tagged_index.TagIndex Std.Usize Tag)
-    (h : t.val < v.length) :
-    alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
-      (core.slice.index.SliceIndexUsizeSlice U) v t = ok (v.slice.val[t.val]) := by
-  simp only [alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index,
-    core.slice.index.Usize.index, Slice.index_usize]
-  have hget : v.slice.val[t.val]? = some (v.slice.val[t.val]) :=
-    List.getElem?_eq_getElem h
-  simp [hget]
-
 /-- `BlockPartition::block` accesses `blocks` by the tag's payload. -/
 theorem block_partition_block_val
     (p : verified.merc_reduction.block_partition.BlockPartition)
-    (b : BlockIndex) (h : b.val < p.blocks.val.length) :
+    (b : BlockIndex) (h : b.index.val < p.blocks.val.length) :
     verified.merc_reduction.block_partition.BlockPartition.block p b =
-      ok (p.blocks.slice.val[b.val]) := by
-  simp only [
-    verified.merc_reduction.block_partition.BlockPartition.block,
-    vec_tagged_index_val p.blocks b h,
-  ]
-
-/-- `BlockPartition::blocks` is indexed by the tag's payload via `index_mut`
-    (the mutating variant of `vec_tagged_index_val`): it reads
-    `blocks[block_index]` and yields the "back" writer `Slice.set`. -/
-theorem blocks_index_mut_contract
-    (p : verified.merc_reduction.block_partition.BlockPartition)
-    (block_index : BlockIndex)
-    (h : block_index.val < p.blocks.slice.val.length) :
-    alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
-        (core.slice.index.SliceIndexUsizeSlice verified.merc_reduction.block_partition.Block)
-        p.blocks block_index =
-      ok (p.blocks.slice.val[block_index.val]'h,
-          fun u => ({ slice := p.blocks.slice.set block_index u } : alloc.vec.Vec
-                  verified.merc_reduction.block_partition.Block)) := by
-  have hg : p.blocks.slice.val[block_index.val]? = some (p.blocks.slice.val[block_index.val]'h) :=
-    List.getElem?_eq_getElem h
-  simp only [alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut,
-    core.slice.index.Usize.index_mut, Slice.index_mut_usize, Slice.index_usize]
-  simp [hg]
+      ok (p.blocks.slice.val[b.index.val]) := by
+  simp only [verified.merc_reduction.block_partition.BlockPartition.block]
+  rw [vec_tagged_index_val p.blocks b h]
 
 /-- `Block::len` is the derived length `end - begin`: the `assert_consistent`
     integrity check always completes (vetted boundary axiom), so the result is
@@ -112,7 +74,7 @@ theorem is_trivially_partitioned_contract
     verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned self block_index =
       (do
         let b ←
-          alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+          verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
             (core.slice.index.SliceIndexUsizeSlice
               verified.merc_reduction.block_partition.Block) self.blocks block_index
         let i ← verified.merc_reduction.block_partition.Block.len b
@@ -123,10 +85,10 @@ theorem is_trivially_partitioned_contract
     is resolved: the pending `Block::len` call on the indexed block. -/
 theorem is_trivially_partitioned_after_ok
     (self : verified.merc_reduction.block_partition.BlockPartition)
-    (block_index : BlockIndex) (h : block_index.val < self.blocks.val.length) :
+    (block_index : BlockIndex) (h : block_index.index.val < self.blocks.val.length) :
     verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned self block_index =
       (do
-        let b ← ok (self.blocks.val[block_index.val]'h)
+        let b ← ok (self.blocks.val[block_index.index.val]'h)
         let i ← verified.merc_reduction.block_partition.Block.len b
         ok (i = 1#usize)) := by
   unfold verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned
@@ -142,10 +104,10 @@ private abbrev PPBuilder := verified.merc_reduction.block_partition.BlockPartiti
 /-- `block_index`'s block with its whole suffix marked (applied by
     `trivial_partition_marked`). -/
 private def mark_all (self : verified.merc_reduction.block_partition.BlockPartition)
-    (block_index : BlockIndex) (h : block_index.val < self.blocks.val.length) :
+    (block_index : BlockIndex) (h : block_index.index.val < self.blocks.val.length) :
     verified.merc_reduction.block_partition.Block :=
-  { self.blocks.val[block_index.val]'h with
-      marked_split := (self.blocks.val[block_index.val]'h).«end» }
+  { self.blocks.val[block_index.index.val]'h with
+      marked_split := (self.blocks.val[block_index.index.val]'h).«end» }
 
 /-- `BlockPartition::new_loop` semantics
 
@@ -172,6 +134,9 @@ lemma uTotal_val_of_lt {k : Nat} (h : k < 2 ^ UScalarTy.Usize.numBits) :
     (uTotal k).val = k := by
   unfold uTotal UScalar.val
   rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h]
+
+/-- The tagged index with payload `k % 2^bits`. -/
+def uTag {Tag : Type} (k : Nat) : TagIndex Sz Tag := { index := uTotal k, marker := () }
 
 lemma uTotal_zero : uTotal 0 = 0#usize := by
   apply UScalar.eq_of_val_eq
@@ -204,34 +169,33 @@ private lemma one_le_max : (1 : Nat) ≤ Usize.max := by
     marked (`unmark_all`: its `marked_split` suffix is pulled up to `end`). -/
 theorem trivial_partition_marked_contract
     (self : verified.merc_reduction.block_partition.BlockPartition)
-    (block_index : BlockIndex) (h : block_index.val < self.blocks.val.length) :
+    (block_index : BlockIndex) (h : block_index.index.val < self.blocks.val.length) :
     ∃ (v : alloc.vec.Vec BlockIndex)
       (p : verified.merc_reduction.block_partition.BlockPartition),
       verified.merc_reduction.block_partition.BlockPartition.trivial_partition_marked self block_index = ok (v, p) ∧
       v.val = [block_index] ∧
       p.blocks.val =
-        self.blocks.val.set block_index.val
-          ({ self.blocks.val[block_index.val]'h with
-              marked_split := (self.blocks.val[block_index.val]'h).«end» }) := by
-  have hb : block_index.val < self.blocks.slice.val.length := by exact h
+        self.blocks.val.set block_index.index.val
+          ({ self.blocks.val[block_index.index.val]'h with
+              marked_split := (self.blocks.val[block_index.index.val]'h).«end» }) := by
+  have hb : block_index.index.val < self.blocks.slice.val.length := by exact h
   refine ⟨alloc.vec.Vec.from [block_index] one_le_max,
     ({ self with
-       blocks := alloc.vec.Vec.mk (self.blocks.slice.set block_index
-         ({ (self.blocks.slice.val[block_index.val]'hb) with
-             marked_split := (self.blocks.slice.val[block_index.val]'hb).«end» })) }),
+       blocks := alloc.vec.Vec.mk (self.blocks.slice.set block_index.index
+         ({ (self.blocks.slice.val[block_index.index.val]'hb) with
+             marked_split := (self.blocks.slice.val[block_index.index.val]'hb).«end» })) }),
     ?_, ?_, ?_⟩
   · rw [verified.merc_reduction.block_partition.BlockPartition.trivial_partition_marked]
-    simp only [alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut,
-      core.slice.index.Usize.index_mut, Slice.index_mut_usize, Slice.index_usize]
-    simp [List.getElem?_eq_getElem hb, verified.merc_reduction.block_partition.Block.unmark_all,
+    rw [blocks_index_mut_contract self block_index hb]
+    simp [verified.merc_reduction.block_partition.Block.unmark_all,
       alloc.vec.FromVecArray.from, Aeneas.Std.Array.make]
   · simp [alloc.vec.Vec.from_val]
-  · change (self.blocks.slice.set block_index
-        ({ (self.blocks.slice.val[block_index.val]'hb) with
-            marked_split := (self.blocks.slice.val[block_index.val]'hb).«end» })).val =
-      self.blocks.val.set block_index.val
-        ({ (self.blocks.val[block_index.val]'h) with
-            marked_split := (self.blocks.val[block_index.val]'h).«end» })
+  · change (self.blocks.slice.set block_index.index
+        ({ (self.blocks.slice.val[block_index.index.val]'hb) with
+            marked_split := (self.blocks.slice.val[block_index.index.val]'hb).«end» })).val =
+      self.blocks.val.set block_index.index.val
+        ({ (self.blocks.val[block_index.index.val]'h) with
+            marked_split := (self.blocks.val[block_index.index.val]'h).«end» })
     rw [Slice.set_val_eq]
     rfl
 
@@ -276,14 +240,14 @@ theorem strong_partition_marked_trivial {L : Type} {Label : Type}
     (signature_builder : PartitionSigKey) (split_builder : PPBuilder)
     (state_to_key : alloc.vec.Vec BlockIndex)
     (hAll : verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned partition block_index = ok true)
-    (hIdx : block_index.val < partition.blocks.val.length) :
+    (hIdx : block_index.index.val < partition.blocks.val.length) :
     ∃ (v : alloc.vec.Vec BlockIndex)
       (p : verified.merc_reduction.block_partition.BlockPartition),
       verified.merc_reduction.signature_refinement.strong_partition_marked LTSInst sys partition block_index
         id key_to_signature signature_builder split_builder state_to_key =
           ok (v, p, id, key_to_signature, signature_builder, split_builder, state_to_key) ∧
       v.val = [block_index] ∧
-      p.blocks.val = partition.blocks.val.set block_index.val (mark_all partition block_index hIdx) := by
+      p.blocks.val = partition.blocks.val.set block_index.index.val (mark_all partition block_index hIdx) := by
   rw [strong_partition_marked_trivial_contract LTSInst sys partition block_index id key_to_signature
     signature_builder split_builder state_to_key hAll]
   rcases trivial_partition_marked_contract partition block_index hIdx with ⟨v0, p0, heq, hv, hp⟩
@@ -326,6 +290,11 @@ lemma map_range_concat (s : Nat) :
   rw [List.range_succ, List.map_append]
   rfl
 
+lemma map_range_concat_tag {Tag : Type} (s : Nat) :
+    (List.range s).map (uTag (Tag := Tag)) ++ [uTag s] = (List.range (s + 1)).map uTag := by
+  rw [List.range_succ, List.map_append]
+  rfl
+
 lemma replicate_append_succ {α : Type} (m : Nat) (x : α) :
     List.replicate m x ++ [x] = List.replicate (Nat.succ m) x := by
   induction m with
@@ -365,16 +334,16 @@ lemma next_range_none (it : core.ops.range.Range Sz)
 private def newLoopInv (num : Sz) : NewLoopState → Prop :=
   fun st =>
     st.1.end = num ∧ st.1.start.val ≤ num.val ∧
-    st.2.1.val = (List.range st.1.start.val).map uTotal ∧
-    st.2.2.1.val = List.replicate st.1.start.val (uTotal 0) ∧
+    st.2.1.val = (List.range st.1.start.val).map uTag ∧
+    st.2.2.1.val = List.replicate st.1.start.val (uTag 0) ∧
     st.2.2.2.val = (List.range st.1.start.val).map uTotal
 
 /-- Postcondition: all three lists fully enumerate `[0, num)`. -/
 private def newLoopPost (num : Sz) : (alloc.vec.Vec (TagIndex Sz StateTag)
       × alloc.vec.Vec (TagIndex Sz BlockTagIdx) × alloc.vec.Vec Sz) → Prop :=
   fun r =>
-    r.1.val = (List.range num.val).map uTotal ∧
-    r.2.1.val = List.replicate num.val (uTotal 0) ∧
+    r.1.val = (List.range num.val).map uTag ∧
+    r.2.1.val = List.replicate num.val (uTag 0) ∧
     r.2.2.val = (List.range num.val).map uTotal
 
 private def newLoopMeasure (st : NewLoopState) : Nat := st.1.end.val - st.1.start.val
@@ -406,14 +375,14 @@ private theorem new_loop_body_step (num : Sz) (st : NewLoopState)
   have hlen_es : st.2.1.val.length < Usize.max := by
     rcases hinv with ⟨_, _, hlen1, _, _⟩
     calc
-      st.2.1.val.length = (List.map uTotal (List.range st.1.start.val)).length := by
+      st.2.1.val.length = (List.map uTag (List.range st.1.start.val)).length := by
         exact congrArg List.length hlen1
       _ = st.1.start.val := by rw [List.length_map, List.length_range]
       _ < Usize.max := hbound
   have hlen_bs : st.2.2.1.val.length < Usize.max := by
     rcases hinv with ⟨_, _, _, hlen2, _⟩
     calc
-      st.2.2.1.val.length = (List.replicate st.1.start.val (uTotal 0)).length := by
+      st.2.2.1.val.length = (List.replicate st.1.start.val (uTag 0)).length := by
         exact congrArg List.length hlen2
       _ = st.1.start.val := by rw [List.length_replicate]
       _ < Usize.max := hbound
@@ -424,13 +393,13 @@ private theorem new_loop_body_step (num : Sz) (st : NewLoopState)
         exact congrArg List.length hlen3
       _ = st.1.start.val := by rw [List.length_map, List.length_range]
       _ < Usize.max := hbound
-  rcases vec_push_val st.2.1 st.1.start hlen_es with ⟨es1, hes1, hesv⟩
-  rcases vec_push_val st.2.2.1 (0#usize) hlen_bs with ⟨bs1, hbs1, hbsv⟩
+  rcases vec_push_val st.2.1 ⟨st.1.start, ()⟩ hlen_es with ⟨es1, hes1, hesv⟩
+  rcases vec_push_val st.2.2.1 ⟨0#usize, ()⟩ hlen_bs with ⟨bs1, hbs1, hbsv⟩
   rcases vec_push_val st.2.2.2 st.1.start hlen_os with ⟨os1, hos1, hosv⟩
   refine ⟨(it1, es1, bs1, os1), ?_, ?_, ?_⟩
   · unfold verified.merc_reduction.block_partition.BlockPartition.new_loop.body
     rw [hnext_e]
-    simp [hopt, merc_utilities.tagged_index.TagIndex.new, hes1, hbs1, hos1]
+    simp [hopt, merc_utilities.tagged_index.TagIndex.new_eq, hes1, hbs1, hos1]
   · rcases hinv with ⟨hend_eq, hstart_le, hes, hbs, hos⟩
     constructor
     · rw [hend']; exact hend_eq
@@ -438,19 +407,25 @@ private theorem new_loop_body_step (num : Sz) (st : NewLoopState)
       · rw [hstart', ← hend_eq]; omega
       · constructor
         · rw [hesv, hes]
-          change (List.range st.1.start.val).map uTotal ++ [st.1.start]
-            = (List.range it1.start.val).map uTotal
+          change (List.range st.1.start.val).map uTag ++ [({ index := st.1.start, marker := () } : TagIndex Sz StateTag)]
+            = (List.range it1.start.val).map uTag
           have hlt2 : st.1.start.val < 2 ^ UScalarTy.Usize.numBits := by
             rw [hend_eq] at hlt
             exact lt_trans hlt (sz_val_lt_two_pow num)
-          have hstart_eq : st.1.start = uTotal st.1.start.val := by
+          have hstart_eq : ({ index := st.1.start, marker := () } : TagIndex Sz StateTag)
+              = uTag st.1.start.val := by
+            unfold uTag
+            congr 1
             apply sz_eq_from_val
             rw [uTotal_val_of_lt hlt2]
-          rw [hstart', ← map_range_concat st.1.start.val, ← hstart_eq]
+          rw [hstart', ← map_range_concat_tag st.1.start.val, ← hstart_eq]
         · constructor
-          · rw [hbsv, hbs, ← uTotal_zero]
-            change List.replicate st.1.start.val (uTotal 0) ++ [uTotal 0]
-              = List.replicate it1.start.val (uTotal 0)
+          · rw [hbsv, hbs]
+            have h0 : ({ index := 0#usize, marker := () } : TagIndex Sz BlockTagIdx) = uTag 0 := by
+              unfold uTag; rw [uTotal_zero]
+            rw [h0]
+            change List.replicate st.1.start.val (uTag 0) ++ [uTag 0]
+              = List.replicate it1.start.val (uTag 0)
             rw [hstart']
             simp [replicate_append_succ]
           · rw [hosv, hos]
@@ -532,8 +507,8 @@ theorem block_partition_new_spec (num : Sz) (hpos : 0 < num.val) :
     ∃ p : verified.merc_reduction.block_partition.BlockPartition,
       verified.merc_reduction.block_partition.BlockPartition.new num = ok p ∧
       p.blocks.val = [ { begin := 0#usize, marked_split := 0#usize, «end» := num } ] ∧
-      p.elements.val = (List.range num.val).map uTotal ∧
-      p.element_to_block.val = List.replicate num.val (uTotal 0) ∧
+      p.elements.val = (List.range num.val).map uTag ∧
+      p.element_to_block.val = List.replicate num.val (uTag 0) ∧
       p.element_offset.val = (List.range num.val).map uTotal := by
   rcases new_loop_spec num with ⟨tr, hnew_loop, hpost⟩
   rcases hpost with ⟨hes, hbs, hos⟩
@@ -557,5 +532,60 @@ theorem block_partition_new_spec (num : Sz) (hpos : 0 < num.val) :
   · rw [hes]
   · rw [hbs]
   · rw [hos]
+
+/-!
+# `mark_element`: the marking primitive
+
+`BlockPartition::mark_element` (`block_partition.rs:288`) is the only operation
+that turns an unmarked state into a marked one, so the worklist loop's
+counting argument rests entirely on what it does and does not touch:
+
+- it reads `element_to_block`, `element_offset` and `blocks[block_index]`, and
+  the marked region is the *tail* `[marked_split, end)`
+  (`is_element_marked` is `offset >= marked_split`, `block_partition.rs:308`);
+- if the element is already marked it is a **no-op**;
+- otherwise it swaps the element with the last marked one *within the same
+  block* and decrements `marked_split` by one. `swap_elements`
+  (`block_partition.rs:1168`) only rewrites `elements` and `element_offset`, so
+  `element_to_block` and `blocks` are untouched apart from that single
+  `marked_split`.
+
+The two consequences used by the termination measure are: `|blocks|` never
+changes (only `strong_partition_marked` adds blocks), and `block_number` is
+stable under marking.
+-/
+
+private abbrev StateIdx := TagIndex Std.Usize verified.merc_lts.lts.StateTag
+private abbrev BP := verified.merc_reduction.block_partition.BlockPartition
+
+/-- Auxiliary well-formedness: the three per-state vectors agree in length, so
+    any state index occurring in `elements` has a slot in `element_to_block` and
+    `element_offset`; and every block satisfies `begin ≤ marked_split ≤ end`,
+    the invariant `assert_consistent` checks. -/
+private def PartWF (p : BP) : Prop :=
+  p.elements.val.length = p.element_to_block.val.length ∧
+  p.elements.val.length = p.element_offset.val.length ∧
+  (∀ i, i < p.blocks.val.length →
+    (p.blocks.val[i].begin : Nat) ≤ (p.blocks.val[i].marked_split : Nat) ∧
+    (p.blocks.val[i].marked_split : Nat) ≤ (p.blocks.val[i].end : Nat))
+
+/-- `swap_elements` exchanges two entries of `elements`, repairs their
+    `element_offset` entries, and leaves `blocks` and `element_to_block`
+    completely alone (`block_partition.rs:265`). -/
+theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
+    (ha : a.val < p.elements.val.length) (hb : b.val < p.elements.val.length) :
+    ∃ p' : BP,
+      verified.merc_reduction.block_partition.BlockPartition.swap_elements p a b = ok p' ∧
+      PartWF p' ∧
+      p'.blocks = p.blocks ∧
+      p'.element_to_block = p.element_to_block ∧
+      p'.elements.val[a.val] = p.elements.val[b.val] ∧
+      p'.elements.val[b.val] = p.elements.val[a.val] ∧
+      (∀ i, i < p.elements.val.length → i ≠ a.val → i ≠ b.val →
+          p'.elements.val[i] = p.elements.val[i]) ∧
+      p'.element_offset.val =
+        (p.element_offset.val.set (p.elements.val[b.val]).index.val a.val).set
+          (p.elements.val[a.val]).index.val b.val := by
+  sorry
 
 end MercVerified.Signatures.Proofs

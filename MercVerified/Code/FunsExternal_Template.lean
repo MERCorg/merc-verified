@@ -457,6 +457,17 @@ axiom rustc_hash.FxHasher.Insts.CoreHashHasher.finish
 axiom rustc_hash.FxHasher.Insts.CoreHashHasher.write
   : rustc_hash.FxHasher → Slice Std.U8 → Result rustc_hash.FxHasher
 
+/-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:55
+    Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash"]
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
+  {T : Type} {Tag : Type} {H : Type} (corehashHashInst : core.hash.Hash T)
+  (corehashHasherInst : core.hash.Hasher H) :
+  merc_utilities.tagged_index.TagIndex T Tag → H → Result H
+
 /-- [merc_reduction::signature_refinement::new_worklist_progress]:
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1655:0-1655:58
     Name pattern: [merc_reduction::signature_refinement::new_worklist_progress] -/

@@ -24,10 +24,16 @@ include = [
 # (via quotient_lts_naive / tau_scc_decomposition_iterative / sort_topological),
 # which uses a GAT that Aeneas's `--lift-associated-types` cannot handle.
 exclude = [
+  "merc_utilities::tagged_index::IdAllocator",
+  "merc_utilities::tagged_index::_::fmt",
   "merc_reduction::signatures::tau_cycle_elimination_and_reorder",
   "merc_reduction::signature_refinement::branching_bisim_sigref_impl",
 ]
+# `TagIndex` is translated as a real struct (`index` + `marker`). The parts that
+# Aeneas cannot handle are excluded: `IdAllocator` (fn-pointer PhantomData) and
+# the formatting/hashing impls.
 opaque = [
+  "merc_utilities::tagged_index::{core::hash::Hash<_>}",
   "merc_reduction::signature_refinement::new_worklist_progress",
   "merc_reduction::block_partition::_::mark_backward_closure",
   "merc_reduction::block_partition::_::assert_consistent",

@@ -22,6 +22,7 @@ The goal is to replace that axiom with a proof.
 open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag Transition)
+open verified.merc_lts.incoming_transitions (IncomingTransitions)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition BlockPartitionBuilder)
 open verified.merc_reduction.signature_refinement (WorklistContextStrong)
@@ -32,7 +33,6 @@ set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
 set_option allowUnsafeReducibility true
 attribute [local reducible] Aeneas.Std.WP.Post
-attribute [local reducible] merc_utilities.tagged_index.TagIndex
 attribute [local reducible] alloc.vec.into_iter.IntoIter
 
 /-- The loop state: the worklist context paired with the iteration counter. -/
@@ -56,7 +56,7 @@ theorem strong_run_worklist_loop_loop_base
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (progress : merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
     (ctx : WorklistContextStrong)
     (hwl : ctx.worklist.val = [])
@@ -108,7 +108,7 @@ theorem strong_run_worklist_loop_base
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (ctx : WorklistContextStrong)
     (hwl : ctx.worklist.val = []) :
     verified.merc_reduction.signature_refinement.strong_run_worklist_loop
@@ -135,7 +135,7 @@ theorem strong_run_worklist_loop_body_pop
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (progress : merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
     (ctx : WorklistContextStrong)
     (b : TagIndex Std.Usize BlockTag)
@@ -173,7 +173,7 @@ theorem strong_run_worklist_loop_body_pop_ext
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (progress : merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
     (ctx ctx' : WorklistContextStrong)
     (b : TagIndex Std.Usize BlockTag)
@@ -224,10 +224,8 @@ argument above linking iterations, which is the crux of replacing
 `run_worklist_loop_spec`.
 -/
 
-attribute [local reducible] merc_utilities.tagged_index.TagIndex
 attribute [local reducible] alloc.vec.into_iter.IntoIter
 
-namespace MercVerified.Signatures.Proofs
 
 abbrev Sz := Std.Usize
 abbrev BT := TagIndex Sz BlockTag
@@ -236,14 +234,22 @@ abbrev InIter := alloc.vec.into_iter.IntoIter BT
 abbrev VecTy := alloc.vec.Vec
 abbrev PWS := BlockPartition × VecTy BT × VecTy ST
 
-abbrev tagEqInst : core.cmp.PartialEq BT BT :=
+noncomputable abbrev tagEqInst : core.cmp.PartialEq BT BT :=
   verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
     BlockTag core.cmp.PartialEqUsize
 
 lemma tagEq_spec (a b : BT) :
     tagEqInst.eq a b = ok (decide (a = b)) := by
-  simp
-  rfl
+  unfold tagEqInst
+  have hinst : (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+      BlockTag core.cmp.PartialEqUsize).eq a b
+      = verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+        core.cmp.PartialEqUsize a b := rfl
+  rw [hinst, tag_partial_eq_inst]
+  by_cases h : a = b
+  · subst h; simp
+  · have : a.index ≠ b.index := fun e => h (merc_utilities.tagged_index.TagIndex.ext e)
+    simp [h, this]
 
 lemma neq_tag (a b : BT) :
     core.cmp.PartialEq.ne.trait_default tagEqInst a b = ok (!decide (a = b)) := by
@@ -286,7 +292,7 @@ lemma into_iter_next_none (it : InIter) (h : it.val = []) :
 
 noncomputable def markDirtyStep (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (nb : BT) (p : BlockPartition) (w : VecTy BT) (s : VecTy ST) : Result PWS := do
   let b ← core.cmp.PartialEq.ne.trait_default tagEqInst block_index nb
@@ -299,7 +305,7 @@ noncomputable def markDirtyStep (BRANCHING : Bool) {L : Type} {Label : Type}
 
 noncomputable def markDirtyAcc (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (p : BlockPartition) (w : VecTy BT) (s : VecTy ST) : List BT → Result PWS
   | [] => ok (p, w, s)
@@ -314,7 +320,7 @@ noncomputable def markDirtyAcc (BRANCHING : Bool) {L : Type} {Label : Type}
 
 theorem markDirtyAcc_cons (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (p : BlockPartition) (w : VecTy BT) (s : VecTy ST)
     (nb : BT) (tl : List BT) :
@@ -342,7 +348,7 @@ theorem markDirtyAcc_cons (BRANCHING : Bool) {L : Type} {Label : Type}
 
 theorem markDirtyAcc_append (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (p : BlockPartition) (w : VecTy BT) (s : VecTy ST) (l1 l2 : List BT) :
     markDirtyAcc BRANCHING ltsInst lts incoming block_index num_blocks p w s (l1 ++ l2)
@@ -362,7 +368,7 @@ theorem markDirtyAcc_append (BRANCHING : Bool) {L : Type} {Label : Type}
 
 lemma markDirtyStep_pos (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz) (v : BT)
     (p : BlockPartition) (w : VecTy BT) (s : VecTy ST) (h : block_index = v) :
     markDirtyStep BRANCHING ltsInst lts incoming block_index num_blocks v p w s = ok (p, w, s) := by
@@ -378,7 +384,7 @@ lemma markDirtyStep_pos (BRANCHING : Bool) {L : Type} {Label : Type}
 
 lemma markDirtyStep_neg (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz) (v : BT)
     (p : BlockPartition) (w : VecTy BT) (s : VecTy ST) (h : ¬ block_index = v) :
     markDirtyStep BRANCHING ltsInst lts incoming block_index num_blocks v p w s
@@ -401,7 +407,7 @@ lemma markDirtyStep_neg (BRANCHING : Bool) {L : Type} {Label : Type}
 
 lemma mark_dirty_new_blocks_loop.body_some_step (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (iter : InIter) (partition : BlockPartition) (worklist : VecTy BT) (states : VecTy ST)
     (v : BT) (it1 : InIter)
@@ -436,7 +442,7 @@ lemma loop_eq_bind {α β : Type} (body : α → Result (ControlFlow α β)) (x 
 
 theorem mark_dirty_new_blocks_loop_spec (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (iter : InIter) (partition : BlockPartition) (worklist : VecTy BT) (states : VecTy ST) :
     verified.merc_reduction.signature_refinement.mark_dirty_new_blocks_loop BRANCHING ltsInst iter lts
@@ -548,7 +554,7 @@ theorem mark_dirty_new_blocks_loop_spec (BRANCHING : Bool) {L : Type} {Label : T
     wrapper frame is exactly the `markDirtyAcc` accumulator. -/
 theorem mark_dirty_new_blocks_contract (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
     (partition : BlockPartition) (worklist : VecTy BT) (states : VecTy ST)
     (nbi : VecTy BT) :
@@ -568,11 +574,11 @@ theorem mark_dirty_new_blocks_contract (BRANCHING : Bool) {L : Type} {Label : Ty
     records every step with the leaf contracts already rewritten in. -/
 theorem strong_process_worklist_block_contract {L : Type} {Label : Type}
     (BRANCHING : Bool) (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (ctx : WorklistContextStrong) (b : BT)
-    (hIdx : b.val < ctx.partition.blocks.val.length)
+    (hIdx : b.index.val < ctx.partition.blocks.val.length)
     (b0 : verified.merc_reduction.block_partition.Block)
-    (hb0 : ctx.partition.blocks.slice.val[b.val] = b0)
+    (hb0 : ctx.partition.blocks.slice.val[b.index.val] = b0)
     (hMark : (b0.marked_split : Nat) < (b0.«end» : Nat)) :
     verified.merc_reduction.signature_refinement.strong_process_worklist_block
       BRANCHING LTSInst sys incoming ctx b =
@@ -612,25 +618,25 @@ counter for a block, resizing the `block_sizes` vector on demand) and
 `strong_intern_signature` (intern a signature in the `id` map). -/
 
 theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
-    (index : merc_utilities.tagged_index.TagIndex Sz BT)
-    (h : index.val < block_sizes.val.length)
+    (index : BT)
+    (h : index.index.val < block_sizes.val.length)
     (hsucc_elem : ∃ newelem : Sz,
-      (block_sizes.val.get ⟨index.val, h⟩) + 1#usize = ok newelem) :
+      (block_sizes.val.get ⟨index.index.val, h⟩) + 1#usize = ok newelem) :
     ∃ v : alloc.vec.Vec Sz,
       verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes index = ok v ∧
       ∃ newelem : Sz,
-        (block_sizes.val.get ⟨index.val, h⟩) + 1#usize = ok newelem ∧
-        v.val = block_sizes.val.set index.val newelem := by
+        (block_sizes.val.get ⟨index.index.val, h⟩) + 1#usize = ok newelem ∧
+        v.val = block_sizes.val.set index.index.val newelem := by
   unfold verified.merc_reduction.signature_refinement.count_block_occurrence
-  simp only [merc_utilities.tagged_index.TagIndex.value, bind_tc_ok]
-  have hb : index.val + 1 < 2 ^ System.Platform.numBits := by
+  simp only []
+  have hb : index.index.val + 1 < 2 ^ System.Platform.numBits := by
     have hlen : block_sizes.val.length ≤ Usize.max := by simp
-    have hsucc_le : index.val + 1 ≤ Usize.max := by omega
+    have hsucc_le : index.index.val + 1 ≤ Usize.max := by omega
     have hmax_lt : Usize.max < 2 ^ System.Platform.numBits := by
       simp [Usize.max, Usize.numBits]
     omega
-  have hindex1 : index + 1#usize = ok (Usize.ofNatCore (index.val + 1) hb) := by
-    rw [show index + 1#usize = UScalar.add index 1#usize by rfl]
+  have hindex1 : index.index + 1#usize = ok (Usize.ofNatCore (index.index.val + 1) hb) := by
+    rw [show index.index + 1#usize = UScalar.add index.index 1#usize by rfl]
     simp only [UScalar.add, UScalar.tryMk, UScalar.tryMkOpt]
     split_ifs with hif
     · rfl
@@ -640,25 +646,26 @@ theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
       exact hb
   have him :
       ∃ x0 : Sz, ∃ back : Sz → alloc.vec.Vec Sz,
-        alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+          (T := Std.Usize) (U := Std.Usize) (Tag := BlockTag) core.marker.CopyUsize
           (core.slice.index.SliceIndexUsizeSlice Std.Usize) block_sizes index = ok (x0, back) ∧
-        x0 = block_sizes.val.get ⟨index.val, h⟩ ∧
-        back = fun u : Sz => ({ slice := Slice.set block_sizes.slice index u } : alloc.vec.Vec Sz) := by
-    rcases spec_imp_exists (Slice.index_mut_usize_spec block_sizes.slice index h) with ⟨w, hw, hpost⟩
+        x0 = block_sizes.val.get ⟨index.index.val, h⟩ ∧
+        back = fun u : Sz => ({ slice := Slice.set block_sizes.slice index.index u } : alloc.vec.Vec Sz) := by
+    rcases spec_imp_exists (Slice.index_mut_usize_spec block_sizes.slice index.index h) with ⟨w, hw, hpost⟩
     rcases w with ⟨x, f⟩
     rcases hpost with ⟨hx, hf⟩
     refine ⟨x, fun u : Sz => ({ slice := f u } : alloc.vec.Vec Sz), ?_, ?_, ?_⟩
-    · unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
-      simp only [core.slice.index.Usize.index_mut]
+    · rw [vec_tagged_index_mut_eq]
       rw [hw]
       simp
     · rw [hx]
-      change (↑block_sizes.slice)[↑index] = (↑block_sizes.slice)[↑index]
+      change (↑block_sizes.slice)[↑index.index] = (↑block_sizes.slice)[↑index.index]
       rfl
     · simp [hf]
   rcases him with ⟨x0, back, himok, hx0, hback⟩
+  simp only [tag_value_id, bind_tc_ok]
   rw [hindex1]
-  have hge : ¬ (block_sizes.val.length ≤ index.val) := by omega
+  have hge : ¬ (block_sizes.val.length ≤ index.index.val) := by omega
   simp [hge]
   obtain ⟨newelem, hnew⟩ := hsucc_elem
   have hnew' : x0 + 1#usize = ok newelem := by
@@ -667,12 +674,14 @@ theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
   have hmain :
       (do
         let (i3, index_mut_back) ←
-          alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+          verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+            (T := Std.Usize) (U := Std.Usize) (Tag := BlockTag) core.marker.CopyUsize
               (core.slice.index.SliceIndexUsizeSlice Std.Usize) block_sizes index
         let i4 ← i3 + 1#usize
         ok (index_mut_back i4)) = ok (back newelem) := by
     conv_lhs =>
-      pattern alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+      pattern verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+        (T := Std.Usize) (U := Std.Usize) (Tag := BlockTag) core.marker.CopyUsize
         (core.slice.index.SliceIndexUsizeSlice Std.Usize) block_sizes index
       rw [himok]
     simp
@@ -680,8 +689,8 @@ theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
     simp
   refine ⟨back newelem, hmain, newelem, hnew, ?_⟩
   · rw [hback]
-    change Slice.val (Slice.set block_sizes.slice index newelem) =
-        List.set (Slice.val block_sizes.slice) index.val newelem
+    change Slice.val (Slice.set block_sizes.slice index.index newelem) =
+        List.set (Slice.val block_sizes.slice) index.index.val newelem
     rw [Slice.set_val_eq]
 
 /-! ## `count_block_occurrence` (resize branch): `count_block_occurrence_spec_ge`
@@ -690,30 +699,30 @@ When the block size cell for `index` is beyond the current length of
 `block_sizes`, the count grows the vector (padding with zeros) and marks the
 fresh cell with `1`. This pins the resulting value completely:
 
-`v.val = List.set index.val 1#usize (List.resize (index.val + 1) 0#usize block_sizes.val)`
+`v.val = List.set index.index.val 1#usize (List.resize (index.index.val + 1) 0#usize block_sizes.val)`
 
 The success hypothesis `hsucc_elem` guards the `index + 1` increments against
 overflow. -/
 theorem count_block_occurrence_spec_ge (block_sizes : alloc.vec.Vec Sz)
-    (index : merc_utilities.tagged_index.TagIndex Sz BT)
-    (h : block_sizes.val.length ≤ index.val)
-    (hsucc_elem : ∃ i3 : Sz, index + 1#usize = ok i3) :
+    (index : BT)
+    (h : block_sizes.val.length ≤ index.index.val)
+    (hsucc_elem : ∃ i3 : Sz, index.index + 1#usize = ok i3) :
     ∃ v : alloc.vec.Vec Sz,
 verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes index = ok v ∧
-      v.val = List.set (List.resize block_sizes.val (index.val + 1) 0#usize) index.val 1#usize := by
+      v.val = List.set (List.resize block_sizes.val (index.index.val + 1) 0#usize) index.index.val 1#usize := by
   unfold verified.merc_reduction.signature_refinement.count_block_occurrence
-  simp only [merc_utilities.tagged_index.TagIndex.value, bind_tc_ok]
+  simp only []
   have hbig : 1 < 2 ^ System.Platform.numBits := by
     rcases System.Platform.numBits_eq with h32 | h64
     · rw [h32]
       norm_num
     · rw [h64]
       norm_num
-  have hb : index.val + 1 < 2 ^ System.Platform.numBits := by
+  have hb : index.index.val + 1 < 2 ^ System.Platform.numBits := by
     rcases hsucc_elem with ⟨i3, hi3⟩
     by_contra hnot
-    have hfail : index + 1#usize = (Result.fail Error.integerOverflow : Result Sz) := by
-      rw [show index + 1#usize = UScalar.add index 1#usize by rfl]
+    have hfail : index.index + 1#usize = (Result.fail Error.integerOverflow : Result Sz) := by
+      rw [show index.index + 1#usize = UScalar.add index.index 1#usize by rfl]
       simp only [UScalar.add, UScalar.tryMk, UScalar.tryMkOpt]
       split_ifs with hif
       · exfalso
@@ -724,8 +733,8 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
       rw [← hfail]
       exact hi3
     exact (fail_not_ok hbad)
-  have hindex1 : index + 1#usize = ok (Usize.ofNatCore (index.val + 1) hb) := by
-    rw [show index + 1#usize = UScalar.add index 1#usize by rfl]
+  have hindex1 : index.index + 1#usize = ok (Usize.ofNatCore (index.index.val + 1) hb) := by
+    rw [show index.index + 1#usize = UScalar.add index.index 1#usize by rfl]
     simp only [UScalar.add, UScalar.tryMk, UScalar.tryMkOpt]
     split_ifs with hif
     · rfl
@@ -748,45 +757,46 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
         decide
   have hcl0 : core.clone.CloneUsize.clone 0#usize = ok (0#usize : Sz) := by
     simp [core.clone.impls.CloneUsize.clone]
+  simp only [tag_value_id, bind_tc_ok]
   rw [hindex1]
-  have hlenle : block_sizes.val.length ≤ index.val := h
+  have hlenle : block_sizes.val.length ≤ index.index.val := h
   simp [hlenle]
-  have hval : (Usize.ofNatCore (index.val + 1) hb).val = index.val + 1 := by
+  have hval : (Usize.ofNatCore (index.index.val + 1) hb).val = index.index.val + 1 := by
     simp [Usize.ofNatCore]
   rcases spec_imp_exists
       (alloc.vec.Vec.resize_spec core.clone.CloneUsize block_sizes
-        (Usize.ofNatCore (index.val + 1) hb) 0#usize hcl0) with ⟨bs1, hresok, hresval⟩
-  have hresval' : bs1.val = List.resize block_sizes.val (index.val + 1) 0#usize := by
+        (Usize.ofNatCore (index.index.val + 1) hb) 0#usize hcl0) with ⟨bs1, hresok, hresval⟩
+  have hresval' : bs1.val = List.resize block_sizes.val (index.index.val + 1) 0#usize := by
     simpa [hval] using hresval
-  have hbound : index.val < bs1.val.length := by
+  have hbound : index.index.val < bs1.val.length := by
     rw [hresval']
     rw [List.resize_length]
     omega
-  have hbound2 : index.val <
+  have hbound2 : index.index.val <
       (block_sizes.val ++
-        List.replicate (index.val + 1 - block_sizes.val.length) 0#usize).length := by
+        List.replicate (index.index.val + 1 - block_sizes.val.length) 0#usize).length := by
     rw [List.length_append, List.replicate_length]
     omega
   have hzz2 :
       (block_sizes.val ++
-          List.replicate (index.val + 1 - block_sizes.val.length) 0#usize)[index.val]'hbound2 =
+          List.replicate (index.index.val + 1 - block_sizes.val.length) 0#usize)[index.index.val]'hbound2 =
       (0#usize : Sz) := by
     rw [List.getElem_append_right]
     · rw [List.getElem_replicate]
     · exact h
-  have h1 : List.resize block_sizes.val (index.val + 1) 0#usize =
+  have h1 : List.resize block_sizes.val (index.index.val + 1) 0#usize =
       block_sizes.val ++
-        List.replicate (index.val + 1 - block_sizes.val.length) 0#usize := by
+        List.replicate (index.index.val + 1 - block_sizes.val.length) 0#usize := by
     unfold List.resize
-    rw [if_pos (Nat.zero_le (index.val + 1))]
+    rw [if_pos (Nat.zero_le (index.index.val + 1))]
     rw [List.take_of_length_le]
     omega
-  have hzz : (List.resize block_sizes.val (index.val + 1) 0#usize)[index.val] =
+  have hzz : (List.resize block_sizes.val (index.index.val + 1) 0#usize)[index.index.val] =
       (0#usize : Sz) := by
     simpa [h1] using hzz2
-  have hzeroElem : bs1.val[index.val] = (0#usize : Sz) := by
+  have hzeroElem : bs1.val[index.index.val] = (0#usize : Sz) := by
     simp [hresval', hzz]
-  rcases spec_imp_exists (Slice.index_mut_usize_spec bs1.slice index hbound) with ⟨w, hw, hpost⟩
+  rcases spec_imp_exists (Slice.index_mut_usize_spec bs1.slice index.index hbound) with ⟨w, hw, hpost⟩
   rcases w with ⟨x, f⟩
   rcases hpost with ⟨hx2, hf2⟩
   let back : Sz → alloc.vec.Vec Sz :=
@@ -799,29 +809,31 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
     rw [hzero]
     exact hzeroAdd
   have him1 :
-      alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+      verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+        (T := Std.Usize) (U := Std.Usize) (Tag := BlockTag) core.marker.CopyUsize
         (core.slice.index.SliceIndexUsizeSlice Std.Usize) bs1 index = ok (x, back) := by
-    unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
-    simp only [core.slice.index.Usize.index_mut]
+    rw [vec_tagged_index_mut_eq]
     rw [hw]
     simp [back]
   have hfull :
       (do
         let block_sizes1 ←
           alloc.vec.Vec.resize core.clone.CloneUsize block_sizes
-            (Usize.ofNatCore (index.val + 1) hb) 0#usize
+            (Usize.ofNatCore (index.index.val + 1) hb) 0#usize
         let (i3, index_mut_back) ←
-          alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+          verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+            (T := Std.Usize) (U := Std.Usize) (Tag := BlockTag) core.marker.CopyUsize
               (core.slice.index.SliceIndexUsizeSlice Std.Usize) block_sizes1 index
         let i4 ← i3 + 1#usize
         ok (index_mut_back i4)) = ok (back 1#usize) := by
     conv_lhs =>
       pattern alloc.vec.Vec.resize core.clone.CloneUsize block_sizes
-        (Usize.ofNatCore (index.val + 1) hb) 0#usize
+        (Usize.ofNatCore (index.index.val + 1) hb) 0#usize
       rw [hresok]
     simp
     conv_lhs =>
-      pattern alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+      pattern verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+        (T := Std.Usize) (U := Std.Usize) (Tag := BlockTag) core.marker.CopyUsize
         (core.slice.index.SliceIndexUsizeSlice Std.Usize) bs1 index
       rw [him1]
     simp
@@ -829,26 +841,26 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
     simp [hback']
   refine ⟨back 1#usize, hfull, ?_⟩
   · rw [hback', hf2]
-    change Slice.val (Slice.set bs1.slice index 1#usize) =
-        List.set (List.resize block_sizes.val (index.val + 1) 0#usize) index.val 1#usize
+    change Slice.val (Slice.set bs1.slice index.index 1#usize) =
+        List.set (List.resize block_sizes.val (index.index.val + 1) 0#usize) index.index.val 1#usize
     rw [Slice.set_val_eq]
-    change (bs1.val).set index.val (1#usize : Sz) =
-        List.set (List.resize block_sizes.val (index.val + 1) 0#usize) index.val 1#usize
+    change (bs1.val).set index.index.val (1#usize : Sz) =
+        List.set (List.resize block_sizes.val (index.index.val + 1) 0#usize) index.index.val 1#usize
     rw [hresval']
 
 /-- `count_block_occurrence` always succeeds: whether `index` is in range
     (increment the existing count) or out of range (resize and set to `1`),
     an updated `block_sizes` is returned. -/
 theorem count_block_occurrence_spec_ok (block_sizes : alloc.vec.Vec Sz) (index : BT)
-    (hsucc_index : ∃ i3 : Sz, index + 1#usize = ok i3)
-    (hsucc_elem : ∀ (h : index.val < block_sizes.val.length),
-      ∃ newelem : Sz, block_sizes.val.get ⟨index.val, h⟩ + 1#usize = ok newelem) :
+    (hsucc_index : ∃ i3 : Sz, index.index + 1#usize = ok i3)
+    (hsucc_elem : ∀ (h : index.index.val < block_sizes.val.length),
+      ∃ newelem : Sz, block_sizes.val.get ⟨index.index.val, h⟩ + 1#usize = ok newelem) :
     ∃ v : alloc.vec.Vec Sz,
       verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes index = ok v := by
-  by_cases h : index.val < block_sizes.val.length
+  by_cases h : index.index.val < block_sizes.val.length
   · rcases count_block_occurrence_spec_lt block_sizes index h (hsucc_elem h) with ⟨v, hvok, _⟩
     exact ⟨v, hvok⟩
-  · have hge : block_sizes.val.length ≤ index.val := by omega
+  · have hge : block_sizes.val.length ≤ index.index.val := by omega
     rcases count_block_occurrence_spec_ge block_sizes index hge hsucc_index with ⟨v, hvok, _⟩
     exact ⟨v, hvok⟩
 
@@ -903,11 +915,11 @@ lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKe
     (hlen : kts.val.length < Usize.max) :
     ∃ id' : InternMap, ∃ kts' : alloc.vec.Vec SigKey,
       verified.merc_reduction.signature_refinement.strong_intern_signature id kts sb =
-        ok (alloc.vec.Vec.len kts, id', kts') ∧
+        ok (({ index := alloc.vec.Vec.len kts, marker := () } : BT), id', kts') ∧
       kts'.val = kts.val ++ [sb] ∧
       std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
         internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
-        internEqInst id' sb = ok (some (sb, alloc.vec.Vec.len kts)) := by
+        internEqInst id' sb = ok (some (sb, ({ index := alloc.vec.Vec.len kts, marker := () } : BT))) := by
   unfold verified.merc_reduction.signature_refinement.strong_intern_signature
   rw [hget]
   have hclone : ∀ x : SigKey, alloc.vec.CloneVec.clone (BuiltinClone SigPair) x = ok x := by
@@ -922,12 +934,10 @@ lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKe
     rw [hs']
     simp
   rcases (std.collections.hash.map.HashMap.insert_spec (K := SigKey) (V := BT)
-      internEqInst internHashInst internBuildHasher id sb (alloc.vec.Vec.len kts))
+      internEqInst internHashInst internBuildHasher id sb (({ index := alloc.vec.Vec.len kts, marker := () } : BT)))
       with ⟨_, id1, hins, hlookup⟩
   rcases Std.WP.spec_imp_exists (alloc.vec.Vec.push_spec kts sb hlen) with ⟨kts1, hpush, hval⟩
   rw [hclone sb]
-  simp
-  rw [merc_utilities.tagged_index.TagIndex.new]
   simp
   rw [hclone sb]
   simp
@@ -958,7 +968,7 @@ lemma strong_intern_signature_total (id : InternMap) (kts : alloc.vec.Vec SigKey
   rcases h with ⟨idx, hget⟩ | ⟨hget, hlen⟩
   · exact ⟨idx, id, kts, strong_intern_signature_found id kts sb idx hget⟩
   · rcases strong_intern_signature_absent id kts sb hget hlen with ⟨id1, kts1, h⟩
-    exact ⟨alloc.vec.Vec.len kts, id1, kts1, h.1⟩
+    exact ⟨({ index := alloc.vec.Vec.len kts, marker := () } : BT), id1, kts1, h.1⟩
 
 /-!
 # `strong_process_marked_elements` value-level loop spec
@@ -1093,7 +1103,7 @@ theorem strong_process_marked_elements_loop.body_some_step
     (hcount : verified.merc_reduction.signature_refinement.count_block_occurrence
       split_builder.block_sizes index = ok v)
     (hmut2 : BT → VecTy BT)
-    (hmut2ok : ∃ x : BT, alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
+    (hmut2ok : ∃ x : BT, verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
       core.marker.CopyUsize (core.slice.index.SliceIndexUsizeSlice BT)
       state_to_key state_index = ok (x, hmut2))
     (element_index1 : Sz)
@@ -1157,7 +1167,7 @@ def LoopElementOk {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS
         verified.merc_reduction.signature_refinement.count_block_occurrence spb.block_sizes index = ok v ∧
       ∃ hmut2 : BT → VecTy BT,
         (∃ x : BT,
-          alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+          verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
             (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = ok (x, hmut2)) ∧
       ∃ ei1 : Sz, ei + 1#usize = ok ei1
 
@@ -1338,7 +1348,7 @@ def LoopStepEq {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
       ok (index, id1, kts1) ∧
     (∃ x : BT, st.2.2.2.1.index_to_block.index_mut_usize st.2.2.2.2.2 = ok (x, hmut1)) ∧
     verified.merc_reduction.signature_refinement.count_block_occurrence st.2.2.2.1.block_sizes index = ok v ∧
-    (∃ x : BT, alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+    (∃ x : BT, verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
       (core.slice.index.SliceIndexUsizeSlice BT) st.2.2.2.2.1 state_index = ok (x, hmut2)) ∧
     st.2.2.2.2.2 + 1#usize = ok ei1 ∧
     c.1 = id1 ∧ c.2.1 = kts1 ∧ c.2.2.1 = signature_builder1 ∧
@@ -1448,19 +1458,18 @@ theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
     the length of the vector. -/
 theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
     (hmut2 : BT → VecTy BT)
-    (hw : alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+    (hw : verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
         (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = ok (x, hmut2)) :
     (hmut2 u).val.length = stk.val.length := by
-  by_cases hb : state_index.val < stk.slice.length
-  · rcases spec_imp_exists (Slice.index_mut_usize_spec stk.slice state_index hb) with ⟨w, hw2, hpost⟩
+  by_cases hb : state_index.index.val < stk.slice.length
+  · rcases spec_imp_exists (Slice.index_mut_usize_spec stk.slice state_index.index hb) with ⟨w, hw2, hpost⟩
     rcases w with ⟨x0, f⟩
     rcases hpost with ⟨hx0, hf⟩
     have hnice :
-        alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
           (core.slice.index.SliceIndexUsizeSlice BT) stk state_index
           = ok (x0, fun u : BT => ({ slice := f u } : VecTy BT)) := by
-      unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
-      simp only [core.slice.index.Usize.index_mut]
+      rw [vec_tagged_index_mut_eq]
       rw [hw2]
       simp
     have hpair : (x0, (fun u : BT => ({ slice := f u } : VecTy BT))) = (x, hmut2) :=
@@ -1470,19 +1479,18 @@ theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
         congrArg Prod.snd hpair
       exact hhmut'.symm
     rw [hhmut, hf]
-    change (stk.slice.set state_index u).val.length = stk.slice.val.length
+    change (stk.slice.set state_index.index u).val.length = stk.slice.val.length
     rw [Slice.set]
-    exact Slice.setAtNat_length stk.slice state_index.val u
-  · have hn : stk.slice.val[state_index.val]? = none := by
+    exact Slice.setAtNat_length stk.slice state_index.index.val u
+  · have hn : stk.slice.val[state_index.index.val]? = none := by
       rw [List.getElem?_eq_none_iff]
       exact Nat.not_lt.mp hb
-    have hfail : Slice.index_mut_usize stk.slice state_index = .fail .arrayOutOfBounds := by
+    have hfail : Slice.index_mut_usize stk.slice state_index.index = .fail .arrayOutOfBounds := by
       simp [Slice.index_mut_usize, Slice.index_usize, Slice.getElem?_Usize_eq, hn]
     have hfull :
-        alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
           (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = .fail .arrayOutOfBounds := by
-      unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
-      simp only [core.slice.index.Usize.index_mut]
+      rw [vec_tagged_index_mut_eq]
       rw [hfail]
       simp
     exfalso
@@ -1529,11 +1537,11 @@ theorem loopElementOk_of_reach {L : Type} {Label : Type}
         (std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
           internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
           internEqInst id sb = ok none ∧ kts.val.length < Usize.max))
-    (hbt : ∀ b : BT, b.val < Usize.max)
+    (hbt : ∀ b : BT, b.index.val < Usize.max)
     (hcnt : ∀ (bs : VecTy Sz) (i : Nat) (hi : i < bs.val.length),
         (bs.val.get ⟨i, hi⟩).val < Usize.max)
     (hlen : olds.val.length < Usize.max)
-    (hstklen : ∀ i (hi : i < olds.val.length), (olds.val[i]).val < stk0.val.length) :
+    (hstklen : ∀ i (hi : i < olds.val.length), (olds.val[i]).index.val < stk0.val.length) :
     SpmeInvariant LTSInst sys partition olds stk0 := by
   intro st' r hold hstk hIdx hdrop hne
   have hdropne : st'.2.2.2.1.old_elements.val.drop st'.2.2.2.2.2.val ≠ [] := by
@@ -1568,16 +1576,16 @@ theorem loopElementOk_of_reach {L : Type} {Label : Type}
       st'.2.2.2.2.2 hbound_idx) with ⟨w, hmut1ok, _⟩
   refine ⟨w.2, ⟨w.1, hmut1ok⟩, ?_⟩
   rcases count_block_occurrence_spec_ok st'.2.2.2.1.block_sizes index
-    (add1_ok_of_lt_max index (hbt index))
+    (add1_ok_of_lt_max index.index (hbt index))
     (by
       intro hb
-      exact add1_ok_of_lt_max (st'.2.2.2.1.block_sizes.val.get ⟨index.val, hb⟩)
-        (hcnt st'.2.2.2.1.block_sizes index.val hb)) with ⟨v, hcount⟩
+      exact add1_ok_of_lt_max (st'.2.2.2.1.block_sizes.val.get ⟨index.index.val, hb⟩)
+        (hcnt st'.2.2.2.1.block_sizes index.index.val hb)) with ⟨v, hcount⟩
   refine ⟨v, hcount, ?_⟩
-  have hbound_stk : state_index.val < st'.2.2.2.2.1.val.length := by
+  have hbound_stk : state_index.index.val < st'.2.2.2.2.1.val.length := by
     rw [hstk]
-    have hsval' : state_index.val = (st'.2.2.2.1.old_elements.val.get ⟨st'.2.2.2.2.2.val, hlt⟩).val := by
-      exact congrArg (fun z : ST => z.val) hsval
+    have hsval' : state_index.index.val = (st'.2.2.2.1.old_elements.val.get ⟨st'.2.2.2.2.2.val, hlt⟩).index.val := by
+      exact congrArg (fun z : ST => z.index.val) hsval
     rw [hsval']
     have hlt_olds : st'.2.2.2.2.2.val < olds.val.length := by
       rw [← hold]
@@ -1588,16 +1596,15 @@ theorem loopElementOk_of_reach {L : Type} {Label : Type}
         (st'.2.2.2.2.2.val) hlt hlt_olds
     rw [hbridge]
     exact hstklen st'.2.2.2.2.2.val hlt_olds
-  rcases spec_imp_exists (Slice.index_mut_usize_spec st'.2.2.2.2.1.slice state_index hbound_stk)
+  rcases spec_imp_exists (Slice.index_mut_usize_spec st'.2.2.2.2.1.slice state_index.index hbound_stk)
     with ⟨w, hwslice, hpost⟩
   rcases w with ⟨x0, f⟩
   rcases hpost with ⟨hx0, hf⟩
   have hok :
-      alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+      verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
         (core.slice.index.SliceIndexUsizeSlice BT) st'.2.2.2.2.1 state_index
         = ok (x0, fun u : BT => ({ slice := f u } : VecTy BT)) := by
-    unfold alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut
-    simp only [core.slice.index.Usize.index_mut]
+    rw [vec_tagged_index_mut_eq]
     rw [hwslice]
     simp
   refine ⟨fun u : BT => ({ slice := f u } : VecTy BT), ⟨x0, hok⟩, ?_⟩
@@ -1830,7 +1837,7 @@ they are the open proof obligations that replaced the former `run_worklist_loop_
 def InitialWorklistContext {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (n : Std.Usize) (ctx0 : WorklistContextStrong) : Prop :=
   ∃ ti : TagIndex Std.Usize BlockTag,
-    merc_utilities.tagged_index.TagIndex.new BlockTag 0#usize = ok ti ∧
+    verified.merc_utilities.tagged_index.TagIndex.new BlockTag 0#usize = ok ti ∧
     alloc.vec.FromVecArray.from (Array.make 1#usize [ti]) = ok ctx0.worklist ∧
     BlockPartition.new n = ok ctx0.partition ∧
     alloc.vec.Vec.resize_with Global
@@ -1851,7 +1858,7 @@ def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
   (∀ s b, (s, b) ∈ List.zip ctx.partition.elements.val ctx.partition.element_to_block.val →
       blockOf s = b) ∧
   (∀ n, LTSInst.num_of_states sys = ok n →
-    ∀ s : TagIndex Std.Usize StateTag, s.val < n.val → s ∈ ctx.partition.elements.val) ∧
+    ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ ctx.partition.elements.val) ∧
   IsStable (fun s => StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf)
     blockOf ∧
   ∀ s s', StrongFixPoint (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s'
@@ -1860,8 +1867,8 @@ def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
 theorem strong_run_worklist_loop_partial_correct
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (hwf : LTSInst.WellFormed sys)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
-    (hinc : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
+    (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
     (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0)
     (ctx : WorklistContextStrong)
@@ -1874,8 +1881,8 @@ theorem strong_run_worklist_loop_partial_correct
 theorem strong_run_worklist_loop_terminates
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (hwf : LTSInst.WellFormed sys)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
-    (hinc : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
+    (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
     (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0) :
     ∃ ctx, verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
@@ -1887,8 +1894,8 @@ theorem strong_run_worklist_loop_terminates
 theorem run_worklist_loop_spec
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (hwf : LTSInst.WellFormed sys)
-    (incoming : merc_lts.incoming_transitions.IncomingTransitions)
-    (hinc : merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
+    (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
+    (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
     (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0) :
     ∃ ctx blockOf,

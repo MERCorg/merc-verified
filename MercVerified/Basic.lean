@@ -76,18 +76,15 @@ def NonEmpty {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
 def WellFormed {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
   LTSInst.NonEmpty sys ∧
   ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
-    ∀ s : TagIndex Std.Usize StateTag, s.val < n.val →
+    ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val →
       ∃ ts : alloc.vec.Vec Transition,
-        LTSInst.outgoing_transitions sys s = ok ts ∧ ∀ t ∈ ts.val, t.to.val < n.val
+        LTSInst.outgoing_transitions sys s = ok ts ∧ ∀ t ∈ ts.val, t.to.index.val < n.val
 
 end verified.merc_lts.lts.LTS
 
 /-- The Rust method `is_hidden_label` declares the hidden (τ) label to be
-    the tagged index `TagIndex::new(0)`. Since `TagIndex` is modelled
-    axiomatically by Aeneas, we postulate the corresponding element here so
-    that the cslib `HasTau` class can be instantiated, making the LTS usable
-    with weak/branching bisimilarity. -/
-axiom tauLabelIndex : TagIndex Std.Usize LabelTag
+    the tagged index `TagIndex::new(0)`. -/
+def tauLabelIndex : TagIndex Std.Usize LabelTag := { index := 0#usize, marker := () }
 
 noncomputable instance : Cslib.HasTau (TagIndex Std.Usize LabelTag) where
   τ := tauLabelIndex
