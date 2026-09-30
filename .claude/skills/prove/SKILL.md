@@ -62,6 +62,7 @@ Only scans the given file, not its imports, so run it on the file that actually 
 ## Rules
 
 - Never close a goal with `sorry` to make diagnostics pass. If a proof cannot be completed, say so and leave the goal open with an explanation.
+- When an existing proof is replaced by `sorry` (e.g. a spec change breaks it, or it needs to be reworked later), keep the old proof body as a comment directly above the `sorry` rather than deleting it — it's a hint for whoever reproves it.
 - Do not weaken, restate, or add a hypothesis to a pinned/headline theorem's signature to make it provable without saying so explicitly — that's a contract change, not a proof detail (see lean-conventions' spec/Proofs/pin split). If the proof genuinely needs more than the spec grants, the spec itself needs a deliberate, reviewed edit, not a quiet signature change in the Proofs file.
 - Only add an import when a lemma genuinely needs it; after changing imports, run `lean_build` once so the LSP picks up the new dependency.
 - Report per-file: clean / errors (with line numbers) / sorries.
