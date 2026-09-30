@@ -1010,7 +1010,7 @@ def merc_lts.incoming_transitions.IncomingTransitions.new
     }
 
 /-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::FromTransition}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 352:4-352:59
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 362:4-362:59
     Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::FromTransition}::new]
     Visibility: public -/
 @[rust_fun
@@ -1107,6 +1107,113 @@ def merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions
   merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions_loop
     { start, «end» } self.transition_labels self.transition_from result
 
+/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 65:4-65:38
+    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
+    Visibility: public -/
+@[rust_fun
+  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq"]
+def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T)
+  (self : merc_utilities.tagged_index.TagIndex T Tag)
+  (other : merc_utilities.tagged_index.TagIndex T Tag) :
+  Result Bool
+  := do
+  corecmpPartialEqInst.eq self.index other.index
+
+/-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 64:0-64:54
+    Name pattern: [core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
+@[reducible, rust_trait_impl
+  "core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
+impl_def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex {T
+  : Type} (Tag : Type) (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  core.cmp.PartialEq (merc_utilities.tagged_index.TagIndex T Tag)
+  (merc_utilities.tagged_index.TagIndex T Tag) := {
+  eq := merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+    corecmpPartialEqInst
+  ne := core.cmp.PartialEq.ne.trait_default
+    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex Tag
+    corecmpPartialEqInst)
+}
+
+/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions]: loop body 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 343:8-348:9
+    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions]
+    Visibility: public -/
+@[rust_loop_body, rust_fun
+  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions"]
+def
+  merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop.body
+  (transitions : alloc.vec.Vec merc_lts.incoming_transitions.FromTransition)
+  (iter : core.ops.range.Range Std.Usize)
+  (result : alloc.vec.Vec merc_lts.incoming_transitions.FromTransition) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (alloc.vec.Vec
+    merc_lts.incoming_transitions.FromTransition)) (alloc.vec.Vec
+    merc_lts.incoming_transitions.FromTransition))
+  := do
+  let (o, iter1) ←
+    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
+  match o with
+  | none => ok (done result)
+  | some i =>
+    let ft ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+        merc_lts.incoming_transitions.FromTransition) transitions i
+    let ti ←
+      merc_utilities.tagged_index.TagIndex.new merc_lts.lts.LabelTag 0#usize
+    let b ←
+      core.cmp.PartialEq.ne.trait_default
+        (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+        merc_lts.lts.LabelTag core.cmp.PartialEqUsize) ft.label ti
+    if b
+    then ok (done result)
+    else
+      let result1 ← alloc.vec.Vec.push result ft
+      ok (cont (iter1, result1))
+
+/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions]: loop 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 343:8-348:9
+    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions]
+    Visibility: public -/
+@[rust_loop, rust_fun
+  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions"]
+def
+  merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop
+  (iter : core.ops.range.Range Std.Usize)
+  (transitions : alloc.vec.Vec merc_lts.incoming_transitions.FromTransition)
+  (result : alloc.vec.Vec merc_lts.incoming_transitions.FromTransition) :
+  Result (alloc.vec.Vec merc_lts.incoming_transitions.FromTransition)
+  := do
+  loop
+    (fun (iter1, result1) =>
+      merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop.body
+      transitions iter1 result1)
+    (iter, result)
+
+/-- [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 339:4-339:93
+    Name pattern: [merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions]
+    Visibility: public -/
+@[rust_fun
+  "merc_lts::incoming_transitions::{merc_lts::incoming_transitions::IncomingTransitions}::incoming_silent_transitions"]
+def
+  merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions
+  (self : merc_lts.incoming_transitions.IncomingTransitions)
+  (state_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag) :
+  Result (alloc.vec.Vec merc_lts.incoming_transitions.FromTransition)
+  := do
+  let transitions ←
+    merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions self
+      state_index
+  let i := alloc.vec.Vec.len transitions
+  let result :=
+    alloc.vec.Vec.with_capacity merc_lts.incoming_transitions.FromTransition i
+  let i1 := alloc.vec.Vec.len transitions
+  merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop
+    { start := 0#usize, «end» := i1 } transitions result
+
 /-- Trait implementation: [merc_lts::lts::{impl core::clone::Clone for merc_lts::lts::Transition}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 132:9-132:14
     Name pattern: [core::clone::Clone<merc_lts::lts::Transition>] -/
@@ -1161,7 +1268,7 @@ def alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
   alloc.vec.Vec.index coresliceindexSliceIndexTSliceUInst self t
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_elements]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 331:4-331:70
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 332:4-332:70
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_elements] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_elements"]
@@ -1194,7 +1301,7 @@ def merc_reduction.block_partition.BlockPartition.swap_elements
   ok { self with elements := v, element_offset := v2 }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_element]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 288:4-288:62
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 289:4-289:62
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_element] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_element"]
@@ -1246,7 +1353,7 @@ def merc_reduction.block_partition.BlockPartition.mark_element
     }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 303:4-303:64
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 304:4-304:64
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_element_marked]
     Visibility: public -/
 @[rust_fun
@@ -1274,7 +1381,7 @@ def merc_reduction.block_partition.BlockPartition.is_element_marked
   ok (offset >= b.marked_split)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::block]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 312:4-312:58
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 313:4-313:58
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::block]
     Visibility: public -/
 @[rust_fun
@@ -1290,7 +1397,7 @@ def merc_reduction.block_partition.BlockPartition.block
     merc_reduction.block_partition.Block) self.blocks block_index
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::num_of_blocks]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 317:4-317:40
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 318:4-318:40
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::num_of_blocks]
     Visibility: public -/
 @[rust_fun
@@ -1302,7 +1409,7 @@ def merc_reduction.block_partition.BlockPartition.num_of_blocks
   ok (alloc.vec.Vec.len self.blocks)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::iter_block]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 322:4-322:70
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 323:4-323:70
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::iter_block]
     Visibility: public -/
 @[rust_fun
@@ -1334,7 +1441,7 @@ def merc_reduction.partition.Partition.is_empty.default
   ok (i = 0#usize)
 
 /-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::len]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 404:4-404:26
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 405:4-405:26
     Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::len]
     Visibility: public -/
 @[rust_fun
@@ -1347,7 +1454,7 @@ def
   ok (alloc.vec.Vec.len self.elements)
 
 /-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::num_of_blocks]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 400:4-400:36
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 401:4-401:36
     Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::num_of_blocks]
     Visibility: public -/
 @[rust_fun
@@ -1360,7 +1467,7 @@ def
   ok (alloc.vec.Vec.len self.blocks)
 
 /-- [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}::block_number]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 396:4-396:61
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 397:4-397:61
     Name pattern: [merc_reduction::block_partition::{merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>}::block_number]
     Visibility: public -/
 @[rust_fun
@@ -1380,7 +1487,7 @@ def
     merc_collections.indexed_partition.BlockTag)) self.element_to_block i
 
 /-- Trait implementation: [merc_reduction::block_partition::{impl merc_reduction::partition::Partition for merc_reduction::block_partition::BlockPartition}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 395:0-395:33
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 396:0-396:33
     Name pattern: [merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>] -/
 @[reducible, rust_trait_impl
   "merc_reduction::partition::Partition<merc_reduction::block_partition::BlockPartition>"]
@@ -1399,7 +1506,7 @@ impl_def
 }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 446:4-446:56
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 447:4-447:56
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new"]
@@ -1411,7 +1518,7 @@ def merc_reduction.block_partition.Block.new
   ok { begin, marked_split := begin, «end» }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new_unmarked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 456:4-456:65
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 457:4-457:65
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new_unmarked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::new_unmarked"]
@@ -1438,7 +1545,7 @@ def merc_reduction.block_partition.Block.new_unmarked
     fail panic
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::iter_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 476:4-476:85
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 477:4-477:85
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::iter_marked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::iter_marked"]
@@ -1451,7 +1558,7 @@ def merc_reduction.block_partition.Block.iter_marked
   ok { elements, index := self.marked_split, «end» := self.end }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::has_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 494:4-494:43
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 495:4-495:43
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::has_marked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::has_marked"]
@@ -1461,7 +1568,7 @@ def merc_reduction.block_partition.Block.has_marked
   ok (self.marked_split < self.end)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::has_unmarked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 501:4-501:45
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 502:4-502:45
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::has_unmarked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::has_unmarked"]
@@ -1471,7 +1578,7 @@ def merc_reduction.block_partition.Block.has_unmarked
   ok (self.begin < self.marked_split)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::len]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 512:4-512:37
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 513:4-513:37
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::len] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::len"]
@@ -1481,7 +1588,7 @@ def merc_reduction.block_partition.Block.len
   self.end - self.begin
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::len_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 519:4-519:44
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 520:4-520:44
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::len_marked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::len_marked"]
@@ -1491,7 +1598,7 @@ def merc_reduction.block_partition.Block.len_marked
   self.end - self.marked_split
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::unmark_all]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 526:4-526:28
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 527:4-527:28
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::unmark_all] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::unmark_all"]
@@ -1502,7 +1609,7 @@ def merc_reduction.block_partition.Block.unmark_all
   ok { self with marked_split := self.end }
 
 /-- [merc_reduction::block_partition::{impl core::iter::traits::iterator::Iterator<merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>> for merc_reduction::block_partition::BlockIter<'_0>}::next]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 555:4-555:44
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 556:4-556:44
     Name pattern: [merc_reduction::block_partition::{core::iter::traits::iterator::Iterator<merc_reduction::block_partition::BlockIter<'0>, merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>>}::next]
     Visibility: public -/
 @[rust_fun
@@ -1521,7 +1628,7 @@ def
   else ok (none, self)
 
 /-- Trait implementation: [merc_reduction::block_partition::{impl core::iter::traits::iterator::Iterator<merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>> for merc_reduction::block_partition::BlockIter<'_0>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 552:0-552:31
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 553:0-553:31
     Name pattern: [core::iter::traits::iterator::Iterator<merc_reduction::block_partition::BlockIter<'0>, merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>>] -/
 @[reducible, rust_trait_impl
   "core::iter::traits::iterator::Iterator<merc_reduction::block_partition::BlockIter<'0>, merc_utilities::tagged_index::TagIndex<usize, merc_lts::lts::StateTag>>"]
@@ -1536,7 +1643,7 @@ impl_def
 }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new]: loop body 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 653:8-657:9
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 654:8-658:9
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new"]
@@ -1573,7 +1680,7 @@ def merc_reduction.block_partition.BlockPartition.new_loop.body
     ok (cont (iter1, elements1, element_to_block1, element_to_block_offset1))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new]: loop 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 653:8-657:9
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 654:8-658:9
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new"]
@@ -1596,7 +1703,7 @@ def merc_reduction.block_partition.BlockPartition.new_loop
     (iter, elements, element_to_block, element_to_block_offset)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 643:4-643:63
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 644:4-644:63
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new"]
@@ -1628,7 +1735,7 @@ def merc_reduction.block_partition.BlockPartition.new
     }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_trivially_partitioned]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 721:4-721:82
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 722:4-722:82
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_trivially_partitioned] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::is_trivially_partitioned"]
@@ -1646,7 +1753,7 @@ def merc_reduction.block_partition.BlockPartition.is_trivially_partitioned
   ok (i = 1#usize)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::trivial_partition_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 729:4-729:97
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 730:4-730:97
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::trivial_partition_marked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::trivial_partition_marked"]
@@ -1707,36 +1814,6 @@ def
   Result (Option Ordering)
   := do
   corecmpPartialOrdInst.partial_cmp self.index other.index
-
-/-- [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}::eq]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 65:4-65:38
-    Name pattern: [merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq]
-    Visibility: public -/
-@[rust_fun
-  "merc_utilities::tagged_index::{core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::eq"]
-def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
-  {T : Type} {Tag : Type} (corecmpPartialEqInst : core.cmp.PartialEq T T)
-  (self : merc_utilities.tagged_index.TagIndex T Tag)
-  (other : merc_utilities.tagged_index.TagIndex T Tag) :
-  Result Bool
-  := do
-  corecmpPartialEqInst.eq self.index other.index
-
-/-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 64:0-64:54
-    Name pattern: [core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>] -/
-@[reducible, rust_trait_impl
-  "core::cmp::PartialEq<merc_utilities::tagged_index::TagIndex<@T, @Tag>, merc_utilities::tagged_index::TagIndex<@T, @Tag>>"]
-impl_def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex {T
-  : Type} (Tag : Type) (corecmpPartialEqInst : core.cmp.PartialEq T T) :
-  core.cmp.PartialEq (merc_utilities.tagged_index.TagIndex T Tag)
-  (merc_utilities.tagged_index.TagIndex T Tag) := {
-  eq := merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
-    corecmpPartialEqInst
-  ne := core.cmp.PartialEq.ne.trait_default
-    (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex Tag
-    corecmpPartialEqInst)
-}
 
 /-- Trait implementation: [merc_utilities::tagged_index::{impl core::cmp::PartialOrd<merc_utilities::tagged_index::TagIndex<T, Tag>> for merc_utilities::tagged_index::TagIndex<T, Tag>}]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 76:0-76:56
@@ -1802,7 +1879,7 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd {T : Type} (Tag :
 }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::marked_elements_sorted]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 743:4-743:109
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 744:4-744:109
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::marked_elements_sorted] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::marked_elements_sorted"]
@@ -1857,7 +1934,7 @@ def merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEq.eq
   corecmpPartialEqInst.eq self.index other
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks]: loop body 1:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 890:8-892:9
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 891:8-893:9
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks"]
@@ -1893,7 +1970,7 @@ def merc_reduction.block_partition.BlockPartition.swap_blocks_loop0_loop0.body
     ok (cont (iter1, v2))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks]: loop 1:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 890:8-892:9
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 891:8-893:9
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks"]
@@ -1915,7 +1992,7 @@ def merc_reduction.block_partition.BlockPartition.swap_blocks_loop0_loop0
     (iter, v1)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks]: loop body 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 869:90-895:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 870:90-896:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks"]
@@ -1972,7 +2049,7 @@ def merc_reduction.block_partition.BlockPartition.swap_blocks_loop0.body
     ok (cont (iter1, v4))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks]: loop 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 869:90-895:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 870:90-896:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks"]
@@ -1997,7 +2074,7 @@ def merc_reduction.block_partition.BlockPartition.swap_blocks_loop0
     (iter, v2)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 869:4-869:89
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 870:4-870:89
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::swap_blocks"]
@@ -2045,7 +2122,7 @@ def merc_reduction.block_partition.BlockPartition.swap_blocks
     ok { self with blocks := v1, element_to_block := v2 }
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap]: loop body 1:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 856:8-863:9
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 857:8-864:9
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap"]
@@ -2090,7 +2167,7 @@ def
     else ok (cont (iter1, max_block_index, max_len))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap]: loop 1:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 856:8-863:9
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 857:8-864:9
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap"]
@@ -2115,7 +2192,7 @@ def merc_reduction.block_partition.BlockPartition.new_block_to_swap_loop0_loop0
     (iter, max_block_index, max_len)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap]: loop body 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 850:8-866:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 851:8-867:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap"]
@@ -2167,7 +2244,7 @@ def merc_reduction.block_partition.BlockPartition.new_block_to_swap_loop0.body
     ok (cont (iter1, new_block_indices1))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap]: loop 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 850:8-866:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 851:8-867:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap"]
@@ -2192,7 +2269,7 @@ def merc_reduction.block_partition.BlockPartition.new_block_to_swap_loop0
     (iter, new_block_indices)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 843:4-847:38
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 844:4-848:38
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::new_block_to_swap"]
@@ -2218,7 +2295,7 @@ def merc_reduction.block_partition.BlockPartition.new_block_to_swap
     self.element_to_block self.element_offset new_block_indices1
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked]: loop body 1:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 806:13-810:77
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 807:13-811:77
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked"]
@@ -2328,7 +2405,7 @@ def
     ok (cont (iter2, v4, v6, v5, block_offsets1))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked]: loop 1:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 806:13-810:77
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 807:13-811:77
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked"]
@@ -2359,7 +2436,7 @@ def
     (iter, v, v1, v2, block_offsets)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked]: loop body 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 777:8-833:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 778:8-834:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked] -/
 @[rust_loop_body, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked"]
@@ -2473,7 +2550,7 @@ def
                                back im1, v6, block1, offset))
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked]: loop 0:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 777:8-833:5
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 778:8-834:5
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked] -/
 @[rust_loop, rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked"]
@@ -2508,7 +2585,7 @@ def merc_reduction.block_partition.BlockPartition.finish_partition_marked_loop0
     (iter, back, v1, block, current)
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 762:4-762:133
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 763:4-763:133
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::finish_partition_marked"]
@@ -2544,8 +2621,558 @@ def merc_reduction.block_partition.BlockPartition.finish_partition_marked
       new_block_index 0#usize
   ok (v, self1, { builder with block_sizes := v1 })
 
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 2:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 943:20-943:91
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0_loop0.body
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition) :
+  Result (ControlFlow (alloc.vec.into_iter.IntoIter
+    merc_lts.incoming_transitions.FromTransition) Unit)
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done ())
+  | some transition =>
+    let ti ←
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+        {
+          elements := v,
+          blocks := v1,
+          element_to_block := v2,
+          element_offset := v3
+        } transition.from
+    let b ←
+      core.cmp.PartialEq.ne.trait_default
+        (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+        merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize) ti
+        block_index
+    if b
+    then ok (cont iter1)
+    else
+      let b1 ←
+        merc_reduction.block_partition.BlockPartition.is_element_marked
+          {
+            elements := v,
+            blocks := v1,
+            element_to_block := v2,
+            element_offset := v3
+          } transition.from
+      massert b1
+      ok (cont iter1)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 2:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 943:20-943:91
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0_loop0
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition)
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag) :
+  Result Unit
+  := do
+  loop
+    (fun iter1 =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0_loop0.body
+      v v1 v2 v3 block_index iter1)
+    iter
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 1:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 941:12-950:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0.body
+  (self : merc_reduction.block_partition.BlockPartition)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions)
+  (iter : core.ops.range.Range Std.Usize) :
+  Result (ControlFlow (core.ops.range.Range Std.Usize)
+    merc_reduction.block_partition.BlockPartition)
+  := do
+  let (o, iter1) ←
+    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
+  match o with
+  | none => ok (done self)
+  | some offset =>
+    let element ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+        (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
+        self.elements offset
+    let v ←
+      merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions
+        incoming_transitions element
+    let iter2 ← alloc.vec.IntoIteratorVec.into_iter v
+    merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0_loop0
+      iter2 self.elements self.blocks self.element_to_block self.element_offset
+      block_index
+    ok (cont iter1)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 1:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 941:12-950:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0
+  (iter : core.ops.range.Range Std.Usize)
+  (self : merc_reduction.block_partition.BlockPartition)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  loop
+    (fun iter1 =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0.body
+      self block_index incoming_transitions iter1)
+    iter
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 3:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 929:12-933:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition)
+  (self : merc_reduction.block_partition.BlockPartition) :
+  Result (ControlFlow ((alloc.vec.into_iter.IntoIter
+    merc_lts.incoming_transitions.FromTransition) ×
+    merc_reduction.block_partition.BlockPartition)
+    merc_reduction.block_partition.BlockPartition)
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done self)
+  | some transition =>
+    let ti ←
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+        self transition.from
+    let b ←
+      merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+        core.cmp.PartialEqUsize ti block_index
+    if b
+    then
+      let self1 ←
+        merc_reduction.block_partition.BlockPartition.mark_element self
+          transition.from
+      ok (cont (iter1, self1))
+    else ok (cont (iter1, self))
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 3:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 929:12-933:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition)
+  (self : merc_reduction.block_partition.BlockPartition)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  loop
+    (fun (iter1, self1) =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body
+      block_index iter1 self1)
+    (iter, self)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 5:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 943:20-943:91
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2_loop0.body
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition) :
+  Result (ControlFlow (alloc.vec.into_iter.IntoIter
+    merc_lts.incoming_transitions.FromTransition) Unit)
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done ())
+  | some transition =>
+    let ti ←
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+        {
+          elements := v,
+          blocks := v1,
+          element_to_block := v2,
+          element_offset := v3
+        } transition.from
+    let b ←
+      core.cmp.PartialEq.ne.trait_default
+        (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+        merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize) ti
+        block_index
+    if b
+    then ok (cont iter1)
+    else
+      let b1 ←
+        merc_reduction.block_partition.BlockPartition.is_element_marked
+          {
+            elements := v,
+            blocks := v1,
+            element_to_block := v2,
+            element_offset := v3
+          } transition.from
+      massert b1
+      ok (cont iter1)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 5:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 943:20-943:91
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2_loop0
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition)
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag) :
+  Result Unit
+  := do
+  loop
+    (fun iter1 =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2_loop0.body
+      v v1 v2 v3 block_index iter1)
+    iter
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 4:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 941:12-950:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2.body
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions)
+  (iter : core.ops.range.Range Std.Usize) :
+  Result (ControlFlow (core.ops.range.Range Std.Usize) Unit)
+  := do
+  let (o, iter1) ←
+    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
+  match o with
+  | none => ok (done ())
+  | some offset =>
+    let element ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+        (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
+        v offset
+    let v4 ←
+      merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions
+        incoming_transitions element
+    let iter2 ← alloc.vec.IntoIteratorVec.into_iter v4
+    merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2_loop0
+      iter2 v v1 v2 v3 block_index
+    ok (cont iter1)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 4:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 941:12-950:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2
+  (iter : core.ops.range.Range Std.Usize)
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions) :
+  Result Unit
+  := do
+  loop
+    (fun iter1 =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2.body
+      v v1 v2 v3 block_index incoming_transitions iter1)
+    iter
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 7:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 943:20-943:91
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3_loop0.body
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition) :
+  Result (ControlFlow (alloc.vec.into_iter.IntoIter
+    merc_lts.incoming_transitions.FromTransition) Unit)
+  := do
+  let (o, iter1) ← alloc.vec.into_iter.IteratorIntoIter.next iter
+  match o with
+  | none => ok (done ())
+  | some transition =>
+    let ti ←
+      merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
+        {
+          elements := v,
+          blocks := v1,
+          element_to_block := v2,
+          element_offset := v3
+        } transition.from
+    let b ←
+      core.cmp.PartialEq.ne.trait_default
+        (merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
+        merc_collections.indexed_partition.BlockTag core.cmp.PartialEqUsize) ti
+        block_index
+    if b
+    then ok (cont iter1)
+    else
+      let b1 ←
+        merc_reduction.block_partition.BlockPartition.is_element_marked
+          {
+            elements := v,
+            blocks := v1,
+            element_to_block := v2,
+            element_offset := v3
+          } transition.from
+      massert b1
+      ok (cont iter1)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 7:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 943:20-943:91
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3_loop0
+  (iter : alloc.vec.into_iter.IntoIter
+  merc_lts.incoming_transitions.FromTransition)
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag) :
+  Result Unit
+  := do
+  loop
+    (fun iter1 =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3_loop0.body
+      v v1 v2 v3 block_index iter1)
+    iter
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 6:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 941:12-950:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3.body
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions)
+  (iter : core.ops.range.Range Std.Usize) :
+  Result (ControlFlow (core.ops.range.Range Std.Usize) Unit)
+  := do
+  let (o, iter1) ←
+    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
+  match o with
+  | none => ok (done ())
+  | some offset =>
+    let element ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+        (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
+        v offset
+    let v4 ←
+      merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions
+        incoming_transitions element
+    let iter2 ← alloc.vec.IntoIteratorVec.into_iter v4
+    merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3_loop0
+      iter2 v v1 v2 v3 block_index
+    ok (cont iter1)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 6:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 941:12-950:13
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3
+  (iter : core.ops.range.Range Std.Usize)
+  (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_lts.lts.StateTag))
+  (v1 : alloc.vec.Vec merc_reduction.block_partition.Block)
+  (v2 : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)) (v3 : alloc.vec.Vec Std.Usize)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions) :
+  Result Unit
+  := do
+  loop
+    (fun iter1 =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3.body
+      v v1 v2 v3 block_index incoming_transitions iter1)
+    iter
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop body 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 923:8-952:5
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop_body, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions)
+  (i : Std.Usize) (i1 : Std.Usize) (iter : core.ops.range.Range Std.Usize)
+  (self : merc_reduction.block_partition.BlockPartition) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) ×
+    merc_reduction.block_partition.BlockPartition)
+    merc_reduction.block_partition.BlockPartition)
+  := do
+  let (o, iter1) ←
+    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
+  match o with
+  | none =>
+    let self1 ←
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0
+        { start := i, «end» := i1 } self block_index incoming_transitions
+    ok (done self1)
+  | some offset =>
+    let i2 ← i1 - 1#usize
+    let it ← i2 - offset
+    let b ←
+      alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index
+        core.marker.CopyUsize (core.slice.index.SliceIndexUsizeSlice
+        merc_reduction.block_partition.Block) self.blocks block_index
+    if it >= b.marked_split
+    then
+      let b1 ← merc_reduction.block_partition.Block.has_unmarked b
+      if b1
+      then
+        let ti ←
+          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+            (merc_utilities.tagged_index.TagIndex Std.Usize
+            merc_lts.lts.StateTag)) self.elements it
+        let v ←
+          merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions
+            incoming_transitions ti
+        let iter2 ← alloc.vec.IntoIteratorVec.into_iter v
+        let self1 ←
+          merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1
+            iter2 self block_index
+        ok (cont (iter1, self1))
+      else
+        merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop2
+          { start := i, «end» := i1 } self.elements self.blocks
+          self.element_to_block self.element_offset block_index
+          incoming_transitions
+        ok (done self)
+    else
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop3
+        { start := i, «end» := i1 } self.elements self.blocks
+        self.element_to_block self.element_offset block_index
+        incoming_transitions
+      ok (done self)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]: loop 0:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 923:8-952:5
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_loop, rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0
+  (iter : core.ops.range.Range Std.Usize)
+  (self : merc_reduction.block_partition.BlockPartition)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions)
+  (i : Std.Usize) (i1 : Std.Usize) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  loop
+    (fun (iter1, self1) =>
+      merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body
+      block_index incoming_transitions i i1 iter1 self1)
+    (iter, self)
+
+/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]:
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 907:4-911:5
+    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
+@[rust_fun
+  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
+def merc_reduction.block_partition.BlockPartition.mark_backward_closure
+  (self : merc_reduction.block_partition.BlockPartition)
+  (block_index : merc_utilities.tagged_index.TagIndex Std.Usize
+  merc_collections.indexed_partition.BlockTag)
+  (incoming_transitions : merc_lts.incoming_transitions.IncomingTransitions) :
+  Result merc_reduction.block_partition.BlockPartition
+  := do
+  let block ←
+    alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice
+      merc_reduction.block_partition.Block) self.blocks block_index
+  let span ← block.end - block.begin
+  merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0
+    { start := 0#usize, «end» := span } self block_index incoming_transitions
+    block.marked_split block.end
+
 /-- [merc_reduction::block_partition::{impl core::default::Default for merc_reduction::block_partition::BlockPartitionBuilder}::default]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 947:9-947:16
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 1004:9-1004:16
     Name pattern: [merc_reduction::block_partition::{core::default::Default<merc_reduction::block_partition::BlockPartitionBuilder>}::default]
     Visibility: public -/
 @[rust_fun

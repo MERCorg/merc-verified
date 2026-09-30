@@ -132,7 +132,7 @@ structure merc_lts.incoming_transitions.IncomingTransitions where
   state2incoming : alloc.vec.Vec Std.Usize
 
 /-- [merc_lts::incoming_transitions::FromTransition]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 345:0-345:25
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 355:0-355:25
     Name pattern: [merc_lts::incoming_transitions::FromTransition]
     Visibility: public -/
 @[rust_type "merc_lts::incoming_transitions::FromTransition"]
@@ -142,7 +142,7 @@ structure merc_lts.incoming_transitions.FromTransition where
     merc_lts.lts.StateTag
 
 /-- [merc_reduction::block_partition::Block]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 438:0-438:16
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 439:0-439:16
     Name pattern: [merc_reduction::block_partition::Block]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::Block"]
@@ -165,7 +165,7 @@ structure merc_reduction.block_partition.BlockPartition where
   element_offset : alloc.vec.Vec Std.Usize
 
 /-- [merc_reduction::block_partition::BlockIter]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 546:0-546:24
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 547:0-547:24
     Name pattern: [merc_reduction::block_partition::BlockIter]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::BlockIter"]
@@ -189,7 +189,7 @@ structure merc_reduction.partition.Partition (Self : Type) where
   is_empty : Self → Result Bool
 
 /-- [merc_reduction::block_partition::BlockPartitionBuilder]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 948:0-948:39
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 1005:0-1005:39
     Name pattern: [merc_reduction::block_partition::BlockPartitionBuilder] -/
 @[rust_type "merc_reduction::block_partition::BlockPartitionBuilder"]
 structure merc_reduction.block_partition.BlockPartitionBuilder where

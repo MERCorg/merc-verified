@@ -16,13 +16,6 @@ set_option maxHeartbeats 1000000
 /- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
 set_option maxRecDepth 2048
 
-/-- [core::sync::atomic::private::Align8]
-    Source: '/rustc/library/core/src/sync/atomic.rs', lines 270:4-270:24
-    Name pattern: [core::sync::atomic::private::Align8]
-    Visibility: public -/
-@[rust_type "core::sync::atomic::private::Align8"]
-axiom core.sync.atomic.private.Align8 (T : Type) : Type
-
 /-- [std::collections::hash::map::HashMap]
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 245:0-250:1
     Name pattern: [std::collections::hash::map::HashMap]

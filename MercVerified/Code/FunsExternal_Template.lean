@@ -384,21 +384,8 @@ axiom merc_lts.lts.Transition.Insts.CoreCloneClone.clone
 axiom merc_lts.lts.Transition.Insts.CoreCmpPartialEqTransition.eq
   : merc_lts.lts.Transition → merc_lts.lts.Transition → Result Bool
 
-/-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 232:4-236:5
-    Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure] -/
-@[rust_fun
-  "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::mark_backward_closure"]
-axiom merc_reduction.block_partition.BlockPartition.mark_backward_closure
-  :
-  merc_reduction.block_partition.BlockPartition →
-    merc_utilities.tagged_index.TagIndex Std.Usize
-    merc_collections.indexed_partition.BlockTag →
-    merc_lts.incoming_transitions.IncomingTransitions → Result
-    merc_reduction.block_partition.BlockPartition
-
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 531:4-531:31
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:4-532:31
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent"]
@@ -406,7 +393,7 @@ axiom merc_reduction.block_partition.Block.assert_consistent
   : merc_reduction.block_partition.Block → Result Unit
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 898:4-898:39
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 955:4-955:39
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent"]
