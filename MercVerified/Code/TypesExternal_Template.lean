@@ -24,13 +24,6 @@ set_option maxRecDepth 2048
 axiom std.collections.hash.map.HashMap (K : Type) (V : Type) (S : Type) (A :
   Type) : Type
 
-/-- [std::collections::hash::map::Values]
-    Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1750:0-1750:35
-    Name pattern: [std::collections::hash::map::Values]
-    Visibility: public -/
-@[rust_type "std::collections::hash::map::Values"]
-axiom std.collections.hash.map.Values (K : Type) (V : Type) : Type
-
 /-- [std::collections::hash::set::HashSet]
     Source: '/rustc/library/std/src/collections/hash/set.rs', lines 126:0-130:1
     Name pattern: [std::collections::hash::set::HashSet]
@@ -38,19 +31,12 @@ axiom std.collections.hash.map.Values (K : Type) (V : Type) : Type
 @[rust_type "std::collections::hash::set::HashSet"]
 axiom std.collections.hash.set.HashSet (T : Type) (S : Type) (A : Type) : Type
 
-/-- [std::hash::random::RandomState]
-    Source: '/rustc/library/std/src/hash/random.rs', lines 35:0-35:22
-    Name pattern: [std::hash::random::RandomState]
+/-- [merc_collections::compressed_vec::ByteCompressedVec]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 30:0-30:31
+    Name pattern: [merc_collections::compressed_vec::ByteCompressedVec]
     Visibility: public -/
-@[rust_type "std::hash::random::RandomState"]
-axiom std.hash.random.RandomState : Type
-
-/-- [std::hash::random::DefaultHasher]
-    Source: '/rustc/library/std/src/hash/random.rs', lines 94:0-94:24
-    Name pattern: [std::hash::random::DefaultHasher]
-    Visibility: public -/
-@[rust_type "std::hash::random::DefaultHasher"]
-axiom std.hash.random.DefaultHasher : Type
+@[rust_type "merc_collections::compressed_vec::ByteCompressedVec"]
+axiom merc_collections.compressed_vec.ByteCompressedVec (T : Type) : Type
 
 /-- [merc_io::progress::TimeProgress]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/io/src/progress.rs', lines 9:0-9:26

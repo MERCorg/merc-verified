@@ -52,12 +52,6 @@ axiom merc_io.progress.TimeProgress.print_spec
   {T : Type} (p : merc_io.progress.TimeProgress T) (t : T) :
   merc_io.progress.TimeProgress.print p t = ok ()
 
-/-- `HashMap::len` never fails - only its value is under-specified. -/
-axiom std.collections.hash.map.HashMap.len_spec
-  {K : Type} {V : Type} {S : Type} {A : Type}
-  (h : std.collections.hash.map.HashMap K V S A) :
-  ∃ n : Std.Usize, std.collections.hash.map.HashMap.len h = ok n
-
 /-- `Vec::resize_with` never fails - only its contents are under-specified. -/
 axiom alloc.vec.Vec.resize_with_spec
   {T : Type} {F : Type} (A : Type)

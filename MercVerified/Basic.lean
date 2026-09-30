@@ -26,7 +26,7 @@ open Aeneas Aeneas.Std Result
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (Transition StateTag LabelTag TransitionLabel LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
-open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
+open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 
 namespace verified.merc_lts.lts.LTS
 
@@ -63,7 +63,7 @@ def toLTS {L Label : Type}
     algorithm's correctness needs beyond the trait's type signature: a non-empty state space
     (needed for `BlockPartition::new`'s `assert!(num_of_elements > 0)`). Not derivable from the
     trait interface alone - it is a property of a specific implementor's invariants (see
-    `slts_num_of_states_pos` below for the witness that `SimpleLabelledTransitionSystem`
+    `lts_wellFormed` below for the witness that `LabelledTransitionSystem`
     satisfies it). -/
 def NonEmpty {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
   ∃ n : Std.Usize, LTSInst.num_of_states sys = ok n ∧ 0 < n.val
@@ -97,18 +97,22 @@ axiom BlockPartition.new_spec
   (num_of_elements : Std.Usize) (hpos : 0 < num_of_elements.val) :
   ∃ bp, verified.merc_reduction.block_partition.BlockPartition.new num_of_elements = ok bp
 
-/-- The translated `SimpleLabelledTransitionSystem` is well-formed: Rust's type invariant is that
-    `transitions` has exactly the keys `0..n` (`n = transitions.len()`, and `n ≥ 1` since the
-    constructor keeps `initial_state` in the map) and every transition target is such a key.
-    Hence `outgoing_transitions` (a `HashMap::get(..).expect(..)`) succeeds on every state `< n`
-    with in-range targets, and the state space is non-empty (otherwise the translated
-    `BlockPartition::new` `assert!(num_of_elements > 0)` would fail).
+/-- The translated `LabelledTransitionSystem` is well-formed: Rust's `assert_valid`
+    (`labelled_transition_system.rs:365-447`, run by every safe constructor -
+    `from_raw_parts`, `new`, `relabel`, ... - so no reachable instance skips it)
+    checks exactly the invariant needed here: `states` has one entry per state
+    plus a sentinel (`states[num_of_states] = num_of_transitions`), every
+    transition's target is `< num_of_states`, and `initial_state.value() <
+    num_of_states` (which alone forces the state space to be non-empty, since
+    indices start at `0`). Hence `outgoing_transitions` (a plain slice read
+    within the checked `[states[i], states[i+1])` range) succeeds on every
+    state `< n` with in-range targets.
 
-    This is the witness that `SimpleLabelledTransitionSystem`'s `LTS` instance satisfies the
+    This is the witness that `LabelledTransitionSystem`'s `LTS` instance satisfies the
     `LTS.WellFormed` requirement, making `strong_bisim_sigref_correct` (in
     `MercVerified/Signatures/Proofs/Refinement_Proofs.lean`) a corollary of the generic
     `strong_bisim_sigref_correct_general`. -/
-axiom slts_wellFormed {Label : Type}
+axiom lts_wellFormed {Label : Type}
     (TLInst : verified.merc_lts.lts.TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label) :
-    (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).WellFormed sys
+    (sys : LabelledTransitionSystem Label) :
+    (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).WellFormed sys

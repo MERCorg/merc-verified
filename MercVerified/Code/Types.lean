@@ -42,12 +42,15 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
 @[reducible, rust_type "core::marker::PhantomData"]
 def core.marker.PhantomData (T : Type) := Unit
 
-/-- [merc_collections::indexed_partition::BlockTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/indexed_partition.rs', lines 6:0-6:19
-    Name pattern: [merc_collections::indexed_partition::BlockTag]
+/-- Trait declaration: [merc_collections::compressed_vec::CompressedEntry]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 469:0-469:25
+    Name pattern: [merc_collections::compressed_vec::CompressedEntry]
     Visibility: public -/
-@[reducible, rust_type "merc_collections::indexed_partition::BlockTag"]
-def merc_collections.indexed_partition.BlockTag := Unit
+@[rust_trait "merc_collections::compressed_vec::CompressedEntry"]
+structure merc_collections.compressed_vec.CompressedEntry (Self : Type) where
+  to_bytes : Self → Slice Std.U8 → Result (Slice Std.U8)
+  from_bytes : Slice Std.U8 → Result Self
+  bytes_required : Self → Result Std.Usize
 
 /-- [merc_utilities::tagged_index::TagIndex]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 33:0-33:27
@@ -57,6 +60,13 @@ def merc_collections.indexed_partition.BlockTag := Unit
 structure merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) where
   index : T
   marker : core.marker.PhantomData Tag
+
+/-- [merc_collections::indexed_partition::BlockTag]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/indexed_partition.rs', lines 6:0-6:19
+    Name pattern: [merc_collections::indexed_partition::BlockTag]
+    Visibility: public -/
+@[reducible, rust_type "merc_collections::indexed_partition::BlockTag"]
+def merc_collections.indexed_partition.BlockTag := Unit
 
 /-- [merc_lts::lts::LabelTag]
     Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 15:0-15:19
@@ -139,6 +149,22 @@ structure merc_lts.incoming_transitions.IncomingTransitions where
 structure merc_lts.incoming_transitions.FromTransition where
   label : merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag
   «from» : merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag
+
+/-- [merc_lts::labelled_transition_system::LabelledTransitionSystem]
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/labelled_transition_system.rs', lines 28:0-28:42
+    Name pattern: [merc_lts::labelled_transition_system::LabelledTransitionSystem]
+    Visibility: public -/
+@[rust_type "merc_lts::labelled_transition_system::LabelledTransitionSystem"]
+structure merc_lts.labelled_transition_system.LabelledTransitionSystem (Label :
+  Type) where
+  states : merc_collections.compressed_vec.ByteCompressedVec Std.Usize
+  transition_labels : merc_collections.compressed_vec.ByteCompressedVec
+    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
+  transition_to : merc_collections.compressed_vec.ByteCompressedVec
+    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
+  labels : alloc.vec.Vec Label
+  initial_state : merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.StateTag
 
 /-- [merc_reduction::block_partition::Block]
@@ -240,17 +266,5 @@ structure merc_reduction.signature_refinement.WorklistContextStrong where
 def merc_reduction.signature_refinement.strong_bisim_sigref.closure (L : Type)
   (Clause0_Label : Type) :=
   L × merc_lts.incoming_transitions.IncomingTransitions
-
-/-- [verified::simple_labelled_transition_system::SimpleLabelledTransitionSystem]
-    Source: 'src/simple_labelled_transition_system.rs', lines 19:0-28:1
-    Visibility: public -/
-structure simple_labelled_transition_system.SimpleLabelledTransitionSystem
-  (Label : Type) where
-  transitions : std.collections.hash.map.HashMap
-    (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag)
-    (alloc.vec.Vec merc_lts.lts.Transition) std.hash.random.RandomState Global
-  labels : alloc.vec.Vec Label
-  initial_state : merc_utilities.tagged_index.TagIndex Std.Usize
-    merc_lts.lts.StateTag
 
 end verified
