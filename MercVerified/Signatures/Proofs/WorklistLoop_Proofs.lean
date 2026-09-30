@@ -192,36 +192,140 @@ theorem strong_run_worklist_loop_body_pop_ext
 /-!
 # Termination of the worklist loop
 
-Derived from the Rust source (`signature_refinement.rs:842-903`,
-`block_partition.rs:144-283`). One loop iteration pops block `b`, then:
+Derived from the Rust source (`signature_refinement.rs:1786-1849`,
+`block_partition.rs:721-866`). One iteration pops a block `b`, then:
 
-1. `strong_process_marked_elements` recomputes the strong signature of each
-   marked state of `b` (the `[marked_split, end)` tail) and, through
-   `finish_partition_marked`, moves these states into fresh blocks above
-   `end_of_blocks` (or back into `b` when it has no unmarked part and the
-   states form a single signature class). Unmarked states stay in `b`.
-2. `mark_dirty_new_blocks`/`mark_dirty_states` then re-marks *every* state
-   with an incoming edge into each newly-created block, pushing the affected
-   blocks onto the worklist (each at most once while they stay marked).
+1. `maybe_mark_backward_closure` (`block_partition.rs:232-264`, only under
+   `BRANCHING`) and `mark_dirty_states`'s calls to `mark_element`
+   (`block_partition.rs:288-300`) only ever move elements *within* their
+   current block and shrink `marked_split`; they never touch `blocks` itself
+   (see the `PartWF`/`swap_elements_spec` discussion above,
+   `Partition_Proofs.lean:540-556`). So neither of these can create a block.
+2. `strong_partition_marked` (`signature_refinement.rs:1755-1782`) is the
+   *only* place `blocks` grows, via `is_trivially_partitioned`/
+   `trivial_partition_marked` (`block_partition.rs:721-732`) or
+   `finish_partition_marked` (`block_partition.rs:762-833`). Both return a
+   `new_block_indices` list of the shape `b :: rest`, where `rest` are the
+   indices pushed above the old `end_of_blocks`:
+   - a trivial block (`len = 1`), or a fully-marked block whose marked
+     elements form a *single* signature class (`¬ has_unmarked ∧
+     block_sizes.length = 1`): `rest = []`, i.e. `new_block_indices = [b]`
+     and `blocks.length` is unchanged - **no split**.
+   - every other case pushes exactly `block_sizes.length` new blocks (when
+     `has_unmarked`) or `block_sizes.length - 1` (when `¬ has_unmarked`), so
+     `rest.length = new_block_indices.length - 1 ≥ 1` - a **genuine split**.
+3. `mark_dirty_new_blocks` (`signature_refinement.rs:1526-1541`) walks
+   `new_block_indices` and calls `mark_dirty_states` on every entry *other
+   than* `b`, i.e. exactly on `rest`. So **when `rest = []` (no split), this
+   whole step is syntactically a no-op**: nothing is marked, nothing is
+   pushed. Only a genuine split can grow the worklist.
+4. `mark_dirty_states` (`signature_refinement.rs:1483-1518`) pushes
+   `other_block` onto the worklist only when `¬ has_marked other_block`,
+   immediately followed by marking one of its states - so a block is pushed
+   only while unmarked and becomes marked the instant it is pushed. It
+   cannot be pushed again before being popped and processed (which unmarks
+   it again via `unmark_all` inside `trivial_partition_marked`/
+   `finish_partition_marked`). Hence **the worklist never holds the same
+   block index twice**.
 
-So naive measures on counts of marked states or on `rocklist` length do not
-work: re-marking can grow both. The decreasing quantity we intend to use is
-the **refinement rank**: a block is pushed at level `k` only after a block
-created at level `k-1` received it as an *incoming* target, and blocks created
-(and the state-to-block map) refine with each split; the rank of every block
-strictly increases the moment it is marked, and each state's rank is bounded
-by the number of states. Concretely:
+So naive measures on counts of marked states or on worklist length alone do
+not work (both can grow when a split happens). But points 1-4 pin down
+*exactly* when growth can happen, which gives a precise two-part measure
+instead of a per-state "rank" argument.
 
-- `Inv` : each worklist block has at least one marked state and the worklist
-  contains each block at most once; every state's current block is the one
-  `state_to_key`/`element_to_block` assign.
-- `measure (ctx, it) := Σ (unmarked) blocks are "settled at level bound"`.
+## The invariant
 
-Proving `strong_run_worklist_loop_loop.spec` requires (a) the two inner
-loops (`strong_process_marked_elements`, `mark_dirty_new_blocks`) framed via
-the list-length measures (done body-level lemmas pending), and (b) the rank
-argument above linking iterations, which is the crux of replacing
-`run_worklist_loop_spec`.
+Let `n := ctx.partition.elements.val.length`, the number of states - fixed
+across the whole loop, since splitting only permutes `elements` and extends
+`blocks` (point 1-2). Write `N ctx := ctx.partition.blocks.val.length`
+(`num_of_blocks`). The loop invariant on `WLS = WorklistContextStrong ×
+Std.Usize` is:
+
+```
+Inv (ctx, it) :=
+  PartWF ctx.partition ∧                      -- structural WF (Partition_Proofs.lean:565)
+  N ctx ≤ n ∧                                  -- blocks partition an n-element set
+  ctx.worklist.val.Nodup ∧                     -- no block queued twice (point 4)
+  ∀ b ∈ ctx.worklist.val,
+    b.index.val < N ctx ∧
+    (ctx.partition.blocks.slice.val[b.index.val]).marked_split.val
+      < (ctx.partition.blocks.slice.val[b.index.val]).«end».val
+                                                -- every queued block `has_marked`
+```
+
+`Nodup` plus the per-entry bound `b.index.val < N ctx` already gives
+`ctx.worklist.val.length ≤ N ctx ≤ n` (distinct naturals all below `N ctx`),
+without needing to track it separately.
+
+## The measure
+
+```
+measure (ctx, it) := (n - N ctx) * (n + 1) + ctx.worklist.val.length
+```
+
+Well-defined (no truncated subtraction) because `Inv` gives `N ctx ≤ n`.
+It strictly decreases on every `cont` step of the loop body:
+
+- **No split** (`rest = []`, point 2-3): `N` is unchanged, and since
+  `mark_dirty_new_blocks` is a no-op the only worklist change is the `pop`
+  itself: `worklist.length' = worklist.length - 1`. The measure drops by
+  exactly `1`.
+- **Split** (`rest.length = k ≥ 1`): `N' = N + k`, so
+  `n - N' ≤ (n - N) - 1`, i.e. the first term drops by at least `n + 1`.
+  Meanwhile `Inv` re-established at the new state gives
+  `worklist.length' ≤ N' ≤ n`, so the second term contributes strictly less
+  than `n + 1`. The measure strictly decreases regardless of how many
+  states get (re-)marked this iteration.
+
+Either way `measure` is a genuine `Std.WP.loop.spec_decr_nat` measure. This
+is the counting argument the file's earlier draft gestured at - a block can
+only be split a bounded number of times because `N` is monotone and capped
+by `n` - made precise enough to case-split on, and it avoids needing a
+per-state "rank".
+
+## Remaining lemmas
+
+Partition-level (`Partition_Proofs.lean`):
+- `mark_element`/`mark_backward_closure` contracts pinning `p'.blocks =
+  p.blocks` (point 1): **`mark_element_blocks_length` is now proved**
+  (`Partition_Proofs.lean`, right after `swap_elements_spec`) - it takes the
+  read/write success data as explicit hypotheses (mirroring
+  `strong_process_worklist_block_contract`'s style) and concludes
+  `self'.blocks.val.length = self.blocks.val.length` by chaining
+  `swap_elements_spec` (blocks untouched by the swap) with
+  `blocks_index_mut_contract` (the one `marked_split` write is a `Slice.set`,
+  which never changes length). `mark_backward_closure` (the `BRANCHING`-only
+  loop over `mark_element`) is **also done**, but not by induction over the
+  loop: Charon/Aeneas could not translate its `while`/`for` control flow, so
+  it is an opaque external (an axiom, not a `def`) with no body to unfold.
+  `mark_backward_closure_blocks_length` (new axiom in
+  `MercVerified/Code/FunsExternalSpecs.lean`, right after
+  `Block.assert_consistent_ok`) records the fact at the trust boundary
+  instead, justified in its docstring by the Rust source only ever calling
+  `mark_element` in that loop. `Partition_Proofs.lean` then has thin
+  restatement theorems `mark_backward_closure_blocks_length` and (covering
+  what the worklist loop actually calls) `maybe_mark_backward_closure_blocks_length`.
+- `finish_partition_marked_contract`: pins `new_block_indices` to
+  `b :: (List.range' N k).map BlockIndex` with `N' = N + k` as in point 2
+  (not yet proved; `strong_partition_marked_nontrivial_contract`,
+  `Partition_Proofs.lean:263`, currently stops at the uninterpreted call to
+  `finish_partition_marked`).
+- A "blocks partition `n` elements ⇒ `N ≤ n`" lemma (blocks are non-empty,
+  pairwise-disjoint sub-ranges of `elements`).
+
+Worklist-level (this file):
+- An `Inv`-preservation lemma for `mark_dirty_new_blocks`/`mark_dirty_states`
+  over `rest`: the worklist stays `Nodup` and only holds valid, marked block
+  indices, and is left *unchanged* when `rest = []` (points 3-4). This
+  builds on `markDirtyAcc`/`mark_dirty_new_blocks_contract` above, which
+  already give the value-level fold shape but not this semantic content.
+- The step lemma: combine the above with
+  `strong_process_worklist_block_contract` (`strong_process_worklist_block_contract`
+  above) to show that from any `Inv`-satisfying `(ctx, it)`, popping `b`
+  both re-establishes `Inv` and strictly decreases `measure`.
+- Final assembly: `loop.spec_decr_nat (measure := measure) (inv := Inv)`,
+  mirroring `strong_run_worklist_loop_loop_base`'s use of the same
+  combinator, to replace the `run_worklist_loop_spec` axiom.
 -/
 
 attribute [local reducible] alloc.vec.into_iter.IntoIter
@@ -1979,6 +2083,87 @@ theorem initial_worklistInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LT
     exact absurd hs.symm hbne
   · intro s s' _
     rfl
+
+/-!
+## Termination scaffolding
+
+The `measure`/`TermInv` pair implementing the plan above (see the
+"Termination of the worklist loop" section). `TagIndex.ext` and
+`UScalar.eq_of_val_eq` give `BT`'s index payload as an injective `Nat` tag,
+so a `Nodup` worklist bounded by `N ctx` can never be longer than `N ctx` -
+this is the one piece of the plan provable without any further partition
+lemmas, and is proved unconditionally below.
+-/
+
+/-- The number of blocks in the current partition - monotone across the loop
+    (see `mark_element_blocks_length`/`finish_partition_marked_contract`) and
+    bounded by the (fixed) number of states. -/
+def numBlocks (ctx : WorklistContextStrong) : Nat := ctx.partition.blocks.val.length
+
+/-- `BT`'s payload (`TagIndex.index.val`) is injective: two block indices with
+    the same underlying `Nat` are the same `TagIndex` (`TagIndex.ext` plus
+    `Usize`'s `.val` injectivity). -/
+theorem blockTag_index_val_injective :
+    Function.Injective (fun x : BT => x.index.val) := by
+  intro a b hab
+  simp only at hab
+  exact merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq hab)
+
+/-- A `Nodup` list of block indices, each below `N`, has length at most `N`:
+    the injective `.index.val` tag embeds it into `Finset.range N`. This is
+    the fact that turns "the worklist holds each block at most once" into
+    "the worklist is no longer than the partition has blocks" -
+    `worklist.val.length ≤ numBlocks ctx ≤ n`, the second summand of
+    `measure`. -/
+theorem nodup_bounded_length_le (l : List BT) (N : Nat)
+    (hnodup : l.Nodup) (hbound : ∀ x ∈ l, x.index.val < N) :
+    l.length ≤ N := by
+  have hinj := blockTag_index_val_injective
+  have hmapnodup : (l.map (fun x : BT => x.index.val)).Nodup := hnodup.map hinj
+  have hlen : (l.map (fun x : BT => x.index.val)).length = l.length := by simp
+  have hsub : (l.map (fun x : BT => x.index.val)).toFinset ⊆ Finset.range N := by
+    intro y hy
+    rw [List.mem_toFinset, List.mem_map] at hy
+    obtain ⟨x, hx, rfl⟩ := hy
+    exact Finset.mem_range.2 (hbound x hx)
+  have hcard : (l.map (fun x : BT => x.index.val)).toFinset.card ≤ N := by
+    calc (l.map (fun x : BT => x.index.val)).toFinset.card
+        ≤ (Finset.range N).card := Finset.card_le_card hsub
+      _ = N := Finset.card_range N
+  rw [List.toFinset_card_of_nodup hmapnodup] at hcard
+  omega
+
+/-- The loop invariant of the termination argument: the partition never
+    exceeds the fixed state count `n`, and the worklist has no duplicate
+    block, only ever holds valid (`< numBlocks ctx`) and currently-marked
+    blocks. Distinct from `WorklistInv` above (which tracks *correctness*,
+    not termination); the two invariants are carried together by the final
+    `loop.spec_decr_nat` application (still to be assembled - see
+    `strong_run_worklist_loop_terminates` below). -/
+def TermInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
+  numBlocks ctx ≤ n ∧
+  ctx.worklist.val.Nodup ∧
+  ∀ b ∈ ctx.worklist.val, ∃ hb : b.index.val < numBlocks ctx,
+    (ctx.partition.blocks.slice.val[b.index.val]'hb).marked_split.val
+      < (ctx.partition.blocks.slice.val[b.index.val]'hb).«end».val
+
+/-- Immediate corollary of `TermInv`: the worklist is no longer than the
+    partition has blocks, hence no longer than `n`. -/
+theorem TermInv.worklist_length_le (n : Nat) (ctx : WorklistContextStrong)
+    (h : TermInv n ctx) : ctx.worklist.val.length ≤ numBlocks ctx := by
+  obtain ⟨_, hnodup, hbound⟩ := h
+  exact nodup_bounded_length_le ctx.worklist.val (numBlocks ctx) hnodup
+    (fun b hb => (hbound b hb).1)
+
+/-- The termination measure: `(n - numBlocks ctx) * (n + 1) + worklist.length`.
+    Strictly decreases on every loop iteration (see the "Termination of the
+    worklist loop" section) - a no-op iteration (`rest = []` in that section's
+    terms) drops the second term by exactly `1`; a genuine split increases
+    `numBlocks` by at least `1`, dropping the first term by at least `n + 1`,
+    which dominates however much the second term grows back (it stays
+    `≤ n` by `TermInv.worklist_length_le`). -/
+def worklistMeasure (n : Nat) (ctx : WorklistContextStrong) : Nat :=
+  (n - numBlocks ctx) * (n + 1) + ctx.worklist.val.length
 
 /-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/
 theorem strong_run_worklist_loop_partial_correct

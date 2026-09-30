@@ -50,7 +50,11 @@ Proved below:
   each carrying `(label, this state)`, so slot `j` ends up holding exactly that state's
   pairs towards `j` in order. The write-stays-in-its-own-slot fact is not re-derived per
   iteration but taken as `SepInv` and discharged once, by the outer scan
-  (`place_all_incoming_loop_spec`), which is next.
+  (`place_all_incoming_loop_spec`), which is next. `SepInv` has two parts - writes avoid
+  `[lb j, cursor0[j])` for every slot `j`, and avoid the already-written part
+  `[cursor0[j], cursor0[j] + seen j)` of any other slot - so the inner scan's postcondition
+  also records that `[lb j, cursor0[j])` is unchanged, which the outer scan needs to be able
+  to concatenate each state's contribution to the range it extends.
 
 Remaining: the outer scan (`place_all_incoming_loop_spec`), stage 7 (`sort_all_incoming`),
 the public-wrapper extraction for `count_all_incoming` / `copy_prefix` / `prefix_sum`'s
@@ -1715,17 +1719,41 @@ theorem towards1_all (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) 
   unfold towards1
   rw [List.take_length]
 
-/-- A write stays clear of the already-written part of every slot: no position this state
-    writes - `cursor0[ti] + (how many of the state's transitions towards `ti` are already
-    placed)`, for any target `ti` and any progress `k` - lies in `[lb j, cursor0[j])` for a
-    slot `j`. For `j` the state's own target the write is at or past `cursor0[j]`, so it is
-    automatically outside; for the other slots this is the CSR separation
-    (`lb j = r[j]`, `cursor0[j] = r[j] + seen j`), which the outer scan discharges once. -/
+/-- The write performed for the `k`-th transition `t` of `ts` is `p = cursor0[ti] +
+    (how many of the state's earlier transitions towards `ti` are already placed)`, where
+    `ti` is `t`'s own target.
+
+    A write by one state must never land inside a part of a slot that is already accounted
+    for. So for every slot `j` we require two things:
+    * `p` is outside `[lb j, cursor0[j])`, so the scan leaves the part of the slot below the
+      starting cursor alone. For `j` the state's own target the write is at or past
+      `cursor0[j]`; for the other slots this is the CSR separation
+      (`lb j = r[j]`, `cursor0[j] = r[j] + seen j`), which the outer scan discharges once;
+    * unless `j` is the transition's own target, `p` is outside
+      `[cursor0[j], cursor0[j] + seen j)`, so the scan leaves the already-written part of
+      every other slot alone. Again the CSR separation gives this.
+
+    `k` and `t` are quantified together, with `t` the transition `ts` actually reports at
+    position `k`, because only then is `cursor0[ti] + seen k ti` the *next* free position of
+    slot `ti` and hence the only position this state can write. The offsets are compared
+    across `ti` and `j`, so the pair `(k, t)` has to be pinned down for the statement to be
+    true; the separation argument below uses the fact that a transition towards `ti` is still
+    unplaced at position `k`. -/
 def SepInv (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat) (ts : alloc.vec.Vec Transition) : Prop :=
-  ∀ j ti k, j < cursor0.val.length → ti < cursor0.val.length → k ≤ ts.val.length →
-    ¬((lb j) ≤ (cursor0.val.getD ti 0#usize).val + toCount (ts.val.take k) ti ∧
-      (cursor0.val.getD ti 0#usize).val + toCount (ts.val.take k) ti
-        < (cursor0.val.getD j 0#usize).val)
+  ∀ (k : Nat) (t : Transition) (j : Nat), k < ts.val.length → ts.val[k]? = some t →
+    j < cursor0.val.length → t.to.index.val < cursor0.val.length →
+    (¬((lb j) ≤ (cursor0.val.getD t.to.index.val 0#usize).val
+            + toCount (ts.val.take k) t.to.index.val ∧
+        (cursor0.val.getD t.to.index.val 0#usize).val
+            + toCount (ts.val.take k) t.to.index.val
+          < (cursor0.val.getD j 0#usize).val)) ∧
+    (j = t.to.index.val ∨
+      ¬((cursor0.val.getD j 0#usize).val
+          ≤ (cursor0.val.getD t.to.index.val 0#usize).val
+            + toCount (ts.val.take k) t.to.index.val ∧
+        (cursor0.val.getD t.to.index.val 0#usize).val
+            + toCount (ts.val.take k) t.to.index.val
+          < (cursor0.val.getD j 0#usize).val + toCount (ts.val.take k) j))
 
 /-- State of the inner placement loop: the transitions still to visit, and the three
     arrays that are written. -/
@@ -1800,6 +1828,15 @@ theorem place_incoming_done (s : TagIndex Sz StateTag) (st : PiSt) (h : st.1.val
 abbrev PiRes := alloc.vec.Vec Sz × alloc.vec.Vec (TagIndex Sz LabelTag)
   × alloc.vec.Vec (TagIndex Sz StateTag)
 
+/-- The transition a scan is about to place, read off the state's own list. -/
+private theorem getElem?_of_drop {α : Type} {l : List α} {k : Nat} (hk : k < l.length)
+    {t : α} {tl : List α} (hshape : l = l.take k ++ t :: tl) : l[k]? = some t := by
+  have hkle : k ≤ l.length := by omega
+  have hmin : min k l.length = k := Nat.min_eq_left hkle
+  rw [hshape, List.getElem?_append_right (by rw [List.length_take, hmin]),
+    List.length_take, hmin, Nat.sub_self]
+  rfl
+
 /-- Reading the two flat arrays through `getD` is the same as through a checked read. -/
 private theorem getElem_eq_getD {α : Type} (l : List α) (i : Nat) (d : α) (h : i < l.length) :
     l[i]'h = l.getD i d := by
@@ -1826,7 +1863,7 @@ theorem place_incoming_loop_spec
     (hfill : ∀ j, j < cursor0.val.length →
       (cursor0.val.getD j 0#usize).val + toCount ts.val j ≤ labels0.val.length)
     (hadd : ∀ j, j < cursor0.val.length →
-      (cursor0.val.getD j 0#usize).val + toCount ts.val j + 1 ≤ Usize.max) :
+      (cursor0.val.getD j 0#usize).val + toCount ts.val j ≤ Usize.max) :
     ∃ (cursor : alloc.vec.Vec Sz) (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
       (src : alloc.vec.Vec (TagIndex Sz StateTag)),
       (@loop PiSt PiRes
@@ -1878,6 +1915,10 @@ theorem place_incoming_loop_spec
           have h1 := congrArg List.length hdrop
           rw [List.length_drop] at h1
           omega
+        have hklt : k < ts.val.length := by
+          have hpos : 0 < (t :: tl).length := by simp
+          rw [hk]
+          omega
         have hmem : t ∈ ts.val.drop k := by
           rw [← hiter]
           exact hst.symm ▸ List.mem_cons_self
@@ -1902,6 +1943,7 @@ theorem place_incoming_loop_spec
           calc ts.val = ts.val.take k ++ ts.val.drop k := hcat.symm
             _ = ts.val.take k ++ st.1.val := by rw [hiter]
             _ = ts.val.take k ++ t :: tl := by rw [hst]
+        have hkt : ts.val[k]? = some t := getElem?_of_drop hklt hshape
         have htk1 : ts.val.take (k + 1) = ts.val.take k ++ [t] :=
           take_head ts.val k t tl hshape
         have hcountle : (st.2.1.val.getD t.to.index.val 0#usize).val + 1
@@ -1936,7 +1978,7 @@ theorem place_incoming_loop_spec
           omega
         have hmaxL : (st.2.1.val.getD t.to.index.val 0#usize).val + 1 ≤ Usize.max := by
           have h2 := hadd t.to.index.val hidx0
-          omega
+          omega -- from hcountle and h2
         have hposlt : (st.2.1.val[t.to.index.val]'hidx).val < st.2.2.1.val.length :=
           hgetE ▸ hposL
         have hposlt' : (st.2.1.val[t.to.index.val]'hidx).val < st.2.2.2.val.length :=
@@ -2013,9 +2055,7 @@ theorem place_incoming_loop_spec
               exact (towards1_succ_self s ts k t tl t.to.index.val hshape rfl).symm
             · omega
           · have hne : t.to.index.val ≠ j := by omega
-            have hsep' := hsep t.to.index.val j k hidx0 hj (by
-              rw [hkdef]
-              exact Nat.sub_le ts.val.length st.1.val.length)
+            have hsep' := hsep k t j hklt hkt hj hidx0
             have hget := getD_set st.2.1.val t.to.index.val j z 0#usize hj1
             rw [hsetC, hget, if_neg hji]
             have hcont'' : slotEntries st.2.2.1.val st.2.2.2.val
@@ -2029,20 +2069,19 @@ theorem place_incoming_loop_spec
             rw [hsetL', hsetS', hval j hj,
               slotEntries_set_of_lt_or_ge st.2.2.1.val st.2.2.2.val
                 (st.2.1.val.getD t.to.index.val 0#usize).val (cursor0.val.getD j 0#usize).val
-                ((cursor0.val.getD j 0#usize).val + toCount (ts.val.take k) j) t.label s hsep']
+                ((cursor0.val.getD j 0#usize).val + toCount (ts.val.take k) j) t.label s
+                (hsep'.2.resolve_left hne.symm)]
             rw [hcont'']
             rw [hk1]
             exact (towards1_succ_ne s ts k t tl j hshape hne).symm
         · -- slot-wise: nothing below the starting cursor has been touched
           intro j hj
           rw [hsetL', hsetS']
-          have hsep' := hsep j t.to.index.val k hj hidx0 (by
-            rw [hkdef]
-            exact Nat.sub_le ts.val.length st.1.val.length)
+          have hsep' := hsep k t j hklt hkt hj hidx0
           rw [← hposgd] at hsep'
-          exact slotEntries_set_of_lt_or_ge st.2.2.1.val st.2.2.2.val
+          exact (slotEntries_set_of_lt_or_ge st.2.2.1.val st.2.2.2.val
             (st.2.1.val.getD t.to.index.val 0#usize).val (lb j)
-            (cursor0.val.getD j 0#usize).val t.label s hsep'
+            (cursor0.val.getD j 0#usize).val t.label s hsep'.1).trans (hprot j hj)
         · -- the rest of the iterator got shorter
           rw [hit1, hst]
           simp
@@ -2060,5 +2099,296 @@ theorem place_incoming_loop_spec
         rfl
   rcases Std.WP.spec_imp_exists hspec with ⟨p, hloop, hpost⟩
   exact ⟨p.1, p.2.1, p.2.2, hloop, hpost⟩
+
+/-! ## Stage 6b: the outer scan `place_all_incoming`
+
+`place_all_incoming` (`:193`) runs `place_incoming` once per state the LTS enumerates, on the
+cursor that stage 5 copied from the CSR offsets. So the outer loop only has to keep track of
+*how many states* it has visited; per state it reuses `place_incoming_loop_spec` verbatim,
+with the three facts that lemma asks for supplied by the outer invariant and the CSR
+separation:
+
+* the *target* bound, because the offsets have one slot per state and every transition's
+  target is a state index;
+* the *fits* and *no overflow* bounds, because the range of slot `j` is
+  `[r[j], r[j] + total j) = [r[j], r[j+1])`, and `[r[j], r[n])` is within the transition
+  arrays;
+* the *separation* `SepInv`, which is `sepInv_of_csr` below: the ranges of two different
+  slots never overlap, so a state's write lands either below `r[j]` or at or past
+  `r[j+1]`.
+
+The slot's content then concatenates: `[r[j], cursor[j])` is what the visited states wrote,
+and this state's contribution is appended to it. -/
+
+/-- Counting more states cannot subtract ticks. -/
+theorem seenCount_nonneg {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (states : List (TagIndex Sz StateTag)) (k j : Nat) : 0 ≤ seenCount LTSInst sys states k j := by
+  unfold seenCount
+  exact List.sum_nonneg (fun s _ => Nat.zero_le _)
+
+/-- `toCount` splits over `take`/`drop`. -/
+theorem toCount_take_drop (ts : List Transition) (k j : Nat) :
+    toCount (ts.take k) j + toCount (ts.drop k) j = toCount ts j := by
+  have h := congrArg (fun l => toCount l j) (List.take_append_drop k ts)
+  rwa [toCount_append] at h
+
+/-- A prefix of a transition list holds no more ticks towards a slot than the whole list. -/
+theorem toCount_take_le (ts : List Transition) (k j : Nat) :
+    toCount (ts.take k) j ≤ toCount ts j := by
+  have h := toCount_take_drop ts k j
+  omega
+
+/-- Two adjacent ranges of a slot read as one range. -/
+theorem slotEntries_append (labels : List (TagIndex Sz LabelTag))
+    (src : List (TagIndex Sz StateTag)) (a b c : Nat) (hab : a ≤ b) (hbc : b ≤ c) :
+    slotEntries labels src a c = slotEntries labels src a b ++ slotEntries labels src b c := by
+  have h1 : c - a = (b - a) + (c - b) := by omega
+  have h3 : List.range' a (b - a) ++ List.range' b (c - b) = List.range' a ((b - a) + (c - b)) := by
+    have hshift : a + 1 * (b - a) = b := by omega
+    have hstep : List.range' a (b - a) ++ List.range' b (c - b)
+        = List.range' a (b - a) ++ List.range' (a + 1 * (b - a)) (c - b) := by
+      rw [hshift]
+    calc
+      List.range' a (b - a) ++ List.range' b (c - b) = _ := hstep
+      _ = _ := List.range'_append (step := 1)
+  unfold slotEntries
+  rw [h1, ← h3, List.map_append]
+
+/-- An element read at position `k` lies in the tail dropped from `k`. -/
+private theorem mem_drop_of_getElem? {α : Type} (l : List α) (k : Nat) (a : α)
+    (h : l[k]? = some a) : a ∈ l.drop k := by
+  induction l generalizing k a with
+  | nil => simp at h
+  | cons x l ih =>
+    cases k with
+    | zero => simp at h; subst h; exact List.mem_cons_self
+    | succ k => exact ih k a h
+
+/-- The CSR separation discharges `SepInv` for the scan of one state.
+
+    The offsets are non-decreasing and `r[j+1] = r[j] + (total number of transitions towards
+    `j)`, so the ranges of two different slots never overlap. A write for the state's
+    `k`-th transition, at `cursor[ti] + (how many of its earlier transitions towards `ti` are
+    placed)`, lies in `[r[ti], r[ti+1])` - the upper bound is strict because the transition
+    being placed is itself still unplaced. So for a slot `j` that is not the write's own
+    target, the write is either below `r[j]` or at or past `r[j+1]`, and hence outside both
+    `[lb j, cursor[j])` and `[cursor[j], cursor[j] + seen j)` with `lb j = r[j]`. -/
+theorem sepInv_of_csr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (states : List (TagIndex Sz StateTag)) (kout : Nat) (tl : List (TagIndex Sz StateTag))
+    (s : TagIndex Sz StateTag) (r cursor0 : alloc.vec.Vec Sz)
+    (hshape : states = states.take kout ++ s :: tl)
+    (hmono : ∀ i, i + 1 < r.val.length →
+      (r.val.getD i 0#usize).val ≤ (r.val.getD (i+1) 0#usize).val)
+    (hcsr : ∀ j, j + 1 < r.val.length →
+      (r.val.getD j 0#usize).val + seenCount LTSInst sys states states.length j
+        = (r.val.getD (j+1) 0#usize).val)
+    (hcur : ∀ j, j < cursor0.val.length →
+      (cursor0.val.getD j 0#usize).val = (r.val.getD j 0#usize).val
+        + seenCount LTSInst sys states kout j)
+    (hseplen : cursor0.val.length + 1 = r.val.length) :
+    SepInv cursor0 (fun j => (r.val.getD j 0#usize).val) (outVec LTSInst sys s) := by
+  have hkle : kout + 1 ≤ states.length := by
+    have h1 := congrArg List.length hshape
+    rw [List.length_append, List.length_cons, List.length_take] at h1
+    by_cases h : kout ≤ states.length
+    · rw [Nat.min_eq_left h] at h1
+      omega
+    · rw [Nat.min_eq_right (Nat.le_of_lt (Nat.lt_of_not_ge h))] at h1
+      omega
+  have hrle : ∀ (a b : Nat), a ≤ b → b < r.val.length →
+      (r.val.getD a 0#usize).val ≤ (r.val.getD b 0#usize).val := by
+    intro a b
+    induction b with
+    | zero =>
+        intro hab _
+        rcases Nat.le_zero.mp hab with rfl
+        exact Nat.le_refl _
+    | succ b ih =>
+        intro hab hb
+        rcases Nat.eq_or_lt_of_le hab with rfl | hlt
+        · exact Nat.le_refl _
+        · exact le_trans (ih (Nat.le_of_lt_succ hlt) (by omega)) (hmono b hb)
+  intro k t j hklt hkt hj hitx
+  generalize hts : (outVec LTSInst sys s).val = ts
+  rw [hts] at hkt
+  -- the transition being placed is still unplaced, so it counts towards its own target
+  have hmem : t ∈ ts.drop k := mem_drop_of_getElem? _ _ _ hkt
+  have hB : 1 ≤ toCount (ts.drop k) t.to.index.val := toCount_pos_of_mem hmem
+  have hA : toCount (ts.take k) t.to.index.val + toCount (ts.drop k) t.to.index.val
+      = toCount ts t.to.index.val := toCount_take_drop ts k t.to.index.val
+  have hA' : toCount (ts.take k) j ≤ toCount ts j := toCount_take_le ts k j
+  have hcur' := hcur t.to.index.val hitx
+  have hcsr' := hcsr t.to.index.val (by omega)
+  have hsplit' : seenCount LTSInst sys states (kout + 1) t.to.index.val
+      = toCount ts t.to.index.val + seenCount LTSInst sys states kout t.to.index.val :=
+    hts ▸ seenCount_succ LTSInst sys states kout s tl t.to.index.val hshape
+  have hmono' := seenCount_mono LTSInst sys states (kout + 1) states.length
+    t.to.index.val hkle
+  dsimp only
+  -- the write position, its lower and its strict upper bound
+  have hlo : 0 ≤ (cursor0.val.getD t.to.index.val 0#usize).val
+      + toCount (ts.take k) t.to.index.val := by
+    have h := seenCount_nonneg LTSInst sys states kout t.to.index.val
+    omega
+  have hhi : (cursor0.val.getD t.to.index.val 0#usize).val
+      + toCount (ts.take k) t.to.index.val
+      < (r.val.getD (t.to.index.val + 1) 0#usize).val := by
+    omega
+  refine ⟨?_, ?_⟩
+  · rcases lt_trichotomy t.to.index.val j with hlt | heq | hgt
+    · -- the write lands below the start of `j`'s range
+      intro hcon
+      have h1 := hcon.1
+      have h2 := hrle (t.to.index.val + 1) j (by omega) (by omega)
+      omega
+    · -- `j` is the write's own slot, so the write is at or past its end
+      subst heq
+      intro hcon
+      have h1 := hcon.2
+      have h2 := hcur j (by omega)
+      have h3 := seenCount_nonneg LTSInst sys states kout j
+      omega
+    · -- the write lands at or past the end of `j`'s range
+      intro hcon
+      have h1 := hcon.2
+      have h2 := hrle (j + 1) t.to.index.val (by omega) (by omega)
+      have h3 := hcsr j (by omega)
+      have h4 := hcur j hj
+      have h5 := seenCount_mono LTSInst sys states kout states.length j hkle
+      have h6 := seenCount_nonneg LTSInst sys states kout j
+      omega
+  · rcases lt_trichotomy t.to.index.val j with hlt | heq | hgt
+    · refine Or.inr ?_
+      intro hcon
+      have h1 := hcon.1
+      have h2 := hrle (t.to.index.val + 1) j (by omega) (by omega)
+      have h3 := hcur j (by omega)
+      have h4 := seenCount_nonneg LTSInst sys states kout j
+      omega
+    · exact Or.inl heq
+    · refine Or.inr ?_
+      intro hcon
+      have h1 := hcon.2
+      have h2 := hrle (j + 1) t.to.index.val (by omega) (by omega)
+      have h3 := hcsr j (by omega)
+      have h4 := hcur j hj
+      have h5 := seenCount_mono LTSInst sys states kout states.length j hkle
+      have h6 := seenCount_nonneg LTSInst sys states kout j
+      have h7 := seenCount_nonneg LTSInst sys states states.length j
+      omega
+
+/-- `place_incoming` for one state, in equation form. -/
+theorem place_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (s : TagIndex Sz StateTag) (cursor : alloc.vec.Vec Sz)
+    (labels : alloc.vec.Vec (TagIndex Sz LabelTag)) (src : alloc.vec.Vec (TagIndex Sz StateTag))
+    (lb : Nat → Nat) (hsep : SepInv cursor lb (outVec LTSInst sys s))
+    (hin : ∀ t, t ∈ (outVec LTSInst sys s).val → t.to.index.val < cursor.val.length)
+    (hlens : labels.val.length = src.val.length)
+    (hfill : ∀ j, j < cursor.val.length →
+      (cursor.val.getD j 0#usize).val + toCount (outVec LTSInst sys s).val j
+        ≤ labels.val.length)
+    (hadd : ∀ j, j < cursor.val.length →
+      (cursor.val.getD j 0#usize).val + toCount (outVec LTSInst sys s).val j ≤ Usize.max) :
+    ∃ (cursor1 : alloc.vec.Vec Sz) (labels1 : alloc.vec.Vec (TagIndex Sz LabelTag))
+      (src1 : alloc.vec.Vec (TagIndex Sz StateTag)),
+      verified.merc_lts.incoming_transitions.place_incoming LTSInst sys s cursor labels src
+        = ok (cursor1, labels1, src1) ∧
+      PiPost s (outVec LTSInst sys s) cursor lb labels src cursor1 labels1 src1 := by
+  rcases place_incoming_loop_spec s (outVec LTSInst sys s) cursor lb labels src hsep hin hlens
+      hfill hadd with ⟨cursor1, labels1, src1, hloop, hpost⟩
+  refine ⟨cursor1, labels1, src1, ?_, hpost⟩
+  unfold verified.merc_lts.incoming_transitions.place_incoming
+  simp only [outVec_eq_ok LTSInst sys s (outVec LTSInst sys s),
+    alloc.vec.IntoIteratorVec.into_iter, bind_tc_ok]
+  exact hloop
+
+/-- State of the outer placement loop: the states still to visit and the three arrays. -/
+abbrev PaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.Vec Sz
+  × alloc.vec.Vec (TagIndex Sz LabelTag) × alloc.vec.Vec (TagIndex Sz StateTag)
+
+/-- Invariant of the outer placement loop after `sv.val.length - st.1.val.length` states have
+    been visited:
+    * the rest of the iterator is the correspondingly dropped tail of `sv`;
+    * the three arrays keep their lengths;
+    * the cursor of slot `j` is `r[j] +` the number of transitions towards `j` that the
+      visited states contribute;
+    * the range `[r[j], cursor[j])` holds exactly those transitions' pairs, in the order
+      `place_all_incoming` writes them. -/
+def PaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
+    (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+    (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) : PaSt → Prop :=
+  fun st =>
+    st.1.val = sv.val.drop (sv.val.length - st.1.val.length) ∧
+    st.2.1.val.length = sv.val.length ∧
+    st.2.2.1.val.length = labels0.val.length ∧
+    st.2.2.2.val.length = src0.val.length ∧
+    (∀ j, j < sv.val.length →
+      (st.2.1.val.getD j 0#usize).val = (r.val.getD j 0#usize).val
+        + seenCount LTSInst sys sv.val (sv.val.length - st.1.val.length) j) ∧
+    (∀ j, j < sv.val.length →
+      slotEntries st.2.2.1.val st.2.2.2.val (r.val.getD j 0#usize).val
+          (st.2.1.val.getD j 0#usize).val
+        = towards LTSInst sys sv.val (sv.val.length - st.1.val.length) j)
+
+/-- On return, the cursor of slot `j` is `r[j] +` the number of transitions towards `j` that
+    *all* of the enumerated states contribute, and `[r[j], cursor[j])` holds exactly their
+    pairs. -/
+def PaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
+    (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+    (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (cursor : alloc.vec.Vec Sz)
+    (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
+    (src : alloc.vec.Vec (TagIndex Sz StateTag)) : Prop :=
+  cursor.val.length = sv.val.length ∧
+  (∀ j, j < sv.val.length →
+    (cursor.val.getD j 0#usize).val = (r.val.getD j 0#usize).val
+      + seenCount LTSInst sys sv.val sv.val.length j) ∧
+  (∀ j, j < sv.val.length →
+    slotEntries labels.val src.val (r.val.getD j 0#usize).val
+        (cursor.val.getD j 0#usize).val
+      = towards LTSInst sys sv.val sv.val.length j)
+
+/-- The exhausted case of the outer placement loop: the arrays are returned as they are. -/
+theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
+    (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+    (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (st : PaSt) (h : st.1.val = [])
+    (hinv : PaInv LTSInst sys sv r labels0 src0 st) :
+    verified.merc_lts.incoming_transitions.place_all_incoming_loop.body
+        LTSInst sys st.1 st.2.1 st.2.2.1 st.2.2.2 = ok (done st.2) ∧
+      PaPost LTSInst sys sv r labels0 src0 st.2.1 st.2.2.1 st.2.2.2 := by
+  have hn : alloc.vec.into_iter.IteratorIntoIter.next
+        (st.1 : alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag))
+      ⦃ p => p.1 = none ∧ p.2 = st.1 ⦄ := vec_next_none st.1 h
+  rcases Std.WP.spec_imp_exists hn with ⟨p, hp, hpt⟩
+  cases p with
+  | mk o it1 =>
+    simp only at hpt
+    have hit1 : it1 = st.1 := hpt.2
+    refine ⟨?_, ?_⟩
+    · unfold verified.merc_lts.incoming_transitions.place_all_incoming_loop.body
+      rw [hp, hpt.1, hit1]
+      simp
+    · rcases hinv with ⟨hiter, hlenC, hlenL, hlenS, hval, hcont⟩
+      refine ⟨hlenC, ?_, ?_⟩
+      · intro j hj
+        have hz : sv.val.drop (sv.val.length - st.1.val.length) = [] :=
+          hiter.symm.trans h
+        have h1 : sv.val.length - (sv.val.length - st.1.val.length) = 0 := by
+          rw [← List.length_drop, hz, List.length_nil]
+        have hklen : sv.val.length - st.1.val.length = sv.val.length := by omega
+        have hval' := hval j hj
+        rw [hklen] at hval'
+        exact hval'
+      · intro j hj
+        have hz : sv.val.drop (sv.val.length - st.1.val.length) = [] :=
+          hiter.symm.trans h
+        have h1 : sv.val.length - (sv.val.length - st.1.val.length) = 0 := by
+          rw [← List.length_drop, hz, List.length_nil]
+        have hklen : sv.val.length - st.1.val.length = sv.val.length := by omega
+        have hcont' := hcont j hj
+        rw [hklen] at hcont'
+        exact hcont'
 
 end MercVerified.Signatures.Proofs
