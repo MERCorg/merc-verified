@@ -192,7 +192,7 @@ theorem swap_elements_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     by_cases hib : i = b.val
     · subst hib; simp [hb', List.length_set]
     · by_cases hia : i = a.val
-      · subst hia; simp [hib, ha', List.length_set, Ne.symm hib]
+      · subst hia; simp [hib, ha', Ne.symm hib]
       · simp [hib, hia, Ne.symm hib, Ne.symm hia]
   have hxo : x.index.val < p.element_offset.val.length := hp.len_off ▸ hxlt
   have hyo : y.index.val < p.element_offset.val.length := hp.len_off ▸ hylt
@@ -203,7 +203,7 @@ theorem swap_elements_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     by_cases h1 : s = x.index.val
     · subst h1; simp [hxo, List.length_set]
     · by_cases h2 : s = y.index.val
-      · subst h2; simp [hyo, List.length_set, h1, Ne.symm h1]
+      · subst h2; simp [hyo, h1, Ne.symm h1]
       · simp [h1, h2, Ne.symm h1, Ne.symm h2]
   have hblk : ∀ j, blkAt p' j = blkAt p j := by intro j; simp [blkAt, hbl]
   have hN : p'.blocks.val.length = p.blocks.val.length := by rw [hbl]

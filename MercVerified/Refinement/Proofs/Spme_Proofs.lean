@@ -180,7 +180,7 @@ theorem spme_commit_old {n : Nat} {olds : VecTy ST} {m : Nat} {id : InternMap} {
       rw [← hs]
       simp
     · rw [List.getD_eq_getElem?_getD, List.getElem?_set_ne (Ne.symm hjc), ← List.getD_eq_getElem?_getD, hs]
-      simp [List.count_singleton, hjc, Ne.symm hjc]
+      simp [Ne.symm hjc]
   · intro j hj
     change 0 < (v.val.map (fun z => z.val)).getD j 0
     rw [hszs']
@@ -258,7 +258,7 @@ theorem spme_commit_new {n : Nat} {olds : VecTy ST} {m : Nat} {id id1 : InternMa
     · have hjlt : j < kts.val.length := by omega
       rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by omega), ← List.getD_eq_getElem?_getD,
         hinv.sizes j hjlt]
-      simp [List.count_singleton, hjc, hidx, Ne.symm hjc]
+      simp [hidx, Ne.symm hjc]
   · intro j hj
     change 0 < (v.val.map (fun z => z.val)).getD j 0
     rw [hszs']

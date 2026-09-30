@@ -63,8 +63,8 @@ theorem sum_count_eq_length (K : Nat) (cls : List Nat) (hcls : ∀ x ∈ cls, x 
       apply List.map_congr_left
       intro j _
       by_cases h : j = x
-      · subst h; simp [List.count_cons]
-      · simp [List.count_cons, h, Ne.symm h]
+      · subst h; simp
+      · simp [h, Ne.symm h]
     rw [hmap]
     have hsplit : ∀ (l : List Nat) , ((l.map (fun j => xs.count j + if j = x then 1 else 0)).sum) =
         (l.map (fun j => xs.count j)).sum + (l.map (fun j => if j = x then 1 else 0)).sum := by
@@ -82,10 +82,10 @@ theorem sum_count_eq_length (K : Nat) (cls : List Nat) (hcls : ∀ x ∈ cls, x 
         | succ k ihk =>
           rw [List.range_succ, List.map_append, List.sum_append, ihk]
           by_cases h1 : x < k
-          · simp [h1, show x ≠ k by omega, show ¬ k = x by omega, show x < k + 1 by omega]
+          · simp [h1, show ¬ k = x by omega, show x < k + 1 by omega]
           · by_cases h2 : x = k
             · subst h2; simp
-            · simp [h1, h2, show ¬ k = x by omega, show ¬ x < k + 1 by omega]
+            · simp [h1, show ¬ k = x by omega, show ¬ x < k + 1 by omega]
       rw [key]; simp [hx]
     simp [this]
 
@@ -167,7 +167,7 @@ theorem posOf_inj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K
 theorem posOf_surj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     {i : Nat} (h1 : ms ≤ i) (h2 : i < ms + cls.length) :
-    ∃ t, ∃ ht : t < cls.length, posOf ms szs cls t = i := by
+    ∃ t, ∃ _ : t < cls.length, posOf ms szs cls t = i := by
   have hsum : szs.sum = cls.length := by
     have := sum_count_eq_length K cls hlt
     rw [← this]

@@ -77,7 +77,7 @@ theorem cls_eq_iff_sig {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L L
     rw [List.getD_eq_getElem _ _ hc1, List.getD_eq_getElem _ _ hc2] at hk
     exact (List.Nodup.getElem_inj_iff hnd).mp hk
 
-theorem labelIdx_inj {bi N K : Nat} {u : Bool} (hb : bi < N) {c c' : Nat} (hc : c < K) (hc' : c' < K)
+theorem labelIdx_inj {bi N K : Nat} {u : Bool} (hb : bi < N) {c c' : Nat} (_hc : c < K) (_hc' : c' < K)
     (h : labelIdx bi u N c = labelIdx bi u N c') : c = c' := by
   cases u
   · simp only [labelIdx, firstNew, Bool.false_eq_true, if_false, and_true] at h
@@ -90,7 +90,7 @@ theorem labelIdx_range {bi N K : Nat} {u : Bool} {c : Nat} (hc : c < K) :
   unfold labelIdx firstNew
   by_cases h : c = 0 ∧ u = false
   · left; simp [h]
-  · right; simp only [h, if_false]; split_ifs <;> simp_all <;> omega
+  · right; simp only [h, if_false]; split_ifs <;> simp_all; omega
 
 theorem labelIdx_ne {bi N : Nat} {u : Bool} (hb : bi < N) (hu : u = true) {c : Nat} :
     labelIdx bi u N c ≠ bi := by

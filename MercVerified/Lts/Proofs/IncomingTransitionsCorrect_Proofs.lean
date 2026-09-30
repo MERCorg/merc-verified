@@ -287,8 +287,8 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
     intro j
     rw [hc0v]
     by_cases hj : j < i.val
-    · simp [List.getD_eq_getElem?_getD, List.getElem?_replicate, hj]
-    · simp [List.getD_eq_getElem?_getD, List.getElem?_replicate, hj]
+    · simp [List.getD_eq_getElem?_getD, hj]
+    · simp [List.getD_eq_getElem?_getD, hj]
   obtain ⟨counts1, hcount, hcl, hcv⟩ := count_all_incoming_state_spec LTSInst sys sv c0 hiter hout
     (fun s hs t ht => by rw [hc0len]; have := htgt s hs t ht; omega)
     (fun j hj => by rw [hc0get j]; have := hseen_le j; omega)
@@ -343,7 +343,7 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
   obtain ⟨labels2, src2, hsort, hsl, hss, hswin⟩ := sort_all_incoming_spec r n0 labels1 src1
     (by omega) (by omega) hrmono (fun j hj => by rw [hL1']; exact hrfill j hj |>.trans (by omega))
     (by rw [hL1', hS1']) (by omega)
-  simp only [hns, hnt, hl0, hs0, hi, hc0, hcount, hps, hcp, hpl, hsort, bind_tc_ok] at hinc
+  simp only [hns, hnt, hl0, hs0, hi, hc0, hcount, hps, hcp, hpl, bind_tc_ok] at hinc
   change (do
       let (tl2, tf2) ← verified.merc_lts.incoming_transitions.sort_all_incoming r labels1 src1 n0
       ok ({ transition_labels := tl2, transition_from := tf2, state2incoming := r } :

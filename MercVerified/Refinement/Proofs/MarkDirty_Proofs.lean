@@ -34,7 +34,7 @@ def DirtyInv (n : Nat) (p : BlockPartition) (w : VecTy BT) : Prop :=
 theorem e2bAt_eq {n : Nat} {p : BlockPartition} (hp : PartInv n p) (s : Nat) (hs : s < n) :
     (p.element_to_block.val.getD s zBT).index.val = e2bAt p s := by
   have h : s < p.element_to_block.val.length := by rw [hp.len_e2b]; exact hs
-  simp [e2bAt, List.getD_eq_getElem _ _ h]
+  simp [e2bAt]
 
 /-- Marks and worklist of a partition `p` derived from `p1` by marking states: the block map is
     unchanged, the marked states are those marked in `p1` together with the set `D`, and the block of
@@ -352,10 +352,7 @@ theorem dirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L
           = ok (none, ({ slice := xs, i := xi } : core.slice.iter.Iter ST)) := by
         unfold core.slice.iter.IteratorSliceIter.next
         simp [hml, Slice.len]
-      have hxi : xi = xs.val.length := by
-        have : xs.val.length = xs.length := rfl
-        omega
-      refine ⟨(x2, x3), ?_, h3, h4, by rw [hxi] at h5; simpa using h5⟩
+      refine ⟨(x2, x3), ?_, h3, h4, by simpa using h5⟩
       show verified.merc_reduction.signature_refinement.mark_dirty_states_loop0.body false LTSInst lts
           incoming num_blocks ⟨xs, xi⟩ x2 x3 = _
       unfold verified.merc_reduction.signature_refinement.mark_dirty_states_loop0.body
@@ -371,7 +368,7 @@ theorem regionElems_mem_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p) {n
     x ∈ regionElems p (blkAt p nb).begin.val ((blkAt p nb).«end».val - (blkAt p nb).begin.val) ↔
       (x.index.val < n ∧ e2bAt p x.index.val = nb) := by
   have hbk := hp.blk nb hnb
-  rw [mem_old_iff (n := n) _ _ _ (List.Perm.refl _) x]
+  rw [mem_old_iff _ _ _ (List.Perm.refl _) x]
   constructor
   · rintro ⟨q, h1, h2, rfl⟩
     have hq : q < n := by omega

@@ -25,9 +25,12 @@ namespace MercVerified.Refinement.Proofs
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
-/-- The loop invariant of the termination proof. -/
+/-- The loop invariant of the termination proof: the worklist bookkeeping (`DirtyInv`), the key
+    table's length, and every currently marked state's block is on the worklist. -/
 def LoopInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
-  DirtyInv n ctx.partition ctx.worklist ∧ ctx.state_to_key.val.length = n
+  DirtyInv n ctx.partition ctx.worklist ∧ ctx.state_to_key.val.length = n ∧
+  ∀ t : ST, t.index.val < n → IsMarked ctx.partition t.index.val →
+    ∃ x ∈ ctx.worklist.val, x.index.val = e2bAt ctx.partition t.index.val
 
 theorem strong_process_worklist_block_step {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
@@ -41,7 +44,7 @@ theorem strong_process_worklist_block_step {L Label : Type}
     ∃ ctx', verified.merc_reduction.signature_refinement.strong_process_worklist_block false LTSInst
         sys incoming { ctx with worklist := w } b = ok ctx' ∧
       LoopInv nU.val ctx' ∧ worklistMeasure nU.val ctx' < worklistMeasure nU.val ctx := by
-  obtain ⟨⟨hp, hnd, hwl⟩, hstk⟩ := hI
+  obtain ⟨⟨hp, hnd, hwl⟩, hstk, hmq⟩ := hI
   rw [hw] at hnd hwl
   have hbmem : b ∈ w.val ++ [b] := by simp
   obtain ⟨hbN, hbmark⟩ := hwl b hbmem
@@ -78,6 +81,47 @@ theorem strong_process_worklist_block_step {L Label : Type}
         rw [← this]; exact hx)
     refine ⟨by omega, ?_⟩
     rw [hother _ hx1 hxb]; exact hx2
+  -- every state marked in the freshly split `p1` is already queued in `w`: states of `b` or of a
+  -- new block are unmarked right after the split (`hmk.1`), and states of an untouched block keep
+  -- their old block record and offset (`hmk.2`/`hother`), so the fact carries over from `hmq`.
+  have hbase : DirtySem nU.val p1 p1 w (fun _ => False) := by
+    refine ⟨rfl, fun t _ => by simp, fun t ht hm => ?_⟩
+    by_cases hjb : e2bAt p1 t.index.val = b.index.val
+    · exfalso
+      have hme := hmk.1 (e2bAt p1 t.index.val) (Or.inl hjb)
+      have hlt := (hp1.own t.index.val ht).2.2
+      unfold IsMarked at hm
+      omega
+    · by_cases hjnew : ctx.partition.blocks.val.length ≤ e2bAt p1 t.index.val ∧
+          e2bAt p1 t.index.val < ctx.partition.blocks.val.length + k
+      · exfalso
+        have hme := hmk.1 (e2bAt p1 t.index.val) (Or.inr hjnew)
+        have hlt := (hp1.own t.index.val ht).2.2
+        unfold IsMarked at hm
+        omega
+      · have hjlt : e2bAt p1 t.index.val < ctx.partition.blocks.val.length := by
+          have hown := (hp1.own t.index.val ht).1
+          rw [hN1] at hown
+          omega
+        have hne : e2bAt ctx.partition t.index.val ≠ b.index.val := by
+          intro heq
+          rcases hmk.2.2.1 t ht heq with h | h
+          · exact hjb h
+          · exact hjnew h
+        have hpres := hmk.2.1 t ht hne
+        have hblk : blkAt p1 (e2bAt p1 t.index.val) = blkAt ctx.partition (e2bAt ctx.partition t.index.val) := by
+          rw [hother _ hjlt hjb, hpres.1]
+        have hm' : IsMarked ctx.partition t.index.val := by
+          unfold IsMarked at hm ⊢
+          rw [hblk, hpres.2] at hm
+          exact hm
+        obtain ⟨x, hx, hxe⟩ := hmq t ht hm'
+        rw [hw] at hx
+        rcases List.mem_append.mp hx with hx | hx
+        · exact ⟨x, hx, by rw [hpres.1]; exact hxe⟩
+        · simp at hx
+          subst hx
+          exact absurd hxe.symm hne
   rw [hcon]
   simp only [hidm, bind_tc_ok, massert, hbmark, decide_true, verified.merc_reduction.signature_refinement.maybe_mark_backward_closure]
   simp only [Bool.false_eq_true, if_false, if_true, bind_tc_ok]
@@ -98,13 +142,13 @@ theorem strong_process_worklist_block_step {L Label : Type}
     have hnbi' : nbi.val = [b] := by rw [hnbi]; simp
     rw [hnbi', markDirtyAcc_cons, markDirtyStep_pos false LTSInst sys incoming b _ b p1 w ctx.states rfl]
     simp only [bind_tc_ok, markDirtyAcc]
-    refine ⟨_, rfl, ⟨hND, hstk1⟩, ?_⟩
+    refine ⟨_, rfl, ⟨hND, hstk1, hbase.2.2⟩, ?_⟩
     unfold worklistMeasure numBlocks
     simp only []
     rw [hN1, Nat.add_zero]
     omega
   · have hkpos : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
-    obtain ⟨p2, w2, s2, hrun, hI2, hlen2⟩ := markDirtyAcc_spec LTSInst sys incoming b
+    obtain ⟨p2, w2, s2, hrun, hI2, hlen2, hsem2⟩ := markDirtyAcc_spec LTSInst sys incoming b
       (alloc.vec.Vec.len ctx.partition.blocks) hnmax hinc nbi.val ctx.states (p := p1) (w := w) (by
         intro x hx
         rw [hnbi] at hx
@@ -115,10 +159,10 @@ theorem strong_process_worklist_block_step {L Label : Type}
           show (uTag j : BT).index.val < _
           simp only [uTag]
           rw [uTotal_val_of_lt (by omega)]
-          omega) hND
+          omega) hND hbase
     rw [hrun]
     simp only [bind_tc_ok]
-    refine ⟨_, rfl, ⟨hI2, hstk1⟩, ?_⟩
+    refine ⟨_, rfl, ⟨hI2, hstk1, hsem2.2.2⟩, ?_⟩
     have hN2n : p2.blocks.val.length ≤ nU.val := hI2.1.blocks_le_n
     have hw2 : w2.val.length ≤ p2.blocks.val.length :=
       nodup_bounded_length_le _ _ hI2.2.1 (fun x hx => (hI2.2.2 x hx).1)

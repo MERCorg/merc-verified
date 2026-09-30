@@ -57,7 +57,7 @@ theorem regionElems_nodup {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms 
 
 /-- If `old` is a permutation of the region's elements, its members are exactly the elements at
     positions of the region. -/
-theorem mem_old_iff {n : Nat} {p : BlockPartition} (old : List (TagIndex Std.Usize StateTag))
+theorem mem_old_iff {p : BlockPartition} (old : List (TagIndex Std.Usize StateTag))
     (ms len : Nat) (hperm : old.Perm (regionElems p ms len)) (x : TagIndex Std.Usize StateTag) :
     x ∈ old ↔ ∃ q, ms ≤ q ∧ q < ms + len ∧ eAt p q = x := by
   rw [hperm.mem_iff]
@@ -74,12 +74,12 @@ theorem idx_in_old_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (∃ x ∈ old, x.index.val = s) ↔ (ms ≤ offAt p s ∧ offAt p s < ms + len) := by
   constructor
   · rintro ⟨x, hx, rfl⟩
-    obtain ⟨q, h1, h2, rfl⟩ := (mem_old_iff (n := n) old ms len hperm x).mp hx
+    obtain ⟨q, h1, h2, rfl⟩ := (mem_old_iff old ms len hperm x).mp hx
     have := (hp.perm q (by omega)).2
     rw [this]; exact ⟨h1, h2⟩
   · rintro ⟨h1, h2⟩
     refine ⟨eAt p (offAt p s), ?_, hp.inv s hs⟩
-    exact (mem_old_iff (n := n) old ms len hperm _).mpr ⟨offAt p s, h1, h2, rfl⟩
+    exact (mem_old_iff old ms len hperm _).mpr ⟨offAt p s, h1, h2, rfl⟩
 
 /-- `s0`: the class index of the first *new* block (`0` when the unmarked part keeps the old
     block, `1` when class `0` itself takes the old block). -/
@@ -138,7 +138,7 @@ theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     omega
   have hoidx : ∀ x ∈ old, x.index.val < n := by
     intro x hx
-    obtain ⟨q, h1, h2, rfl⟩ := (mem_old_iff (n := n) old ms cls.length hperm x).mp hx
+    obtain ⟨q, h1, h2, rfl⟩ := (mem_old_iff old ms cls.length hperm x).mp hx
     exact (hp.perm q (by omega)).1
   have hgetD : ∀ t, t < cls.length → old.getD t zST ∈ old := by
     intro t ht

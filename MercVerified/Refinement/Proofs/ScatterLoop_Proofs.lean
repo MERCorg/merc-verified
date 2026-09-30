@@ -57,7 +57,7 @@ theorem write_step {α : Type} (F F0 : List α) (d : α) (g : Nat → Nat) (v : 
 
 /-- The label `finish_partition_marked` gives to class `j`: the original block for class `0` when
     there is no unmarked part, and `new_block_index + j` otherwise. -/
-def scatterLabel (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi j : Std.Usize)
+def scatterLabel (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (_nbi j : Std.Usize)
     (z : Std.Usize) : TagIndex Std.Usize BlockTag :=
   if j.val = 0 ∧ u = false then block_index else ({ index := z, marker := () } : TagIndex Std.Usize BlockTag)
 
@@ -161,39 +161,35 @@ theorem scatter_body_step
         rw [if_neg (fun h => h.2 hu)]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = True := eq_true (hobi0.mpr h0)
         have hub : (block.begin.val < block.marked_split.val) = True := eq_true hu
-        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm', hEm, vec_tagged_index_mut_ok O _ he1,
+        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub, core.iter.traits.iterator.IteratorSliceIter,
+          block_has_unmarked_contract, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
-        all_goals rfl
       · 
         rw [if_pos ⟨h0, hu⟩]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = True := eq_true (hobi0.mpr h0)
         have hub : (block.begin.val < block.marked_split.val) = False := eq_false hu
-        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm', hEm, vec_tagged_index_mut_ok O _ he1,
+        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub, core.iter.traits.iterator.IteratorSliceIter,
+          block_has_unmarked_contract, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
-        all_goals rfl
     · by_cases hu : block.begin.val < block.marked_split.val
       · 
         rw [if_neg (fun h => h0 h.1)]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = False := eq_false (fun h => h0 (hobi0.mp h))
         have hub : (block.begin.val < block.marked_split.val) = True := eq_true hu
-        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm', hEm, vec_tagged_index_mut_ok O _ he1,
+        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub, core.iter.traits.iterator.IteratorSliceIter,
+          block_has_unmarked_contract, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
-        all_goals rfl
       · 
         rw [if_neg (fun h => h0 h.1)]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = False := eq_false (fun h => h0 (hobi0.mp h))
         have hub : (block.begin.val < block.marked_split.val) = False := eq_false hu
-        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm', hEm, vec_tagged_index_mut_ok O _ he1,
+        simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub, core.iter.traits.iterator.IteratorSliceIter,
+          block_has_unmarked_contract, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
-        all_goals rfl
 
 /-- The label of class `j` as a `BlockIndex`. -/
 def labelNat (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.Usize) (j : Nat) :
@@ -211,7 +207,7 @@ theorem scatterLabel_eq (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (
 theorem count_take_succ_ne (l : List Nat) (m j : Nat) (hm : m < l.length) (h : l[m] ≠ j) :
     (l.take (m + 1)).count j = (l.take m).count j := by
   rw [List.take_succ_eq_append_getElem hm, List.count_append]
-  simp [List.count_singleton, Ne.symm h, h]
+  simp [h]
 
 theorem posOf_eq_cursor (ms : Nat) (szs cls : List Nat) (m : Nat) (hm : m < cls.length) :
     posOf ms szs cls m = cumS ms szs cls[m] + (cls.take m).count cls[m] := by
@@ -502,8 +498,7 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
               core.iter.adapters.enumerate.Enumerate (core.slice.iter.Iter (TagIndex Std.Usize BlockTag)))
             E B O bo = ok (done (E, B, O, bo)) := by
           unfold verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked_loop0_loop0.body
-          simp [core.iter.traits.iterator.IteratorSliceIter,
-            core.iter.adapters.enumerate.IteratorEnumerate.next, hnext]
+          simp [core.iter.adapters.enumerate.IteratorEnumerate.next, hnext]
         exact Std.WP.exists_imp_spec ⟨done (E, B, O, bo), hbody, hI⟩
     · refine ⟨0, 0#usize, rfl, rfl, Nat.zero_le _, ?_⟩
       refine ⟨hE, hB, hO, hbo, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩

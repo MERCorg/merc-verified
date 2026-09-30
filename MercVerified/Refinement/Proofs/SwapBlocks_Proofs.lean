@@ -269,9 +269,9 @@ theorem swapBlocksVec_getD (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize 
   rw [swapBlocksVec_val]
   simp only [swapIdx, List.getD_eq_getElem?_getD, List.getElem?_set, List.length_set]
   by_cases hjr : j = r.index.val
-  · subst hjr; simp [hr, hne.symm]
+  · subst hjr; simp [hr]
   · by_cases hjl : j = l.index.val
-    · subst hjl; simp [hl, hr, hne, Ne.symm hne, hjr]
+    · subst hjl; simp [hl, hr, hne, Ne.symm hne]
     · simp [hjr, hjl, Ne.symm hjr, Ne.symm hjl]
 
 /-- Elements in `[b, e)` (as positions) are exactly the states whose offset lies in it. -/
@@ -378,8 +378,8 @@ theorem swapIdx_invol (l r j : Nat) : swapIdx l r (swapIdx l r j) = j := by
     · simp [h1, h2]
   · by_cases h2 : j = l
     · by_cases h3 : r = l
-      · subst h3; simp [h2, h1]
-      · simp [h1, h2, h3]
+      · subst h3; simp [h2]
+      · simp [h2]
     · simp [h1, h2]
 
 /-- Once the block records are exchanged (`blkAt p' j = blkAt p (swapIdx j)`) and `element_offset`
@@ -416,7 +416,7 @@ theorem swap_blocks_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     refine ⟨p, ?_, hp, rfl, rfl, rfl, ?_, ?_⟩
     · unfold verified.merc_reduction.block_partition.BlockPartition.swap_blocks
       have : l.index = r.index := UScalar.eq_of_val_eq hlr
-      simp [tag_eq_decide, this]
+      simp [this]
     · intro j; rw [hid]
     · intro s _; rw [hid]
   · have hne : l.index.val ≠ r.index.val := hlr
@@ -450,7 +450,7 @@ theorem swap_blocks_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       simp [swapIdx, hne]
       rfl
     unfold verified.merc_reduction.block_partition.BlockPartition.swap_blocks
-    simp [tag_eq_decide, hdec, vec_tagged_index_val p.blocks l hl,
+    simp [hdec, vec_tagged_index_val p.blocks l hl,
       vec_tagged_index_val p.blocks r hr, hbl_read, hbr_read,
       vec_tagged_index_mut_ok p.blocks l hl, vec_tagged_index_mut_ok _ r hv0len]
     have hv1eq : (alloc.vec.Vec.mk ((p.blocks.slice.set l.index (blkAt p r.index.val)).set r.index (blkAt p l.index.val)) : alloc.vec.Vec Block) = swapBlocksVec p.blocks l r (blkAt p l.index.val) (blkAt p r.index.val) := rfl

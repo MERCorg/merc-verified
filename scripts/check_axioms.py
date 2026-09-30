@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Check that the "headline" theorems below depend on no axioms beyond:
   - the three Lean/mathlib kernel axioms (propext, Classical.choice, Quot.sound)
-  - the hand-vetted boundary axioms declared in MercVerified/Basic.lean and
+  - the hand-vetted boundary axioms declared in
     MercVerified/Code/*External*.lean.
   - the Aeneas Lean backend's own Std-library axioms (everything under
     3rd-party/aeneas/backends/lean/Aeneas/) - the translation framework's own
     trusted primitives (e.g. `core.fmt.Formatter`), out of this project's
     control
   - `_native.decide.ax_N` axioms whose statement is exactly the byte-length
-    bound check `Aeneas.Std.toStr` discharges via `decide +native` for a
-    string literal (`decide ("<lit>".toByteArray.size <= U32.max) = true`).
-    These get a fresh per-declaration name each time, so they can't be
-    approved by name; their statement shape is checked instead (see
-    `is_tostr_bound_check`) before they're waved through.
-  - `sorryAx`, reported as a known-incomplete proof (see KNOWN_INCOMPLETE
-    below) rather than a failure
+    bound check `Aeneas.Std.toStr` discharges via `decide +native` for a string
+    literal (`decide ("<lit>".toByteArray.size <= U32.max) = true`). These get a
+    fresh per-declaration name each time, so they can't be approved by name;
+    their statement shape is checked instead (see `is_tostr_bound_check`) before
+    they're waved through.
+  - `sorryAx`, reported as a known-incomplete proof (see KNOWN_INCOMPLETE below)
+    rather than a failure
 """
 
 import re
@@ -42,9 +42,7 @@ THEOREMS = [
 
 # Theorems allowed to depend on `sorryAx` without failing the check (open,
 # tracked contracts - see their module doc comments).
-KNOWN_INCOMPLETE = {
-    
-}
+KNOWN_INCOMPLETE : set[str] = set()
 
 IMPORTS = [
     "Signatures.Proofs.Signature_Proofs",

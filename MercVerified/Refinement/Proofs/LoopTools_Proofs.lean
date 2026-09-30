@@ -96,7 +96,7 @@ theorem vec_tagged_index_mut_ok {U Tag : Type} (v : alloc.vec.Vec U) (t : TagInd
   obtain ⟨⟨x, back⟩, hx, hxe, hb⟩ := Std.WP.spec_imp_exists hs
   rw [hx]
   subst hb
-  simp [hxe, Functor.map]
+  simp [hxe]
   rfl
 
 /-- A `loop` whose state carries a progress counter `idx x` that the invariant `inv m x` pins to

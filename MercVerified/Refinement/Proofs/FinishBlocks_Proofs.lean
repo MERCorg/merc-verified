@@ -220,7 +220,7 @@ theorem blkSeq_length (blocks : List Block) (b : Nat) (u : Bool) (block : Block)
 
 /-- `blkSeq K` has exactly the shape `split_partInv` asks of the new block list. -/
 theorem blkSeq_getD_new (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
-    (szs : List Nat) (K : Nat) (hK : 0 < K) (hb : b < blocks.length) (c : Nat)
+    (szs : List Nat) (K : Nat) (hK : 0 < K) (_hb : b < blocks.length) (c : Nat)
     (hc1 : firstNew u ≤ c) (hc2 : c < K) :
     (blkSeq blocks b u block ms szs K).getD (blocks.length + (c - firstNew u)) blk0 =
       pieceRec ms szs c := by
@@ -247,12 +247,12 @@ theorem blkSeq_getD_old (blocks : List Block) (b : Nat) (u : Bool) (block : Bloc
   unfold blkSeq
   rw [if_neg (by omega)]
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by simp; omega)]
-  simp [List.getElem?_set, hjb.symm, List.getD_eq_getElem?_getD]
+  simp [hjb.symm, List.getD_eq_getElem?_getD]
 
 theorem drop_set_self {α : Type} (l : List α) (m : Nat) (x : α) (h : m < l.length) :
     (l.set m x).drop m = x :: l.drop (m + 1) := by
   rw [List.set_eq_take_append_cons_drop, if_pos h]
-  simp [List.drop_append, List.length_take, Nat.min_eq_left h.le]
+  simp [List.length_take, Nat.min_eq_left h.le]
 
 theorem unmRec_eq_pieceRec (ms : Nat) (szs : List Nat) (K : Nat) (a e : Std.Usize) (c : Nat)
     (hc : c < K) (hbnd : ∀ c', c' ≤ K → cumS ms szs c' < 2 ^ UScalarTy.Usize.numBits)
@@ -282,7 +282,7 @@ def Loop0Inv (S : Slice Std.Usize) (block : Block) (ms : Nat) (szs : List Nat)
       (x.2.1 im).slice.val = vals ++ im.slice.val.drop m ∧ (x.2.1 im).i = im.i
 
 theorem back_step (back : core.slice.iter.IterMut Std.Usize → core.slice.iter.IterMut Std.Usize)
-    (vals : List Std.Usize) (m : Nat) (nc : Std.Usize) (hlen : vals.length = m)
+    (vals : List Std.Usize) (m : Nat) (nc : Std.Usize) (_hlen : vals.length = m)
     (h8 : ∀ im : core.slice.iter.IterMut Std.Usize, m ≤ im.slice.val.length →
       (back im).slice.val = vals ++ im.slice.val.drop m ∧ (back im).i = im.i) :
     ∀ im : core.slice.iter.IterMut Std.Usize, m + 1 ≤ im.slice.val.length →
@@ -559,7 +559,7 @@ theorem finish0_tail
   have hnd : old.val.Nodup := (hperm.nodup_iff).mpr (regionElems_nodup hp ms cls.length hle)
   have hoidx : ∀ x ∈ old.val, x.index.val < n := by
     intro x hx
-    obtain ⟨q, h1, h2, rfl⟩ := (mem_old_iff (n := n) old.val ms cls.length hperm x).mp hx
+    obtain ⟨q, h1, h2, rfl⟩ := (mem_old_iff old.val ms cls.length hperm x).mp hx
     exact (hp.perm q (by omega)).1
   have hKpos : 0 < K := by
     have : 0 < cls.length := by omega

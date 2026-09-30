@@ -70,8 +70,7 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone BlockTag
         core.clone.CloneUsize).clone x = ok x := by
     intro x
-    simp [verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone,
-      verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone, core.clone.CloneUsize]
+    simp [verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone]
   obtain ⟨v3, hv3, hv3v⟩ := spec_imp_exists (alloc.vec.Vec.resize_spec
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone BlockTag core.clone.CloneUsize)
     v i ({ index := 0#usize, marker := () } : TagIndex Std.Usize BlockTag) (hcl _))
