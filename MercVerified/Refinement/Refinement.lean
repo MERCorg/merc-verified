@@ -16,17 +16,29 @@ namespace MercVerified.Refinement
     well-formedness (`hwf`, see `LTS.WellFormed`: a non-empty state space on which
     `outgoing_transitions` succeeds with in-range targets). Showing that a concrete implementor
     (e.g. `LabelledTransitionSystem`) satisfies `hwf` is a separate concern
-    (see `docs/axiom-audit-plan.md`). Proved by `Proofs.strong_bisim_sigref_correct`. -/
+    (see `docs/axiom-audit-plan.md`). Proved by `Proofs.strong_bisim_sigref_correct`.
+
+    `element_to_block` is indexed by the *state* (`element_to_block[s]` is the block of state `s`;
+    `elements` is a permutation of the states, so its positions carry no such meaning), hence the
+    coherence clause reads it at `s.index`. Only the `n` real states `s.index < n` are constrained:
+    `WellFormed` says nothing about the transitions of indices `≥ n`, so stability and completeness
+    are stated for in-range states only. -/
 def StrongBisimSigrefCorrectSpec
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (_hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) : Prop :=
   ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
     strong_bisim_sigref LTSInst sys timing = ok (sys, partition) ∧
-    (∀ s b, (s, b) ∈ List.zip partition.elements.val partition.element_to_block.val →
-        blockOf s = b) ∧
+    (∀ s b, s ∈ partition.elements.val →
+        partition.element_to_block.val[s.index.val]? = some b → blockOf s = b) ∧
     (∀ n, LTSInst.num_of_states sys = ok n →
         ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ partition.elements.val) ∧
-    IsStable (fun s => StrongSignature (toLTS LTSInst sys) s blockOf) blockOf ∧
-    ∀ s s', StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s'
+    (∀ n, LTSInst.num_of_states sys = ok n →
+        ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
+          blockOf s = blockOf s' →
+          StrongSignature (toLTS LTSInst sys) s blockOf =
+            StrongSignature (toLTS LTSInst sys) s' blockOf) ∧
+    ∀ n, LTSInst.num_of_states sys = ok n →
+      ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
+        StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s'
 
 end MercVerified.Refinement

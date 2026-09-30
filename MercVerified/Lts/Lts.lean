@@ -53,15 +53,31 @@ def NonEmpty {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
 
 /-- Well-formedness of an `LTS` implementor's concrete representation: a non-empty state space
     of `n` states in which `outgoing_transitions` succeeds on every state `< n` and only yields
-    transitions whose target is again `< n`. The trait's type signature does not imply any of
-    this (`outgoing_transitions` may `fail`, and its targets are arbitrary indices), so
-    algorithms over `LTS` implementors are only trusted under this hypothesis. -/
+    transitions whose target is again `< n`, and whose state count is small enough
+    (`n * (n + 2) ≤ Usize::MAX`) that the signature-refinement loop's iteration counter, which
+    can reach roughly `n * (n + 1)`, never overflows. The trait's type signature does not imply
+    any of this (`outgoing_transitions` may `fail`, its targets are arbitrary indices), so
+    algorithms over `LTS` implementors are only trusted under this hypothesis.
+
+    Finally `iter_states` enumerates each of the `n` states exactly once, and
+    `num_of_transitions` is at least the total number of transitions the states have
+    (`IncomingTransitions::new` allocates its flat arrays with that size), which fits in a `usize`
+    with room to spare. -/
 def WellFormed {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
   NonEmpty LTSInst sys ∧
-  ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+  (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
     ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val →
       ∃ ts : alloc.vec.Vec Transition,
-        LTSInst.outgoing_transitions sys s = ok ts ∧ ∀ t ∈ ts.val, t.to.index.val < n.val
+        LTSInst.outgoing_transitions sys s = ok ts ∧ ∀ t ∈ ts.val, t.to.index.val < n.val) ∧
+  (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n → n.val * (n.val + 2) ≤ Std.Usize.max) ∧
+  (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+    ∃ (sv : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (m : Std.Usize),
+      LTSInst.iter_states sys = ok sv ∧ sv.val.Nodup ∧
+      (∀ s : TagIndex Std.Usize StateTag, s ∈ sv.val ↔ s.index.val < n.val) ∧
+      LTSInst.num_of_transitions sys = ok m ∧ m.val < Std.Usize.max ∧
+      ∀ ts : TagIndex Std.Usize StateTag → alloc.vec.Vec Transition,
+        (∀ s ∈ sv.val, LTSInst.outgoing_transitions sys s = ok (ts s)) →
+        (sv.val.map (fun s => (ts s).val.length)).sum ≤ m.val)
 
 /-- The Rust method `is_hidden_label` declares the hidden (τ) label to be
     the tagged index `TagIndex::new(0)`. -/

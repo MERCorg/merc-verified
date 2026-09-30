@@ -30,6 +30,86 @@ axiom merc_reduction.block_partition.Block.assert_consistent_ok
   (b : merc_reduction.block_partition.Block) :
   ∃ u : Unit, merc_reduction.block_partition.Block.assert_consistent b = ok u
 
+namespace MercVerified.Refinement
+
+open verified.merc_utilities.tagged_index (TagIndex)
+open verified.merc_lts.lts (StateTag)
+open verified.merc_collections.indexed_partition (BlockTag)
+open verified.merc_reduction.block_partition (BlockPartition Block)
+
+/-! ### The partition invariant
+
+`PartInv n p` says that `p : BlockPartition` is a consistent partition of the states `[0, n)`:
+`elements` is a permutation of `[0, n)` with `element_offset` its inverse, the blocks are
+non-empty, pairwise disjoint ranges of `elements`, and `element_to_block` sends every state to the
+block whose range contains its offset. This is what `BlockPartition::assert_consistent`
+(`block_partition.rs`) checks, and it is stated here (rather than with the proofs) because the
+boundary axiom `BlockPartition.assert_consistent_ok` below is conditional on it. The accessors
+use default values so that statements need no bound proofs. -/
+
+/-- A dummy block, the default of `blkAt`. -/
+def blk0 : Block := { begin := 0#usize, marked_split := 0#usize, «end» := 0#usize }
+
+/-- `p.blocks[k]` (dummy if out of range). -/
+def blkAt (p : BlockPartition) (k : Nat) : Block := p.blocks.val.getD k blk0
+
+/-- `p.elements[i]` (state `0` if out of range). -/
+def eAt (p : BlockPartition) (i : Nat) : TagIndex Std.Usize StateTag :=
+  p.elements.val.getD i { index := 0#usize, marker := () }
+
+/-- `p.element_offset[s]` (`0` if out of range). -/
+def offAt (p : BlockPartition) (s : Nat) : Nat := (p.element_offset.val.getD s 0#usize).val
+
+/-- `p.element_to_block[s]`'s block number (`0` if out of range). -/
+def e2bAt (p : BlockPartition) (s : Nat) : Nat :=
+  (p.element_to_block.val.getD s { index := 0#usize, marker := () }).index.val
+
+structure PartInv (n : Nat) (p : BlockPartition) : Prop where
+  len_e : p.elements.val.length = n
+  len_e2b : p.element_to_block.val.length = n
+  len_off : p.element_offset.val.length = n
+  perm : ∀ i, i < n → (eAt p i).index.val < n ∧ offAt p (eAt p i).index.val = i
+  inv : ∀ s, s < n → (eAt p (offAt p s)).index.val = s
+  blk : ∀ k, k < p.blocks.val.length →
+    (blkAt p k).begin.val < (blkAt p k).«end».val ∧ (blkAt p k).«end».val ≤ n ∧
+    (blkAt p k).begin.val ≤ (blkAt p k).marked_split.val ∧
+    (blkAt p k).marked_split.val ≤ (blkAt p k).«end».val
+  own : ∀ s, s < n → e2bAt p s < p.blocks.val.length ∧
+    (blkAt p (e2bAt p s)).begin.val ≤ offAt p s ∧ offAt p s < (blkAt p (e2bAt p s)).«end».val
+  disj : ∀ j k, j < p.blocks.val.length → k < p.blocks.val.length → j ≠ k →
+    (blkAt p j).«end».val ≤ (blkAt p k).begin.val ∨
+    (blkAt p k).«end».val ≤ (blkAt p j).begin.val
+
+end MercVerified.Refinement
+
+/-- `BlockPartition::assert_consistent` (`block_partition.rs`, the `debug_assert!`-based integrity
+    check) returns `true` on a consistent partition: it panics only when an invariant is
+    broken, and `PartInv` (elements a permutation with inverse `element_offset`, disjoint
+    non-empty blocks covering every element, `element_to_block` naming the containing block)
+    implies every one of its checks. -/
+axiom merc_reduction.block_partition.BlockPartition.assert_consistent_ok
+  {n : Nat} (p : merc_reduction.block_partition.BlockPartition)
+  (h : MercVerified.Refinement.PartInv n p) :
+  merc_reduction.block_partition.BlockPartition.assert_consistent p = ok true
+
+/-- `Vec::extend` over a `BlockIter` appends exactly the elements the iterator yields, in order:
+    `BlockIter::next` (`block_partition.rs:556`, a generated definition) yields
+    `elements[index], elements[index + 1], …` while `index < end`, so the appended list is the
+    window `elements[index, end)`. Success is assumed absent allocation failure: the only failure
+    mode of `extend` is the vector's length overflowing `usize`, which the hypotheses exclude. -/
+axiom alloc.vec.Vec.extend_blockIter_spec
+    (v : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag))
+    (bi : merc_reduction.block_partition.BlockIter)
+    (hend : bi.«end».val ≤ bi.elements.val.length)
+    (hlen : v.val.length + (bi.«end».val - bi.index.val) ≤ Std.Usize.max) :
+    ∃ v' : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag),
+      alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend Global
+        (core.iter.traits.collect.IntoIterator.Blanket
+          merc_reduction.block_partition.BlockIter.Insts.CoreIterTraitsIteratorIteratorTagIndexUsizeStateTag)
+        v bi = ok v' ∧
+      v'.val = v.val ++
+        ((bi.elements.val.drop bi.index.val).take (bi.«end».val - bi.index.val))
+
 /-!
 # `TagIndex` semantics
 
@@ -38,7 +118,7 @@ is the translated structure `{ index : T, marker : PhantomData Tag }` and all of
 its operations are generated definitions. The lemmas that unfold those
 definitions are *theorems* (no trust boundary), so they now live with the rest
 of the machine-generated proofs, in
-`MercVerified/Refinement/Proofs/Partition_Proofs.lean` (see `TagIndex.ext`,
+`MercVerified/Lts/Proofs/Foundation_Proofs.lean` (see `TagIndex.ext`,
 `vec_tagged_index_eq`, `vec_tagged_index_mut_eq`, `vec_tagged_index_val`,
 `blocks_index_mut_contract`, ...).
 -/
@@ -61,6 +141,70 @@ axiom std.collections.hash.map.HashMap.insert_spec
     std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
       corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
       corehashHashInst corecmpEqInst m' k = ok (some (k, v))
+
+/-- Every value a lookup can return satisfies `P` (lookups through the map's own
+    equality/hash instances, the way `strong_intern_signature` queries it). -/
+def std.collections.hash.map.HashMap.AllValues
+    {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
+    (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+    (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+    (m : std.collections.hash.map.HashMap K V S A) (P : V → Prop) : Prop :=
+  ∀ (q : K) (k : K) (v : V),
+    std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
+      corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
+      corehashHashInst corecmpEqInst m q = ok (some (k, v)) → P v
+
+/-- `HashMap::insert` only ever *adds* the inserted value to what lookups can return: every
+    property of all stored values that held before still holds after, provided the inserted
+    value has it. (A hash map stores exactly the values inserted into it.) -/
+axiom std.collections.hash.map.HashMap.insert_allValues
+  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
+  (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+  (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (m : std.collections.hash.map.HashMap K V S A) (k : K) (v : V) :
+  ∃ old : Option V, ∃ m' : std.collections.hash.map.HashMap K V S A,
+    std.collections.hash.map.HashMap.insert corecmpEqInst corehashHashInst
+      corehashBuildHasherInst m k v = ok (old, m') ∧
+    ∀ P : V → Prop,
+      std.collections.hash.map.HashMap.AllValues corecmpEqInst corehashHashInst
+        corehashBuildHasherInst m P → P v →
+      std.collections.hash.map.HashMap.AllValues corecmpEqInst corehashHashInst
+        corehashBuildHasherInst m' P
+
+/-- A lookup on a hash map never fails (`HashMap::get_key_value` only hashes and compares). -/
+axiom std.collections.hash.map.HashMap.get_key_value_ok
+  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
+  (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+  (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (m : std.collections.hash.map.HashMap K V S A) (q : K) :
+  ∃ o : Option (K × V),
+    std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
+      corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
+      corehashHashInst corecmpEqInst m q = ok o
+
+/-- A lookup that finds an entry returns a stored key that the map's own equality test reports
+    equal to the query (`HashMap::get_key_value` only returns entries whose key equals `q`). -/
+axiom std.collections.hash.map.HashMap.get_key_value_eq
+  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
+  (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+  (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (m : std.collections.hash.map.HashMap K V S A) (q k : K) (v : V)
+  (h : std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
+      corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
+      corehashHashInst corecmpEqInst m q = ok (some (k, v))) :
+  corecmpEqInst.partialEqInst.eq q k = ok true
+
+/-- `HashMap::default` succeeds and yields an empty map: every lookup finds nothing. -/
+axiom std.collections.hash.map.HashMapKVSGlobal.default_spec
+  (K : Type) (V : Type) {S : Type} (coredefaultDefaultInst : core.default.Default S) :
+  ∃ m : std.collections.hash.map.HashMap K V S Global,
+    std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default K V
+      coredefaultDefaultInst = ok m ∧
+    ∀ {Clause2_Hasher : Type} (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
+      (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher) (q : K),
+      std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
+        corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
+        corehashHashInst corecmpEqInst m q = ok none
 
 /-- Inserting `k ↦ v` leaves all lookups of keys the map's own equality test
     reports as *different* from `k` untouched. -/

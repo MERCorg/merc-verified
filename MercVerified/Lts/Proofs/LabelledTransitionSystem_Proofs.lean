@@ -1,5 +1,5 @@
 import MercVerified.Lts.Lts
-import MercVerified.Refinement.Proofs.Partition_Proofs
+import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -20,7 +20,6 @@ tying `index`/`len` together on its own - only a value actually produced by a sa
 which Charon does not translate, is trusted to satisfy it).
 -/
 
-open MercVerified.Refinement.Proofs
 open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
@@ -65,7 +64,13 @@ def LabelledTransitionSystemValid {Label : Type}
         (verified.merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry
           StateTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize)
         sys.transition_to k = ok vt ∧
-        vt.index.val < numStates)
+        vt.index.val < numStates) ∧
+    numStates * (numStates + 2) ≤ Std.Usize.max ∧
+    (∃ tl : Std.Usize, merc_collections.compressed_vec.ByteCompressedVec.len
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry
+          LabelTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize)
+        sys.transition_labels = ok tl ∧ tl.val = numTransitions) ∧
+    numTransitions < Std.Usize.max
 
 namespace MercVerified.Lts.Proofs
 
@@ -120,7 +125,8 @@ private theorem outgoing_transitions_loop_bounded
       ∃ result',
         verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.outgoing_transitions_loop
           iter bcv bcv1 result = ok result' ∧
-        ∀ t ∈ result'.val, t.to.index.val < numStates := by
+        (∀ t ∈ result'.val, t.to.index.val < numStates) ∧
+        result'.val.length = result.val.length + n := by
   let ul : (core.ops.range.Range Std.Usize × alloc.vec.Vec Transition) →
       Result (ControlFlow (core.ops.range.Range Std.Usize × alloc.vec.Vec Transition)
         (alloc.vec.Vec Transition)) :=
@@ -137,7 +143,7 @@ private theorem outgoing_transitions_loop_bounded
   induction n with
   | zero =>
     intro iter result hn hend hcap hbound
-    refine ⟨result, ?_, hbound⟩
+    refine ⟨result, ?_, hbound, by omega⟩
     rw [← hloop_unfold, loop_unfold_step]
     have hge : iter.start.val ≥ iter.«end».val := by omega
     obtain ⟨o, iter1, hnext, ho, hident⟩ := next_range_none iter hge
@@ -184,8 +190,10 @@ private theorem outgoing_transitions_loop_bounded
         rw [hpushv]; simp
       have : iter1.«end».val = iter.«end».val := by rw [hend']
       omega
-    obtain ⟨result', hloop', hbound'⟩ := ih iter1 result1 hn1 hend1 hcap1 hbound1
-    refine ⟨result', ?_, hbound'⟩
+    have hlen1 : result1.val.length = result.val.length + 1 := by
+      rw [hpushv]; simp
+    obtain ⟨result', hloop', hbound', hlen'⟩ := ih iter1 result1 hn1 hend1 hcap1 hbound1
+    refine ⟨result', ?_, hbound', by omega⟩
     rw [← hloop_unfold, loop_unfold_step, hbody]
     simp [hloop_unfold, hloop']
 
@@ -202,7 +210,7 @@ theorem lts_wellFormed {Label : Type}
     (hvalid : LabelledTransitionSystemValid sys) :
     MercVerified.Lts.WellFormed (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys := by
   obtain ⟨numStates, numTransitions, statesAt, ⟨statesLen, hstatesLen, hstatesLenV⟩,
-    hstatesIdx, hmono, hsentinel, hinit, hlabelsIdx, htargetIdx⟩ := hvalid
+    hstatesIdx, hmono, hsentinel, hinit, hlabelsIdx, htargetIdx, hsmall, ⟨tl, htl, htlv⟩, htmax⟩ := hvalid
   -- A real `Usize` whose value is `numStates` (obtained from `statesLen - 1`), used to look
   -- up the sentinel entry `statesAt numStates = numTransitions` and bound `numTransitions`.
   have h1le : (1#usize).val ≤ statesLen.val := by simp; omega
@@ -223,15 +231,12 @@ theorem lts_wellFormed {Label : Type}
     rw [hstatesLen]
     simp
     exact hnsu_eq
-  constructor
-  · -- `NonEmpty`
-    refine ⟨numStatesU, hnumOfStates, ?_⟩
-    omega
-  · intro n hn s hs
-    have hnEq : n = numStatesU := Result.ok_injective (hn.symm.trans hnumOfStates)
-    have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
-    rw [hnEq] at hs
-    rw [hnsu_valEq] at hs
+  have key : ∀ s : TagIndex Std.Usize StateTag, s.index.val < numStates →
+      ∃ ts : alloc.vec.Vec Transition,
+        (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).outgoing_transitions sys s = ok ts ∧
+        (∀ t ∈ ts.val, t.to.index.val < numStates) ∧
+        ts.val.length = statesAt (s.index.val + 1) - statesAt s.index.val := by
+    intro s hs
     -- unfold `outgoing_transitions sys s`
     have hderef : verified.merc_utilities.tagged_index.TagIndex.Insts.CoreOpsDerefDeref.deref s
         = ok s.index := rfl
@@ -271,15 +276,144 @@ theorem lts_wellFormed {Label : Type}
       rw [this]
       simp
       omega
-    obtain ⟨result', hloop', hbound'⟩ :=
+    obtain ⟨result', hloop', hbound', hlen'⟩ :=
       outgoing_transitions_loop_bounded sys.transition_labels sys.transition_to numStates
         numTransitions hnumTransMax hlabelsIdx htargetIdx (endV.val - startV.val)
         { start := startV, «end» := endV } (alloc.vec.Vec.with_capacity Transition i2) rfl
         hendMax hcap0 (by simp [alloc.vec.Vec.with_capacity, alloc.vec.Vec.new])
-    refine ⟨result', ?_, ?_⟩
-    · rw [houtgoing, hloop']
-    · intro t ht
-      have := hbound' t ht
+    refine ⟨result', by rw [houtgoing, hloop'], hbound', ?_⟩
+    have hwc : (alloc.vec.Vec.with_capacity Transition i2).val = [] := by
+      simp [alloc.vec.Vec.with_capacity, alloc.vec.Vec.new]
+    rw [hlen', hwc, hendV_val, hstartV_val]
+    have hi1v' : i1.val = s.index.val + 1 := by simp at hi1_val; omega
+    rw [hi1v']
+    simp
+
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- `NonEmpty`
+    refine ⟨numStatesU, hnumOfStates, ?_⟩
+    omega
+  · intro n hn s hs
+    have hnEq : n = numStatesU := Result.ok_injective (hn.symm.trans hnumOfStates)
+    have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
+    obtain ⟨ts, h1, h2, -⟩ := key s (by omega)
+    exact ⟨ts, h1, fun t ht => by have := h2 t ht; omega⟩
+  · intro n hn
+    have hnEq : n = numStatesU := Result.ok_injective (hn.symm.trans hnumOfStates)
+    have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
+    rw [hnval]; exact hsmall
+  · intro n hn
+    have hnEq : n = numStatesU := Result.ok_injective (hn.symm.trans hnumOfStates)
+    have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
+    -- the enumeration of the states
+    have hnb : numStates < 2 ^ UScalarTy.Usize.numBits := lt_two_pow_of_le_max hnumStatesMax
+    obtain ⟨sv, hsvcall, hsvlen, hsvget⟩ : ∃ sv : alloc.vec.Vec (TagIndex Std.Usize StateTag),
+        (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).iter_states sys = ok sv ∧
+        sv.val.length = numStates ∧ ∀ k, k < numStates → sv.val.getD k (uTag 0) = uTag k := by
+      have hg := gather_loop_spec (α := TagIndex Std.Usize StateTag) numStatesU
+        (fun k => uTag k) (uTag 0) (by
+          have hMaxPos : 0 < Usize.max := by
+            have := usize_le_max 1#usize
+            simp at this
+            omega
+          have : numStates < Usize.max := by
+            by_contra hcon
+            replace hcon := Nat.not_lt.mp hcon
+            nlinarith
+          omega)
+        (fun it v => verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop.body
+          it v)
+        (fun it v hend hvl hlt hvs => by
+          obtain ⟨o, it1, hnext, hopt, hstart, hend'⟩ := next_range_some it hlt
+          rcases vec_push_val v (uTag it.start.val) hvl with ⟨v1, hpush, hv1⟩
+          refine ⟨it1, v1, ?_, hstart, hend', hv1⟩
+          unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop.body
+          have hu : (uTag it.start.val : TagIndex Std.Usize StateTag) = { index := it.start, marker := () } := by
+            simp only [uTag]
+            congr 1
+            apply UScalar.eq_of_val_eq
+            exact uTotal_val_of_lt (lt_two_pow_of_le_max (usize_le_max it.start))
+          rw [hu] at hpush
+          rw [hnext]; subst hopt
+          simp [verified.merc_utilities.tagged_index.TagIndex.new, hpush])
+        (fun it v hge => by
+          obtain ⟨o, it1, hnext, hopt, hident⟩ := next_range_none it hge
+          unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop.body
+          rw [hnext, hopt]
+          simp)
+      obtain ⟨sv, hsv, hpost⟩ := Std.WP.spec_imp_exists hg
+      refine ⟨sv, ?_, by rw [hpost.1, hnsu_valEq], fun k hk => by rw [hpost.2 k (by omega)]⟩
+      show verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states
+        TLInst sys = ok sv
+      unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states
+      have hnumOfStatesX : verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_states
+          TLInst sys = ok numStatesU := hnumOfStates
+      rw [hnumOfStatesX]
+      simp only [bind_tc_ok]
+      exact hsv
+    have hsvl : sv.val = (List.range numStates).map (fun k => (uTag k : TagIndex Std.Usize StateTag)) := by
+      apply List.ext_getElem
+      · simp [hsvlen]
+      · intro k h1 h2
+        have hk : k < numStates := by rw [hsvlen] at h1; exact h1
+        have := hsvget k hk
+        rw [List.getD_eq_getElem _ _ h1] at this
+        rw [this]; simp
+    have hidx : ∀ k, k < numStates → (uTag k : TagIndex Std.Usize StateTag).index.val = k :=
+      fun k hk => uTotal_val_of_lt (by omega)
+    have hnumT : (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).num_of_transitions sys = ok tl := by
+      show verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions
+        TLInst sys = ok tl
+      unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_transitions
+      exact htl
+    refine ⟨sv, tl, hsvcall, ?_, ?_, hnumT, by omega, ?_⟩
+    · rw [hsvl]
+      refine List.Nodup.map_on ?_ List.nodup_range
+      intro a ha b hb h
+      have ha' := List.mem_range.mp ha
+      have hb' := List.mem_range.mp hb
+      have := congrArg (fun x : TagIndex Std.Usize StateTag => x.index.val) h
+      rwa [hidx a ha', hidx b hb'] at this
+    · intro s'
+      rw [hsvl, List.mem_map, hnval]
+      constructor
+      · rintro ⟨k, hk, rfl⟩
+        rw [hidx k (List.mem_range.mp hk)]; exact List.mem_range.mp hk
+      · intro hs'
+        refine ⟨s'.index.val, List.mem_range.mpr hs', ?_⟩
+        apply merc_utilities.tagged_index.TagIndex.ext
+        exact sz_eq_from_val (uTotal_val_of_lt (by omega))
+    · intro ts hts
+      have hlenTs : ∀ k, k < numStates → (ts (uTag k)).val.length = statesAt (k + 1) - statesAt k := by
+        intro k hk
+        have hmemk : (uTag k : TagIndex Std.Usize StateTag) ∈ sv.val := by
+          rw [hsvl]; exact List.mem_map.mpr ⟨k, List.mem_range.mpr hk, rfl⟩
+        obtain ⟨ts', h1, -, h3⟩ := key (uTag k) (by rw [hidx k hk]; exact hk)
+        have hh : ts (uTag k) = ts' := Result.ok_injective ((hts _ hmemk).symm.trans h1)
+        rw [hh, h3, hidx k hk]
+      rw [hsvl, List.map_map]
+      have hcongr : (List.map ((fun s => (ts s).val.length) ∘ fun k => (uTag k : TagIndex Std.Usize StateTag))
+            (List.range numStates)).sum
+          = ((List.range numStates).map (fun k => statesAt (k + 1) - statesAt k)).sum := by
+        congr 1
+        apply List.map_congr_left
+        intro k hk
+        exact hlenTs k (List.mem_range.mp hk)
+      rw [hcongr]
+      have htel : ∀ k, k ≤ numStates →
+          ((List.range k).map (fun i => statesAt (i + 1) - statesAt i)).sum + statesAt 0
+            = statesAt k := by
+        intro k
+        induction k with
+        | zero => intro _; simp
+        | succ k ih =>
+          intro hk
+          rw [List.range_succ, List.map_append, List.sum_append]
+          simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero]
+          have := ih (by omega)
+          have := hmono k (by omega)
+          omega
+      have := htel numStates (le_refl _)
       omega
 
 end MercVerified.Lts.Proofs

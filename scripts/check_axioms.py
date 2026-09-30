@@ -36,9 +36,8 @@ THEOREMS = [
     "IsStable.branchingBisimilarity_inductive",
     "InductiveBranchingFixPoint.branchingBisimilarity",
     "BranchingBisimilarity.inductiveBranchingFixPoint",
-    "MercVerified.Signatures.Proofs.strong_bisim_sigref_correct",
-    "MercVerified.Signatures.Proofs.strong_bisim_signature_spec",
-    "MercVerified.Signatures.Proofs.strong_bisim_sigref_correct",
+    "MercVerified.Refinement.Proofs.strong_bisim_sigref_correct",
+    "MercVerified.Refinement.Proofs.strong_bisim_signature_spec",
 ]
 
 # Theorems allowed to depend on `sorryAx` without failing the check (open,
@@ -51,8 +50,8 @@ IMPORTS = [
     "Signatures.Proofs.Signature_Proofs",
     "Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs",
     "Signatures.Proofs.InductiveSignatures_Proofs",
-    "MercVerified.Signatures.Proofs.Refinement_Proofs",
-    "MercVerified.Signatures.Proofs.StrongSignature_Proofs",
+    "MercVerified.Refinement.Proofs.Refinement_Proofs",
+    "MercVerified.Refinement.Proofs.StrongSignature_Proofs",
 ]
 
 KERNEL_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}
@@ -115,16 +114,17 @@ def qualified_axiom_names(text: str) -> set[str]:
 
 def boundary_axioms() -> set[str]:
     """Axioms already declared for the translated-code boundary: anything
-    declared in MercVerified/Basic.lean or MercVerified/Code/*External*.lean
-    is pre-approved, as is anything declared in the Aeneas Lean backend's own
-    Std library (3rd-party/aeneas/backends/lean/Aeneas/**/*.lean) - that's the
-    translation framework's own trusted primitive layer, not this project's."""
+    declared in MercVerified/Code/*External*.lean is pre-approved, as is
+    anything declared in the Aeneas Lean backend's own Std library
+    (3rd-party/aeneas/backends/lean/Aeneas/**/*.lean) - that's the translation
+    framework's own trusted primitive layer, not this project's."""
     axioms: set[str] = set()
-    paths = [REPO_ROOT / "MercVerified" / "Basic.lean"]
+    paths = []
     paths += sorted((REPO_ROOT / "MercVerified" / "Code").glob("*External*.lean"))
     paths += sorted(
         (REPO_ROOT / "3rd-party" / "aeneas" / "backends" / "lean" / "Aeneas").rglob("*.lean")
     )
+    
     for path in paths:
         if path.exists():
             axioms.update(qualified_axiom_names(path.read_text()))

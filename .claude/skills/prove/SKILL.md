@@ -39,14 +39,14 @@ This MCP does not edit files — use `Edit`/`Write` for that. All line/column nu
 Per the lean-conventions skill's spec/Proofs/pin split, a handful of theorems are "headline" results with a signature-drift pin (an `example := theoremName` right after them) and are checked in CI by `scripts/check_axioms.py`. `lean_verify` with the fully qualified name is the interactive-session equivalent — it confirms the theorem depends on no `sorry` or unexpected axiom before you commit to a proof being "done":
 
 ```
-lean_verify(file_path=".../Proofs/Refinement_Proofs.lean", theorem_name="MercVerified.Signatures.Proofs.strong_bisim_sigref_correct")
+lean_verify(file_path=".../Proofs/Refinement_Proofs.lean", theorem_name="MercVerified.Refinement.Proofs.strong_bisim_sigref_correct")
 ```
 
 Only scans the given file, not its imports, so run it on the file that actually declares the theorem.
 
 ## Proof idioms in this repo
 
-- **Translated-code contracts** (theorems about Aeneas-translated Rust, e.g. `MercVerified/Signatures/Proofs/StrongSignature_Proofs.lean`) go through `Aeneas.Std.WP`: `spec_bind`, `spec_imp_exists`, `loop.spec_decr_nat` with explicit `measure`/`inv`/`post`, and `unfold <def>` before stepping through a `do`-block. Look at an existing loop proof before writing a new one — the shape is fairly fixed.
+- **Translated-code contracts** (theorems about Aeneas-translated Rust, e.g. `MercVerified/Refinement/Proofs/StrongSignature_Proofs.lean`) go through `Aeneas.Std.WP`: `spec_bind`, `spec_imp_exists`, `loop.spec_decr_nat` with explicit `measure`/`inv`/`post`, and `unfold <def>` before stepping through a `do`-block. Look at an existing loop proof before writing a new one — the shape is fairly fixed.
 - **Pure LTS/signature math** (`Signatures/Proofs/*.lean`) is mostly `rcases`/`obtain` destructuring, `calc` chains through `↔`/`⊆`, and targeted `simp [...]`/`rw [...]`. See lean-conventions for the general tactic-preference order (`grind`/`simp`/`omega`/`aesop`/`decide` before manual term-mode).
 
 ## Fixing a failing proof
@@ -57,7 +57,7 @@ Only scans the given file, not its imports, so run it on the file that actually 
 4. If a supporting lemma might already exist, check `lean_local_search` (this project) before `lean_state_search`/`lean_leansearch`/`lean_loogle`/`lean_hammer_premise` (cslib/Mathlib).
 5. Apply the fix, then re-run `lean_diagnostic_messages` on the file.
 
-**File editing policy:** `Signatures/Proofs/` and `MercVerified/Signatures/Proofs/` files are machine-generated and can be freely modified. All other `Signatures/` and `MercVerified/Signatures/` files are human-vetted — make only minimal, necessary changes (e.g. adding a spec `def` or a single helper `def`); do not refactor, reorder, or rewrite existing content. See the lean-conventions skill for the spec/Proofs/pin split these files follow.
+**File editing policy:** `Signatures/Proofs/` and `MercVerified/{Refinement,Lts}/Proofs/` files are machine-generated and can be freely modified. All other `Signatures/` and `MercVerified/Refinement/` and `MercVerified/Lts/` files are human-vetted — make only minimal, necessary changes (e.g. adding a spec `def` or a single helper `def`); do not refactor, reorder, or rewrite existing content. See the lean-conventions skill for the spec/Proofs/pin split these files follow.
 
 ## Rules
 
@@ -74,5 +74,5 @@ Only scans the given file, not its imports, so run it on the file that actually 
 | `LTS.IsBranchingBisimulation` | `Signatures/BranchingBisimilarity.lean` | Branching bisimulation predicate |
 | `BranchingBisimilarity` | `Signatures/BranchingBisimilarity.lean` | Bisimilarity relation (`≈br[lts]`) |
 | `StrongSignature` / `Refine` / `IsStable` / `FixPoint` | `Signatures/Signature.lean` | Partition refinement for observational equivalence |
-| `StrongBisimSignatureSpec` | `MercVerified/Signatures/StrongSignature.lean` | Contract: translated `strong_bisim_signature` computes `StrongSignature` |
-| `StrongBisimSigrefCorrectSpec` | `MercVerified/Signatures/Refinement.lean` | Contract: translated `strong_bisim_sigref` is a strong-bisimulation partition refinement (open, `sorry`) |
+| `StrongBisimSignatureSpec` | `MercVerified/Refinement/Proofs/StrongSignature_Proofs.lean` | Contract: translated `strong_bisim_signature` computes `StrongSignature` |
+| `StrongBisimSigrefCorrectSpec` | `MercVerified/Refinement/Refinement.lean` | Contract: translated `strong_bisim_sigref` is a strong-bisimulation partition refinement (open, `sorry`) |

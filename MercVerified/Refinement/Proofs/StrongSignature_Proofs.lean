@@ -1,5 +1,6 @@
 import MercVerified.Basic
 import MercVerified.Refinement.Proofs.Partition_Proofs
+import MercVerified.Refinement.Proofs.SigKey_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -22,6 +23,8 @@ open verified.merc_reduction.signatures (strong_bisim_signature strong_bisim_sig
 open verified.merc_reduction.partition (Partition)
 open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open MercVerified.Lts (toLTS toLTS_Tr tr)
+
+open MercVerified.Lts.Proofs
 
 namespace MercVerified.Refinement
 
@@ -82,7 +85,7 @@ private theorem strong_bisim_signature_loop_spec
     (builder : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
     (l : List Transition)
     (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
-    (hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
+    (hblock : ∀ t ∈ l, PInst.block_number partition t.to = ok (blockNumber t.to))
     (hlen : (builder.val ++ List.map (sigEntry blockNumber) l).length ≤ Usize.max)
     (hiter : iter.val = l) :
     ∃ builder', strong_bisim_signature_loop PInst iter partition builder = ok builder'
@@ -131,7 +134,7 @@ private theorem strong_bisim_signature_loop_spec
           unfold alloc.vec.into_iter.IteratorIntoIter.next
           split <;> simp_all
         have hti : PInst.block_number partition hd.to ⦃ ti => ti = blockNumber hd.to ⦄ := by
-          rw [hblock hd.to]
+          rw [hblock hd (by rw [hl]; simp)]
           simp
         have hlen' : (builder.val ++ List.map (sigEntry blockNumber) (pref ++ [hd])).length ≤ Usize.max := by
           have hld : (pref ++ [hd]) ++ tl = l := by
@@ -269,19 +272,20 @@ theorem strong_bisim_signature_spec_general
   let iter : alloc.vec.into_iter.IntoIter Transition := ts
   have hlen : (builder1.val ++ List.map (sigEntry blockNumber) ts.val).length ≤ Usize.max := by
     simp [hb1val]
-  rcases (strong_bisim_signature_loop_spec PInst partition iter builder1 ts.val blockNumber hblock
-      hlen (by rfl)) with ⟨builder2, hb2, hb2val⟩
+  rcases (strong_bisim_signature_loop_spec PInst partition iter builder1 ts.val blockNumber
+      (fun t _ => hblock t.to) hlen (by rfl)) with ⟨builder2, hb2, hb2val⟩
   rcases (core.slice.Slice.sort_unstable_spec (T := Entry)
       (verified.Pair.Insts.CoreCmpOrd
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
-      builder2.slice) with ⟨s1, hs1, hs1perm⟩
+      builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
   rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
-      builder3) with ⟨result, hdedup, hdedupmem⟩
+      builder3) with ⟨result, hdedup, hdedupspec⟩
+  have hdedupmem := (hdedupspec entry_partialEq_lawful).1
   refine ⟨result, ?_, ?_⟩
   · rw [hb1]
     simp
@@ -306,6 +310,118 @@ theorem strong_bisim_signature_spec_general
             simp
       _ ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber :=
             sigEntry_mem_iff LTSInst sys s blockNumber ts houtgoing μ β
+
+/-- `strong_bisim_signature` succeeds as soon as `outgoing_transitions s` does and the
+    `block_number` lookups of the actual transition targets do (no assumption about other states). -/
+theorem strong_bisim_signature_total
+    {L Label P : Type}
+    (LTSInst : LTS L Label)
+    (PInst : Partition P)
+    (sys : L)
+    (partition : P)
+    (s : TagIndex Std.Usize StateTag)
+    (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
+    (ts : alloc.vec.Vec Transition)
+    (houtgoing : LTSInst.outgoing_transitions sys s = ok ts)
+    (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
+    (hblock : ∀ t ∈ ts.val, PInst.block_number partition t.to = ok (blockNumber t.to)) :
+    ∃ result, strong_bisim_signature LTSInst PInst s sys partition builder0 = ok result := by
+  rw [strong_bisim_signature]
+  rcases (alloc.vec.Vec.clear_spec (T := Entry) Global builder0) with ⟨builder1, hb1, hb1val⟩
+  let iter : alloc.vec.into_iter.IntoIter Transition := ts
+  have hlen : (builder1.val ++ List.map (sigEntry blockNumber) ts.val).length ≤ Usize.max := by
+    simp [hb1val]
+  rcases (strong_bisim_signature_loop_spec PInst partition iter builder1 ts.val blockNumber
+      hblock hlen (by rfl)) with ⟨builder2, hb2, hb2val⟩
+  rcases (core.slice.Slice.sort_unstable_spec (T := Entry)
+      (verified.Pair.Insts.CoreCmpOrd
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
+      builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
+  let builder3 : alloc.vec.Vec Entry := { slice := s1 }
+  rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
+      (verified.Pair.Insts.CoreCmpPartialEqPair
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
+      builder3) with ⟨result, hdedup, -⟩
+  refine ⟨result, ?_⟩
+  rw [hb1]
+  simp
+  rw [houtgoing]
+  simp
+  simp [alloc.vec.IntoIteratorVec.into_iter]
+  rw [hb2]
+  simp [Aeneas.Std.lift, alloc.vec.Vec.deref_mut]
+  rw [hs1]
+  simp
+  rw [hdedup]
+
+/-- The signature key that `strong_bisim_signature` computes: it succeeds as soon as
+    `outgoing_transitions s` and the `block_number` lookups of the actual targets do, its members are
+    exactly the `StrongSignature` of `s` under `blockNumber`, and it is strictly sorted. Hence the
+    key is a canonical form of the signature set (`sigKey_unique`). -/
+theorem strong_bisim_signature_key
+    {L Label P : Type}
+    (LTSInst : LTS L Label)
+    (PInst : Partition P)
+    (sys : L)
+    (partition : P)
+    (s : TagIndex Std.Usize StateTag)
+    (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
+    (ts : alloc.vec.Vec Transition)
+    (houtgoing : LTSInst.outgoing_transitions sys s = ok ts)
+    (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
+    (hblock : ∀ t ∈ ts.val, PInst.block_number partition t.to = ok (blockNumber t.to)) :
+    ∃ result, strong_bisim_signature LTSInst PInst s sys partition builder0 = ok result ∧
+      (∀ μ β, (μ, β) ∈ result.val ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber) ∧
+      List.Pairwise entLt result.val := by
+  rw [strong_bisim_signature]
+  rcases (alloc.vec.Vec.clear_spec (T := Entry) Global builder0) with ⟨builder1, hb1, hb1val⟩
+  let iter : alloc.vec.into_iter.IntoIter Transition := ts
+  have hlen : (builder1.val ++ List.map (sigEntry blockNumber) ts.val).length ≤ Usize.max := by
+    simp [hb1val]
+  rcases (strong_bisim_signature_loop_spec PInst partition iter builder1 ts.val blockNumber
+      hblock hlen (by rfl)) with ⟨builder2, hb2, hb2val⟩
+  rcases (core.slice.Slice.sort_unstable_spec (T := Entry)
+      (verified.Pair.Insts.CoreCmpOrd
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
+      builder2.slice) with ⟨s1, hs1, hs1perm, hs1sorted⟩
+  let builder3 : alloc.vec.Vec Entry := { slice := s1 }
+  rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
+      (verified.Pair.Insts.CoreCmpPartialEqPair
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
+      builder3) with ⟨result, hdedup, hdedupspec⟩
+  obtain ⟨hdmem, hdsub, hdchain⟩ := hdedupspec entry_partialEq_lawful
+  refine ⟨result, ?_, ?_, ?_⟩
+  · rw [hb1]
+    simp
+    rw [houtgoing]
+    simp
+    simp [alloc.vec.IntoIteratorVec.into_iter]
+    rw [hb2]
+    simp [Aeneas.Std.lift, alloc.vec.Vec.deref_mut]
+    rw [hs1]
+    simp
+    rw [hdedup]
+  · intro μ β
+    have hperm : List.Perm s1.val builder2.val := by simpa [alloc.vec.Vec.val] using hs1perm
+    calc
+      (μ, β) ∈ result.val ↔ (μ, β) ∈ builder3.val := hdmem (μ, β)
+      _ ↔ (μ, β) ∈ builder2.val := by
+            have hb3 : builder3.val = s1.val := by simp [builder3, alloc.vec.Vec.val]
+            rw [hb3]
+            exact List.Perm.mem_iff hperm
+      _ ↔ (μ, β) ∈ List.map (sigEntry blockNumber) ts.val := by
+            rw [hb2val, hb1val]
+            simp
+      _ ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber :=
+            sigEntry_mem_iff LTSInst sys s blockNumber ts houtgoing μ β
+  · have hb3 : builder3.val = s1.val := by simp [builder3, alloc.vec.Vec.val]
+    have hsorted : List.Pairwise (fun a b => entryOrd.cmp a b ≠ ok Ordering.gt) result.val :=
+      List.Pairwise.sublist hdsub (by rw [hb3]; exact hs1sorted entry_ord_total)
+    exact sorted_chain_strict hsorted hdchain
 
 /-- `LabelledTransitionSystem`'s `LTS` instance is a specific `LTS`
     implementor, so its correctness result is a corollary of the generic

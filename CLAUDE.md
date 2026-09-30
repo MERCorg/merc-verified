@@ -4,8 +4,8 @@
 - **`MercVerified/Code/*External.lean`** — Hand-written stubs for external functions (e.g. HashMap ops). Edit as needed.
 - **`Signatures/`** — Human-vetted: `Basic.lean`, `BranchingBisimilarity.lean`, `Signature.lean`, `InductiveSignatures.lean`, and their `*_Pins.lean` siblings (e.g. `Signature_Pins.lean`). Make only minimal, targeted changes.
 - **`Signatures/Proofs/`** — Machine-generated proofs. May be freely edited or regenerated.
-- **`MercVerified/Signatures/`** — Human-vetted contract specs for the translated code (e.g. `Refinement.lean`, `StrongSignature.lean`) and their `*_Pins.lean` siblings (e.g. `Refinement_Pins.lean`). Same split as `Signatures/`: each spec file states a claim as a named `def ... : Prop`, never a theorem. Make only minimal, targeted changes.
-- **`MercVerified/Signatures/Proofs/`** — Machine-generated proofs of the specs above. May be freely edited or regenerated. Each proved "headline" theorem is guarded against drift by a pinned `example` in the matching human-vetted `*_Pins.lean` file (not in this directory). See the lean-conventions skill for the full spec/Proofs/pin pattern.
+- **`MercVerified/Refinement/`** (for the `merc_refinement` crate) and **`MercVerified/Lts/`** (for the `merc_lts` crate; namespace `MercVerified.Lts`) — Human-vetted contract specs and definitions for the translated code (e.g. `Refinement/Refinement.lean`, `Lts/Lts.lean`) and the `*_Pins.lean` siblings under `Pins/` (e.g. `Refinement/Pins/Refinement_Pins.lean`). Same split as `Signatures/`: each spec file states a claim as a named `def ... : Prop`, never a theorem. Make only minimal, targeted changes.
+- **`MercVerified/{Refinement,Lts}/Proofs/`** — Machine-generated proofs of the specs above. May be freely edited or regenerated. Each proved "headline" theorem is guarded against drift by a pinned `example` in the matching human-vetted `*_Pins.lean` file (not in this directory). See the lean-conventions skill for the full spec/Proofs/pin pattern.
 
 ## Skills
 

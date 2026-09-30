@@ -1,5 +1,5 @@
 import MercVerified.Lts.Lts
-import MercVerified.Refinement.Proofs.Partition_Proofs
+import MercVerified.Lts.Proofs.Foundation_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -73,7 +73,6 @@ but says nothing about `iter_states` or `num_of_transitions`, which is what the 
 extraction lemma needs.
 -/
 
-open MercVerified.Refinement.Proofs
 open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag Transition LTS)
@@ -85,8 +84,9 @@ namespace MercVerified.Lts
 /-- `incoming` indexes the incoming transitions of every in-range state exactly: for each
     state `s` with `s.index.val < n`, `IncomingTransitions::incoming_transitions incoming s`
     succeeds and its result contains exactly the `FromTransition`s `{ label := μ, from := s' }`
-    for which the LTS has a transition `s' →[μ] s` - i.e. exactly the transitions whose
-    *target* is `s`.
+    for which the LTS has a transition `s' →[μ] s` from an in-range state `s'` - i.e. exactly
+    the transitions whose *target* is `s`. (`s' < n` is part of the statement: the trait says
+    nothing about `outgoing_transitions` of an out-of-range state.)
 
     Stated as a membership (`∈`) characterisation rather than an ordered one. The translated
     `incoming_transitions` sorts each state's range by label (`sort_incoming`, an insertion
@@ -100,9 +100,10 @@ def IncomingTransitionsCorrect {L Label : Type} (LTSInst : LTS L Label) (sys : L
       ∃ res : alloc.vec.Vec verified.merc_lts.incoming_transitions.FromTransition,
         verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions
             incoming s = ok res ∧
+        (∀ i ∈ res.val, i.«from».index.val < n.val) ∧
         ∀ i : verified.merc_lts.incoming_transitions.FromTransition, i ∈ res.val ↔
           ∃ μ : TagIndex Std.Usize LabelTag, ∃ s' : TagIndex Std.Usize StateTag,
-            tr LTSInst sys s' μ s ∧ (i.label, i.«from») = (μ, s')
+            s'.index.val < n.val ∧ tr LTSInst sys s' μ s ∧ (i.label, i.«from») = (μ, s')
 
 end MercVerified.Lts
 
@@ -327,17 +328,17 @@ outgoing arrays. -/
     equation of `usize`s. -/
 def natSum (c : List Sz) (k : Nat) : Nat := ((c.take k).map (fun x => x.val)).sum
 
-private lemma natSum_zero (c : List Sz) : natSum c 0 = 0 := by simp [natSum]
+lemma natSum_zero (c : List Sz) : natSum c 0 = 0 := by simp [natSum]
 
 /-- `Usize.max` is one below `2^numBits`, so a total bounded by it fits. -/
-private lemma lt_two_pow_of_le_max {k : Nat} (h : k ≤ Usize.max) :
+lemma lt_two_pow_of_le_max {k : Nat} (h : k ≤ Usize.max) :
     k < 2 ^ UScalarTy.Usize.numBits := by
   have h2 : Usize.max + 1 = 2 ^ UScalarTy.Usize.numBits := by
     simp [Usize.max, Usize.numBits]
   omega
 
 /-- Extending the prefix by one slot adds exactly that slot's value. -/
-private lemma natSum_succ (c : List Sz) (i : Nat) (h : i < c.length) :
+lemma natSum_succ (c : List Sz) (i : Nat) (h : i < c.length) :
     natSum c (i + 1) = natSum c i + c[i].val := by
   have htake : c.take (i + 1) = c.take i ++ [c[i]] := by
     rw [List.take_add_one, List.getElem?_eq_getElem h]
@@ -1133,7 +1134,7 @@ theorem count_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : 
     enumerated states report. -/
 theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz)
-    (hout : ∀ s, LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
+    (hout : ∀ s, s ∈ sv.val → LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
     (hin : ∀ s, s ∈ sv.val → ∀ t, t ∈ (outVec LTSInst sys s).val → t.to.index.val < c0.val.length)
     (hovf : ∀ j, j < c0.val.length →
       (c0.val.getD j 0#usize).val + seenCount LTSInst sys sv.val sv.val.length j ≤ Usize.max) :
@@ -1205,7 +1206,7 @@ theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
             rwa [hsucc j] at h1
           rw [hv]
           omega
-        rcases count_all_incoming_step LTSInst sys st.1 st.2 s sl hst (hout s)
+        rcases count_all_incoming_step LTSInst sys st.1 st.2 s sl hst (hout s (List.mem_of_mem_drop hmem))
             (fun t ht => by rw [hlen]; exact hin s (List.mem_of_mem_drop hmem) t ht) hmax with
           ⟨iter1, counts1, hbody, hit1, hpost⟩
         have hle' : sl.length + 1 ≤ sv.val.length := by
@@ -1254,7 +1255,7 @@ theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
 /-- `count_all_incoming_loop` in equation form. -/
 theorem count_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz)
-    (hout : ∀ s, LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
+    (hout : ∀ s, s ∈ sv.val → LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
     (hin : ∀ s, s ∈ sv.val → ∀ t, t ∈ (outVec LTSInst sys s).val → t.to.index.val < c0.val.length)
     (hovf : ∀ j, j < c0.val.length →
       (c0.val.getD j 0#usize).val + seenCount LTSInst sys sv.val sv.val.length j ≤ Usize.max) :
@@ -1271,7 +1272,7 @@ theorem count_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
 theorem count_all_incoming_state_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz)
     (hiter : LTSInst.iter_states sys = ok sv)
-    (hout : ∀ s, LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
+    (hout : ∀ s, s ∈ sv.val → LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
     (hin : ∀ s, s ∈ sv.val → ∀ t, t ∈ (outVec LTSInst sys s).val → t.to.index.val < c0.val.length)
     (hovf : ∀ j, j < c0.val.length →
       (c0.val.getD j 0#usize).val + seenCount LTSInst sys sv.val sv.val.length j ≤ Usize.max) :
@@ -1330,7 +1331,8 @@ theorem gather_loop_spec {α : Type} (n : Sz) (f : Nat → α) (d : α) (hn : n.
   · intro st hinv
     rcases hinv with ⟨hend, hle, hlen, hpt⟩
     by_cases hlt : st.1.start.val < st.1.end.val
-    · have hlen2 : st.2.val.length < Usize.max := by omega
+    · have hendv : st.1.end.val = n.val := by rw [hend]
+      have hlen2 : st.2.val.length < Usize.max := by omega
       rcases hstep st.1 st.2 hend hlen2 hlt hlen with ⟨it1, v1, hbody, hstart, hend', hvval⟩
       have hinv' : gatherInv n f d (it1, v1) := by
         refine ⟨hend'.trans hend, ?_, ?_, ?_⟩
@@ -2369,8 +2371,11 @@ def PaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     pairs. -/
 def PaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
+    (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+    (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (cursor : alloc.vec.Vec Sz) (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src : alloc.vec.Vec (TagIndex Sz StateTag)) : Prop :=
+  labels.val.length = labels0.val.length ∧ src.val.length = src0.val.length ∧
   cursor.val.length = sv.val.length ∧
   (∀ j, j < sv.val.length →
     (cursor.val.getD j 0#usize).val = (r.val.getD j 0#usize).val
@@ -2388,7 +2393,7 @@ theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : 
     (hinv : PaInv LTSInst sys sv r labels0 src0 st) :
     verified.merc_lts.incoming_transitions.place_all_incoming_loop.body
         LTSInst sys st.1 st.2.1 st.2.2.1 st.2.2.2 = ok (done st.2) ∧
-      PaPost LTSInst sys sv r st.2.1 st.2.2.1 st.2.2.2 := by
+      PaPost LTSInst sys sv r labels0 src0 st.2.1 st.2.2.1 st.2.2.2 := by
   have hn : alloc.vec.into_iter.IteratorIntoIter.next
         (st.1 : alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag))
       ⦃ p => p.1 = none ∧ p.2 = st.1 ⦄ := vec_next_none st.1 h
@@ -2402,7 +2407,7 @@ theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : 
       rw [hp, hpt.1, hit1]
       simp
     · rcases hinv with ⟨hiter, hlenC, hlenL, hlenS, hval, hcont⟩
-      refine ⟨hlenC, ?_, ?_⟩
+      refine ⟨hlenL, hlenS, hlenC, ?_, ?_⟩
       · intro j hj
         have hz : sv.val.drop (sv.val.length - st.1.val.length) = [] :=
           hiter.symm.trans h
@@ -2594,14 +2599,14 @@ theorem place_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
       (src1 : alloc.vec.Vec (TagIndex Sz StateTag)),
       verified.merc_lts.incoming_transitions.place_all_incoming_loop LTSInst st.1 sys
           st.2.1 st.2.2.1 st.2.2.2 = ok (cursor1, labels1, src1) ∧
-      PaPost LTSInst sys sv r cursor1 labels1 src1 := by
+      PaPost LTSInst sys sv r labels0 src0 cursor1 labels1 src1 := by
   have hspec : verified.merc_lts.incoming_transitions.place_all_incoming_loop LTSInst st.1 sys
           st.2.1 st.2.2.1 st.2.2.2
-        ⦃ fun c : PiRes => PaPost LTSInst sys sv r c.1 c.2.1 c.2.2 ⦄ := by
+        ⦃ fun c : PiRes => PaPost LTSInst sys sv r labels0 src0 c.1 c.2.1 c.2.2 ⦄ := by
     apply loop.spec_decr_nat
       (measure := fun st : PaSt => st.1.val.length)
       (inv := PaInv LTSInst sys sv r labels0 src0)
-      (post := fun c : PiRes => PaPost LTSInst sys sv r c.1 c.2.1 c.2.2)
+      (post := fun c : PiRes => PaPost LTSInst sys sv r labels0 src0 c.1 c.2.1 c.2.2)
       (body := fun st => verified.merc_lts.incoming_transitions.place_all_incoming_loop.body
         LTSInst sys st.1 st.2.1 st.2.2.1 st.2.2.2)
       (x := st)
@@ -2655,7 +2660,7 @@ theorem place_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
       (src1 : alloc.vec.Vec (TagIndex Sz StateTag)),
       verified.merc_lts.incoming_transitions.place_all_incoming LTSInst sys cursor0
           labels0 src0 = ok (cursor1, labels1, src1) ∧
-      PaPost LTSInst sys sv r cursor1 labels1 src1 := by
+      PaPost LTSInst sys sv r labels0 src0 cursor1 labels1 src1 := by
   have hinv0 : PaInv LTSInst sys sv r labels0 src0
       ((sv : alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag)), (cursor0, (labels0, src0))) :=
     ⟨by simp, hclen, rfl, rfl,
@@ -2818,7 +2823,7 @@ def IsInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
 
 /-- The scalar carried by `1#usize`; `omega` treats `UScalar.val` of a literal as an opaque
     atom, so the generated `j - 1#usize` has to be opened up explicitly. -/
-private theorem one_val : (1#usize : Sz).val = 1 := rfl
+theorem one_val : (1#usize : Sz).val = 1 := rfl
 
 /-- `j ≤ start`: there is nothing left of `j` to compare against, so the held pair is already
     in place. -/
@@ -3834,7 +3839,7 @@ def gatherFromInv {α : Type} (n s : Sz) (f : Nat → α) (d : α) :
 /-- A loop whose body is "advance the range, or stop; append `f start` and continue",
     started at `s` instead of at `0`, copies `f s, …, f (n-1)` into the accumulator. -/
 theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (hsn : s.val ≤ n.val)
-    (hn : n.val < Usize.max)
+    (hn : n.val ≤ Usize.max)
     (body : ItSz → alloc.vec.Vec α →
       Result (ControlFlow (ItSz × alloc.vec.Vec α) (alloc.vec.Vec α)))
     (hstep : ∀ (it : ItSz) (v : alloc.vec.Vec α), it.end = n →
@@ -3863,7 +3868,8 @@ theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (
   · intro st hinv
     rcases hinv with ⟨hend, hle, hle2, hlen, hpt⟩
     by_cases hlt : st.1.start.val < st.1.end.val
-    · have hlen2 : st.2.val.length < Usize.max := by omega
+    · have hendv : st.1.end.val = n.val := by rw [hend]
+      have hlen2 : st.2.val.length < Usize.max := by omega
       rcases hstep st.1 st.2 hend hlen2 hlt hlen with ⟨it1, v1, hbody, hstart, hend', hvval⟩
       have hinv' : gatherFromInv n s f d (it1, v1) := by
         refine ⟨hend'.trans hend, ?_, ?_, ?_, ?_⟩
@@ -3908,10 +3914,10 @@ theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (
       exact absurd hk (by simp)
 
 /-- The empty `FromTransition`, read by `getD` at an out-of-range position. -/
-private abbrev zeroFT : FromTransition := ⟨zeroLabel, zeroState⟩
+abbrev zeroFT : FromTransition := ⟨zeroLabel, zeroState⟩
 
 /-- The `FromTransition` stored at position `p` of the two flat arrays. -/
-private def ftAt (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
+def ftAt (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
     (p : Nat) : FromTransition :=
   ⟨(pairAt labels src p).1, (pairAt labels src p).2⟩
 
@@ -3940,8 +3946,13 @@ theorem incoming_transitions_loop_step
   refine ⟨it1, res1, ?_, hstart, hend, hresval⟩
   unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions_loop.body
   rw [hnext]
-  simp only [hopt, alloc.vec.Vec.index_slice_index]
-  rw [hidx0, hidx1, hx0, hx1, hpush]
-  rfl
+  subst hopt
+  subst hx0 hx1
+  have hft : ∀ (a : TagIndex Sz LabelTag) (b : TagIndex Sz StateTag),
+      verified.merc_lts.incoming_transitions.FromTransition.new a b = ok ⟨a, b⟩ := fun _ _ => rfl
+  have hpush' := hpush
+  simp only [ftAt, pairAt, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hbound,
+    List.getElem?_eq_getElem hsrc, Option.getD_some] at hpush'
+  simp [hidx0, hidx1, hft, hpush']
 
 end MercVerified.Lts.Proofs
