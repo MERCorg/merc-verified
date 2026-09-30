@@ -1,4 +1,4 @@
-import MercVerified.Signatures.StrongSignature
+import MercVerified.Basic
 import MercVerified.Signatures.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
@@ -8,13 +8,10 @@ import Aeneas.Std.WP
 Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
 `strong_bisim_signature_spec_general` proves the `StrongBisimSignatureSpec`
-contract stated in `MercVerified/Signatures/StrongSignature.lean`, generically
-for any `LTS` trait implementor, using the private helper lemmas below it.
-`strong_bisim_signature_spec` specializes it to
-`LabelledTransitionSystem`. Their contract pins (the `example`s
-re-stating their exact closed signatures, so `lake build` fails if a
-regeneration drifts from the pinned shape) live in the human-vetted
-`MercVerified/Signatures/StrongSignature_Pins.lean`, not in this file.
+contract (defined below - an internal lemma of the refinement proof, not a
+pinned contract), generically for any `LTS` trait implementor, using the
+private helper lemmas below it. `strong_bisim_signature_spec` specializes it to
+`LabelledTransitionSystem`.
 -/
 
 open Aeneas Aeneas.Std Aeneas.Std.WP Result
@@ -25,6 +22,29 @@ open verified.merc_reduction.signatures (strong_bisim_signature strong_bisim_sig
 open verified.merc_reduction.partition (Partition)
 open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open verified.merc_lts.lts.LTS (toLTS toLTS_Tr tr)
+
+namespace MercVerified.Signatures
+
+/-- Contract: the translated `strong_bisim_signature` computes `StrongSignature`. -/
+def StrongBisimSignatureSpec
+    {L Label P : Type}
+    (LTSInst : LTS L Label)
+    (PInst : Partition P)
+    (sys : L)
+    (partition : P)
+    (s : TagIndex Std.Usize StateTag)
+    (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
+    (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
+    (_hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
+    (ts : alloc.vec.Vec Transition)
+    (_houtgoing : LTSInst.outgoing_transitions sys s = ok ts) : Prop :=
+  ∃ result,
+    verified.merc_reduction.signatures.strong_bisim_signature
+        LTSInst PInst s sys partition builder0 = ok result
+    ∧ ∀ μ β, (μ, β) ∈ result.val ↔
+        (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber
+
+end MercVerified.Signatures
 
 namespace MercVerified.Signatures.Proofs
 

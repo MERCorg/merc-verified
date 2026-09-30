@@ -7,7 +7,8 @@ import Aeneas.Std.WP
 
 Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
-`LabelledTransitionSystemValid` (`MercVerified/Basic.lean`) states the raw structural
+`LabelledTransitionSystemValid` (defined below; moved out of `Basic.lean` while it is not part
+of the pinned contract, to be restated as a theorem later - see `docs/axiom-audit-plan.md`) states the raw structural
 validity of a `LabelledTransitionSystem`'s internal representation - exactly what Rust's
 `assert_valid` checks, restricted to what `LTS.WellFormed` needs, and phrased over the
 opaque `ByteCompressedVec` primitive's `index`/`len` (which carries no model of its own).
@@ -23,6 +24,47 @@ open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
 open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
+
+/-- Raw structural validity of a `LabelledTransitionSystem`'s internal representation: exactly
+    what Rust's `assert_valid` (`labelled_transition_system.rs:365-447`, run by every safe
+    constructor - `from_raw_parts`, `new`, `relabel`, ... - so no reachable instance skips it)
+    checks, restricted to the part `LTS.WellFormed` needs: `states` has one entry per state plus
+    a sentinel (`statesAt numStates = numTransitions`, `statesAt` monotone), every transition's
+    target is `< numStates`, and `initial_state.value() < numStates`.
+
+    Phrased over the boundary `ByteCompressedVec` primitive's `index`/`len` (an existential
+    `statesAt : Nat → Nat` stands in for the array read, since `ByteCompressedVec` is a fully
+    opaque external type with no `.val` model of its own - see
+    `MercVerified/Code/TypesExternal_Template.lean`). `lts_wellFormed` (below) derives
+    `LTS.WellFormed` from this by real proof. It is a *hypothesis* of the contract theorems, not
+    an axiom: it holds for every value built by a safe constructor (`from_raw_parts` runs
+    `assert_valid`), which is to be proved once those constructors are translated
+    (see `docs/axiom-audit-plan.md`). -/
+def LabelledTransitionSystemValid {Label : Type}
+    (sys : LabelledTransitionSystem Label) : Prop :=
+  ∃ (numStates numTransitions : Nat) (statesAt : Nat → Nat),
+    (∃ statesLen : Std.Usize,
+      merc_collections.compressed_vec.ByteCompressedVec.len
+        verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry sys.states = ok statesLen ∧
+      statesLen.val = numStates + 1) ∧
+    (∀ i : Std.Usize, i.val ≤ numStates →
+      ∃ v : Std.Usize, merc_collections.compressed_vec.ByteCompressedVec.index
+        verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry sys.states i = ok v ∧
+        v.val = statesAt i.val) ∧
+    (∀ i, i < numStates → statesAt i ≤ statesAt (i + 1)) ∧
+    statesAt numStates = numTransitions ∧
+    sys.initial_state.index.val < numStates ∧
+    (∀ k : Std.Usize, k.val < numTransitions →
+      ∃ vl : TagIndex Std.Usize LabelTag, merc_collections.compressed_vec.ByteCompressedVec.index
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry
+          LabelTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize)
+        sys.transition_labels k = ok vl) ∧
+    (∀ k : Std.Usize, k.val < numTransitions →
+      ∃ vt : TagIndex Std.Usize StateTag, merc_collections.compressed_vec.ByteCompressedVec.index
+        (verified.merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry
+          StateTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize)
+        sys.transition_to k = ok vt ∧
+        vt.index.val < numStates)
 
 namespace MercVerified.Signatures.Proofs
 
@@ -147,7 +189,7 @@ private theorem outgoing_transitions_loop_bounded
     simp [hloop_unfold, hloop']
 
 /-- `LabelledTransitionSystem` satisfies the `LTS.WellFormed` requirement, given the raw
-    structural validity `LabelledTransitionSystemValid` (`MercVerified/Basic.lean`) - a real
+    structural validity `LabelledTransitionSystemValid` (defined in this file) - a real
     proof, not an axiom, conditional on this hypothesis (rather than asserted unconditionally
     for every `sys`, which is not true in general: `ByteCompressedVec` is a fully opaque
     external type with no invariant of its own connecting `index` and `len`; only a value

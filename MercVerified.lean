@@ -1,2 +1,2 @@
 import MercVerified.Basic
-import MercVerified.Signatures.StrongSignature
+import MercVerified.Signatures.Refinement

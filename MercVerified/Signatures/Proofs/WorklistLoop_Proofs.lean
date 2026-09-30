@@ -2168,6 +2168,404 @@ theorem TermInv.worklist_length_le (n : Nat) (ctx : WorklistContextStrong)
 def worklistMeasure (n : Nat) (ctx : WorklistContextStrong) : Nat :=
   (n - numBlocks ctx) * (n + 1) + ctx.worklist.val.length
 
+/-!
+# PLAN: remaining proofs (`strong_run_worklist_loop_terminates`, `_partial_correct`)
+
+Concept only - nothing below is implemented yet. Everything is for `BRANCHING = false`
+(`maybe_mark_backward_closure` is then `ok partition`, and `mark_dirty_states` takes its
+last, non-branching arm).
+
+## 0. Failure model (what may be axiomatised, what must be proved)
+
+- *Environmental* failures (OOM, capacity overflow, I/O) are assumed away by axioms that are
+  split into a pure success statement and a separate content statement, each docstring saying
+  "assumes no allocation failure". These live in `Code/FunsExternal.lean` /
+  `Code/FunsExternalSpecs.lean` (the axiom-policy-approved files).
+- *Logic* failures (index out of bounds, `usize` over/underflow, `massert`/`debug_assert`)
+  are never axiomatised; the proof derives their absence from invariants.
+- *External checks* that panic only on a broken invariant get a **conditional** axiom.
+
+New axioms needed (all others are already Aeneas theorems, e.g. `Vec.push_spec`,
+`Vec.resize_spec`, or existing axioms such as `Vec.clear_spec`, `sort_unstable_spec`):
+1. `BlockPartition.assert_consistent_ok : PartInv n p → assert_consistent p = ok true`
+   (conditional; Rust returns `true` or panics). Needs `PartInv` (section 1) declared in
+   `FunsExternalSpecs.lean`, or restated there over elementary conditions.
+2. `Vec.extend` over a `BlockIter`: `bi.end ≤ bi.elements.length →
+   extend v bi = ok v' ∧ v'.val = v.val ++ ((bi.elements.val.drop bi.index).take (bi.end - bi.index))`
+   (content + success; the bound is a logic precondition, not assumed).
+3. `HashMapKVSGlobal.default_spec`: `default` succeeds, and every lookup in it is `ok none`.
+4. `TagIndex.new`/`value`, `Vec.with_capacity`, `Vec.len`: check whether these are already
+   transparent defs (most are); only add axioms for what is still opaque.
+5. `IncomingTransitions.incoming_transitions` success/bounds: expected to come from
+   `IncomingTransitions_Proofs.lean` (already 3.9k lines) given `hwf`; add nothing unless a
+   gap shows up.
+6. `resize_with` length (`state_to_key.length = n`): the current `resize_with_spec` gives no
+   length. Add `len = n` content axiom, or replace by a proof if `resize_with` can be modelled
+   by a `List.replicate` of the (pure) closure.
+
+## 1. Partition invariant `PartInv n p` (new file `Proofs/PartitionInv_Proofs.lean`)
+
+Public, replaces the private `PartWF` for this purpose:
+- (L)  `elements`, `element_to_block`, `element_offset` all have length `n`.
+- (E)  `∀ i < n, elements[i].index < n ∧ element_offset[elements[i].index] = i`
+       (elements is a permutation, `element_offset` its inverse).
+- (B)  `∀ k < N, begin_k < end_k ≤ n ∧ begin_k ≤ marked_split_k ≤ end_k`.
+- (D)  `∀ s < n, element_to_block[s].index < N ∧ begin(e2b s) ≤ offset s < end(e2b s)`.
+- (Dj) blocks have pairwise disjoint ranges.
+Derived lemmas:
+- `blocks_le_n`: (B)+(Dj) give `N ≤ n` (injection `k ↦ begin_k` into `range n`).
+- `pos_block_unique`: a position in two blocks' ranges forces the blocks to be equal.
+- `elem_in_own_block`: `elements[p]` lies in block `k` iff `p ∈ range k` (from E, D, Dj).
+Preservation lemmas (each proved from a bare success hypothesis, like the existing
+`*_blocks_length` lemmas, or with `PartInv` as precondition where a bound is needed):
+- `swap_elements_partInv` (extends `swap_elements_spec`; `blocks`/`e2b` unchanged).
+- `mark_element_spec`: with `s < n`, `PartInv n p`, `mark_element p s = ok p'`, then
+  `PartInv n p'`, only `marked_split` of `e2b s` changes (decreases or stays), and
+  afterwards `marked_split(e2b s) < end(e2b s)` (this is the fact the worklist's
+  "queued blocks are marked" invariant needs).
+- `init_partInv`: `BlockPartition.new n` satisfies it (from `block_partition_new_spec`).
+
+## 2. Contract of `finish_partition_marked` (in `PartitionInv_Proofs.lean`)
+
+Hypotheses (the "builder is dense" facts, section 3 shows `strong_process_marked_elements`
+establishes them): `PartInv n p`; block `b` with `marked_split < end`;
+`old_elements` is a permutation of `elements[ms..end)`; `block_sizes.length = K ≥ 1`;
+every `block_sizes[j] > 0`; `sum block_sizes = end - ms`; `index_to_block[i] < K`; and
+`|{i | index_to_block[i] = j}| = block_sizes[j]`.
+Conclusions: returns `ok (nbi, p', builder')` with
+- `PartInv n p'`;
+- `nbi = b :: (List.range' N k).map uTag` where `k = K` if `has_unmarked` else `K - 1`,
+  and `numBlocks p' = N + k`;
+- all blocks of `p'` are unmarked (`marked_split = end`) - needed for the worklist invariant;
+- `blocks` outside `{b} ∪ [N, N+k)` unchanged.
+Proof split along the code (all bounds discharged from the hypotheses):
+- (a) loop 0 (`finish_partition_marked_loop0`, `IterMut` over `block_sizes` with `back`
+  closures): invariant = prefix of `block_sizes` already converted to start offsets and the
+  matching blocks already pushed; needs a helper for the `IterMut`/`back` idiom (compare the
+  existing `Slice.iter_mut` handling in Aeneas std).
+- (b) loop 1 (`..._loop0_loop0`, `Enumerate` over `index_to_block`, counting-sort scatter):
+  invariant = elements/offsets/e2b already scattered for the processed prefix; positions
+  handed out are pairwise distinct and cover `[ms,end)` at the end (counting-sort lemma:
+  offsets `cum_j + c_j` with `c_j ≤ size_j`).
+- (c) `new_block_to_swap` (two small loops): `nbi` shape, `max_block_index ∈ nbi`.
+- (d) `swap_blocks` (two `Range` loops re-labelling `element_to_block`): preserves `PartInv`
+  and the multiset of block records; only used with `max_block_index ∈ nbi`.
+
+## 3. `strong_process_marked_elements` totality (extends the existing `spme*` lemmas)
+
+Currently `SpmeInvariant` (per-element `LoopElementOk`) is a *hypothesis*. Discharge it:
+- `state_index < n`: from `PartInv` (E) and the sort permutation.
+- `outgoing_transitions` succeeds with targets `< n`: `hwf`.
+- `strong_bisim_signature` succeeds: reuse `StrongSignature_Proofs.lean`; needs `e2b`
+  bounds `(D)` for the targets.
+- `strong_intern_signature` total: `strong_intern_signature_total`; the `id` map is the
+  fresh `default` (axiom 3), so the first-miss case gives `kts.length < Usize.max` via
+  `kts.length ≤ old_elements.length ≤ n`.
+- `index_to_block`/`state_to_key` `index_mut`: lengths (`hIdx`, `state_to_key.length = n`).
+- `count_block_occurrence`: `count_block_occurrence_spec_ok` (its `+ 1` side conditions from
+  `count ≤ old_elements.length ≤ n < Usize.max`).
+Add the *density* output the finish contract consumes: after the loop
+`block_sizes.length = kts.length = K`, every `block_sizes[j] > 0`,
+`index_to_block[i] < K`, `sum block_sizes = old_elements.length`, and
+`block_sizes[j] = |{i | index_to_block[i] = j}|` (loop invariant on the `spmeAcc` fold;
+the interned index is either an existing class or the fresh class `K`, so density holds).
+Also `marked_elements_sorted`: `old_elements` is a perm of `elements[ms..end)`
+(axiom 2 + `sort_unstable_spec`), `index_to_block` has length `end - ms`, sizes cleared.
+
+## 4. One-iteration step lemma (this file)
+
+Define `LoopInv n ctx := PartInv n ctx.partition ∧ TermInv n ctx ∧
+ctx.state_to_key.length = n` (`TermInv` as above, plus `worklist` blocks `< N`).
+`strong_process_worklist_block_step`: from `LoopInv n ctx`, `hwf`, `hinc`, and a pop
+`(some b, w)` of `ctx.worklist`, `strong_process_worklist_block false ... {ctx with worklist := w} b`
+returns `ok ctx'` with `LoopInv n ctx'` and `worklistMeasure n ctx' < worklistMeasure n ctx`.
+Case analysis (uses `strong_process_worklist_block_contract` for the do-mirror):
+- trivial block (`len = 1`): `trivial_partition_marked_contract`; `nbi = [b]`, no split,
+  `mark_dirty_new_blocks` is a no-op (`b = b` is skipped), worklist shrinks by 1.
+- non-trivial: sections 2-3; `N' = N + k`. If `k = 0` (no unmarked part, one class):
+  `nbi = [b]`, no-op dirty step, measure drops by 1. If `k ≥ 1`: measure drops by
+  `(n+1)·k` in the first term and the second stays `≤ N' ≤ n`.
+- `mark_dirty_new_blocks` on `nbi.tail` (new blocks): loop invariant over `markDirtyAcc`
+  (existing) = `PartInv`, worklist `Nodup`, every queued block `< N'` and marked.
+  Per state: `block_number`/`block`/`has_marked`/`push`/`mark_element` succeed by `PartInv`;
+  push only when the block is *unmarked*, hence not already queued (queued blocks are all
+  marked), and it is marked right after (`mark_element_spec`). `from < n` from
+  `IncomingTransitions_Proofs`.
+
+## 5. `strong_run_worklist_loop_terminates`
+
+`loop.spec_decr_nat` with `measure := worklistMeasure n`, `inv := LoopInv n`,
+mirroring `strong_run_worklist_loop_loop_base`:
+- worklist empty: `strong_run_worklist_loop_loop_base`;
+- else `worklist_pop_some` + step lemma + `strong_run_worklist_loop_body_pop_ext`
+  (the iteration counter `it + 1` never overflows: `it ≤` number of iterations `≤ measure`,
+  add `it.val + measure ≤ Usize.max`-style clause to the invariant, or bound `it ≤ N·(n+1)`).
+`LoopInv n ctx0` comes from `initial_worklistInv`-style lemma: `init_partInv`,
+worklist `[uTag 0]` marked (`marked_split = 0 < n = end`), `state_to_key.length = n`.
+Then `strong_run_worklist_loop` = `new_worklist_progress` (axiom) + the loop.
+
+## 6. `strong_run_worklist_loop_partial_correct` (after termination is in)
+
+Independent of termination: induction over the loop (`loop.spec` with `WorklistInv` +
+the section-4 invariants). Needs the semantic step `WorklistInv` preservation:
+- coherence/coverage: from `PartInv` (D), (E) and the coverage of `elements`
+  (add `elements` is a permutation of `range n` to `PartInv`; already implied by (E) + (L)).
+- *settledness*: the block map `blockOf` after splitting `b` into classes with equal
+  `strong_bisim_signature` (relative to the *pre-split* `state_to_key`/`blockOf`);
+  a block off the worklist stays settled because a state's signature only changes when
+  a successor's block changes, and every such state is in a block that `mark_dirty_states`
+  re-queues (backward closure over `incoming_transitions`). This is the core lemma;
+  it needs `IncomingTransitions` correctness (`IncomingTransitions_Proofs.lean`) and
+  `StrongSignature` invariance under refinement of `blockOf` (`StrongSignature_Proofs`).
+- *completeness* (`StrongFixPoint` states never separated): splitting only by equal
+  signature; `StrongFixPoint s s'` states have equal signature w.r.t. any coarser-than-
+  fixpoint `blockOf` (`Signatures/Proofs`: `IsStable`/`FixPoint` lemmas).
+- final: worklist empty gives `WorklistInv.toCorrect`.
+Suggested order: 1 -> 2 -> 3 -> 4 -> 5, then 6. Each step compiles on its own and can be
+committed separately; 6 is the largest single lemma.
+-/
+
+/-!
+# CONCEPT PROOFS (unchecked Lean, kept in a comment; to be made real step by step)
+
+Nothing in this block has been run through Lean. Names of helper lemmas are the ones the plan
+above introduces. Accessors use `getD` so that statements need no bound proofs.
+
+```
+-- ===== accessors and the partition invariant =====================================
+def blk0 : Block := { begin := 0#usize, marked_split := 0#usize, «end» := 0#usize }
+def blkAt (p : BlockPartition) (k : Nat) : Block := p.blocks.val.getD k blk0
+def eAt   (p : BlockPartition) (i : Nat) : ST := p.elements.val.getD i (uTag 0)
+def offAt (p : BlockPartition) (s : Nat) : Nat := (p.element_offset.val.getD s 0#usize).val
+def e2bAt (p : BlockPartition) (s : Nat) : Nat := (p.element_to_block.val.getD s (uTag 0)).index.val
+
+structure PartInv (n : Nat) (p : BlockPartition) : Prop where
+  len_e   : p.elements.val.length = n
+  len_e2b : p.element_to_block.val.length = n
+  len_off : p.element_offset.val.length = n
+  perm    : ∀ i, i < n → (eAt p i).index.val < n ∧ offAt p (eAt p i).index.val = i
+  blk     : ∀ k, k < p.blocks.val.length →
+              (blkAt p k).begin.val < (blkAt p k).«end».val ∧ (blkAt p k).«end».val ≤ n ∧
+              (blkAt p k).begin.val ≤ (blkAt p k).marked_split.val ∧
+              (blkAt p k).marked_split.val ≤ (blkAt p k).«end».val
+  own     : ∀ s, s < n → e2bAt p s < p.blocks.val.length ∧
+              (blkAt p (e2bAt p s)).begin.val ≤ offAt p s ∧ offAt p s < (blkAt p (e2bAt p s)).«end».val
+  disj    : ∀ j k, j < p.blocks.val.length → k < p.blocks.val.length → j ≠ k →
+              (blkAt p j).«end».val ≤ (blkAt p k).begin.val ∨ (blkAt p k).«end».val ≤ (blkAt p j).begin.val
+
+-- N <= n: `k ↦ begin_k` is injective (disjoint, non-empty ranges) into `range n`
+theorem PartInv.blocks_le_n {n p} (h : PartInv n p) : p.blocks.val.length ≤ n := by
+  have hmaps : ∀ k ∈ Finset.range p.blocks.val.length, (blkAt p k).begin.val ∈ Finset.range n := by
+    intro k hk; have := h.blk k (Finset.mem_range.mp hk); simp; omega
+  have hinj : Set.InjOn (fun k => (blkAt p k).begin.val) ↑(Finset.range p.blocks.val.length) := by
+    intro j hj k hk hjk
+    by_contra hne
+    have hj' := Finset.mem_range.mp hj; have hk' := Finset.mem_range.mp hk
+    have bj := h.blk j hj'; have bk := h.blk k hk'
+    rcases h.disj j k hj' hk' hne with h1 | h1 <;> simp at hjk <;> omega
+  simpa using Finset.card_le_card_of_injOn _ hmaps hinj
+
+-- two blocks containing one position are equal
+theorem PartInv.pos_block_unique {n p} (h : PartInv n p) {j k q}
+    (hj : j < p.blocks.val.length) (hk : k < p.blocks.val.length)
+    (hqj : (blkAt p j).begin.val ≤ q ∧ q < (blkAt p j).«end».val)
+    (hqk : (blkAt p k).begin.val ≤ q ∧ q < (blkAt p k).«end».val) : j = k := by
+  by_contra hne; rcases h.disj j k hj hk hne with h1 | h1 <;> omega
+
+-- ===== mark_element =============================================================
+theorem mark_element_spec {n p} (h : PartInv n p) (s : ST) (hs : s.index.val < n) :
+    ∃ p', mark_element p s = ok p' ∧ PartInv n p' ∧
+      p'.blocks.val.length = p.blocks.val.length ∧
+      (∀ k, k ≠ e2bAt p s.index.val → blkAt p' k = blkAt p k) ∧
+      e2bAt p' = e2bAt p ∧
+      (blkAt p' (e2bAt p s.index.val)).marked_split.val ≤ (blkAt p (e2bAt p s.index.val)).marked_split.val ∧
+      (blkAt p' (e2bAt p s.index.val)).marked_split.val < (blkAt p (e2bAt p s.index.val)).«end».val := by
+  -- unfold; the three lookups succeed by `h.len_*`/`h.own`; case `offset < marked_split`:
+  --   `marked_split - 1` cannot underflow (offset ≥ 0); `swap_elements_partInv` with
+  --   positions `offset`, `marked_split-1`, both in [begin,end) (own + blk), keeps `perm`/`own`
+  --   (the other swapped element `t` has `e2bAt t = e2bAt s` by `pos_block_unique`);
+  --   new `marked_split - 1 ≥ begin` since `offset ≥ begin`.
+  -- otherwise unchanged, and `offset < end` (own) with `marked_split ≤ offset` gives
+  --   `marked_split < end`.  `Block.assert_consistent_ok` closes the trailing check.
+  sorry
+
+-- ===== finish_partition_marked ==================================================
+-- density facts the builder must satisfy when `finish_partition_marked` runs
+structure BuilderDense (n : Nat) (p : BlockPartition) (b : BT) (sb : BlockPartitionBuilder) : Prop where
+  perm_marked : sb.old_elements.val.Perm
+      (((List.range ((blkAt p b.index.val).«end».val - (blkAt p b.index.val).marked_split.val)).map
+        fun i => eAt p ((blkAt p b.index.val).marked_split.val + i)))
+  len_idx  : sb.index_to_block.val.length = sb.old_elements.val.length
+  idx_lt   : ∀ i ∈ sb.index_to_block.val, i.index.val < sb.block_sizes.val.length
+  sizes_pos: ∀ j, j < sb.block_sizes.val.length → 0 < sb.block_sizes.val.getD j 0#usize |>.val
+  sizes_cnt: ∀ j, j < sb.block_sizes.val.length →
+      (sb.block_sizes.val.getD j 0#usize).val = (sb.index_to_block.val.filter (·.index.val = j)).length
+  nonempty : 0 < sb.block_sizes.val.length
+
+theorem finish_partition_marked_spec {n p b sb}
+    (hp : PartInv n p) (hb : b.index.val < p.blocks.val.length)
+    (hmark : (blkAt p b.index.val).marked_split.val < (blkAt p b.index.val).«end».val)
+    (hd : BuilderDense n p b sb) :
+    ∃ nbi p' sb', finish_partition_marked p b sb = ok (nbi, p', sb') ∧
+      PartInv n p' ∧
+      let N := p.blocks.val.length
+      let K := sb.block_sizes.val.length
+      let k := if (blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val then K else K - 1
+      nbi.val = b :: (List.range' N k).map uTag ∧ p'.blocks.val.length = N + k ∧
+      (∀ j, j < N + k → (blkAt p' j).marked_split = (blkAt p' j).«end» ∨ j ∉ pieces) ∧ ... := by
+  -- (a) loop0 over `block_sizes` (IterMut + back closures): invariant after `m` steps
+  --     `blocks = old blocks with b's record replaced ++ m pieces`, `block_sizes[0..m)` hold the
+  --     start offsets `cum_j`, the rest are untouched; each `new_unmarked` succeeds because
+  --     `size > 0` (sizes_pos) and `cum + size ≤ end` (sum of sizes = end - ms by sizes_cnt);
+  --     `push` succeeds because `N + K ≤ n < Usize.max` (blocks_le_n of the *result*, see (d)).
+  -- (b) loop1 over `index_to_block`: counting-sort scatter.  Invariant: for the first `m`
+  --     old_elements, `elements[pos_i] = old_i`, `offset[old_i] = pos_i`, `e2b[old_i] = blockOf_j`,
+  --     positions `pos_i = cum_j + (rank of i within class j)`, hence pairwise distinct and inside
+  --     the piece's range; `block_offsets[j] = cum_j + (#seen in class j)`.  All indexings succeed:
+  --     `element < n` (perm_marked + hp.perm), `pos < end ≤ n`.
+  -- (c) `new_block_to_swap`: two `Range` loops; `nbi` is `b :: [N..N+k)`, `max` is a member.
+  -- (d) `swap_blocks b max`: swaps the two records, re-labels `e2b` over both ranges (two loops);
+  --     preserves PartInv because it only exchanges two disjoint pieces.
+  --     `blocks_le_n` on the final partition gives `N + k ≤ n`, used retroactively for `push`.
+  sorry
+
+-- ===== strong_process_marked_elements produces `BuilderDense` ===================
+theorem spme_dense {..} (hp : PartInv n p) (hwf : LTSInst.WellFormed sys) (hstk : stk.val.length = n)
+    (hsorted : sb.old_elements.val.Perm (marked region)) (hidx : sb.index_to_block.val.length = sb.old_elements.val.length) :
+    ∃ ..., strong_process_marked_elements LTSInst sys p id0 kts0 sigb sb stk = ok (...) ∧
+      BuilderDense n p b sb' ∧ stk'.val.length = n := by
+  -- `SpmeInvariant` (per-element success) from: state < n (hp.perm), `hwf` (outgoing ok, targets < n),
+  -- `strong_bisim_signature` total (StrongSignature_Proofs, needs e2b bounds hp.own),
+  -- `strong_intern_signature_total` (id0 = default, kts.length ≤ old_elements.length ≤ n),
+  -- `count_block_occurrence_spec_ok`.  Fold invariant on `spmeAcc`:
+  --   `kts.length = sizes.length`, `∀ i < ei, index_to_block[i] < sizes.length`, sizes_cnt/pos so far,
+  --   the interned index is either an existing class or the fresh class `sizes.length`.
+  sorry
+
+-- ===== the one-iteration step =====================================================
+def LoopInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
+  PartInv n ctx.partition ∧ TermInv n ctx ∧ ctx.state_to_key.val.length = n
+
+theorem strong_process_worklist_block_step {L Label} (LTSInst : LTS L Label) (sys : L)
+    (hwf : LTSInst.WellFormed sys) (incoming) (hinc : IncomingTransitionsCorrect LTSInst sys incoming)
+    {n} (hns : LTSInst.num_of_states sys = ok n) (ctx : WorklistContextStrong)
+    (hI : LoopInv n.val ctx) (b : BT) (w) (hpop : Vec.pop Global ctx.worklist = ok (some b, w))
+    (hnd : (b :: w.val).Nodup ∧ ...) :
+    ∃ ctx', strong_process_worklist_block false LTSInst sys incoming { ctx with worklist := w } b = ok ctx' ∧
+      LoopInv n.val ctx' ∧ worklistMeasure n.val ctx' < worklistMeasure n.val ctx := by
+  -- b < N and marked: from TermInv.  Rewrite with `strong_process_worklist_block_contract`.
+  -- by_cases htriv : is_trivially_partitioned = true
+  --  · `strong_partition_marked_trivial`: nbi = [b]; `mark_dirty_new_blocks` skips `b` (loop body,
+  --    `ne` false) so the result is unchanged (lemma `mark_dirty_new_blocks_singleton`);
+  --    N' = N, worklist' = w, measure drops by 1 (`worklist.length` shrank by the pop).
+  --  · nontrivial: `marked_elements_sorted` (clear/resize/extend/sort axioms) -> `BuilderDense`
+  --    input; `spme_dense`; `finish_partition_marked_spec`.
+  --      k = 0: nbi = [b], as above, measure drops by 1.
+  --      k ≥ 1: N' = N + k ≤ n; measure' = (n-N')(n+1) + wl' ≤ (n-N-1)(n+1) + n < measure.
+  --  Dirty step: `markDirtyAcc` over `nbi.tail` (existing `mark_dirty_new_blocks_contract`):
+  --  prove by induction on the list the invariant `PartInv ∧ TermInv` where each per-state step is
+  --  `mark_dirty_states_state_step`: `block_number`, `block`, `has_marked` succeed (hp.own, hp.blk);
+  --  if `¬has_marked` push (`Vec.push_spec`, length < Usize.max since Nodup+bounded ≤ n) — the block is
+  --  not already queued because every queued block is marked (TermInv) — then `mark_element_spec`
+  --  makes it marked, so TermInv (marked, valid, Nodup) is restored.  `from < n` and existence of
+  --  `incoming_transitions s`: `hinc`.
+  sorry
+
+-- ===== termination =============================================================
+theorem strong_run_worklist_loop_terminates ... := by
+  obtain ⟨ti, hti, hwl, hbp, hstk, hbld, hsplit, hstates⟩ := hinit
+  have hI0 : LoopInv n.val ctx0 := init_loopInv LTSInst sys hwf n hns ctx0 ⟨ti, hti, hwl, hbp, hstk, hbld, hsplit, hstates⟩
+  unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop
+  obtain ⟨progress, hprog⟩ := verified.merc_reduction.signature_refinement.new_worklist_progress_spec
+  rw [hprog]; simp
+  have hspec : loop (fun x : WLS => strong_run_worklist_loop_loop.body false LTSInst sys incoming progress x.1 x.2)
+      (ctx0, 0#usize) ⦃ b => True ⦄ := by
+    apply loop.spec_decr_nat
+      (measure := fun x : WLS => worklistMeasure n.val x.1)
+      (inv := fun x : WLS => LoopInv n.val x.1 ∧ x.2.val + worklistMeasure n.val x.1 ≤ Usize.max)
+    · intro x ⟨hI, hit⟩
+      unfold strong_run_worklist_loop_loop.body
+      by_cases hemp : x.1.worklist.val = []
+      · -- pop_nil_spec: `done`
+        rw [alloc.vec.Vec.pop_nil_spec Global _ hemp]; simp [spec_ok]
+      · obtain ⟨rest, b, hsplit⟩ := List.eq_nil_or_concat x.1.worklist.val |>.resolve_left hemp
+        obtain ⟨w, hpop, hw⟩ := worklist_pop_some x.1.worklist b rest hsplit
+        obtain ⟨ctx', hproc, hI', hlt⟩ :=
+          strong_process_worklist_block_step LTSInst sys hwf incoming hinc' hns x.1 hI b w hpop ...
+        -- `it + 1` cannot overflow: x.2 + measure ≤ max and measure ≥ 1 (worklist non-empty)
+        obtain ⟨it1, hadd⟩ := add1_ok_of_lt_max x.2 (by omega)
+        rw [strong_run_worklist_loop_body_pop ... hpop hproc hadd]
+        exact Std.WP.exists_imp_spec ⟨_, rfl, ⟨hI', by omega⟩, hlt⟩   -- shape as in `new_loop_spec`
+    · exact ⟨hI0, by omega⟩   -- measure ≤ n*(n+1)+n and we also assume n*(n+2) ≤ Usize.max (see note)
+  obtain ⟨y, hy, -⟩ := Std.WP.spec_imp_exists hspec
+  exact ⟨⟨...⟩, by rw [hy]; rfl⟩
+-- NOTE the counter bound: `worklistMeasure ≤ n*(n+1)+n`, which must fit `Usize.max`; either add the
+-- premise `n.val * (n.val + 2) ≤ Usize.max` (true for any addressable LTS: n ≤ 2^32 in practice, but
+-- not derivable in general) to the theorem, or bound `it` by the number of *splits + pops* actually
+-- performed (`it ≤ N_final + pops`) and use `Usize.max = 2^64` with `n < 2^64` - if `n*(n+2)` does
+-- overflow the loop really can overflow `iteration` in Rust, so this is a genuine hypothesis
+-- (`debug` builds panic). Decide when writing the theorem.
+```
+
+## Partial correctness, the actual mathematical invariant
+
+Write `sig s := StrongSignature (toLTS LTSInst sys) s blockOf`, where `blockOf s = e2b[s]`.
+A state is *marked* when its offset is `≥ marked_split` of its block. The key point (found by
+reading `finish_partition_marked` and `swap_blocks`) is that the algorithm is only complete
+because of a **separation** property, so the invariant needs it:
+
+```
+structure Inv (ctx) (blockOf) : Prop where
+  coh     : coherence + coverage        -- as in WorklistInv
+  uni     : ∀ B, ∀ u u' unmarked-in B, sig u = sig u'
+  sep     : ∀ B, ∀ s marked-in B, ∀ u unmarked-in B, sig s ≠ sig u
+  nowl    : ∀ B ∉ worklist, no state of B is marked        -- gives `WorklistInv.settled`
+  comp    : StrongFixPoint s s' → blockOf s = blockOf s'
+```
+(`uni` and `nowl` give `BlockSettled` for off-worklist blocks, hence `WorklistInv`.)
+
+Why one iteration preserves it (processing block `X` with marked part `M`, unmarked part `U`):
+1. Refinement monotonicity: if `blockOf'` refines `blockOf` (`blockOf t = f (blockOf' t)`) then
+   `sig' s = sig' s' → sig s = sig s'` (equal finer signatures imply equal coarser ones), so `sep`
+   for old marked/unmarked pairs survives every split. (`sig_refine_mono`)
+2. `strong_partition_marked` groups `M` by `strong_bisim_signature` computed against the *pre-split*
+   `blockOf` (the partition passed in), so every new piece is signature-uniform (`uni`), and `U`
+   is retained (uniform by `uni`).
+3. Pieces of `X` are `U` (if non-empty) and the classes of `M`. By `sep`, `sig` of a class differs
+   from `sig` of `U`; by construction classes differ pairwise. Hence no `StrongFixPoint` pair is
+   separated: fixpoint-related states have equal signatures (`comp` + `StrongFixPoint` unfolds one
+   step, `fixpoint_sig_eq`) - this proves `comp` for the new `blockOf`.
+4. `swap_blocks` gives the *largest* piece the old index `b`, every other piece a fresh scanned
+   index (`nbi.tail`). `mark_dirty_new_blocks` then marks every predecessor (via `hinc`, i.e.
+   `IncomingTransitionsCorrect`) of every state in a scanned piece. A predecessor that only reaches
+   the largest piece keeps its signature (the pair `(μ, b)` is unchanged), so an *unmarked* state
+   `u` outside the scanned predecessors has an unchanged signature (`uni` for other blocks) and no
+   transition into any scanned piece, whereas a newly marked `s` has one, so `sig s ≠ sig u`
+   (`sep`). States of `X`'s pieces are all unmarked after the split (`new_unmarked`), so `nowl`
+   holds for `X`'s pieces unless re-marked by the dirty step, in which case they were pushed on the
+   worklist (`push` happens exactly when a block goes from unmarked to marked).
+5. The worklist facts (`Nodup`, marked) are the termination invariant `TermInv`.
+
+Concrete statements to write:
+```
+theorem sig_refine_mono ... : (∀ t, blockOf t = f (blockOf' t)) →
+    StrongSignature lts s blockOf' = StrongSignature lts s' blockOf' →
+    StrongSignature lts s blockOf = StrongSignature lts s' blockOf
+theorem fixpoint_sig_eq (hcomp : ∀ t t', StrongFixPoint lts t t' → blockOf t = blockOf t') :
+    StrongFixPoint lts s s' → StrongSignature lts s blockOf = StrongSignature lts s' blockOf
+theorem process_block_correct_step (... Inv ctx blockOf ...) (hproc : strong_process_worklist_block ... = ok ctx') :
+    ∃ blockOf', Inv ctx' blockOf' ∧ (∀ t, blockOf t = f (blockOf' t))
+-- induction: `loop.spec` with `inv := fun x => ∃ blockOf, Inv x.1 blockOf`,
+-- `post := fun r => ∃ blockOf, WorklistLoopCorrect ... r blockOf` (via `WorklistInv.toCorrect`
+-- once `worklist = []`, which the `pop_nil_spec` branch provides).
+theorem strong_run_worklist_loop_partial_correct ... := by
+  obtain ⟨blockOf0, h0⟩ := initial_worklistInv_strong ...        -- everything unmarked? no: block 0 is
+  -- initial: one block, all marked?  `BlockPartition.new` gives marked_split = begin (all marked),
+  -- so `sep`/`uni` are vacuous on the unmarked side; `nowl` holds because block 0 is on the worklist.
+  ...
+```
+-/
+
 /-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/
 theorem strong_run_worklist_loop_partial_correct
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
