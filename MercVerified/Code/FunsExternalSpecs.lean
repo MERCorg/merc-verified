@@ -23,7 +23,7 @@ axiom merc_lts.incoming_transitions.IncomingTransitions.new_spec
     access runs first. It is an Aeneas external (an axiom in
     `MercVerified/Code/FunsExternal_Template.lean`), so its *success* is asserted
     here at the boundary: it only validates `begin ≤ marked_split ≤ end` and so
-    never fails. `MercVerified/Signatures/Proofs/Partition_Proofs.lean` uses this
+    never fails. `MercVerified/Refinement/Proofs/Partition_Proofs.lean` uses this
     to reduce `Block::len` and `Block::has_marked` to plain arithmetic and
     `decide` on their fields. -/
 axiom merc_reduction.block_partition.Block.assert_consistent_ok
@@ -38,7 +38,7 @@ is the translated structure `{ index : T, marker : PhantomData Tag }` and all of
 its operations are generated definitions. The lemmas that unfold those
 definitions are *theorems* (no trust boundary), so they now live with the rest
 of the machine-generated proofs, in
-`MercVerified/Signatures/Proofs/Partition_Proofs.lean` (see `TagIndex.ext`,
+`MercVerified/Refinement/Proofs/Partition_Proofs.lean` (see `TagIndex.ext`,
 `vec_tagged_index_eq`, `vec_tagged_index_mut_eq`, `vec_tagged_index_val`,
 `blocks_index_mut_contract`, ...).
 -/

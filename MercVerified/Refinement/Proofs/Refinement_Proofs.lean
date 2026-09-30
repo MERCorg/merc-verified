@@ -1,17 +1,17 @@
-import MercVerified.Signatures.Refinement
+import MercVerified.Refinement.Refinement
 import Signatures.Proofs.Signature_Proofs
-import MercVerified.Signatures.Proofs.WorklistLoop_Proofs
+import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
 /-!
 # Proofs for the `strong_bisim_sigref` correctness contract
 
 Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
 `strong_bisim_sigref_correct` proves the `StrongBisimSigrefCorrectSpec`
-contract stated in `MercVerified/Signatures/Refinement.lean`, generically for
+contract stated in `MercVerified/Refinement/Refinement.lean`, generically for
 any `LTS` trait implementor with a well-formed state space (`hwf`). Its contract
 pin (an `example` re-stating its exact closed signature, so `lake build` fails
 if a regeneration drifts from the pinned shape) lives in the human-vetted
-`MercVerified/Signatures/Pins/Refinement_Pins.lean`, not in this file.
+`MercVerified/Refinement/Pins/Refinement_Pins.lean`, not in this file.
 That a concrete implementor such as `LabelledTransitionSystem` satisfies `hwf`
 is a separate concern (see `docs/axiom-audit-plan.md`).
 
@@ -21,10 +21,10 @@ The proof unfolds the translated `do`-blocks of `strong_bisim_sigref` /
   `MercVerified/Code/FunsExternal.lean` (`IncomingTransitions::new`,
   `Timing::measure`, `HashMap::len`, `Vec::resize_with`, `Vec::default`,
   `TagIndex::new`), plus `BlockPartition::new` (positive element count);
-- the `hwf : LTSInst.WellFormed sys` hypothesis, without which
+- the `hwf : MercVerified.Lts.WellFormed LTSInst sys` hypothesis, without which
   `BlockPartition::new`'s `assert!(num_of_elements > 0)` or `outgoing_transitions` may fail;
 - the hand-written `run_worklist_loop` contract axiom `run_worklist_loop_spec`
-  (declared in `MercVerified/Basic.lean`, where `toLTS` is defined, generic
+  (declared in `MercVerified/Lts/Lts.lean`, where `toLTS` is defined, generic
   over any `LTS` implementor), which provides the partition coherence,
   `IsStable` (soundness) and `StrongFixPoint` completeness conjuncts of the
   spec.
@@ -48,9 +48,9 @@ open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)
 open verified.merc_reduction.signature_refinement (strong_bisim_sigref strong_signature_refinement)
 open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
-open verified.merc_lts.lts.LTS (toLTS)
+open MercVerified.Lts (toLTS)
 
-namespace MercVerified.Signatures.Proofs
+namespace MercVerified.Refinement.Proofs
 
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
@@ -95,7 +95,7 @@ private theorem signature_refinement_spec
     (sys : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hincoming : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
-    (hwf : LTSInst.WellFormed sys)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (n : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n)
     (hnpos : 0 < n.val) :
@@ -150,7 +150,7 @@ private theorem signature_refinement_spec
     concrete `BlockPartition` representation. -/
 theorem strong_bisim_sigref_correct
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
     StrongBisimSigrefCorrectSpec LTSInst sys hwf timing := by
   unfold StrongBisimSigrefCorrectSpec
   obtain ⟨n, hns, hnpos⟩ := hwf.1
@@ -201,7 +201,7 @@ theorem stable_implies_strong_fixpoint
     are related by the strong-bisimulation `StrongFixPoint` semantics. -/
 theorem strong_bisim_sigref_same_block_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
           LTSInst
@@ -222,7 +222,7 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
     the spec's own completeness conjunct. -/
 theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
           LTSInst
@@ -248,7 +248,7 @@ theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     `StrongFixPoint.bisimilarity`. -/
 theorem strong_bisim_sigref_same_block_iff_bisimilar
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
           LTSInst
@@ -268,4 +268,4 @@ theorem strong_bisim_sigref_same_block_iff_bisimilar
   · intro hb
     exact hss'.2 (Cslib.LTS.Bisimilarity.strongFixPoint (toLTS LTSInst sys) hb)
 
-end MercVerified.Signatures.Proofs
+end MercVerified.Refinement.Proofs

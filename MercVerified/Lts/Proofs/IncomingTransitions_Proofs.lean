@@ -1,5 +1,5 @@
-import MercVerified.Basic
-import MercVerified.Signatures.Proofs.Partition_Proofs
+import MercVerified.Lts.Lts
+import MercVerified.Refinement.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -68,18 +68,19 @@ content of `IncomingTransitionsCorrect`. Stage 7 is a stable insertion sort per 
 only has to be a permutation of each range.
 
 Stages 3, 6 and 7 all take the enumeration and the transition count of the `LTS` implementor
-as hypotheses: `LTS.WellFormed` (`MercVerified/Basic.lean`) constrains `outgoing_transitions`
+as hypotheses: `LTS.WellFormed` (`MercVerified/Lts/Lts.lean`) constrains `outgoing_transitions`
 but says nothing about `iter_states` or `num_of_transitions`, which is what the final
 extraction lemma needs.
 -/
 
+open MercVerified.Refinement.Proofs
 open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag Transition LTS)
 open verified.merc_lts.incoming_transitions (IncomingTransitions FromTransition)
-open verified.merc_lts.lts.LTS (toLTS tr)
+open MercVerified.Lts (toLTS tr)
 
-namespace MercVerified.Signatures
+namespace MercVerified.Lts
 
 /-- `incoming` indexes the incoming transitions of every in-range state exactly: for each
     state `s` with `s.index.val < n`, `IncomingTransitions::incoming_transitions incoming s`
@@ -103,9 +104,9 @@ def IncomingTransitionsCorrect {L Label : Type} (LTSInst : LTS L Label) (sys : L
           ∃ μ : TagIndex Std.Usize LabelTag, ∃ s' : TagIndex Std.Usize StateTag,
             tr LTSInst sys s' μ s ∧ (i.label, i.«from») = (μ, s')
 
-end MercVerified.Signatures
+end MercVerified.Lts
 
-namespace MercVerified.Signatures.Proofs
+namespace MercVerified.Lts.Proofs
 
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
@@ -3943,4 +3944,4 @@ theorem incoming_transitions_loop_step
   rw [hidx0, hidx1, hx0, hx1, hpush]
   rfl
 
-end MercVerified.Signatures.Proofs
+end MercVerified.Lts.Proofs

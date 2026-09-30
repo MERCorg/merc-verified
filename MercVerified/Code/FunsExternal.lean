@@ -4,14 +4,14 @@ open Aeneas Aeneas.Std Result
 open verified
 
 /-- `[T]::sort_unstable` never fails, and its result is a permutation of its
-    input - the only property of sorting that `MercVerified/Signatures/`
+    input - the only property of sorting that `MercVerified/Refinement/` and `MercVerified/Lts/`
     needs (it deliberately does not characterize sortedness itself). -/
 axiom core.slice.Slice.sort_unstable_spec
   {T : Type} (cmpOrdInst : core.cmp.Ord T) (s : Slice T) :
   ∃ s', core.slice.Slice.sort_unstable cmpOrdInst s = ok s' ∧ List.Perm s'.val s.val
 
 /-- `Vec::clear` never fails, and empties the vector - the only property that
-    `MercVerified/Signatures/` needs (the initial contents of the reused builder
+    `MercVerified/Refinement/` and `MercVerified/Lts/` needs (the initial contents of the reused builder
     are irrelevant to `strong_bisim_signature`). -/
 axiom alloc.vec.Vec.clear_spec
   {T : Type} (A : Type) (v : alloc.vec.Vec T) :

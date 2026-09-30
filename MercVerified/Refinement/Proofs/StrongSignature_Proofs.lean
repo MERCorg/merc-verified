@@ -1,5 +1,5 @@
 import MercVerified.Basic
-import MercVerified.Signatures.Proofs.Partition_Proofs
+import MercVerified.Refinement.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -21,9 +21,9 @@ open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.signatures (strong_bisim_signature strong_bisim_signature_loop)
 open verified.merc_reduction.partition (Partition)
 open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
-open verified.merc_lts.lts.LTS (toLTS toLTS_Tr tr)
+open MercVerified.Lts (toLTS toLTS_Tr tr)
 
-namespace MercVerified.Signatures
+namespace MercVerified.Refinement
 
 /-- Contract: the translated `strong_bisim_signature` computes `StrongSignature`. -/
 def StrongBisimSignatureSpec
@@ -44,9 +44,9 @@ def StrongBisimSignatureSpec
     ∧ ∀ μ β, (μ, β) ∈ result.val ↔
         (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber
 
-end MercVerified.Signatures
+end MercVerified.Refinement
 
-namespace MercVerified.Signatures.Proofs
+namespace MercVerified.Refinement.Proofs
 
 set_option maxHeartbeats 800000
 
@@ -331,4 +331,4 @@ theorem strong_bisim_signature_spec
     (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
     PInst sys partition s builder0 blockNumber hblock ts houtgoing
 
-end MercVerified.Signatures.Proofs
+end MercVerified.Refinement.Proofs

@@ -1,4 +1,4 @@
-import MercVerified.Signatures.Refinement
+import MercVerified.Refinement.Refinement
 import MercVerified.Code.FunsExternalSpecs
 import Aeneas.Std.WP
 
@@ -20,10 +20,10 @@ open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_lts.lts (StateTag LabelTag LTS)
 
-namespace verified.merc_lts.lts.LTS
+namespace MercVerified.Lts
 
 /-- `(toLTS LTSInst sys).Tr` unfolds to `tr LTSInst sys` - a real theorem (`Iff.rfl`), moved here
-    (from `MercVerified/Basic.lean`) since it is a proof, not part of the trust boundary. -/
+    (from `MercVerified/Lts/Lts.lean`) since it is a proof, not part of the trust boundary. -/
 @[simp] theorem toLTS_Tr {L Label : Type}
     (LTSInst : LTS L Label)
     (sys : L)
@@ -32,9 +32,9 @@ namespace verified.merc_lts.lts.LTS
     (s' : TagIndex Std.Usize StateTag) :
     (toLTS LTSInst sys).Tr s μ s' ↔ tr LTSInst sys s μ s' := Iff.rfl
 
-end verified.merc_lts.lts.LTS
+end MercVerified.Lts
 
-namespace MercVerified.Signatures.Proofs
+namespace MercVerified.Refinement.Proofs
 
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
@@ -1163,4 +1163,4 @@ theorem maybe_mark_backward_closure_blocks_length
     simp at h
     rw [← h]
 
-end MercVerified.Signatures.Proofs
+end MercVerified.Refinement.Proofs

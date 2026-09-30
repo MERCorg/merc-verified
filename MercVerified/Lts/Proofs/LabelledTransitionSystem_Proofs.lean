@@ -1,5 +1,5 @@
-import MercVerified.Basic
-import MercVerified.Signatures.Proofs.Partition_Proofs
+import MercVerified.Lts.Lts
+import MercVerified.Refinement.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -20,6 +20,7 @@ tying `index`/`len` together on its own - only a value actually produced by a sa
 which Charon does not translate, is trusted to satisfy it).
 -/
 
+open MercVerified.Refinement.Proofs
 open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
@@ -66,7 +67,7 @@ def LabelledTransitionSystemValid {Label : Type}
         sys.transition_to k = ok vt ∧
         vt.index.val < numStates)
 
-namespace MercVerified.Signatures.Proofs
+namespace MercVerified.Lts.Proofs
 
 private theorem loop_unfold_step {α β : Type} (body : α → Result (ControlFlow α β)) (x : α) :
     Aeneas.Std.loop body x
@@ -199,7 +200,7 @@ theorem lts_wellFormed {Label : Type}
     (TLInst : verified.merc_lts.lts.TransitionLabel Label)
     (sys : LabelledTransitionSystem Label)
     (hvalid : LabelledTransitionSystemValid sys) :
-    (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).WellFormed sys := by
+    MercVerified.Lts.WellFormed (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys := by
   obtain ⟨numStates, numTransitions, statesAt, ⟨statesLen, hstatesLen, hstatesLenV⟩,
     hstatesIdx, hmono, hsentinel, hinit, hlabelsIdx, htargetIdx⟩ := hvalid
   -- A real `Usize` whose value is `numStates` (obtained from `statesLen - 1`), used to look
@@ -281,4 +282,4 @@ theorem lts_wellFormed {Label : Type}
       have := hbound' t ht
       omega
 
-end MercVerified.Signatures.Proofs
+end MercVerified.Lts.Proofs

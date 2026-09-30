@@ -1,6 +1,6 @@
-import MercVerified.Signatures.Refinement
-import MercVerified.Signatures.Proofs.StrongSignature_Proofs
-import MercVerified.Signatures.Proofs.Partition_Proofs
+import MercVerified.Refinement.Refinement
+import MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import MercVerified.Refinement.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -27,7 +27,7 @@ open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition BlockPartitionBuilder)
 open verified.merc_reduction.signature_refinement (WorklistContextStrong)
 
-namespace MercVerified.Signatures.Proofs
+namespace MercVerified.Refinement.Proofs
 
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
@@ -1966,9 +1966,9 @@ def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
       blockOf s = b) ∧
   (∀ n, LTSInst.num_of_states sys = ok n →
     ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ ctx.partition.elements.val) ∧
-  IsStable (fun s => StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf)
+  IsStable (fun s => StrongSignature (MercVerified.Lts.toLTS LTSInst sys) s blockOf)
     blockOf ∧
-  ∀ s s', StrongFixPoint (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s'
+  ∀ s s', StrongFixPoint (MercVerified.Lts.toLTS LTSInst sys) s s' → blockOf s = blockOf s'
 
 /-!
 ## The running invariant for partial correctness
@@ -1998,8 +1998,8 @@ def BlockSettled {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) 
     (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
     (b : TagIndex Std.Usize BlockTag) : Prop :=
   ∀ s s', blockOf s = b → blockOf s' = b →
-    StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s blockOf =
-    StrongSignature (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s' blockOf
+    StrongSignature (MercVerified.Lts.toLTS LTSInst sys) s blockOf =
+    StrongSignature (MercVerified.Lts.toLTS LTSInst sys) s' blockOf
 
 /-- The running invariant of the worklist loop. `blockOf` is the block map read
     off the current partition; the first two conjuncts are the coherence and
@@ -2014,7 +2014,7 @@ def WorklistInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (
   (∀ n, LTSInst.num_of_states sys = ok n →
     ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ ctx.partition.elements.val) ∧
   (∀ b, b ∉ ctx.worklist.val → BlockSettled LTSInst sys blockOf b) ∧
-  (∀ s s', StrongFixPoint (verified.merc_lts.lts.LTS.toLTS LTSInst sys) s s' → blockOf s = blockOf s')
+  (∀ s s', StrongFixPoint (MercVerified.Lts.toLTS LTSInst sys) s s' → blockOf s = blockOf s')
 
 /-- `WorklistInv` implies the final specification once the worklist is empty:
     every block is then off the worklist, so the settled condition is exactly
@@ -2430,7 +2430,7 @@ theorem finish_partition_marked_spec {n p b sb}
   sorry
 
 -- ===== strong_process_marked_elements produces `BuilderDense` ===================
-theorem spme_dense {..} (hp : PartInv n p) (hwf : LTSInst.WellFormed sys) (hstk : stk.val.length = n)
+theorem spme_dense {..} (hp : PartInv n p) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hstk : stk.val.length = n)
     (hsorted : sb.old_elements.val.Perm (marked region)) (hidx : sb.index_to_block.val.length = sb.old_elements.val.length) :
     ∃ ..., strong_process_marked_elements LTSInst sys p id0 kts0 sigb sb stk = ok (...) ∧
       BuilderDense n p b sb' ∧ stk'.val.length = n := by
@@ -2447,7 +2447,7 @@ def LoopInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
   PartInv n ctx.partition ∧ TermInv n ctx ∧ ctx.state_to_key.val.length = n
 
 theorem strong_process_worklist_block_step {L Label} (LTSInst : LTS L Label) (sys : L)
-    (hwf : LTSInst.WellFormed sys) (incoming) (hinc : IncomingTransitionsCorrect LTSInst sys incoming)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (incoming) (hinc : IncomingTransitionsCorrect LTSInst sys incoming)
     {n} (hns : LTSInst.num_of_states sys = ok n) (ctx : WorklistContextStrong)
     (hI : LoopInv n.val ctx) (b : BT) (w) (hpop : Vec.pop Global ctx.worklist = ok (some b, w))
     (hnd : (b :: w.val).Nodup ∧ ...) :
@@ -2569,7 +2569,7 @@ theorem strong_run_worklist_loop_partial_correct ... := by
 /-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/
 theorem strong_run_worklist_loop_partial_correct
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -2583,7 +2583,7 @@ theorem strong_run_worklist_loop_partial_correct
 /-- Termination of `strong_run_worklist_loop` from the initial context of a well-formed LTS. -/
 theorem strong_run_worklist_loop_terminates
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -2596,7 +2596,7 @@ theorem strong_run_worklist_loop_terminates
     returns a context whose partition is correct (see `WorklistLoopCorrect`). -/
 theorem run_worklist_loop_spec
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : LTSInst.WellFormed sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -2608,4 +2608,4 @@ theorem run_worklist_loop_spec
   obtain ⟨blockOf, hb⟩ := strong_run_worklist_loop_partial_correct LTSInst sys hwf incoming hinc n hns ctx0 hinit ctx hctx
   exact ⟨ctx, blockOf, hctx, hb⟩
 
-end MercVerified.Signatures.Proofs
+end MercVerified.Refinement.Proofs
