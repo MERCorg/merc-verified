@@ -51,6 +51,9 @@ jobs:
     - name: Generate lean code using aeneas
       run: ./3rd-party/aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=MercVerified/Code ./verified/verified.llbc
 
+    - name: Strip absolute source paths from generated code
+      run: python3 scripts/strip_source_paths.py
+
     - name: Check generated code matches checked-in code
       run: |
         git add --intent-to-add MercVerified/Code

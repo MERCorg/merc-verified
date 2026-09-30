@@ -15,6 +15,10 @@ cd ..
 
 # Step 2: Translate LLBC → Lean (outputs to MercVerified/Code/)
 ./3rd-party/aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=MercVerified/Code ./verified/verified.llbc
+
+# Step 3: Strip absolute paths from generated `Source:` comments (avoids
+# machine-specific diffs; CI does this too before comparing checked-in code)
+python3 scripts/strip_source_paths.py
 ```
 
 Then update `MercVerified/Code/*External.lean` to implement any new external function stubs.

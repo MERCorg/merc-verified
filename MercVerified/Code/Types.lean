@@ -43,7 +43,7 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
 def core.marker.PhantomData (T : Type) := Unit
 
 /-- Trait declaration: [merc_collections::compressed_vec::CompressedEntry]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 469:0-469:25
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 469:0-469:25
     Name pattern: [merc_collections::compressed_vec::CompressedEntry]
     Visibility: public -/
 @[rust_trait "merc_collections::compressed_vec::CompressedEntry"]
@@ -53,7 +53,7 @@ structure merc_collections.compressed_vec.CompressedEntry (Self : Type) where
   bytes_required : Self → Result Std.Usize
 
 /-- [merc_utilities::tagged_index::TagIndex]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 33:0-33:27
+    Source: '3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 33:0-33:27
     Name pattern: [merc_utilities::tagged_index::TagIndex]
     Visibility: public -/
 @[rust_type "merc_utilities::tagged_index::TagIndex"]
@@ -62,28 +62,28 @@ structure merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) where
   marker : core.marker.PhantomData Tag
 
 /-- [merc_collections::indexed_partition::BlockTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/indexed_partition.rs', lines 6:0-6:19
+    Source: '3rd-party/merc/crates/collections/src/indexed_partition.rs', lines 6:0-6:19
     Name pattern: [merc_collections::indexed_partition::BlockTag]
     Visibility: public -/
 @[reducible, rust_type "merc_collections::indexed_partition::BlockTag"]
 def merc_collections.indexed_partition.BlockTag := Unit
 
 /-- [merc_lts::lts::LabelTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 15:0-15:19
+    Source: '3rd-party/merc/crates/lts/src/lts.rs', lines 15:0-15:19
     Name pattern: [merc_lts::lts::LabelTag]
     Visibility: public -/
 @[reducible, rust_type "merc_lts::lts::LabelTag"]
 def merc_lts.lts.LabelTag := Unit
 
 /-- [merc_lts::lts::StateTag]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 18:0-18:19
+    Source: '3rd-party/merc/crates/lts/src/lts.rs', lines 18:0-18:19
     Name pattern: [merc_lts::lts::StateTag]
     Visibility: public -/
 @[reducible, rust_type "merc_lts::lts::StateTag"]
 def merc_lts.lts.StateTag := Unit
 
 /-- [merc_lts::lts::Transition]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 133:0-133:21
+    Source: '3rd-party/merc/crates/lts/src/lts.rs', lines 133:0-133:21
     Name pattern: [merc_lts::lts::Transition]
     Visibility: public -/
 @[rust_type "merc_lts::lts::Transition"]
@@ -92,7 +92,7 @@ structure merc_lts.lts.Transition where
   «to» : merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag
 
 /-- Trait declaration: [merc_lts::lts::TransitionLabel]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 113:0-113:78
+    Source: '3rd-party/merc/crates/lts/src/lts.rs', lines 113:0-113:78
     Name pattern: [merc_lts::lts::TransitionLabel]
     Visibility: public -/
 @[rust_trait "merc_lts::lts::TransitionLabel"
@@ -109,7 +109,7 @@ structure merc_lts.lts.TransitionLabel (Self : Type) where
   from_index : Std.Usize → Result Self
 
 /-- Trait declaration: [merc_lts::lts::LTS]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/lts.rs', lines 31:0-31:13
+    Source: '3rd-party/merc/crates/lts/src/lts.rs', lines 31:0-31:13
     Name pattern: [merc_lts::lts::LTS]
     Visibility: public -/
 @[rust_trait "merc_lts::lts::LTS" (parentClauses := ["TransitionLabelInst"])]
@@ -130,7 +130,7 @@ structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
     merc_lts.lts.LabelTag → Result Bool
 
 /-- [merc_lts::incoming_transitions::IncomingTransitions]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 269:0-269:30
+    Source: '3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 269:0-269:30
     Name pattern: [merc_lts::incoming_transitions::IncomingTransitions]
     Visibility: public -/
 @[rust_type "merc_lts::incoming_transitions::IncomingTransitions"]
@@ -142,7 +142,7 @@ structure merc_lts.incoming_transitions.IncomingTransitions where
   state2incoming : alloc.vec.Vec Std.Usize
 
 /-- [merc_lts::incoming_transitions::FromTransition]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 355:0-355:25
+    Source: '3rd-party/merc/crates/lts/src/incoming_transitions.rs', lines 355:0-355:25
     Name pattern: [merc_lts::incoming_transitions::FromTransition]
     Visibility: public -/
 @[rust_type "merc_lts::incoming_transitions::FromTransition"]
@@ -152,7 +152,7 @@ structure merc_lts.incoming_transitions.FromTransition where
     merc_lts.lts.StateTag
 
 /-- [merc_lts::labelled_transition_system::LabelledTransitionSystem]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/lts/src/labelled_transition_system.rs', lines 28:0-28:42
+    Source: '3rd-party/merc/crates/lts/src/labelled_transition_system.rs', lines 28:0-28:42
     Name pattern: [merc_lts::labelled_transition_system::LabelledTransitionSystem]
     Visibility: public -/
 @[rust_type "merc_lts::labelled_transition_system::LabelledTransitionSystem"]
@@ -168,7 +168,7 @@ structure merc_lts.labelled_transition_system.LabelledTransitionSystem (Label :
     merc_lts.lts.StateTag
 
 /-- [merc_reduction::block_partition::Block]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 439:0-439:16
+    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 439:0-439:16
     Name pattern: [merc_reduction::block_partition::Block]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::Block"]
@@ -178,7 +178,7 @@ structure merc_reduction.block_partition.Block where
   «end» : Std.Usize
 
 /-- [merc_reduction::block_partition::BlockPartition]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 16:0-16:25
+    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 16:0-16:25
     Name pattern: [merc_reduction::block_partition::BlockPartition]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::BlockPartition"]
@@ -191,7 +191,7 @@ structure merc_reduction.block_partition.BlockPartition where
   element_offset : alloc.vec.Vec Std.Usize
 
 /-- [merc_reduction::block_partition::BlockIter]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 547:0-547:24
+    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 547:0-547:24
     Name pattern: [merc_reduction::block_partition::BlockIter]
     Visibility: public -/
 @[rust_type "merc_reduction::block_partition::BlockIter"]
@@ -202,7 +202,7 @@ structure merc_reduction.block_partition.BlockIter where
   «end» : Std.Usize
 
 /-- Trait declaration: [merc_reduction::partition::Partition]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/partition.rs', lines 10:0-10:19
+    Source: '3rd-party/merc/crates/reduction/src/partition.rs', lines 10:0-10:19
     Name pattern: [merc_reduction::partition::Partition]
     Visibility: public -/
 @[rust_trait "merc_reduction::partition::Partition"]
@@ -215,7 +215,7 @@ structure merc_reduction.partition.Partition (Self : Type) where
   is_empty : Self → Result Bool
 
 /-- [merc_reduction::block_partition::BlockPartitionBuilder]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 1005:0-1005:39
+    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 1005:0-1005:39
     Name pattern: [merc_reduction::block_partition::BlockPartitionBuilder] -/
 @[rust_type "merc_reduction::block_partition::BlockPartitionBuilder"]
 structure merc_reduction.block_partition.BlockPartitionBuilder where
@@ -226,7 +226,7 @@ structure merc_reduction.block_partition.BlockPartitionBuilder where
     merc_lts.lts.StateTag)
 
 /-- [merc_reduction::signature_refinement::strong_signature_refinement::{closure}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1858:50-1858:52
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1858:50-1858:52
     Name pattern: [merc_reduction::signature_refinement::strong_signature_refinement::closure] -/
 @[reducible, rust_type
   "merc_reduction::signature_refinement::strong_signature_refinement::closure"]
@@ -242,7 +242,7 @@ Unit
 def rustc_hash.FxBuildHasher := Unit
 
 /-- [merc_reduction::signature_refinement::WorklistContextStrong]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1741:0-1741:28
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1741:0-1741:28
     Name pattern: [merc_reduction::signature_refinement::WorklistContextStrong] -/
 @[rust_type "merc_reduction::signature_refinement::WorklistContextStrong"]
 structure merc_reduction.signature_refinement.WorklistContextStrong where
@@ -259,7 +259,7 @@ structure merc_reduction.signature_refinement.WorklistContextStrong where
     merc_collections.indexed_partition.BlockTag)
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}]
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1195:48-1195:50
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1195:48-1195:50
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure] -/
 @[rust_type
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure"]

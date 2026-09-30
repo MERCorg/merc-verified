@@ -53,6 +53,10 @@ cd ..
 
 # Translate LLBC to Lean
 ./3rd-party/aeneas/bin/aeneas -split-files -backend=lean -dest=. -subdir=MercVerified/Code ./verified/verified.llbc
+
+# Strip absolute paths from generated `Source:` comments, so regenerating on
+# a different machine/checkout doesn't produce a spurious diff
+python3 scripts/strip_source_paths.py
 ```
 
 The generated Lean files will appear in `MercVerified/Code/`.

@@ -245,7 +245,7 @@ axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
   (T : Type) : Result (alloc.vec.Vec T)
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::index]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 98:4-98:42
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 98:4-98:42
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::index]
     Visibility: public -/
 @[rust_fun
@@ -257,7 +257,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.index
     T
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::len]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 118:4-118:30
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 118:4-118:30
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::len]
     Visibility: public -/
 @[rust_fun
@@ -268,7 +268,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.len
   merc_collections.compressed_vec.ByteCompressedVec T → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for usize}::bytes_required]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 496:4-496:37
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 496:4-496:37
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<usize>}::bytes_required]
     Visibility: public -/
 @[rust_fun
@@ -277,7 +277,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.bytes_required
   : Std.Usize → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for usize}::from_bytes]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 488:4-488:39
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 488:4-488:39
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<usize>}::from_bytes]
     Visibility: public -/
 @[rust_fun
@@ -286,7 +286,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.from_bytes
   : Slice Std.U8 → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for usize}::to_bytes]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 481:4-481:40
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 481:4-481:40
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<usize>}::to_bytes]
     Visibility: public -/
 @[rust_fun
@@ -295,7 +295,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.to_bytes
   : Std.Usize → Slice Std.U8 → Result (Slice Std.U8)
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for merc_utilities::tagged_index::TagIndex<T, Tag>}::from_bytes]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 519:4-519:39
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 519:4-519:39
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::from_bytes]
     Visibility: public -/
 @[rust_fun
@@ -308,7 +308,7 @@ axiom
   Slice Std.U8 → Result (merc_utilities.tagged_index.TagIndex T Tag)
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for merc_utilities::tagged_index::TagIndex<T, Tag>}::bytes_required]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 515:12-515:45
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 515:12-515:45
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::bytes_required]
     Visibility: public -/
 @[rust_fun
@@ -321,7 +321,7 @@ axiom
   merc_utilities.tagged_index.TagIndex T Tag → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for merc_utilities::tagged_index::TagIndex<T, Tag>}::to_bytes]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 514:12-514:48
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 514:12-514:48
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::to_bytes]
     Visibility: public -/
 @[rust_fun
@@ -335,7 +335,7 @@ axiom
     Std.U8)
 
 /-- [merc_io::progress::{merc_io::progress::TimeProgress<T>}::print]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/io/src/progress.rs', lines 38:4-38:34
+    Source: '3rd-party/merc/crates/io/src/progress.rs', lines 38:4-38:34
     Name pattern: [merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print]
     Visibility: public -/
 @[rust_fun "merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print"]
@@ -343,7 +343,7 @@ axiom merc_io.progress.TimeProgress.print
   {T : Type} : merc_io.progress.TimeProgress T → T → Result Unit
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:4-532:31
+    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:4-532:31
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent"]
@@ -351,7 +351,7 @@ axiom merc_reduction.block_partition.Block.assert_consistent
   : merc_reduction.block_partition.Block → Result Unit
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 955:4-955:39
+    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 955:4-955:39
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent"]
@@ -359,7 +359,7 @@ axiom merc_reduction.block_partition.BlockPartition.assert_consistent
   : merc_reduction.block_partition.BlockPartition → Result Bool
 
 /-- [merc_utilities::timing::{merc_utilities::timing::Timing}::measure]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 37:4-39:25
+    Source: '3rd-party/merc/crates/utilities/src/timing.rs', lines 37:4-39:25
     Name pattern: [merc_utilities::timing::{merc_utilities::timing::Timing}::measure]
     Visibility: public -/
 @[rust_fun "merc_utilities::timing::{merc_utilities::timing::Timing}::measure"]
@@ -403,7 +403,7 @@ axiom rustc_hash.FxHasher.Insts.CoreHashHasher.write
   : rustc_hash.FxHasher → Slice Std.U8 → Result rustc_hash.FxHasher
 
 /-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:55
+    Source: '3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:55
     Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
     Visibility: public -/
 @[rust_fun
@@ -414,7 +414,7 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
 
 /-- [merc_reduction::signature_refinement::new_worklist_progress]:
-    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1655:0-1655:58
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1655:0-1655:58
     Name pattern: [merc_reduction::signature_refinement::new_worklist_progress] -/
 @[rust_fun "merc_reduction::signature_refinement::new_worklist_progress"]
 axiom merc_reduction.signature_refinement.new_worklist_progress
