@@ -1,6 +1,7 @@
 import MercVerified.Signatures.Refinement
 import Signatures.Proofs.Signature_Proofs
 import MercVerified.Signatures.Proofs.WorklistLoop_Proofs
+import MercVerified.Signatures.Proofs.LabelledTransitionSystem_Proofs
 /-!
 # Proofs for the `strong_bisim_sigref` correctness contract
 
@@ -9,7 +10,7 @@ Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 `strong_bisim_sigref_correct_general` proves the `StrongBisimSigrefCorrectSpec`
 contract stated in `MercVerified/Signatures/Refinement.lean`, generically for
 any `LTS` trait implementor. `strong_bisim_sigref_correct` specializes it to
-`SimpleLabelledTransitionSystem`. Their contract pins (the `example`s
+`LabelledTransitionSystem`. Their contract pins (the `example`s
 re-stating their exact closed signatures, so `lake build` fails if a
 regeneration drifts from the pinned shape) live in the human-vetted
 `MercVerified/Signatures/Refinement_Pins.lean`, not in this file.
@@ -20,10 +21,13 @@ The proof unfolds the translated `do`-blocks of `strong_bisim_sigref` /
   `MercVerified/Code/FunsExternal.lean` (`IncomingTransitions::new`,
   `Timing::measure`, `HashMap::len`, `Vec::resize_with`, `Vec::default`,
   `TagIndex::new`), plus `BlockPartition::new` (positive element count);
-- the `hwf : LTSInst.WellFormed sys` hypothesis (for `SimpleLabelledTransitionSystem`,
-  discharged by the domain axiom `slts_wellFormed`, mirroring the Rust
-  `transitions` key/target invariant), without which `BlockPartition::new`'s
-  `assert!(num_of_elements > 0)` or `outgoing_transitions` may fail;
+- the `hwf : LTSInst.WellFormed sys` hypothesis (for `LabelledTransitionSystem`, discharged
+  by the real theorem `lts_wellFormed`
+  (`MercVerified/Signatures/Proofs/LabelledTransitionSystem_Proofs.lean`) from the caller-supplied
+  `hvalid : LabelledTransitionSystemValid sys` - not an axiom, and not unconditional: it mirrors
+  the Rust `assert_valid` invariant, which only a value produced by a safe constructor is trusted
+  to satisfy), without which `BlockPartition::new`'s `assert!(num_of_elements > 0)` or
+  `outgoing_transitions` may fail;
 - the hand-written `run_worklist_loop` contract axiom `run_worklist_loop_spec`
   (declared in `MercVerified/Basic.lean`, where `toLTS` is defined, generic
   over any `LTS` implementor), which provides the partition coherence,
@@ -48,7 +52,7 @@ open verified.merc_lts.lts (StateTag LabelTag TransitionLabel LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)
 open verified.merc_reduction.signature_refinement (strong_bisim_sigref strong_signature_refinement)
-open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
+open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open verified.merc_lts.lts.LTS (toLTS)
 
 namespace MercVerified.Signatures.Proofs
@@ -184,18 +188,22 @@ theorem strong_bisim_sigref_correct_general
   rw [hmeasure]
   simp
 
-/-- `SimpleLabelledTransitionSystem` satisfies the `LTS.WellFormed` requirement
-    (via `slts_wellFormed`), so its correctness result is a corollary
-    of the generic `strong_bisim_sigref_correct_general`. -/
+/-- `LabelledTransitionSystem` satisfies the `LTS.WellFormed` requirement whenever its raw
+    representation is valid (`LabelledTransitionSystemValid`, `MercVerified/Basic.lean` - via
+    `lts_wellFormed`, `MercVerified/Signatures/Proofs/LabelledTransitionSystem_Proofs.lean`), so
+    its correctness result is a corollary of the generic `strong_bisim_sigref_correct_general`,
+    conditional on that hypothesis (rather than unconditional, since `LabelledTransitionSystemValid`
+    is not derivable from the type alone - `ByteCompressedVec` is a fully opaque external type). -/
 theorem strong_bisim_sigref_correct
     {Label : Type} (TLInst : TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label) (timing : Timing) :
+    (sys : LabelledTransitionSystem Label) (hvalid : LabelledTransitionSystemValid sys)
+    (timing : Timing) :
     StrongBisimSigrefCorrectSpec
-      (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
-      (slts_wellFormed TLInst sys) timing :=
+      (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
+      (lts_wellFormed TLInst sys hvalid) timing :=
   strong_bisim_sigref_correct_general
-    (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
-    (slts_wellFormed TLInst sys) timing
+    (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys
+    (lts_wellFormed TLInst sys hvalid) timing
 
 /-- Any partition that is stable for the strong signature witnesses the
     `StrongFixPoint` semantic: two states that end up in the same block are
@@ -215,19 +223,20 @@ theorem stable_implies_strong_fixpoint
     are related by the strong-bisimulation `StrongFixPoint` semantics. -/
 theorem strong_bisim_sigref_same_block_strong_fixpoint
     {Label : Type} (TLInst : TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label) (timing : Timing) :
+    (sys : LabelledTransitionSystem Label) (hvalid : LabelledTransitionSystemValid sys)
+    (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
-          (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+          (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
           sys timing = ok (sys, partition) ∧
-      ∀ s s', blockOf s = blockOf s' → StrongFixPoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
-  have hspec := strong_bisim_sigref_correct TLInst sys timing
+      ∀ s s', blockOf s = blockOf s' → StrongFixPoint (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
+  have hspec := strong_bisim_sigref_correct TLInst sys hvalid timing
   unfold StrongBisimSigrefCorrectSpec at hspec
   rcases hspec with ⟨partition, blockOf, hret, hcoh, hcov, hstab, _hcomplete⟩
   refine ⟨partition, blockOf, ?_, ?_⟩
   · simpa using hret
   · intro s s' hbb
-    exact stable_implies_strong_fixpoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) blockOf hstab s s' hbb
+    exact stable_implies_strong_fixpoint (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) blockOf hstab s s' hbb
 
 /-- The partition that `strong_bisim_sigref` returns puts exactly the
     `StrongFixPoint`-related (equivalently, by `StrongFixPoint.bisimilarity` /
@@ -236,50 +245,52 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
     the spec's own completeness conjunct. -/
 theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     {Label : Type} (TLInst : TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label) (timing : Timing) :
+    (sys : LabelledTransitionSystem Label) (hvalid : LabelledTransitionSystemValid sys)
+    (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
-          (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+          (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
           sys timing = ok (sys, partition) ∧
-      ∀ s s', blockOf s = blockOf s' ↔ StrongFixPoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
-  have hspec := strong_bisim_sigref_correct TLInst sys timing
+      ∀ s s', blockOf s = blockOf s' ↔ StrongFixPoint (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
+  have hspec := strong_bisim_sigref_correct TLInst sys hvalid timing
   unfold StrongBisimSigrefCorrectSpec at hspec
   rcases hspec with ⟨partition, blockOf, hret, hcoh, hcov, hstab, hcomplete⟩
   refine ⟨partition, blockOf, ?_, ?_⟩
   · simpa using hret
   · intro s s'
-    exact ⟨stable_implies_strong_fixpoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) blockOf hstab s s', hcomplete s s'⟩
+    exact ⟨stable_implies_strong_fixpoint (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) blockOf hstab s s', hcomplete s s'⟩
 
 /-- The headline strong-bisimilarity statement: `strong_bisim_sigref`'s block
     map is exactly the strong bisimilarity relation. This is the *full*
     strong-bisimilarity reachable from `StrongBisimSigrefCorrectSpec`: two
     states are placed in the same block by the translated refinement iff they
     are strongly bisimilar in the `toLTS` view of the
-    `SimpleLabelledTransitionSystem`. The right-to-left direction is the spec's
+    `LabelledTransitionSystem`. The right-to-left direction is the spec's
     `StrongFixPoint`-completeness conjunct chained through
     `Cslib.LTS.Bisimilarity.strongFixPoint`; the left-to-right is the spec's
     `IsStable` conjunct witnessed through `stable_implies_strong_fixpoint` and
     `StrongFixPoint.bisimilarity`. -/
 theorem strong_bisim_sigref_same_block_iff_bisimilar
     {Label : Type} (TLInst : TransitionLabel Label)
-    (sys : SimpleLabelledTransitionSystem Label) (timing : Timing) :
+    (sys : LabelledTransitionSystem Label) (hvalid : LabelledTransitionSystemValid sys)
+    (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
-          (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+          (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
           sys timing = ok (sys, partition) ∧
       ∀ s s', blockOf s = blockOf s' ↔
-        Cslib.LTS.Bisimilarity (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys)
-          (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
+        Cslib.LTS.Bisimilarity (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys)
+          (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := by
   obtain ⟨partition, blockOf, hret, hiff⟩ :=
-    strong_bisim_sigref_same_block_iff_strong_fixpoint TLInst sys timing
+    strong_bisim_sigref_same_block_iff_strong_fixpoint TLInst sys hvalid timing
   refine ⟨partition, blockOf, hret, ?_⟩
   intro s s'
   have hss' : blockOf s = blockOf s' ↔
-      StrongFixPoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := hiff s s'
+      StrongFixPoint (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) s s' := hiff s s'
   constructor
   · intro hab
-    exact StrongFixPoint.bisimilarity (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) (hss'.1 hab)
+    exact StrongFixPoint.bisimilarity (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) (hss'.1 hab)
   · intro hb
-    exact hss'.2 (Cslib.LTS.Bisimilarity.strongFixPoint (toLTS (SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) hb)
+    exact hss'.2 (Cslib.LTS.Bisimilarity.strongFixPoint (toLTS (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) sys) hb)
 
 end MercVerified.Signatures.Proofs

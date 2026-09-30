@@ -287,24 +287,27 @@ per-state "rank".
 
 Partition-level (`Partition_Proofs.lean`):
 - `mark_element`/`mark_backward_closure` contracts pinning `p'.blocks =
-  p.blocks` (point 1): **`mark_element_blocks_length` is now proved**
-  (`Partition_Proofs.lean`, right after `swap_elements_spec`) - it takes the
-  read/write success data as explicit hypotheses (mirroring
-  `strong_process_worklist_block_contract`'s style) and concludes
-  `self'.blocks.val.length = self.blocks.val.length` by chaining
-  `swap_elements_spec` (blocks untouched by the swap) with
-  `blocks_index_mut_contract` (the one `marked_split` write is a `Slice.set`,
-  which never changes length). `mark_backward_closure` (the `BRANCHING`-only
-  loop over `mark_element`) is **also done**, but not by induction over the
-  loop: Charon/Aeneas could not translate its `while`/`for` control flow, so
-  it is an opaque external (an axiom, not a `def`) with no body to unfold.
-  `mark_backward_closure_blocks_length` (new axiom in
-  `MercVerified/Code/FunsExternalSpecs.lean`, right after
-  `Block.assert_consistent_ok`) records the fact at the trust boundary
-  instead, justified in its docstring by the Rust source only ever calling
-  `mark_element` in that loop. `Partition_Proofs.lean` then has thin
-  restatement theorems `mark_backward_closure_blocks_length` and (covering
-  what the worklist loop actually calls) `maybe_mark_backward_closure_blocks_length`.
+  p.blocks` (point 1): **both are now proved by real induction, with no
+  axiom**. `mark_backward_closure` used to be an opaque external (Charon
+  could not translate its original `while`/`for` control flow), so this
+  fact used to be recorded as a trust-boundary axiom instead; it has since
+  been rewritten (under the `lean` Cargo feature, in
+  `crates/reduction/src/block_partition.rs`) into a form Aeneas *can*
+  translate, so it is now a real `def` with a body to reason about.
+  `mark_element_blocks_length`, `mark_backward_closure_loop0_loop1_blocks_length`
+  (the main marking scan), `mark_backward_closure_loop0_loop0_eq` (the
+  trailing debug-assertion consistency check, which is read-only and always
+  returns its input unchanged), `mark_backward_closure_loop0_blocks_length`,
+  `mark_backward_closure_blocks_length` and `maybe_mark_backward_closure_blocks_length`
+  (all in `Partition_Proofs.lean`, right after `swap_elements_spec`) chain
+  together bottom-up. Rather than threading a `PartWF`-style well-formedness
+  invariant through the recursion to justify every intermediate index bound,
+  each lemma is proved directly from a bare success hypothesis: `ok_bind_elim`
+  peels one `do`-step of the translated code at a time (sound because
+  `Result` is total on its `ok`/`vis`/`div` shape, even though it's an
+  `ITree` and not a plain inductive), so no bound side-conditions are ever
+  needed - if the whole computation is `ok`, every step it took must have
+  succeeded too.
 - `finish_partition_marked_contract`: pins `new_block_indices` to
   `b :: (List.range' N k).map BlockIndex` with `N' = N + k` as in point 2
   (not yet proved; `strong_partition_marked_nontrivial_contract`,

@@ -18,6 +18,21 @@ Machine-generated proofs; may be freely edited or regenerated (see CLAUDE.md).
 open Aeneas Aeneas.Std WP Result ControlFlow
 open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_collections.indexed_partition (BlockTag)
+open verified.merc_lts.lts (StateTag LabelTag LTS)
+
+namespace verified.merc_lts.lts.LTS
+
+/-- `(toLTS LTSInst sys).Tr` unfolds to `tr LTSInst sys` - a real theorem (`Iff.rfl`), moved here
+    (from `MercVerified/Basic.lean`) since it is a proof, not part of the trust boundary. -/
+@[simp] theorem toLTS_Tr {L Label : Type}
+    (LTSInst : LTS L Label)
+    (sys : L)
+    (s : TagIndex Std.Usize StateTag)
+    (μ : TagIndex Std.Usize LabelTag)
+    (s' : TagIndex Std.Usize StateTag) :
+    (toLTS LTSInst sys).Tr s μ s' ↔ tr LTSInst sys s μ s' := Iff.rfl
+
+end verified.merc_lts.lts.LTS
 
 namespace MercVerified.Signatures.Proofs
 
@@ -25,6 +40,110 @@ set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
 
 private abbrev BlockIndex := TagIndex Std.Usize BlockTag
+
+/-!
+## `TagIndex` semantics
+
+`merc_utilities::tagged_index` is in Charon's `include` list, so `TagIndex T Tag`
+is the translated structure `{ index : T, marker : PhantomData Tag }` and all of
+its operations are generated definitions. The lemmas below are *theorems*
+(no trust boundary) that unfold those definitions, so proofs can rewrite with
+them instead of unfolding by hand. Moved here (from
+`MercVerified/Code/FunsExternalSpecs.lean`) since they are genuine proofs, not
+hand-vetted trust-boundary axioms.
+-/
+
+/-- `TagIndex` is determined by its payload (the phantom marker is `Unit`). -/
+theorem merc_utilities.tagged_index.TagIndex.ext {T Tag : Type}
+    {a b : TagIndex T Tag} (h : a.index = b.index) : a = b := by
+  cases a; cases b; simp_all
+
+instance {T Tag : Type} [DecidableEq T] :
+    DecidableEq (TagIndex T Tag) := fun a b =>
+  if h : a.index = b.index then isTrue (merc_utilities.tagged_index.TagIndex.ext h)
+  else isFalse (fun e => h (congrArg (·.index) e))
+
+instance {T Tag : Type} [Inhabited T] :
+    Inhabited (TagIndex T Tag) := ⟨⟨default, ()⟩⟩
+
+/-- `TagIndex::new` never fails. -/
+theorem merc_utilities.tagged_index.TagIndex.new_spec
+    {T : Type} (Tag : Type) (i : T) :
+    ∃ t, verified.merc_utilities.tagged_index.TagIndex.new Tag i = ok t :=
+  ⟨_, rfl⟩
+
+/-- `TagIndex::new` wraps its argument. -/
+@[simp] theorem merc_utilities.tagged_index.TagIndex.new_eq {T : Type} (Tag : Type)
+    (i : T) :
+    verified.merc_utilities.tagged_index.TagIndex.new Tag i = ok { index := i, marker := () } :=
+  rfl
+
+/-- `TagIndex::value` projects the payload. -/
+@[simp] theorem tag_value_id {T : Type} {Tag : Type} (CopyInst : core.marker.Copy T)
+    (t : TagIndex T Tag) :
+    verified.merc_utilities.tagged_index.TagIndex.value CopyInst t = ok t.index :=
+  rfl
+
+/-- `TagIndex`'s `PartialEq` is the payload's `PartialEq`. -/
+@[simp] theorem tag_partial_eq_inst {T : Type} {Tag : Type}
+    (peqInst : core.cmp.PartialEq T T)
+    (a b : TagIndex T Tag) :
+    verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
+      peqInst a b = peqInst.eq a.index b.index :=
+  rfl
+
+/-- Indexing a `Vec` by a tagged `usize` is `Slice` indexing by the payload. -/
+theorem vec_tagged_index_eq {U : Type} {Tag : Type}
+    (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag) :
+    verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice U) v t
+      = v.slice.index_usize t.index := by
+  simp [verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index, alloc.vec.Vec.index,
+    core.slice.index.Usize.index]
+
+/-- Likewise for `IndexMut`. -/
+theorem vec_tagged_index_mut_eq {U : Type} {Tag : Type}
+    (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag) :
+    verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice U) v t
+      = (do
+        let p ← v.slice.index_mut_usize t.index
+        ok (p.1, fun u => ({ slice := p.2 u } : alloc.vec.Vec U))) := by
+  simp [verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut, alloc.vec.Vec.index_mut,
+    core.slice.index.Usize.index_mut]
+  rfl
+
+theorem vec_tagged_index_val {U : Type} {Tag : Type}
+    (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag)
+    (h : t.index.val < v.length) :
+    verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
+      (core.slice.index.SliceIndexUsizeSlice U) v t = ok (v.slice.val[t.index.val]) := by
+  rw [vec_tagged_index_eq]
+  have := Slice.index_usize_spec v.slice t.index (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
+  obtain ⟨x, hx, hxe⟩ := Std.WP.spec_imp_exists this
+  rw [hx, hxe]
+  rfl
+
+theorem blocks_index_mut_contract
+    (p : verified.merc_reduction.block_partition.BlockPartition)
+    (block_index : TagIndex Std.Usize
+      verified.merc_collections.indexed_partition.BlockTag)
+    (h : block_index.index.val < p.blocks.slice.val.length) :
+    verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        (core.slice.index.SliceIndexUsizeSlice
+          verified.merc_reduction.block_partition.Block)
+        p.blocks block_index =
+      ok (p.blocks.slice.val[block_index.index.val]'h,
+          fun u => ({ slice := p.blocks.slice.set block_index.index u } : alloc.vec.Vec
+                  verified.merc_reduction.block_partition.Block)) := by
+  rw [vec_tagged_index_mut_eq]
+  have := Slice.index_mut_usize_spec p.blocks.slice block_index.index
+    (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
+  obtain ⟨⟨x, back⟩, hx, hxe, hb⟩ := Std.WP.spec_imp_exists this
+  simp only [hx]
+  simp only [bind_tc_ok]
+  subst hb
+  simp [hxe]
 
 /-- `BlockPartition::block` accesses `blocks` by the tag's payload. -/
 theorem block_partition_block_val
@@ -399,7 +518,7 @@ private theorem new_loop_body_step (num : Sz) (st : NewLoopState)
   refine ⟨(it1, es1, bs1, os1), ?_, ?_, ?_⟩
   · unfold verified.merc_reduction.block_partition.BlockPartition.new_loop.body
     rw [hnext_e]
-    simp [hopt, merc_utilities.tagged_index.TagIndex.new_eq, hes1, hbs1, hos1]
+    simp [hopt, hes1, hbs1, hos1]
   · rcases hinv with ⟨hend_eq, hstart_le, hes, hbs, hos⟩
     constructor
     · rw [hend']; exact hend_eq
@@ -650,5 +769,398 @@ theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
           rw [e]; exact h3 _ (List.getElem_mem hi')
     · show s1.length = _; rw [hl1]; rfl
     · show (back2 b).length = _; rw [hlen]; rfl
+
+
+/-!
+# `mark_element`/`mark_backward_closure`: preserve `blocks.length`
+
+`mark_backward_closure` is, since it was made transparent (a real translated
+`def`, not an opaque external - see the `lean` Cargo feature rewrite in
+`crates/reduction/src/block_partition.rs`), a bounded loop that only ever
+mutates state through `mark_element`, plus trailing debug-assertion passes
+that read but never write. Neither the marking primitive nor a consistency
+check changes the *number* of blocks. Rather than threading a
+well-formedness invariant (`PartWF`) through the recursion to derive every
+intermediate index's bound, the lemmas below work directly from a bare
+success hypothesis: `Result` is an `ITree`, but its `bind` is total on the
+`ok`/`vis`/`div` shape (`ok_bind_elim`), so every index/subtraction/branch
+Aeneas emits can be peeled one step at a time, and each individual step that
+mutates `blocks` (`Slice.set`) is unconditionally length-preserving - no
+bound hypothesis is ever needed.
+-/
+
+private abbrev IT := verified.merc_lts.incoming_transitions.IncomingTransitions
+private abbrev FT := verified.merc_lts.incoming_transitions.FromTransition
+
+/-- Peeling one `do`-step under a bare success hypothesis: if a bind
+    succeeds with `y`, its head computation succeeded with some `x` and the
+    continuation on `x` succeeds with `y`. `Result` is an `ITree`, not a
+    plain inductive, but `Result.cases` (registered as its `cases_eliminator`)
+    still lets `cases` split it into `ok`/`vis`/`div`, and the `bind_*` simp
+    set disposes of the two impossible branches. -/
+theorem ok_bind_elim {α β : Type} {e : Result α} {f : α → Result β} {y : β}
+    (h : (do let x ← e; f x) = ok y) : ∃ x, e = ok x ∧ f x = ok y := by
+  cases e with
+  | ret x => exact ⟨x, rfl, by simpa using h⟩
+  | vis i k => simp at h
+  | div => simp at h
+
+/-- Unfolding equation for `Aeneas.Std.loop`, restated locally (the same fact
+    as `loop_eq_bind` in `WorklistLoop_Proofs.lean`, which this file cannot
+    import without creating a cycle). -/
+private theorem partition_loop_unfold {α β : Type} (body : α → Result (ControlFlow α β)) (x : α) :
+    Aeneas.Std.loop body x
+      = (do
+          let r ← body x
+          match r with
+          | ControlFlow.cont c => Aeneas.Std.loop body c
+          | ControlFlow.done d => ok d) := by
+  rw [Aeneas.Std.loop]
+  rfl
+
+private theorem intoIterNextSome {T : Type} (it : alloc.vec.into_iter.IntoIter T) (v : T) (tl : List T)
+    (h : it.val = v :: tl) :
+    ∃ it1 : alloc.vec.into_iter.IntoIter T,
+      alloc.vec.into_iter.IteratorIntoIter.next it = ok (some v, it1) ∧ it1.val = tl := by
+  unfold alloc.vec.into_iter.IteratorIntoIter.next
+  split
+  · rename_i heq'
+    have : v :: tl = [] := h.symm.trans heq'
+    cases this
+  · rename_i hd' tl' heq'
+    have hvc : v :: tl = hd' :: tl' := h.symm.trans heq'
+    cases hvc
+    refine ⟨alloc.vec.Vec.from tl (by grind), ?_⟩
+    constructor
+    · congr
+    · simp [alloc.vec.Vec.from, alloc.vec.Vec.val]
+
+private theorem intoIterNextNone {T : Type} (it : alloc.vec.into_iter.IntoIter T) (h : it.val = []) :
+    alloc.vec.into_iter.IteratorIntoIter.next it = ok (none, it) := by
+  unfold alloc.vec.into_iter.IteratorIntoIter.next
+  split
+  · rfl
+  · rename_i hd' tl' heq'
+    have : hd' :: tl' = [] := heq'.symm.trans h
+    cases this
+
+/-- `swap_elements` writes only `elements`/`element_offset`: its final result
+    is literally `{ self with elements := v, element_offset := v2 }`, so
+    `blocks` is untouched - derived from a bare success hypothesis alone,
+    with no bound side conditions. -/
+theorem swap_elements_blocks_eq
+    (self : BP) (a b : Std.Usize) (self' : BP)
+    (h : verified.merc_reduction.block_partition.BlockPartition.swap_elements self a b = ok self') :
+    self'.blocks = self.blocks := by
+  unfold verified.merc_reduction.block_partition.BlockPartition.swap_elements at h
+  obtain ⟨⟨_, _⟩, -, h⟩ := ok_bind_elim h
+  obtain ⟨_, -, h⟩ := ok_bind_elim h
+  obtain ⟨_, -, h⟩ := ok_bind_elim h
+  obtain ⟨⟨_, _⟩, -, h⟩ := ok_bind_elim h
+  obtain ⟨_, -, h⟩ := ok_bind_elim h
+  obtain ⟨⟨_, _⟩, -, h⟩ := ok_bind_elim h
+  simp at h
+  rw [← h]
+
+/-- The back-function a `TagIndex`-addressed `index_mut` hands back is always
+    `Slice.set` at the same index - unconditionally, regardless of whether
+    the read that produced it was in bounds (`Slice.index_mut_usize`'s own
+    back-function is `Slice.set v i`, full stop; the *read* may fail out of
+    bounds, but if the whole call is `ok`, the back-function has this shape). -/
+theorem tagIndex_index_mut_back_eq {U : Type} {Tag : Type}
+    (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag) (x : U)
+    (back : U → alloc.vec.Vec U)
+    (h : verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
+        (core.slice.index.SliceIndexUsizeSlice U) v t = ok (x, back)) :
+    back = fun u => ({ slice := v.slice.set t.index u } : alloc.vec.Vec U) := by
+  rw [vec_tagged_index_mut_eq] at h
+  obtain ⟨p, hp, heq⟩ := ok_bind_elim h
+  unfold Slice.index_mut_usize at hp
+  obtain ⟨y, -, hp2⟩ := ok_bind_elim hp
+  simp at hp2
+  rw [← hp2] at heq
+  simp only [Result.ok.injEq, Prod.mk.injEq] at heq
+  exact heq.2.symm
+
+/-- `mark_element` preserves the number of blocks: its only write to `blocks`
+    is the `Slice.set` of `block_index`'s `marked_split` field (guarded by
+    `swap_elements`, which `swap_elements_blocks_eq` shows leaves `blocks`
+    untouched entirely); the `else` branch doesn't touch `blocks` at all.
+    Proved from a bare success hypothesis, with no `PartWF`/bound
+    side-conditions. -/
+theorem mark_element_blocks_length
+    (self : BP) (element : TagIndex Sz StateTag) (self' : BP)
+    (h : verified.merc_reduction.block_partition.BlockPartition.mark_element self element = ok self') :
+    self'.blocks.val.length = self.blocks.val.length := by
+  unfold verified.merc_reduction.block_partition.BlockPartition.mark_element at h
+  obtain ⟨block_index, -, h⟩ := ok_bind_elim h
+  obtain ⟨offset, -, h⟩ := ok_bind_elim h
+  obtain ⟨b, -, h⟩ := ok_bind_elim h
+  obtain ⟨⟨v, v1, v2, v3⟩, hv, h⟩ := ok_bind_elim h
+  obtain ⟨_, -, h⟩ := ok_bind_elim h
+  obtain ⟨_, -, h⟩ := ok_bind_elim h
+  simp at h
+  have hblocks : self'.blocks = v1 := by rw [← h]
+  rw [hblocks]
+  by_cases hlt : offset < b.marked_split
+  · rw [if_pos hlt] at hv
+    obtain ⟨_, -, hv⟩ := ok_bind_elim hv
+    obtain ⟨self1, hself1, hv⟩ := ok_bind_elim hv
+    obtain ⟨⟨bm, back⟩, hbm, hv⟩ := ok_bind_elim hv
+    obtain ⟨i1, -, hv⟩ := ok_bind_elim hv
+    simp only [Result.ok.injEq, Prod.mk.injEq] at hv
+    obtain ⟨-, hv4, -, -⟩ := hv
+    have hself1b := swap_elements_blocks_eq self offset _ self1 hself1
+    have hback := tagIndex_index_mut_back_eq self1.blocks block_index bm back hbm
+    have heqv1 : v1 = back { bm with marked_split := i1 } := hv4.symm
+    rw [heqv1, hback]
+    simp [alloc.vec.Vec.val, hself1b]
+  · rw [if_neg hlt] at hv
+    simp only [Result.ok.injEq, Prod.mk.injEq] at hv
+    obtain ⟨-, hv2, -, -⟩ := hv
+    rw [← hv2]
+
+/-- `mark_backward_closure_loop0_loop0` (the debug-assertion consistency-check
+    loop reached when the main scan is exhausted without an early break) is a
+    read-only pass: `self` is closed over, not part of the loop state, so on
+    success it always returns exactly the `self` it was given. -/
+theorem mark_backward_closure_loop0_loop0_eq
+    (self : BP) (block_index : BlockIndex) (incoming_transitions : IT) :
+    ∀ n (iter : core.ops.range.Range Sz) (self' : BP),
+      iter.«end».val - iter.start.val = n →
+      verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0
+        iter self block_index incoming_transitions = ok self' →
+      self' = self := by
+  intro n
+  induction n with
+  | zero =>
+    intro iter self' hn h
+    unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0 at h
+    rw [partition_loop_unfold] at h
+    obtain ⟨r, hr, h⟩ := ok_bind_elim h
+    unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0.body at hr
+    have hge : iter.start.val ≥ iter.«end».val := by omega
+    obtain ⟨o, iter1, hnext, ho, hident⟩ := next_range_none iter hge
+    rw [hnext, ho] at hr
+    simp only [bind_tc_ok] at hr
+    simp at hr
+    rw [← hr] at h
+    simp at h
+    exact h.symm
+  | succ n ih =>
+    intro iter self' hn h
+    unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0 at h
+    rw [partition_loop_unfold] at h
+    obtain ⟨r, hr, h⟩ := ok_bind_elim h
+    unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop0.body at hr
+    have hlt : iter.start.val < iter.«end».val := by omega
+    obtain ⟨o, iter1, hnext, ho, hstart', hend'⟩ := next_range_some iter hlt
+    rw [hnext, ho] at hr
+    simp only [bind_tc_ok] at hr
+    obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+    obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+    obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+    obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+    simp at hr
+    rw [← hr] at h
+    have hn1 : iter1.«end».val - iter1.start.val = n := by
+      have : iter1.«end».val = iter.«end».val := by rw [hend']
+      omega
+    exact ih iter1 self' hn1 h
+
+/-- `mark_backward_closure_loop0_loop1` (the main marking scan) preserves the
+    number of blocks: its only state-changing step is `mark_element`, whose
+    own `blocks.length`-preservation (`mark_element_blocks_length`) is
+    likewise proved from a bare success hypothesis. -/
+theorem mark_backward_closure_loop0_loop1_blocks_length
+    (self : BP) (block_index : BlockIndex) (iter : alloc.vec.into_iter.IntoIter FT) (self' : BP)
+    (h : verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1
+        iter self block_index = ok self') :
+    self'.blocks.val.length = self.blocks.val.length := by
+  let ul : (alloc.vec.into_iter.IntoIter FT × BP) →
+      Result (ControlFlow (alloc.vec.into_iter.IntoIter FT × BP) BP) :=
+    fun (iter1, self1) =>
+      verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body
+        block_index iter1 self1
+  have hloop_unfold : ∀ (it : alloc.vec.into_iter.IntoIter FT) (s : BP),
+      Aeneas.Std.loop ul (it, s) =
+        verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1
+          it s block_index := by
+    intro it s
+    rw [verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1]
+  have hw : ∀ n (it : alloc.vec.into_iter.IntoIter FT) (s s' : BP), it.val.length = n →
+      Aeneas.Std.loop ul (it, s) = ok s' → s'.blocks.val.length = s.blocks.val.length := by
+    intro n
+    induction n with
+    | zero =>
+      intro it s s' hlen h
+      have hnil : it.val = [] := List.eq_nil_of_length_eq_zero hlen
+      rw [partition_loop_unfold] at h
+      obtain ⟨r, hr, h⟩ := ok_bind_elim h
+      have hru : ul (it, s) = verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body
+          block_index it s := rfl
+      rw [hru] at hr
+      unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body at hr
+      rw [intoIterNextNone it hnil] at hr
+      simp only [bind_tc_ok] at hr
+      simp at hr
+      rw [← hr] at h
+      simp at h
+      rw [← h]
+    | succ n ih =>
+      intro it s s' hlen h
+      cases hcons : it.val with
+      | nil => exfalso; rw [hcons] at hlen; simp at hlen
+      | cons tr tl =>
+        obtain ⟨it1, hnext, hval⟩ := intoIterNextSome it tr tl hcons
+        have hlen1 : it1.val.length = n := by
+          have hlc : (tr :: tl).length = n + 1 := by rw [← hcons]; exact hlen
+          have hh : tl.length = n := by simpa using hlc
+          rw [hval]; exact hh
+        rw [partition_loop_unfold] at h
+        obtain ⟨r, hr, h⟩ := ok_bind_elim h
+        have hru : ul (it, s) = verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body
+            block_index it s := rfl
+        rw [hru] at hr
+        unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body at hr
+        rw [hnext] at hr
+        simp only [bind_tc_ok] at hr
+        obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+        obtain ⟨eqb, -, hr⟩ := ok_bind_elim hr
+        by_cases hb : eqb = true
+        · rw [if_pos hb] at hr
+          obtain ⟨self1, hself1, hr⟩ := ok_bind_elim hr
+          simp at hr
+          rw [← hr] at h
+          have hstep := mark_element_blocks_length s tr.«from» self1 hself1
+          have hrec := ih it1 self1 s' hlen1 h
+          exact hrec.trans hstep
+        · rw [if_neg hb] at hr
+          simp at hr
+          rw [← hr] at h
+          exact ih it1 s s' hlen1 h
+  exact hw iter.val.length iter self self' rfl h
+
+/-- The top-level marking loop (`mark_backward_closure_loop0`) preserves the
+    number of blocks: on each step it either leaves `self` untouched (the
+    two debug-assertion exit branches, plus the exhaustion branch via
+    `mark_backward_closure_loop0_loop0_eq`) or updates it through
+    `mark_backward_closure_loop0_loop1`, whose own length-preservation is
+    `mark_backward_closure_loop0_loop1_blocks_length`. -/
+theorem mark_backward_closure_loop0_blocks_length
+    (block_index : BlockIndex) (incoming_transitions : IT) (i i1 : Sz)
+    (iter : core.ops.range.Range Sz) (self self' : BP)
+    (h : verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0
+        iter self block_index incoming_transitions i i1 = ok self') :
+    self'.blocks.val.length = self.blocks.val.length := by
+  let ul : (core.ops.range.Range Sz × BP) → Result (ControlFlow (core.ops.range.Range Sz × BP) BP) :=
+    fun (iter1, self1) =>
+      verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body
+        block_index incoming_transitions i i1 iter1 self1
+  have hloop_unfold : ∀ (it : core.ops.range.Range Sz) (s : BP),
+      Aeneas.Std.loop ul (it, s) =
+        verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0
+          it s block_index incoming_transitions i i1 := by
+    intro it s
+    rw [verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0]
+  have hw : ∀ n (it : core.ops.range.Range Sz) (s s' : BP),
+      it.«end».val - it.start.val = n →
+      Aeneas.Std.loop ul (it, s) = ok s' → s'.blocks.val.length = s.blocks.val.length := by
+    intro n
+    induction n with
+    | zero =>
+      intro it s s' hn h
+      rw [partition_loop_unfold] at h
+      obtain ⟨r, hr, h⟩ := ok_bind_elim h
+      have hru : ul (it, s) = verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body
+          block_index incoming_transitions i i1 it s := rfl
+      rw [hru] at hr
+      unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body at hr
+      have hge : it.start.val ≥ it.«end».val := by omega
+      obtain ⟨o, it1, hnext, ho, hident⟩ := next_range_none it hge
+      rw [hnext, ho] at hr
+      simp only [bind_tc_ok] at hr
+      obtain ⟨self1, hself1, hr⟩ := ok_bind_elim hr
+      simp at hr
+      rw [← hr] at h
+      simp at h
+      have heq1 := mark_backward_closure_loop0_loop0_eq s block_index incoming_transitions
+        (i1.val - i.val) { start := i, «end» := i1 } self1 rfl hself1
+      rw [← h, heq1]
+    | succ n ih =>
+      intro it s s' hn h
+      rw [partition_loop_unfold] at h
+      obtain ⟨r, hr, h⟩ := ok_bind_elim h
+      have hru : ul (it, s) = verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body
+          block_index incoming_transitions i i1 it s := rfl
+      rw [hru] at hr
+      unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0.body at hr
+      have hlt : it.start.val < it.«end».val := by omega
+      obtain ⟨o, it1, hnext, ho, hstart', hend'⟩ := next_range_some it hlt
+      rw [hnext, ho] at hr
+      simp only [bind_tc_ok] at hr
+      obtain ⟨i2, -, hr⟩ := ok_bind_elim hr
+      obtain ⟨itv, -, hr⟩ := ok_bind_elim hr
+      obtain ⟨b, -, hr⟩ := ok_bind_elim hr
+      have hn1 : it1.«end».val - it1.start.val = n := by
+        have : it1.«end».val = it.«end».val := by rw [hend']
+        omega
+      by_cases hge : itv ≥ b.marked_split
+      · rw [if_pos hge] at hr
+        obtain ⟨b1, -, hr⟩ := ok_bind_elim hr
+        by_cases hb1 : b1 = true
+        · rw [if_pos hb1] at hr
+          obtain ⟨ti, -, hr⟩ := ok_bind_elim hr
+          obtain ⟨vtr, -, hr⟩ := ok_bind_elim hr
+          obtain ⟨iter2, -, hr⟩ := ok_bind_elim hr
+          obtain ⟨self1, hself1, hr⟩ := ok_bind_elim hr
+          simp at hr
+          rw [← hr] at h
+          have hstep := mark_backward_closure_loop0_loop1_blocks_length s block_index iter2 self1 hself1
+          have hrec := ih it1 self1 s' hn1 h
+          exact hrec.trans hstep
+        · rw [if_neg hb1] at hr
+          obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+          simp at hr
+          rw [← hr] at h
+          simp at h
+          rw [← h]
+      · rw [if_neg hge] at hr
+        obtain ⟨_, -, hr⟩ := ok_bind_elim hr
+        simp at hr
+        rw [← hr] at h
+        simp at h
+        rw [← h]
+  exact hw (iter.«end».val - iter.start.val) iter self self' rfl h
+
+/-- `mark_backward_closure` preserves the number of blocks: it just reads the
+    target block's `marked_split`/`end` once, then delegates entirely to
+    `mark_backward_closure_loop0`. -/
+theorem mark_backward_closure_blocks_length
+    (self : BP) (block_index : BlockIndex) (incoming_transitions : IT) (self' : BP)
+    (h : verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure
+        self block_index incoming_transitions = ok self') :
+    self'.blocks.val.length = self.blocks.val.length := by
+  unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure at h
+  obtain ⟨block, -, h⟩ := ok_bind_elim h
+  obtain ⟨span, -, h⟩ := ok_bind_elim h
+  exact mark_backward_closure_loop0_blocks_length block_index incoming_transitions
+    block.marked_split block.«end» { start := 0#usize, «end» := span } self self' h
+
+/-- `maybe_mark_backward_closure` preserves the number of blocks in both the
+    `BRANCHING` and non-`BRANCHING` cases: the latter is the identity, and
+    the former is exactly `mark_backward_closure_blocks_length`. -/
+theorem maybe_mark_backward_closure_blocks_length
+    (BRANCHING : Bool) (self : BP) (block_index : BlockIndex) (incoming_transitions : IT) (self' : BP)
+    (h : verified.merc_reduction.signature_refinement.maybe_mark_backward_closure
+        BRANCHING self block_index incoming_transitions = ok self') :
+    self'.blocks.val.length = self.blocks.val.length := by
+  unfold verified.merc_reduction.signature_refinement.maybe_mark_backward_closure at h
+  by_cases hbr : BRANCHING = true
+  · rw [if_pos hbr] at h
+    exact mark_backward_closure_blocks_length self block_index incoming_transitions self' h
+  · rw [if_neg hbr] at h
+    simp at h
+    rw [← h]
 
 end MercVerified.Signatures.Proofs

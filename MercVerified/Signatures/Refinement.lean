@@ -15,10 +15,11 @@ namespace MercVerified.Signatures
 /-- Correctness of `strong_bisim_sigref` for any `LTS` trait implementor `L` (via its dictionary
     `LTSInst`), given the requirement that isn't implied by the trait's type signature alone:
     well-formedness (`hwf`, see `LTS.WellFormed`: a non-empty state space on which
-    `outgoing_transitions` succeeds with in-range targets). `SimpleLabelledTransitionSystem`
-    satisfies `hwf` via `slts_wellFormed` (`MercVerified/Basic.lean`), making its correctness result
-    (`Proofs.strong_bisim_sigref_correct`) a corollary of this general spec's proof
-    (`Proofs.strong_bisim_sigref_correct_general`). -/
+    `outgoing_transitions` succeeds with in-range targets). `LabelledTransitionSystem` satisfies
+    `hwf` via `lts_wellFormed` (`MercVerified/Signatures/Proofs/LabelledTransitionSystem_Proofs.lean`),
+    conditional on its raw representation being valid (`LabelledTransitionSystemValid`,
+    `MercVerified/Basic.lean`), making its correctness result (`Proofs.strong_bisim_sigref_correct`)
+    a corollary of this general spec's proof (`Proofs.strong_bisim_sigref_correct_general`). -/
 def StrongBisimSigrefCorrectSpec
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (_hwf : LTSInst.WellFormed sys) (timing : Timing) : Prop :=

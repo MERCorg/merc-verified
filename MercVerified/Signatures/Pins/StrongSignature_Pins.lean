@@ -6,7 +6,7 @@ open verified.merc_utilities.tagged_index (TagIndex)
 open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.partition (Partition)
-open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
+open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open MercVerified.Signatures (StrongBisimSignatureSpec)
 
 -- Contract pin: fails to compile if `strong_bisim_signature_spec_general`'s signature drifts.
@@ -27,16 +27,16 @@ example :
 example :
     ∀ {Label P : Type}
       (TLInst : TransitionLabel Label) (PInst : Partition P)
-      (sys : SimpleLabelledTransitionSystem Label) (partition : P)
+      (sys : LabelledTransitionSystem Label) (partition : P)
       (s : TagIndex Std.Usize StateTag)
       (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
       (blockNumber : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
       (hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
       (ts : alloc.vec.Vec Transition)
       (houtgoing :
-        (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS
+        (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS
             TLInst).outgoing_transitions sys s = ok ts),
       StrongBisimSignatureSpec
-        (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+        (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
         PInst sys partition s builder0 blockNumber hblock ts houtgoing :=
   MercVerified.Signatures.Proofs.strong_bisim_signature_spec

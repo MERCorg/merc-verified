@@ -1,4 +1,5 @@
 import MercVerified.Signatures.StrongSignature
+import MercVerified.Signatures.Proofs.Partition_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -10,7 +11,7 @@ Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 contract stated in `MercVerified/Signatures/StrongSignature.lean`, generically
 for any `LTS` trait implementor, using the private helper lemmas below it.
 `strong_bisim_signature_spec` specializes it to
-`SimpleLabelledTransitionSystem`. Their contract pins (the `example`s
+`LabelledTransitionSystem`. Their contract pins (the `example`s
 re-stating their exact closed signatures, so `lake build` fails if a
 regeneration drifts from the pinned shape) live in the human-vetted
 `MercVerified/Signatures/StrongSignature_Pins.lean`, not in this file.
@@ -22,7 +23,7 @@ open verified.merc_lts.lts (StateTag LabelTag TransitionLabel Transition LTS)
 open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.signatures (strong_bisim_signature strong_bisim_signature_loop)
 open verified.merc_reduction.partition (Partition)
-open verified.simple_labelled_transition_system (SimpleLabelledTransitionSystem)
+open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open verified.merc_lts.lts.LTS (toLTS toLTS_Tr tr)
 
 namespace MercVerified.Signatures.Proofs
@@ -286,14 +287,14 @@ theorem strong_bisim_signature_spec_general
       _ ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber :=
             sigEntry_mem_iff LTSInst sys s blockNumber ts houtgoing μ β
 
-/-- `SimpleLabelledTransitionSystem`'s `LTS` instance is a specific `LTS`
+/-- `LabelledTransitionSystem`'s `LTS` instance is a specific `LTS`
     implementor, so its correctness result is a corollary of the generic
     `strong_bisim_signature_spec_general`. -/
 theorem strong_bisim_signature_spec
     {Label P : Type}
     (TLInst : TransitionLabel Label)
     (PInst : Partition P)
-    (sys : SimpleLabelledTransitionSystem Label)
+    (sys : LabelledTransitionSystem Label)
     (partition : P)
     (s : TagIndex Std.Usize StateTag)
     (builder0 : alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)))
@@ -301,13 +302,13 @@ theorem strong_bisim_signature_spec
     (hblock : ∀ t, PInst.block_number partition t = ok (blockNumber t))
     (ts : alloc.vec.Vec Transition)
     (houtgoing :
-      (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS
+      (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS
           TLInst).outgoing_transitions sys s = ok ts) :
     StrongBisimSignatureSpec
-      (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+      (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
       PInst sys partition s builder0 blockNumber hblock ts houtgoing :=
   strong_bisim_signature_spec_general
-    (verified.simple_labelled_transition_system.SimpleLabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
+    (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst)
     PInst sys partition s builder0 blockNumber hblock ts houtgoing
 
 end MercVerified.Signatures.Proofs
