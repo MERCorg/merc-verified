@@ -18,6 +18,7 @@ include = [
   "merc_reduction::block_partition",
   "merc_reduction::signature_refinement",
   "merc_lts::incoming_transitions",
+  "merc_lts::labelled_transition_system",
   "merc_utilities::tagged_index",
 ]
 # `tau_cycle_elimination_and_reorder` pulls in `merc_collections::graph::Graph`

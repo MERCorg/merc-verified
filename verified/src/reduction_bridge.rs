@@ -14,7 +14,9 @@
 
 use merc_collections::BlockIndex;
 use merc_lts::LTS;
+use merc_lts::LabelledTransitionSystem;
 use merc_lts::StateIndex;
+use merc_lts::TransitionLabel;
 use merc_reduction::BlockPartition;
 use merc_reduction::Partition;
 use merc_reduction::SignatureBuilder;
@@ -23,6 +25,13 @@ use rustc_hash::FxHashSet;
 
 pub fn strong_bisim_sigref<L: LTS>(lts: L, timing: &Timing) -> (L, BlockPartition) {
     merc_reduction::strong_bisim_sigref(lts, timing)
+}
+
+pub fn labelled_transition_system_strong_bisim_sigref<Label: TransitionLabel>(
+    lts: LabelledTransitionSystem<Label>,
+    timing: &Timing,
+) -> (LabelledTransitionSystem<Label>, BlockPartition) {
+    strong_bisim_sigref(lts, timing)
 }
 
 pub fn strong_bisim_signature<L: LTS, P: Partition>(
