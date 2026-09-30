@@ -35,6 +35,5 @@ exclude = [
 opaque = [
   "merc_utilities::tagged_index::{core::hash::Hash<_>}",
   "merc_reduction::signature_refinement::new_worklist_progress",
-  "merc_reduction::block_partition::_::mark_backward_closure",
   "merc_reduction::block_partition::_::assert_consistent",
 ]
