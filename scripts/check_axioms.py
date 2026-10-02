@@ -10,9 +10,10 @@
   - `_native.decide.ax_N` axioms whose statement is exactly the byte-length
     bound check `Aeneas.Std.toStr` discharges via `decide +native` for a string
     literal (`decide ("<lit>".toByteArray.size <= U32.max) = true`). These get a
-    fresh per-declaration name each time, so they can't be approved by name;
-    their statement shape is checked instead (see `is_tostr_bound_check`) before
-    they're waved through.
+    fresh per-declaration name each time (and, when they sit inside a `private`
+    declaration, an abbreviated `_private`-mangled `✝`-suffixed name), so they
+    can't be approved by name; their statement shape is checked instead (see
+    `is_tostr_bound_check`) before they're waved through.
   - `sorryAx`, reported as a known-incomplete proof (see KNOWN_INCOMPLETE below)
     rather than a failure
 """
@@ -38,6 +39,7 @@ THEOREMS = [
     "BranchingBisimilarity.inductiveBranchingFixPoint",
     "MercVerified.Refinement.Proofs.strong_bisim_sigref_correct",
     "MercVerified.Refinement.Proofs.strong_bisim_signature_spec",
+    "MercVerified.Refinement.Proofs.strong_bisim_sigref_same_block_iff_bisimilar",
 ]
 
 # Theorems allowed to depend on `sorryAx` without failing the check (open,
@@ -67,7 +69,15 @@ PRINT_AXIOMS_RE = re.compile(
     r"|depends on axioms: \[(?P<axioms>[^\]]*)\])$",
     re.MULTILINE,
 )
-NATIVE_DECIDE_RE = re.compile(r"\._native\.decide\.ax_\d+(?:_\d+)*$")
+# `#print axioms` reports the `_native.decide.ax_N` axiom a `decide +native` in a
+# *private* declaration as `_private`-mangled-away and `✝`-suffixed
+# (`verified.foo._native.decide.ax_1✝`), so the suffix has to be tolerated here.
+NATIVE_DECIDE_RE = re.compile(r"\._native\.decide\.ax_\d+(?:_\d+)*✝?$")
+# Start of one `logInfo` record emitted by `native_decide_statements`, with or
+# without the `path:line:col: info: ` prefix Lean may prepend.
+NATIVE_DECIDE_DUMP_RE = re.compile(
+    r"^(?:\S+:\d+:\d+: (?:info|warning|error): )?AXIOM\|", re.MULTILINE
+)
 # Lean's pretty-printer only varies on *where* it line-wraps this, never the
 # tokens, so whitespace is collapsed before matching.
 TOSTR_BOUND_CHECK_RE = re.compile(
@@ -158,29 +168,82 @@ def run_lean(lean_src: str) -> str:
     return result.stdout
 
 
+def native_decide_statements() -> dict[str, str]:
+    """Map every `_native.decide.ax_N` axiom's real (environment) name to its
+    `#print`-shaped `axiom <name> : <statement>` line.
+
+    Needed because `#print axioms` reports such an axiom in an abbreviated form
+    (`verified.foo._native.decide.ax_1✝` for
+    `_private.MercVerified.Code.Funs.0.verified.foo._native.decide.ax_1`) that is
+    not parseable back as a Lean identifier, so `#print <name>` can't be used to
+    recover its statement. Read the statements straight out of the environment
+    instead and let the caller match the two spellings by suffix."""
+    imports = "\n".join(f"import {i}" for i in IMPORTS)
+    lean_src = f"""{imports}
+open Lean Elab Command in
+run_cmd do
+  let env ← getEnv
+  for (n, ci) in env.constants.toList do
+    if ci matches .axiomInfo _ then
+      if (n.toString).contains "_native.decide" then
+        logInfo m!"AXIOM|{{n}}|{{ci.type}}"
+"""
+    stdout = run_lean(lean_src)
+
+    starts = [m.start() for m in NATIVE_DECIDE_DUMP_RE.finditer(stdout)]
+    statements: dict[str, str] = {}
+    for i, start in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else len(stdout)
+        header, _, rest = stdout[start:end].partition("\n")
+        fields = header.split("|", 2)
+        if len(fields) != 3:
+            continue
+        statements[fields[1]] = " ".join(f"{fields[2]}\n{rest}".split())
+    return statements
+
+
 def approved_native_decide_axioms(candidates: set[str]) -> set[str]:
     """Of the `_native.decide.ax_N`-shaped `candidates`, the subset whose
-    `#print`ed statement is actually the `toStr` bound check (see
+    statement is actually the `toStr` bound check (see
     `is_tostr_bound_check`) - checked mechanically rather than approved by
     name alone, since their names are fresh per declaration."""
     if not candidates:
         return set()
 
     imports = "\n".join(f"import {i}" for i in IMPORTS)
-    prints = "\n".join(f"#print {name}" for name in sorted(candidates))
-    stdout = run_lean(f"{imports}\n{prints}\n")
+    # A `✝`-suffixed name isn't a parseable Lean identifier, so it can't be
+    # `#print`ed; those candidates go straight to the environment dump below.
+    printable = sorted(n for n in candidates if not n.endswith("✝"))
+    blocks: list[str] = []
+    if printable:
+        prints = "\n".join(f"#print {name}" for name in printable)
+        stdout = run_lean(f"{imports}\n{prints}\n")
 
-    # `lean` prints consecutive `#print` results back-to-back with no blank
-    # line between them, so split right before each `axiom <name> :` header.
-    blocks = re.split(r"(?=^axiom \S+ :)", stdout, flags=re.MULTILINE)
+        # `lean` prints consecutive `#print` results back-to-back with no blank
+        # line between them, so split right before each `axiom <name> :` header.
+        blocks = re.split(r"(?=^axiom \S+ :)", stdout, flags=re.MULTILINE)
 
     approved: set[str] = set()
-    for name in candidates:
+    for name in printable:
         prefix = f"axiom {name} :"
         for block in blocks:
             if block.startswith(prefix) and is_tostr_bound_check(block):
                 approved.add(name)
                 break
+
+    # `#print` can only speak the un-abbreviated names, so any candidate still
+    # unresolved is looked up in the environment dump.
+    unresolved = candidates - approved
+    if unresolved:
+        statements = native_decide_statements()
+        for name in unresolved:
+            key = name[:-1] if name.endswith("✝") else name
+            for real_name, statement in statements.items():
+                if real_name.endswith(key) and is_tostr_bound_check(
+                    f"axiom {real_name} : {statement}"
+                ):
+                    approved.add(name)
+                    break
     return approved
 
 
