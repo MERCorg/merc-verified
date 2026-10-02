@@ -1,1 +1,3 @@
-import MercVerified.Code.TypesExternal_Template
+module
+
+public import MercVerified.Code.TypesExternal_Template
