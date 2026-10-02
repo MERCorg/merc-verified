@@ -240,58 +240,16 @@ end BranchingBisimilarity
 
 namespace BranchingBisimilarity
 
-/-- **Path inertness (helper lemma) — the Computation Lemma.** In a τ-loop-free LTS with the
-branching-bisimilarity quotient as the partition, any τ*-path between same-block states admits
-an inert τ*-path (every intermediate state has the same block as the endpoints).
-
-This is the classical **Computation Lemma** (van Glabbeek–Weijland 1996); in TauLoopFree LTSs
-it admits a direct proof by well-founded induction on the τ-relation. (The general LTS case
-requires Basten's saturation construction.)
-
-Proof outline:
-1. *Suffices step*: prove the stronger **block-stability** lemma — for any τ-decomposition
-   `x →τ*→ z →τ*→ y` with `⟦x⟧ = ⟦y⟧`, we have `⟦z⟧ = ⟦x⟧`. The inert path is then built by
-   labelling each step of the given path with the block-equality from block-stability.
-2. *Proof of block-stability*: nested induction.
-   * **Outer**: well-founded induction on `y` via `TauLoopFree` (extended to `TransGen`).
-   * **Inner**: structural induction on `x →τ*→ z` (where the inner IH proves block-stability
-     for the immediate predecessor of `z` on the sub-path).
-   In the inner inductive step, BB-matching the last step `w →τ→ z` on the `y`-side yields:
-   * `Or.inl`: matched-by-no-step, giving `⟦z⟧ = ⟦y⟧ = ⟦x⟧` immediately.
-   * `Or.inr`: matched τ*-prefix `y →τ*→ c →τ→ c'`. Applying `stutter` on `r z c'` along
-     `z →τ*→ y` produces a state `c''` with `r y c''`, strictly WF-below `y` (since the
-     prefix contains at least the non-empty step `c →τ→ c'`). The **outer IH** at `c''`,
-     applied to the τ-decomposition `w →τ*→ c' →τ*→ c''` (with `⟦w⟧ = ⟦c''⟧ = ⟦y⟧`), yields
-     `⟦c'⟧ = ⟦w⟧`. Combined with `⟦z⟧ = ⟦c'⟧` (from `r z c'`), this gives `⟦z⟧ = ⟦w⟧ = ⟦x⟧`.
-
-The TauLoopFree assumption is essential: the outer WF descent on the matched-state side is
-exactly what rules out the otherwise-problematic non-inert matched-step case. -/
-private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+/-- **Block-stability.** Every state on a τ-path between two bisimilar states is bisimilar to them
+(the strong form of the stuttering lemma), in a τ-loop-free LTS. -/
+private theorem block_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
     (hWF : TauLoopFree lts) :
-    ∀ {x y : State}, lts.τSTr x y →
+    ∀ (y : State), ∀ {x z : State}, lts.τSTr x z → lts.τSTr z y →
       Quotient.mk (brSetoid lts) x = Quotient.mk (brSetoid lts) y →
-      Relation.ReflTransGen
-        (fun u v => lts.Tr u Cslib.HasTau.τ v ∧
-          Quotient.mk (brSetoid lts) u = Quotient.mk (brSetoid lts) x ∧
-          Quotient.mk (brSetoid lts) v = Quotient.mk (brSetoid lts) x)
-        x y := by
+      Quotient.mk (brSetoid lts) z = Quotient.mk (brSetoid lts) x := by
   -- TauLoopFree gives WF on τ-steps; extend to `TransGen` for multi-step descent.
   have wfTr : WellFounded (Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s')) :=
     WellFounded.transGen hWF
-  -- **Block-stability** (suffices): every state on every τ-path between bisim-related
-  -- endpoints lies in the same block.
-  suffices comp : ∀ (y : State), ∀ {x z : State}, lts.τSTr x z → lts.τSTr z y →
-      Quotient.mk (brSetoid lts) x = Quotient.mk (brSetoid lts) y →
-      Quotient.mk (brSetoid lts) z = Quotient.mk (brSetoid lts) x by
-    -- Reconstruct the inert path from the given path by labelling each step with the
-    -- block-equality from `comp`.
-    intro x y hPath hπ
-    induction hPath with
-    | refl => exact Relation.ReflTransGen.refl
-    | @tail w y' h_rest h_last ih =>
-      have hπw : Quotient.mk (brSetoid lts) w = Quotient.mk (brSetoid lts) x :=
-        comp y' h_rest (Relation.ReflTransGen.single h_last) hπ
-      exact Relation.ReflTransGen.tail (ih hπw.symm) ⟨h_last, hπw, hπ.symm⟩
   -- **Proof of block-stability** by outer WF on `y`, inner structural induction on `x →τ*→ z`.
   intro y
   induction y using WellFounded.induction wfTr with
@@ -358,6 +316,60 @@ private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label
         have hπZ'C' : Quotient.mk (brSetoid lts) z' = Quotient.mk (brSetoid lts) c' :=
           Quotient.sound (s := brSetoid lts) ⟨r, hr_z'_c', hBis⟩
         exact hπZ'C'.trans (hπC'.trans hπW)
+
+
+/-- **Path inertness (helper lemma) — the Computation Lemma.** In a τ-loop-free LTS with the
+branching-bisimilarity quotient as the partition, any τ*-path between same-block states admits
+an inert τ*-path (every intermediate state has the same block as the endpoints).
+
+This is the classical **Computation Lemma** (van Glabbeek–Weijland 1996); in TauLoopFree LTSs
+it admits a direct proof by well-founded induction on the τ-relation. (The general LTS case
+requires Basten's saturation construction.)
+
+Proof outline:
+1. *Suffices step*: prove the stronger **block-stability** lemma — for any τ-decomposition
+   `x →τ*→ z →τ*→ y` with `⟦x⟧ = ⟦y⟧`, we have `⟦z⟧ = ⟦x⟧`. The inert path is then built by
+   labelling each step of the given path with the block-equality from block-stability.
+2. *Proof of block-stability*: nested induction.
+   * **Outer**: well-founded induction on `y` via `TauLoopFree` (extended to `TransGen`).
+   * **Inner**: structural induction on `x →τ*→ z` (where the inner IH proves block-stability
+     for the immediate predecessor of `z` on the sub-path).
+   In the inner inductive step, BB-matching the last step `w →τ→ z` on the `y`-side yields:
+   * `Or.inl`: matched-by-no-step, giving `⟦z⟧ = ⟦y⟧ = ⟦x⟧` immediately.
+   * `Or.inr`: matched τ*-prefix `y →τ*→ c →τ→ c'`. Applying `stutter` on `r z c'` along
+     `z →τ*→ y` produces a state `c''` with `r y c''`, strictly WF-below `y` (since the
+     prefix contains at least the non-empty step `c →τ→ c'`). The **outer IH** at `c''`,
+     applied to the τ-decomposition `w →τ*→ c' →τ*→ c''` (with `⟦w⟧ = ⟦c''⟧ = ⟦y⟧`), yields
+     `⟦c'⟧ = ⟦w⟧`. Combined with `⟦z⟧ = ⟦c'⟧` (from `r z c'`), this gives `⟦z⟧ = ⟦w⟧ = ⟦x⟧`.
+
+The TauLoopFree assumption is essential: the outer WF descent on the matched-state side is
+exactly what rules out the otherwise-problematic non-inert matched-step case. -/
+private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) :
+    ∀ {x y : State}, lts.τSTr x y →
+      Quotient.mk (brSetoid lts) x = Quotient.mk (brSetoid lts) y →
+      Relation.ReflTransGen
+        (fun u v => lts.Tr u Cslib.HasTau.τ v ∧
+          Quotient.mk (brSetoid lts) u = Quotient.mk (brSetoid lts) x ∧
+          Quotient.mk (brSetoid lts) v = Quotient.mk (brSetoid lts) x)
+        x y := by
+  have comp := block_stable hWF
+  -- Reconstruct the inert path from the given path by labelling each step with the
+  -- block-equality from `comp`.
+  intro x y hPath hπ
+  induction hPath with
+  | refl => exact Relation.ReflTransGen.refl
+  | @tail w y' h_rest h_last ih =>
+    have hπw : Quotient.mk (brSetoid lts) w = Quotient.mk (brSetoid lts) x :=
+      comp y' h_rest (Relation.ReflTransGen.single h_last) hπ
+    exact Relation.ReflTransGen.tail (ih hπw.symm) ⟨h_last, hπw, hπ.symm⟩
+
+/-- Public form of block-stability: if `x ≈br y` and `z` lies on a τ-path from `x` to `y`, then
+`z ≈br x`. -/
+theorem tauPath_mid [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {x z y : State} (h1 : lts.τSTr x z) (h2 : lts.τSTr z y)
+    (hxy : BranchingBisimilarity lts x y) : BranchingBisimilarity lts z x :=
+  Quotient.exact (s := brSetoid lts) (block_stable hWF y h1 h2 (Quotient.sound hxy))
 
 /-- **Corollary.** If a state has no inert τ-successor and a τ*-path returns to the same block,
 the path must be trivial (length 0). Direct consequence of `path_inertness`. -/

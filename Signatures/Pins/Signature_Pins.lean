@@ -32,3 +32,15 @@ example [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
     {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
     BranchingBisimilarity lts s₁ s₂ :=
   IsStable.branchingBisimilarity lts partition h hRel
+
+-- Contract pin: fails to compile if `BranchingFixPoint.branchingBisimilarity`'s signature drifts.
+example [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    {s s' : State} (h : BranchingFixPoint lts s s') :
+    BranchingBisimilarity lts s s' :=
+  BranchingFixPoint.branchingBisimilarity lts h
+
+-- Contract pin: fails to compile if `BranchingBisimilarity.branchingFixPoint`'s signature drifts.
+example [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    {s s' : State} (h : BranchingBisimilarity lts s s') :
+    BranchingFixPoint lts s s' :=
+  BranchingBisimilarity.branchingFixPoint lts h
