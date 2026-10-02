@@ -124,16 +124,51 @@ of the machine-generated proofs, in
 -/
 
 /-!
+# Hash totality of the concrete instances
+
+The `HashMap` axioms below need the `Hash`/`BuildHasher` instances to never fail. For the
+instances the project uses this is read off the Rust bodies: each only feeds its components to the
+hasher (`write`/`finish`), so it is total exactly when its components and the hasher are.
+-/
+
+/-- `usize::hash` is `state.write_usize(*self)`: total for a total hasher. -/
+axiom Usize.Insts.CoreHashHash.isTotal : core.hash.Hash.IsTotal Usize.Insts.CoreHashHash
+
+/-- `TagIndex::hash` hashes only the `index` field (`tagged_index.rs:83`). -/
+axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.isTotal
+  {T : Type} (Tag : Type) (I : core.hash.Hash T) (h : core.hash.Hash.IsTotal I) :
+  core.hash.Hash.IsTotal (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash Tag I)
+
+/-- Tuple hashing (`core::tuple`) hashes both components in turn. -/
+axiom Pair.Insts.CoreHashHash.isTotal {T B : Type} (I : core.hash.Hash T) (J : core.hash.Hash B)
+  (hI : core.hash.Hash.IsTotal I) (hJ : core.hash.Hash.IsTotal J) :
+  core.hash.Hash.IsTotal (Pair.Insts.CoreHashHash I J)
+
+/-- `Vec::hash` hashes the slice: the length, then every element in turn. -/
+axiom alloc.vec.Vec.Insts.CoreHashHash.isTotal {T : Type} (A : Type) (I : core.hash.Hash T)
+  (h : core.hash.Hash.IsTotal I) :
+  core.hash.Hash.IsTotal (alloc.vec.Vec.Insts.CoreHashHash A I)
+
+/-- `FxBuildHasher::build_hasher` and `FxHasher::{write, finish}` are plain integer arithmetic. -/
+axiom rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher.isTotal :
+  verified.core.hash.BuildHasher.IsTotal
+    rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher
+
+/-!
 # `HashMap` boundary semantics
 -/
 
-/-- `HashMap::insert` never fails, and immediately afterwards a lookup of the
+/-- `HashMap::insert` never fails (for a lawful `Eq` and total `Hash`/`BuildHasher`: the
+    instance methods it calls may otherwise fail), and immediately afterwards a lookup of the
     freshly inserted key (through the same equality/hash instances) returns
-    exactly that `(key, value)` pair. -/
+    exactly that `(key, value)` pair. (With a lawful `Eq`, equal keys are identical, so the
+    stored key that `insert` keeps is `k` itself.) -/
 axiom std.collections.hash.map.HashMap.insert_spec
   {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
   (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
   (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (hEq : core.cmp.Eq.IsLawful corecmpEqInst) (hHash : core.hash.Hash.IsTotal corehashHashInst)
+  (hBH : verified.core.hash.BuildHasher.IsTotal corehashBuildHasherInst)
   (m : std.collections.hash.map.HashMap K V S A) (k : K) (v : V) :
   ∃ old : Option V, ∃ m' : std.collections.hash.map.HashMap K V S A,
     std.collections.hash.map.HashMap.insert corecmpEqInst corehashHashInst
@@ -161,6 +196,8 @@ axiom std.collections.hash.map.HashMap.insert_allValues
   {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
   (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
   (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (hEq : core.cmp.Eq.IsLawful corecmpEqInst) (hHash : core.hash.Hash.IsTotal corehashHashInst)
+  (hBH : verified.core.hash.BuildHasher.IsTotal corehashBuildHasherInst)
   (m : std.collections.hash.map.HashMap K V S A) (k : K) (v : V) :
   ∃ old : Option V, ∃ m' : std.collections.hash.map.HashMap K V S A,
     std.collections.hash.map.HashMap.insert corecmpEqInst corehashHashInst
@@ -176,6 +213,8 @@ axiom std.collections.hash.map.HashMap.get_key_value_ok
   {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
   (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
   (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (hEq : core.cmp.Eq.IsLawful corecmpEqInst) (hHash : core.hash.Hash.IsTotal corehashHashInst)
+  (hBH : verified.core.hash.BuildHasher.IsTotal corehashBuildHasherInst)
   (m : std.collections.hash.map.HashMap K V S A) (q : K) :
   ∃ o : Option (K × V),
     std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
@@ -201,7 +240,9 @@ axiom std.collections.hash.map.HashMapKVSGlobal.default_spec
     std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default K V
       coredefaultDefaultInst = ok m ∧
     ∀ {Clause2_Hasher : Type} (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
-      (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher) (q : K),
+      (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+      (_hHash : core.hash.Hash.IsTotal corehashHashInst)
+      (_hBH : verified.core.hash.BuildHasher.IsTotal corehashBuildHasherInst) (q : K),
       std.collections.hash.map.HashMap.get_key_value corecmpEqInst corehashHashInst
         corehashBuildHasherInst (verified.core.borrow.Borrow.Blanket K)
         corehashHashInst corecmpEqInst m q = ok none
@@ -212,6 +253,8 @@ axiom std.collections.hash.map.HashMap.insert_get_key_value_other
   {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
   (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
   (corehashBuildHasherInst : verified.core.hash.BuildHasher S Clause2_Hasher)
+  (hEq : core.cmp.Eq.IsLawful corecmpEqInst) (hHash : core.hash.Hash.IsTotal corehashHashInst)
+  (hBH : verified.core.hash.BuildHasher.IsTotal corehashBuildHasherInst)
   (m : std.collections.hash.map.HashMap K V S A) (k : K) (v : V) (q : K)
   (hneq : corecmpEqInst.partialEqInst.eq k q = ok false) :
   ∃ old : Option V, ∃ m' : std.collections.hash.map.HashMap K V S A,

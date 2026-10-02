@@ -31,6 +31,25 @@ axiom alloc.vec.Vec.clear_spec
 def core.cmp.PartialEq.IsLawfulEq {T : Type} (I : core.cmp.PartialEq T T) : Prop :=
   ∀ a b, ∃ r, I.eq a b = ok r ∧ (r = true ↔ a = b)
 
+/-- `Eq` instance whose `eq` never fails and is equality of the values (so reflexive, symmetric,
+    transitive, and a hash consistent with it is just a function of the value). -/
+def core.cmp.Eq.IsLawful {T : Type} (I : core.cmp.Eq T) : Prop :=
+  core.cmp.PartialEq.IsLawfulEq I.partialEqInst
+
+/-- `Hasher` whose `write` and `finish` never fail. -/
+def core.hash.Hasher.IsTotal {H : Type} (I : core.hash.Hasher H) : Prop :=
+  (∀ h s, ∃ h', I.write h s = ok h') ∧ (∀ h, ∃ r, I.finish h = ok r)
+
+/-- `Hash` instance whose `hash` never fails when run with a total `Hasher`. -/
+def core.hash.Hash.IsTotal {T : Type} (I : core.hash.Hash T) : Prop :=
+  ∀ {H : Type} (HI : core.hash.Hasher H), core.hash.Hasher.IsTotal HI →
+    ∀ x h, ∃ h', I.hash HI x h = ok h'
+
+/-- `BuildHasher` whose `build_hasher` never fails and whose hashers are total. -/
+def verified.core.hash.BuildHasher.IsTotal {S Hs : Type}
+    (B : verified.core.hash.BuildHasher S Hs) : Prop :=
+  (∀ s, ∃ h, B.build_hasher s = ok h) ∧ core.hash.Hasher.IsTotal B.HasherInst
+
 /-- `Vec::dedup` never fails. For a lawful equality it removes exactly the *consecutive*
     duplicates: the result is a sub-list of the input with the same elements, in which no two
     neighbours are equal. -/
