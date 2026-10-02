@@ -34,7 +34,7 @@ def LoopInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
 
 theorem strong_process_worklist_block_step {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU) (incoming : IncomingTransitions)
     (hinc : ∀ s : ST, s.index.val < nU.val → ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
@@ -49,7 +49,7 @@ theorem strong_process_worklist_block_step {L Label : Type}
   have hbmem : b ∈ w.val ++ [b] := by simp
   obtain ⟨hbN, hbmark⟩ := hwl b hbmem
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
-  have hn2 := hwf.2.2.1 nU hns
+  have hn2 := hfit nU hns
   -- the worklist without `b`
   have hnbw : b ∉ w.val := by
     intro hbw
@@ -62,14 +62,14 @@ theorem strong_process_worklist_block_step {L Label : Type}
   have hb0 : ctx.partition.blocks.slice.val[b.index.val]'hbN = blkAt ctx.partition b.index.val :=
     (blkAt_eq_getElem hbN).symm
   have hcon := strong_process_worklist_block_contract false LTSInst sys incoming
-    { ctx with worklist := w } b hbN _ hb0 hbmark
+    { ctx with worklist := w } b hbN _ hb0 (partInv_blockWF hp hbN) hbmark
   obtain ⟨idm, hidm, hid⟩ := std.collections.hash.map.HashMapKVSGlobal.default_spec
     (alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × BT)) BT
     verified.rustc_hash.FxBuildHasher.Insts.CoreDefaultDefault
   have hkts : (alloc.vec.Vec.new (VecTy ((TagIndex Std.Usize LabelTag) × BT))).val = [] := rfl
   obtain ⟨nbi, p1, id1, kts1, sigb1, sb1, stk1, hspm, hstk1, hsplit⟩ :=
-    strong_partition_marked_spec LTSInst sys hwf nU hns hp b hbN hbmark idm
-      (fun q => hid _ _ _ q) (alloc.vec.Vec.new _) hkts ctx.builder ctx.split_builder
+    strong_partition_marked_spec LTSInst sys hwf hfit nU hns hp b hbN hbmark idm
+      (fun q => hid _ _ _ internHash_total internBuildHasher_total q) (alloc.vec.Vec.new _) hkts ctx.builder ctx.split_builder
       ctx.state_to_key hstk
   obtain ⟨hp1, k, hN1, hnbi, hother, hmk⟩ := hsplit
   have hND : DirtyInv nU.val p1 w := by
@@ -123,10 +123,10 @@ theorem strong_process_worklist_block_step {L Label : Type}
           subst hx
           exact absurd hxe.symm hne
   rw [hcon]
-  simp only [hidm, bind_tc_ok, massert, hbmark, decide_true, verified.merc_reduction.signature_refinement.maybe_mark_backward_closure]
-  simp only [Bool.false_eq_true, if_false, if_true, bind_tc_ok]
+  simp only [hidm, massert, hbmark, decide_true, verified.merc_reduction.signature_refinement.maybe_mark_backward_closure]
+  simp only [Bool.false_eq_true, if_false, if_true, bind_ok]
   rw [hspm]
-  simp only [bind_tc_ok, mark_dirty_new_blocks_contract]
+  simp only [bind_ok, mark_dirty_new_blocks_contract]
   show ∃ ctx', (do
       let r ← markDirtyAcc false LTSInst sys incoming b ctx.partition.blocks.len p1 w ctx.states nbi.val
       ok ({ partition := r.1, worklist := r.2.1, states := r.2.2, builder := sigb1,
@@ -141,7 +141,7 @@ theorem strong_process_worklist_block_step {L Label : Type}
   · subst hk
     have hnbi' : nbi.val = [b] := by rw [hnbi]; simp
     rw [hnbi', markDirtyAcc_cons, markDirtyStep_pos false LTSInst sys incoming b _ b p1 w ctx.states rfl]
-    simp only [bind_tc_ok, markDirtyAcc]
+    simp only [bind_ok, markDirtyAcc]
     refine ⟨_, rfl, ⟨hND, hstk1, hbase.2.2⟩, ?_⟩
     unfold worklistMeasure numBlocks
     simp only []
@@ -161,7 +161,7 @@ theorem strong_process_worklist_block_step {L Label : Type}
           rw [uTotal_val_of_lt (by omega)]
           omega) hND hbase
     rw [hrun]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     refine ⟨_, rfl, ⟨hI2, hstk1, hsem2.2.2⟩, ?_⟩
     have hN2n : p2.blocks.val.length ≤ nU.val := hI2.1.blocks_le_n
     have hw2 : w2.val.length ≤ p2.blocks.val.length :=

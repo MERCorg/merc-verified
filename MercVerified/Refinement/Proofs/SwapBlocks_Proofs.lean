@@ -455,7 +455,7 @@ theorem swap_blocks_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       vec_tagged_index_mut_ok p.blocks l hl, vec_tagged_index_mut_ok _ r hv0len]
     have hv1eq : (alloc.vec.Vec.mk ((p.blocks.slice.set l.index (blkAt p r.index.val)).set r.index (blkAt p l.index.val)) : alloc.vec.Vec Block) = swapBlocksVec p.blocks l r (blkAt p l.index.val) (blkAt p r.index.val) := rfl
     rw [hv1eq, vec_tagged_index_val _ l hv1len, hv1l]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     have hN1 : (swapBlocksVec p.blocks l r (blkAt p l.index.val)
         (blkAt p r.index.val)).val.length = p.blocks.val.length := swapBlocksVec_length _ _ _ _ _
     have hrb' : (swapBlocksVec p.blocks l r (blkAt p l.index.val)
@@ -486,7 +486,7 @@ theorem swap_blocks_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
         merc_reduction.block_partition.BlockPartition.assert_consistent_ok _
           (swap_blocks_partInv hp l r hl hr hne e (by rw [hlen]; exact hlenB) hpt))
     rw [hres]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     have hPI := swap_blocks_partInv hp l r hl hr hne res (by rw [hreslen]; exact hlenB) hrespt
     have hblkeq : ∀ j, blkAt { p with blocks := swapBlocksVec p.blocks l r (blkAt p l.index.val) (blkAt p r.index.val), element_to_block := res } j = blkAt p (swapIdx l.index.val r.index.val j) := fun j =>
       swapBlocksVec_getD p.blocks l r hl hr hne j

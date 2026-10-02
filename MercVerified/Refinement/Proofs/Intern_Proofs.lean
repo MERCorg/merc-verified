@@ -28,49 +28,6 @@ noncomputable abbrev internGet (id : InternMap) (q : SigKey) :=
   std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst internBuildHasher
     (verified.core.borrow.Borrow.Blanket SigKey) internHashInst internEqInst id q
 
-theorem allM_zip_lawful {α : Type} [DecidableEq α] (I : core.cmp.PartialEq α α) (hI : core.cmp.PartialEq.IsLawfulEq I) :
-    ∀ (l1 l2 : List α), l1.length = l2.length →
-      List.allM (fun (x : α × α) => match x with | (x0, x1) => I.eq x0 x1) (List.zip l1 l2) = ok (decide (l1 = l2))
-  | [], [], _ => by simp only [List.zip_nil_left, List.allM]; rfl
-  | [], _ :: _, h => by simp at h
-  | _ :: _, [], h => by simp at h
-  | a :: l1, b :: l2, h => by
-    obtain ⟨r, hr, hiff⟩ := hI a b
-    have ih := allM_zip_lawful I hI l1 l2 (by simpa using h)
-    simp only [List.zip_cons_cons, List.allM]
-    simp only [hr, bind_tc_ok]
-    cases r
-    · have : ¬ a = b := fun e => by simpa using hiff.mpr e
-      simp [this]; rfl
-    · have hab : a = b := hiff.mp rfl
-      subst hab
-      simp only [ih]
-      simp
-
-/-- The equality instance of signature keys is lawful. -/
-theorem sigKey_eq_lawful : core.cmp.PartialEq.IsLawfulEq internEqInst.partialEqInst := by
-  intro a b
-  have hI : core.cmp.PartialEq.IsLawfulEq
-      (verified.Pair.Insts.CoreCmpEq
-        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq LabelTag core.cmp.EqUsize)
-        (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq BlockTag core.cmp.EqUsize)).partialEqInst :=
-    entry_partialEq_lawful
-  show ∃ r, alloc.vec.partial_eq.PartialEqVec.eq _ a b = ok r ∧ _
-  unfold alloc.vec.partial_eq.PartialEqVec.eq
-  by_cases hl : a.length = b.length
-  · rw [if_pos hl]
-    have := allM_zip_lawful _ hI a.val b.val hl
-    refine ⟨decide (a.val = b.val), this, ?_⟩
-    simp only [decide_eq_true_eq]
-    constructor
-    · intro h; exact alloc.vec.Vec.ext _ _ h
-    · intro h; rw [h]
-  · rw [if_neg hl]
-    refine ⟨false, rfl, ?_⟩
-    simp only [Bool.false_eq_true, false_iff]
-    intro h; exact hl (by rw [h])
-
-
 theorem sigKey_eq_false {a b : SigKey} (h : a ≠ b) :
     internEqInst.partialEqInst.eq a b = ok false := by
   obtain ⟨r, hr, hiff⟩ := sigKey_eq_lawful a b

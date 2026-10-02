@@ -3,6 +3,7 @@ import MercVerified.Refinement.Proofs.Partition_Proofs
 import MercVerified.Refinement.Proofs.PartitionInv_Proofs
 import MercVerified.Refinement.Proofs.LoopTools_Proofs
 import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import MercVerified.Refinement.Proofs.SigKey_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -61,6 +62,7 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
   obtain ⟨v2, hv2, hv20⟩ := alloc.vec.Vec.clear_spec Global sb.old_elements
   -- `len_marked`
   obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok bk
+    ⟨hbkr.1, hbkr.2.2.1, hbkr.2.2.2⟩
   obtain ⟨i, hi, hiv, -⟩ := spec_imp_exists
     (Usize.sub_spec (x := bk.«end») (y := bk.marked_split) (by omega))
   have hlm : verified.merc_reduction.block_partition.Block.len_marked bk = ok i := by
@@ -84,7 +86,7 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
     (by simp only []; omega) (by simp only []; rw [hv20]; simp; omega)
   obtain ⟨s2, hs2, hs2p, -⟩ := core.slice.Slice.sort_unstable_spec
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd StateTag core.cmp.OrdUsize)
-    (alloc.vec.Vec.deref_mut v4).1
+    (tagIndex_ord_total StateTag) (alloc.vec.Vec.deref_mut v4).1
   refine ⟨{ index_to_block := v3, block_sizes := v1, old_elements := (alloc.vec.Vec.deref_mut v4).2 s2 }, ?_, hv10, ?_, ?_⟩
   · unfold verified.merc_reduction.block_partition.BlockPartition.marked_elements_sorted
     simp [vec_tagged_index_val p.blocks b hb, hbkread, hv, hv1, hv2, hlm,

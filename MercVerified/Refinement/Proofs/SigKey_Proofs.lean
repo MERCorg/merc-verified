@@ -118,7 +118,7 @@ theorem entry_cmp_eq (a b : SigEntry) : entryOrd.cmp a b = ok (entCmp a b) := by
   have h2 : (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag
       core.cmp.OrdUsize).cmp b1 b2 = ok (compare b1.index.val b2.index.val) := rfl
   rw [h1]
-  simp only [bind_tc_ok, entCmp]
+  simp only [bind_ok, entCmp]
   split_ifs
   · exact h2
   · rfl
@@ -161,6 +161,22 @@ theorem entCmp_eq_iff (a b : SigEntry) : entCmp a b = Ordering.eq ↔ a = b := b
     constructor
     · intro h2; exact absurd h2 h
     · intro h2; subst h2; exact absurd rfl this
+
+/-- The `Ord` instance of `TagIndex`-of-`usize` (compared on the underlying index) is a lawful
+    total order. -/
+theorem tagIndex_ord_total (Tag : Type) :
+    core.cmp.Ord.IsTotalOrder
+      (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd Tag core.cmp.OrdUsize) := by
+  have hc : ∀ a b : TagIndex Std.Usize Tag,
+      (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd Tag core.cmp.OrdUsize).cmp a b
+        = ok (compare a.index.val b.index.val) := fun _ _ => rfl
+  refine ⟨fun a b => ⟨_, hc a b⟩, fun a b => ?_, fun a b c => ?_⟩
+  · rw [hc, hc]
+    simp only [ok.injEq, compare_gt_iff_gt, compare_lt_iff_lt]
+  · rw [hc, hc, hc]
+    simp only [ne_eq, ok.injEq, compare_gt_iff_gt, not_lt]
+    intro h1 h2
+    omega
 
 theorem entry_ord_total : core.cmp.Ord.IsTotalOrder entryOrd := by
   refine ⟨fun a b => ⟨_, entry_cmp_eq a b⟩, fun a b => ?_, fun a b c => ?_⟩

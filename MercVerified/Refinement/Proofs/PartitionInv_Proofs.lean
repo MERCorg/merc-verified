@@ -447,13 +447,13 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
     show s.index.val < p.element_to_block.val.length
     omega
   rw [vec_tagged_index_val _ _ h1]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   have h2 : s.index.val < p.element_offset.length := by
     have := h.len_off
     show s.index.val < p.element_offset.val.length
     omega
   rw [vec_tagged_index_val _ _ h2]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   have hbi : ((p.element_to_block.slice.val)[s.index.val]'h1).index.val = e2bAt p s.index.val := by
     have h1' : s.index.val < p.element_to_block.val.length := h1
     simp [e2bAt, List.getD_eq_getElem?_getD, h1']
@@ -468,7 +468,7 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
   generalize hoffdef : offAt p s.index.val = off at *
   have hbN : bi.index.val < p.blocks.length := by rw [hbi]; exact hK
   rw [vec_tagged_index_val p.blocks bi hbN]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   have hb0 : (p.blocks.slice.val[bi.index.val]'hbN) = blkAt p K := by
     rw [blkAt_eq_getElem hK]; congr 1
   rw [hb0]
@@ -481,16 +481,16 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
       (Usize.sub_spec (x := (blkAt p K).marked_split) (y := 1#usize) hsub)
     simp only [usize_one_val] at hival
     rw [hi]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     have hon : o.val < n := by omega
     have hin : i.val < n := by omega
     obtain ⟨self1, hsw, hP1, hbl1, he1, hoff1⟩ := swap_elements_partInv h o i hon hin hK
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
     rw [hsw]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     have hbN1 : bi.index.val < self1.blocks.val.length := by rw [hbl1]; omega
     rw [blocks_index_mut_contract self1 bi hbN1]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     have hbk1 : blkAt self1 K = blkAt p K := by simp [blkAt, hbl1]
     have hb1 : self1.blocks.slice.val[bi.index.val]'hbN1 = blkAt p K := by
       rw [← hbk1, blkAt_eq_getElem (by omega)]; congr 1
@@ -502,8 +502,15 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
     have hnb : ({ blkAt self1 bi.index.val with marked_split := i1 } : Block) =
         { begin := (blkAt p K).begin, marked_split := i1, «end» := (blkAt p K).«end» } := by
       rw [hbkK]
+    have hwfI : merc_reduction.block_partition.Block.WellFormed
+        ({ begin := (blkAt p K).begin, marked_split := i1, «end» := (blkAt p K).«end» } : Block) := by
+      refine ⟨hbe, ?_, ?_⟩
+      · show (blkAt p K).begin.val ≤ i1.val
+        omega
+      · show i1.val ≤ (blkAt p K).«end».val
+        omega
     obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok
-      ({ begin := (blkAt p K).begin, marked_split := i1, «end» := (blkAt p K).«end» } : Block)
+      ({ begin := (blkAt p K).begin, marked_split := i1, «end» := (blkAt p K).«end» } : Block) hwfI
     have hlen : bi.index.val <
         (({ slice := self1.blocks.slice.set bi.index ({ begin := (blkAt p K).begin, marked_split := i1, «end» := (blkAt p K).«end» } : Block) } :
           alloc.vec.Vec Block)).length := by
@@ -549,8 +556,9 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
         have hi1' : i.val = (blkAt p K).marked_split.val - 1 := hival
         rw [hi1']
   · rw [if_neg hlt]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok (blkAt p K)
+      ⟨hbe, hms1, hms2⟩
     have hlt' : ¬ o.val < (blkAt p K).marked_split.val := fun hh => hlt hh
     refine ⟨p, ?_, h, rfl, rfl, fun _ _ => rfl, rfl, rfl, le_refl _, ?_, ?_⟩
     · simp [vec_tagged_index_val p.blocks bi hbN, hb0, hu]

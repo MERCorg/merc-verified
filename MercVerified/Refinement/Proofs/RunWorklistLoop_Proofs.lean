@@ -26,6 +26,19 @@ namespace MercVerified.Refinement.Proofs
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
+/-- The `resize_with` closure of `strong_signature_refinement` never fails: it just builds the
+    block index `0`. -/
+theorem resize_closure_total {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) :
+    core.ops.function.FnMut.IsTotal
+      (verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
+        LTSInst) := by
+  intro c
+  obtain ⟨ti, hti⟩ := merc_utilities.tagged_index.TagIndex.new_spec (T := Std.Usize) BlockTag 0#usize
+  refine ⟨(ti, c), ?_⟩
+  show verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag.call_mut LTSInst c () = _
+  unfold verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag.call_mut
+  rw [hti, bind_ok]
+
 /-- The initial context of `strong_signature_refinement` satisfies the loop invariant, and its
     measure is at most `n * (n + 2)`. -/
 theorem initial_loopInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (n : Sz)
@@ -45,7 +58,7 @@ theorem initial_loopInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
   rw [hpp] at hbl
   obtain ⟨w, hw, hwlen⟩ := alloc.vec.Vec.resize_with_spec Global
     (verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
-      LTSInst)
+      LTSInst) (resize_closure_total LTSInst)
     (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n ()
   have hw' : w = ctx0.state_to_key := by
     have := hw.symm.trans hres; simpa using this
@@ -88,7 +101,7 @@ abbrev RunState := WorklistContextStrong × Std.Usize
     keep `LoopInv` instead of discarding it as `True`. -/
 theorem strong_run_worklist_loop_terminates'
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -99,19 +112,19 @@ theorem strong_run_worklist_loop_terminates'
   have hnn : n0 = n := by
     have := hn0.symm.trans hns; simpa using this
   subst hnn
-  have hIC := MercVerified.Lts.Proofs.incoming_transitions_correct LTSInst sys hwf incoming hinc
+  have hIC := MercVerified.Lts.Proofs.incoming_transitions_correct LTSInst sys hwf hfit incoming hinc
   have hincS : ∀ s : ST, s.index.val < n0.val → ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
         ∀ i ∈ res.val, i.«from».index.val < n0.val := fun s hs => by
     obtain ⟨res, h1, h2, -⟩ := hIC n0 hns s hs
     exact ⟨res, h1, h2⟩
   obtain ⟨hI0, hM0⟩ := initial_loopInv LTSInst n0 hnpos ctx0 hinit
-  have hn2 := hwf.2.2.1 n0 hns
+  have hn2 := hfit n0 hns
   have hnmax : n0.val ≤ Usize.max := by scalar_tac
   unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop
   obtain ⟨progress, hprog⟩ := merc_reduction.signature_refinement.new_worklist_progress_spec
   rw [hprog]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   suffices h : ∃ y, verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop false
       LTSInst sys incoming ctx0 0#usize progress = ok y ∧
       ∃ ctx' : WorklistContextStrong,
@@ -154,7 +167,7 @@ theorem strong_run_worklist_loop_terminates'
           (List.dropLast_append_getLast hne).symm
         obtain ⟨v', hpop, hv'⟩ := worklist_pop_some x.1.worklist (x.1.worklist.val.getLast hne)
           x.1.worklist.val.dropLast hsplit
-        obtain ⟨ctx', hproc, hI', hmeas⟩ := strong_process_worklist_block_step LTSInst sys hwf n0 hns
+        obtain ⟨ctx', hproc, hI', hmeas⟩ := strong_process_worklist_block_step LTSInst sys hwf hfit n0 hns
           incoming hincS x.1 (x.1.worklist.val.getLast hne) v' (by rw [hv']; exact hsplit) hI
         have hlenpos : 1 ≤ x.1.worklist.val.length := List.length_pos_iff.mpr hne
         have hmpos : 1 ≤ worklistMeasure n0.val x.1 := by
@@ -173,14 +186,14 @@ theorem strong_run_worklist_loop_terminates'
 /-- Termination of `strong_run_worklist_loop` from the initial context of a well-formed LTS. -/
 theorem strong_run_worklist_loop_terminates
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
     (ctx0 : WorklistContextStrong) (hinit : InitialWorklistContext LTSInst n ctx0) :
     ∃ ctx, verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
       LTSInst sys incoming ctx0 = ok ctx := by
-  obtain ⟨ctx, hctx, -, -⟩ := strong_run_worklist_loop_terminates' LTSInst sys hwf incoming hinc n hns
+  obtain ⟨ctx, hctx, -, -⟩ := strong_run_worklist_loop_terminates' LTSInst sys hwf hfit incoming hinc n hns
     ctx0 hinit
   exact ⟨ctx, hctx⟩
 
@@ -191,7 +204,7 @@ theorem strong_run_worklist_loop_terminates
     each iteration. -/
 theorem strong_run_worklist_loop_RefinesQ
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -205,7 +218,7 @@ theorem strong_run_worklist_loop_RefinesQ
   have hnn : n0 = n := by
     have := hn0.symm.trans hns; simpa using this
   subst hnn
-  have hIC := MercVerified.Lts.Proofs.incoming_transitions_correct LTSInst sys hwf incoming hinc
+  have hIC := MercVerified.Lts.Proofs.incoming_transitions_correct LTSInst sys hwf hfit incoming hinc
   have hincS : ∀ s : ST, s.index.val < n0.val → ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
         ∀ i ∈ res.val, i.«from».index.val < n0.val := fun s hs => by
@@ -215,12 +228,12 @@ theorem strong_run_worklist_loop_RefinesQ
   have hRQ0 : RefinesQ Q n0.val ctx0.partition := RefinesQ.initial LTSInst n0 hnpos ctx0 hinit Q
   have hSS0 : SettledStable LTSInst sys n0.val ctx0.partition :=
     SettledStable.initial LTSInst sys n0 hnpos ctx0 hinit
-  have hn2 := hwf.2.2.1 n0 hns
+  have hn2 := hfit n0 hns
   have hnmax : n0.val ≤ Usize.max := by scalar_tac
   unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop
   obtain ⟨progress, hprog⟩ := merc_reduction.signature_refinement.new_worklist_progress_spec
   rw [hprog]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   suffices h : ∃ y, verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop false
       LTSInst sys incoming ctx0 0#usize progress = ok y ∧
       ∃ ctx' : WorklistContextStrong,
@@ -268,7 +281,7 @@ theorem strong_run_worklist_loop_RefinesQ
         obtain ⟨v', hpop, hv'⟩ := worklist_pop_some x.1.worklist (x.1.worklist.val.getLast hne)
           x.1.worklist.val.dropLast hsplit
         obtain ⟨ctx', hproc, hI', hmeas, hRQ', hSS'⟩ := strong_process_worklist_block_step_RQ LTSInst sys
-          hwf n0 hns incoming hIC hincS x.1 (x.1.worklist.val.getLast hne) v'
+          hwf hfit n0 hns incoming hIC hincS x.1 (x.1.worklist.val.getLast hne) v'
           (by rw [hv']; exact hsplit) hI Q hQstable hRQx hSSx
         have hlenpos : 1 ≤ x.1.worklist.val.length := List.length_pos_iff.mpr hne
         have hmpos : 1 ≤ worklistMeasure n0.val x.1 := by
@@ -288,7 +301,7 @@ theorem strong_run_worklist_loop_RefinesQ
 /-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/
 theorem strong_run_worklist_loop_partial_correct
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -298,7 +311,7 @@ theorem strong_run_worklist_loop_partial_correct
       LTSInst sys incoming ctx0 = ok ctx) :
     ∃ blockOf, WorklistLoopCorrect LTSInst sys ctx blockOf := by
   obtain ⟨ctx', hctx', hI, hwlnil⟩ :=
-    strong_run_worklist_loop_terminates' LTSInst sys hwf incoming hinc n hns ctx0 hinit
+    strong_run_worklist_loop_terminates' LTSInst sys hwf hfit incoming hinc n hns ctx0 hinit
   have hctxeq : ctx = ctx' := by have := hrun.symm.trans hctx'; simpa using this
   subst hctxeq
   obtain ⟨⟨hp, -, -⟩, -, hmark⟩ := hI
@@ -329,7 +342,7 @@ theorem strong_run_worklist_loop_partial_correct
     have hnn' : n' = n := by have := hn'.symm.trans hns; simpa using this
     rw [hnn'] at hs hs'
     obtain ⟨ctx2, hctx2, -, -, -, hSS2⟩ :=
-      strong_run_worklist_loop_RefinesQ LTSInst sys hwf incoming hinc n hns ctx0 hinit
+      strong_run_worklist_loop_RefinesQ LTSInst sys hwf hfit incoming hinc n hns ctx0 hinit
         (fun s : ST => s) (fun s s' (h : s = s') => by subst h; rfl)
     have hctx2eq : ctx2 = ctx := by have := hctx2.symm.trans hrun; simpa using this
     rw [hctx2eq] at hSS2
@@ -349,7 +362,7 @@ theorem strong_run_worklist_loop_partial_correct
     rw [hnn'] at hs hs'
     obtain ⟨Block, Q, hQstable, hQeq⟩ := hSFP
     obtain ⟨ctx2, hctx2, -, -, hRQ2, -⟩ :=
-      strong_run_worklist_loop_RefinesQ LTSInst sys hwf incoming hinc n hns ctx0 hinit Q hQstable
+      strong_run_worklist_loop_RefinesQ LTSInst sys hwf hfit incoming hinc n hns ctx0 hinit Q hQstable
     have hctx2eq : ctx2 = ctx := by have := hctx2.symm.trans hrun; simpa using this
     rw [← hctx2eq]
     exact (hRQ2 s s' hs hs' hQeq).1
@@ -359,7 +372,7 @@ theorem strong_run_worklist_loop_partial_correct
     returns a context whose partition is correct (see `WorklistLoopCorrect`). -/
 theorem run_worklist_loop_spec
     {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hinc : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -367,8 +380,8 @@ theorem run_worklist_loop_spec
     ∃ ctx blockOf,
       verified.merc_reduction.signature_refinement.strong_run_worklist_loop false
         LTSInst sys incoming ctx0 = ok ctx ∧ WorklistLoopCorrect LTSInst sys ctx blockOf := by
-  obtain ⟨ctx, hctx⟩ := strong_run_worklist_loop_terminates LTSInst sys hwf incoming hinc n hns ctx0 hinit
-  obtain ⟨blockOf, hb⟩ := strong_run_worklist_loop_partial_correct LTSInst sys hwf incoming hinc n hns ctx0 hinit ctx hctx
+  obtain ⟨ctx, hctx⟩ := strong_run_worklist_loop_terminates LTSInst sys hwf hfit incoming hinc n hns ctx0 hinit
+  obtain ⟨blockOf, hb⟩ := strong_run_worklist_loop_partial_correct LTSInst sys hwf hfit incoming hinc n hns ctx0 hinit ctx hctx
   exact ⟨ctx, blockOf, hctx, hb⟩
 
 

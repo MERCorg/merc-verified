@@ -53,6 +53,7 @@ theorem finish0_step_first_unmarked
     (S : Slice Std.Usize) (m : Nat)
     (back : core.slice.iter.IterMut Std.Usize → core.slice.iter.IterMut Std.Usize)
     (v5 : alloc.vec.Vec Block) (block : Block)
+    (hblock : merc_reduction.block_partition.Block.WellFormed block)
     (hm : m < S.val.length) (hpos : 0 < (S.val[m]'hm).val)
     (hb : block_index.index.val < v5.val.length)
     (hun : block.begin.val < block.marked_split.val)
@@ -96,7 +97,7 @@ theorem finish0_step_first_unmarked
     funext it' x
     cases x <;> rfl
   have hhas : block.has_unmarked = ok true := by
-    rw [block_has_unmarked_contract]; simp [hun]
+    rw [block_has_unmarked_contract block hblock]; simp [hun]
   have hnu1 := new_unmarked_ok block.begin block.marked_split hun
   have hnu2 := new_unmarked_ok block.marked_split i1 (by omega)
   simp [hnext, massert, hpos, hhas, hnu1, hnu2, vec_tagged_index_mut_ok v5 block_index hb,
@@ -114,6 +115,7 @@ theorem finish0_step_first_plain
     (S : Slice Std.Usize) (m : Nat)
     (back : core.slice.iter.IterMut Std.Usize → core.slice.iter.IterMut Std.Usize)
     (v5 : alloc.vec.Vec Block) (block : Block)
+    (hblock : merc_reduction.block_partition.Block.WellFormed block)
     (hm : m < S.val.length) (hpos : 0 < (S.val[m]'hm).val)
     (hb : block_index.index.val < v5.val.length)
     (hun : ¬ block.begin.val < block.marked_split.val)
@@ -149,7 +151,7 @@ theorem finish0_step_first_plain
   refine ⟨i1, { slice := v5.slice.set block_index.index (unmRec block.begin i1) }, hi1v, hv8, ?_⟩
   unfold verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked_loop0.body
   have hhas : block.has_unmarked = ok false := by
-    rw [block_has_unmarked_contract]; simp [hun]
+    rw [block_has_unmarked_contract block hblock]; simp [hun]
   have hnu1 := new_unmarked_ok block.begin i1 (by omega)
   simp [hnext, massert, hpos, hhas, hnu1, vec_tagged_index_mut_ok v5 block_index hb, hi1]
 
@@ -332,7 +334,9 @@ theorem loop0_inv_step
     (block_index : TagIndex Std.Usize BlockTag)
     (idxv : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (eob nbiU : Std.Usize)
-    (S : Slice Std.Usize) (block : Block) (ms : Nat) (szs : List Nat) (blocks : List Block)
+    (S : Slice Std.Usize) (block : Block)
+    (hblock : merc_reduction.block_partition.Block.WellFormed block)
+    (ms : Nat) (szs : List Nat) (blocks : List Block)
     (b : Nat) (u : Bool) (K : Nat)
     (hb : block_index.index.val = b) (hbN : b < blocks.length)
     (hS : S.val.map (fun z => z.val) = szs) (hK : szs.length = K)
@@ -386,7 +390,7 @@ theorem loop0_inv_step
     by_cases hun : block.begin.val < block.marked_split.val
     · have hu1 : u = true := by rw [hu]; simp [hun]
       obtain ⟨i1, v6, hi1, hv6, hbody⟩ := finish0_step_first_unmarked deref_mut_back iter_mut_back E B
-        O block_index idxv old eob nbiU S 0 back v5 block hSm hpos hb' hun hadd
+        O block_index idxv old eob nbiU S 0 back v5 block hblock hSm hpos hb' hun hadd
         (by rw [hlenv5]; simp; omega)
       refine ⟨_, hbody, [block.marked_split], rfl, by omega, ?_, rfl, ?_, by simp, ?_, ?_⟩
       · show v6.val = _
@@ -403,7 +407,7 @@ theorem loop0_inv_step
     · have hu0 : u = false := by rw [hu]; simp [hun]
       have hbg : block.begin.val = ms := by omega
       obtain ⟨i1, v6, hi1, hv6, hbody⟩ := finish0_step_first_plain deref_mut_back iter_mut_back E B O
-        block_index idxv old eob nbiU S 0 back v5 block hSm hpos hb' hun (by
+        block_index idxv old eob nbiU S 0 back v5 block hblock hSm hpos hb' hun (by
           rw [hbg]; rw [hms] at hadd; exact hadd)
       refine ⟨_, hbody, [block.begin], rfl, by omega, ?_, rfl, ?_, by simp, ?_, ?_⟩
       · show v6.val = _
@@ -573,7 +577,8 @@ theorem finish0_tail
   -- the scatter
   have hbo0 : ({ slice := (back ({ slice := S, i := K } : core.slice.iter.IterMut Std.Usize)).slice } :
       alloc.vec.Vec Std.Usize).val = vals := hback
-  obtain ⟨E', B', O', bo1, hscat, hsc⟩ := scatter_loop_spec (ms := ms) hK hcnt hlt b old bk nbiU idxv hidx
+  obtain ⟨E', B', O', bo1, hscat, hsc⟩ := scatter_loop_spec (ms := ms) hK hcnt hlt b old bk
+    (partInv_blockWF hp hb) nbiU idxv hidx
     hold hnd p.elements p.element_to_block p.element_offset
     { slice := (back ({ slice := S, i := K } : core.slice.iter.IterMut Std.Usize)).slice } n
     hp.len_e hp.len_e2b hp.len_off (by rw [hbo0]; exact h6)
@@ -758,7 +763,7 @@ theorem finish0_loop_spec
     (by
       intro m x hm hI
       exact loop0_inv_step deref_mut_back iter_mut_back p.elements p.element_to_block p.element_offset
-        b idxv old eob nbiU S bk ms szs p.blocks.val b.index.val u K rfl hb hS hK hszpos rfl hu
+        b idxv old eob nbiU S bk ⟨hbkr.1, hbkr.2.2.1, hbkr.2.2.2⟩ ms szs p.blocks.val b.index.val u K rfl hb hS hK hszpos rfl hu
         hbkr.2.2.1 hcumle hNK hbnd m hm x hI)
     (by
       rintro ⟨iter, back, v5, bl, cur⟩ hI
@@ -779,7 +784,8 @@ theorem finish0_loop_spec
 /-- Unfolding of `finish_partition_marked` down to its main loop. -/
 theorem finish_unfold (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
     (sb : verified.merc_reduction.block_partition.BlockPartitionBuilder)
-    (hb : b.index.val < p.blocks.val.length) :
+    (hb : b.index.val < p.blocks.val.length)
+    (hblkWF : merc_reduction.block_partition.Block.WellFormed (blkAt p b.index.val)) :
     ∃ nbiU : Std.Usize,
       nbiU.val = (if decide ((blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val)
         then p.blocks.val.length else p.blocks.val.length - 1) ∧
@@ -793,7 +799,7 @@ theorem finish_unfold (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
             nbiU 0#usize
           ok (y.1, y.2.1, { sb with block_sizes := y.2.2 })) := by
   have hlen : (alloc.vec.Vec.len p.blocks).val = p.blocks.val.length := by simp [alloc.vec.Vec.len]
-  have hhas := block_has_unmarked_contract (blkAt p b.index.val)
+  have hhas := block_has_unmarked_contract (blkAt p b.index.val) hblkWF
   have hbk : p.blocks.slice.val[b.index.val]'hb = blkAt p b.index.val := (blkAt_eq_getElem hb).symm
   unfold verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked
   by_cases hun : (blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val
@@ -838,7 +844,7 @@ theorem finish_partition_marked_spec
         (decide ((blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val))
         cls sb.old_elements.val (nbi, p3, bo1) := by
   obtain ⟨hS, hidx, hold, hperm, hlen, hlt, hcnt, hszpos⟩ := hd
-  obtain ⟨nbiU, hnbiUv, hunf⟩ := finish_unfold p b sb hb
+  obtain ⟨nbiU, hnbiUv, hunf⟩ := finish_unfold p b sb hb (partInv_blockWF hp hb)
   have hbn : p.blocks.val.length ≤ n := hp.blocks_le_n
   have hbkr := hp.blk b.index.val hb
   have hsum := szs_sum_eq szs cls szs.length rfl hcnt hlt
@@ -859,6 +865,6 @@ theorem finish_partition_marked_spec
     sb.block_sizes.slice hS
   refine ⟨y.1, y.2.1, y.2.2, ?_, hpost⟩
   rw [hunf, hy]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
 
 end MercVerified.Refinement.Proofs

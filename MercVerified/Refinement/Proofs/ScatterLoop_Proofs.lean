@@ -62,17 +62,20 @@ def scatterLabel (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (_nbi j 
   if j.val = 0 ∧ u = false then block_index else ({ index := z, marker := () } : TagIndex Std.Usize BlockTag)
 
 /-- `Block::has_unmarked` is the comparison `begin < marked_split`. -/
-theorem block_has_unmarked_contract (b : Block) :
+theorem block_has_unmarked_contract (b : Block)
+    (hb : merc_reduction.block_partition.Block.WellFormed b) :
     verified.merc_reduction.block_partition.Block.has_unmarked b
       = ok (decide (b.begin.val < b.marked_split.val)) := by
   unfold verified.merc_reduction.block_partition.Block.has_unmarked
-  obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok b
+  obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok b hb
   rw [hu]; simp
 
 /-- One iteration of the scatter loop on a live element. -/
 theorem scatter_body_step
     (block_index : TagIndex Std.Usize BlockTag)
-    (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (block : Block) (nbi : Std.Usize)
+    (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (block : Block)
+    (hblock : merc_reduction.block_partition.Block.WellFormed block)
+    (nbi : Std.Usize)
     (s : Slice (TagIndex Std.Usize BlockTag)) (cnt : Std.Usize) (hm : cnt.val < s.val.length)
     (E : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (B : alloc.vec.Vec (TagIndex Std.Usize BlockTag)) (O : alloc.vec.Vec Std.Usize)
@@ -163,7 +166,7 @@ theorem scatter_body_step
         have hub : (block.begin.val < block.marked_split.val) = True := eq_true hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub,
+          block_has_unmarked_contract block hblock, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
       · 
         rw [if_pos ⟨h0, hu⟩]
@@ -171,7 +174,7 @@ theorem scatter_body_step
         have hub : (block.begin.val < block.marked_split.val) = False := eq_false hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub,
+          block_has_unmarked_contract block hblock, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
     · by_cases hu : block.begin.val < block.marked_split.val
       · 
@@ -180,7 +183,7 @@ theorem scatter_body_step
         have hub : (block.begin.val < block.marked_split.val) = True := eq_true hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub,
+          block_has_unmarked_contract block hblock, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
       · 
         rw [if_neg (fun h => h0 h.1)]
@@ -188,7 +191,7 @@ theorem scatter_body_step
         have hub : (block.begin.val < block.marked_split.val) = False := eq_false hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
           vec_tagged_index_mut_ok B _ he2, vec_tagged_index_mut_ok bo _ hobi, hi1,
-          block_has_unmarked_contract, heq0, hz, hb, hub,
+          block_has_unmarked_contract block hblock, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
 
 /-- The label of class `j` as a `BlockIndex`. -/
@@ -375,7 +378,9 @@ abbrev ScResult := alloc.vec.Vec (TagIndex Std.Usize StateTag) × alloc.vec.Vec 
 theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     (block_index : TagIndex Std.Usize BlockTag)
-    (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (block : Block) (nbi : Std.Usize)
+    (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (block : Block)
+    (hblock : merc_reduction.block_partition.Block.WellFormed block)
+    (nbi : Std.Usize)
     (idxv : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (hidx : idxv.val.map (fun x => x.index.val) = cls)
     (hold : old.val.length = cls.length) (hnd : old.val.Nodup)
@@ -452,7 +457,7 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
           exact ⟨z, hz, hzv⟩
         obtain ⟨z, hz, hzv⟩ := hz
         obtain ⟨cnt', i1, E', B', O', bo', hc', hi1v, hbody, hE', hO', hB', hbo''⟩ :=
-          scatter_body_step block_index old block nbi s cnt hm E B O bo (by omega) hmold hobi
+          scatter_body_step block_index old block hblock nbi s cnt hm E B O bo (by omega) hmold hobi
             (by rw [hbo_pm, hI.lenE]; exact hpmn) (by
               have := hoidx _ (List.getElem_mem hmold); rw [hI.lenO]; exact this)
             (by have := hoidx _ (List.getElem_mem hmold); rw [hI.lenB]; exact this)

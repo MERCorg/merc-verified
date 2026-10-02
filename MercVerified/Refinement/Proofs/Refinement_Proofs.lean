@@ -64,6 +64,11 @@ noncomputable abbrev resizeFnMut {L Label : Type} (LTSInst : LTS L Label) :=
   verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
     LTSInst
 
+/-- The `resize_with` closure never fails. -/
+theorem resizeFnMut_total {L Label : Type} (LTSInst : LTS L Label) :
+    core.ops.function.FnMut.IsTotal (resizeFnMut LTSInst) :=
+  resize_closure_total LTSInst
+
 /-- The translated `FnOnce` instance whose `call_once` runs
     `signature_refinement`. -/
 noncomputable abbrev fnOnceInst {L Label : Type} (LTSInst : LTS L Label) :=
@@ -83,8 +88,8 @@ private theorem BlockPartitionBuilder_default_ok :
     ∃ bpb : verified.merc_reduction.block_partition.BlockPartitionBuilder,
       verified.merc_reduction.block_partition.BlockPartitionBuilder.Insts.CoreDefaultDefault.default = ok bpb := by
   rw [verified.merc_reduction.block_partition.BlockPartitionBuilder.Insts.CoreDefaultDefault.default]
-  rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec (TagIndex Std.Usize BlockTag)) with ⟨b0, hb0⟩
-  rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec Std.Usize) with ⟨b1, hb1⟩
+  rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec (TagIndex Std.Usize BlockTag)) with ⟨b0, hb0, -⟩
+  rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec Std.Usize) with ⟨b1, hb1, -⟩
   rw [hb0, hb1]
   exact ⟨({ index_to_block := b0, block_sizes := b1, old_elements := b0 } :
     verified.merc_reduction.block_partition.BlockPartitionBuilder), by simp⟩
@@ -98,7 +103,7 @@ private theorem signature_refinement_spec
     (sys : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (hincoming : verified.merc_lts.incoming_transitions.IncomingTransitions.new LTSInst sys = ok incoming)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (n : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n)
     (hnpos : 0 < n.val) :
@@ -117,7 +122,7 @@ private theorem signature_refinement_spec
       ∀ n, LTSInst.num_of_states sys = ok n →
         ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
           StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s' := by
-  rcases (alloc.vec.Vec.resize_with_spec Global (resizeFnMut LTSInst)
+  rcases (alloc.vec.Vec.resize_with_spec Global (resizeFnMut LTSInst) (resizeFnMut_total LTSInst)
       (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n ()) with ⟨state_to_key, hstate_to_key, -⟩
   rcases (block_partition_new_spec n hnpos) with ⟨bp, hbp, -⟩
   rcases (merc_utilities.tagged_index.TagIndex.new_spec (T := Std.Usize) BlockTag 0#usize) with ⟨ti, hti⟩
@@ -126,7 +131,7 @@ private theorem signature_refinement_spec
   subst hti'
   rcases (FromVecArray_from_ok (Array.make 1#usize [({ index := 0#usize, marker := () } : TagIndex Std.Usize BlockTag)])) with ⟨v, hv⟩
   rcases (alloc.vec.Vec.Insts.CoreDefaultDefault.default_spec
-      ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag))) with ⟨v1, hv1⟩
+      ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag))) with ⟨v1, hv1, -⟩
   rcases (BlockPartitionBuilder_default_ok) with ⟨bpb, hbpb⟩
   let ctx0 : verified.merc_reduction.signature_refinement.WorklistContextStrong :=
     { partition := bp, worklist := v,
@@ -134,7 +139,7 @@ private theorem signature_refinement_spec
       builder := v1, split_builder := bpb, state_to_key := state_to_key }
   have hinit : InitialWorklistContext LTSInst n ctx0 :=
     ⟨_, hti, hv, hbp, hstate_to_key, hv1, hbpb, rfl⟩
-  rcases (run_worklist_loop_spec LTSInst sys hwf incoming hincoming n hns ctx0 hinit)
+  rcases (run_worklist_loop_spec LTSInst sys hwf hfit incoming hincoming n hns ctx0 hinit)
     with ⟨ctx, blockOf, hloop, hcohloop, hcovloop, hstabloop, hcomplloop⟩
   refine ⟨ctx.partition, blockOf, ?_, hcohloop, hcovloop, hstabloop, hcomplloop⟩
   unfold verified.merc_reduction.signature_refinement.strong_signature_refinement
@@ -160,16 +165,26 @@ private theorem signature_refinement_spec
     concrete `BlockPartition` representation. -/
 theorem strong_bisim_sigref_correct
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
-    StrongBisimSigrefCorrectSpec LTSInst sys hwf timing := by
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
+    StrongBisimSigrefCorrectSpec LTSInst sys hwf hfit timing := by
   unfold StrongBisimSigrefCorrectSpec
   obtain ⟨n, hns, hnpos⟩ := hwf.1
-  rcases (merc_lts.incoming_transitions.IncomingTransitions.new_spec LTSInst sys)
+  rcases (MercVerified.Lts.Proofs.incoming_new_ok LTSInst sys hwf hfit)
     with ⟨incoming, hincoming⟩
-  rcases (merc_utilities.timing.Timing.measure_spec (fnOnceInst LTSInst) timing (toStr "reduction") (sys, incoming))
-    with ⟨partition, hmeasure, hcall⟩
-  rcases (signature_refinement_spec LTSInst sys incoming hincoming hwf n hns hnpos)
+  rcases (signature_refinement_spec LTSInst sys incoming hincoming hwf hfit n hns hnpos)
     with ⟨partition', blockOf, hsr, hcoh, hcov, hstab, hcomplete⟩
+  have hcall0 : (fnOnceInst LTSInst).call_once (sys, incoming) () = ok partition' := by
+    rw [fnOnceInst]
+    dsimp
+    rw [verified.merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once]
+    simpa using hsr
+  have hmeasure := merc_utilities.timing.Timing.measure_spec (fnOnceInst LTSInst) timing
+    (toStr "reduction") (sys, incoming)
+  rw [hcall0] at hmeasure
+  obtain ⟨partition, hmeasure, hcall⟩ : ∃ partition, merc_utilities.timing.Timing.measure
+      (fnOnceInst LTSInst) timing (toStr "reduction") (sys, incoming) = ok partition ∧
+      (fnOnceInst LTSInst).call_once (sys, incoming) () = ok partition :=
+    ⟨partition', hmeasure, hcall0⟩
   have hcall' :
       verified.merc_reduction.signature_refinement.strong_signature_refinement LTSInst
         sys incoming = ok partition := by
@@ -187,7 +202,7 @@ theorem strong_bisim_sigref_correct
       ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val → s ∈ partition.elements.val := by
     intro n hns s hlt
     simpa [hp'] using hcov n hns s hlt
-  refine ⟨partition, blockOf, ?_, hcoh', hcov', hstab, hcomplete⟩
+  refine ⟨partition, blockOf, ?_, ⟨hcoh', hcov'⟩, hstab, hcomplete⟩
   unfold strong_bisim_sigref
   rw [hincoming]
   simp
@@ -201,7 +216,7 @@ theorem strong_bisim_sigref_correct
     in-range states only have in-range successors, so their signatures are unaffected. -/
 theorem stable_implies_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
     (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag)
     (hstable : ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
@@ -257,7 +272,7 @@ theorem stable_implies_strong_fixpoint
     related by the strong-bisimulation `StrongFixPoint` semantics. -/
 theorem strong_bisim_sigref_same_block_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
           LTSInst
@@ -265,13 +280,13 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
       ∀ n, LTSInst.num_of_states sys = ok n →
         ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
           blockOf s = blockOf s' → StrongFixPoint (toLTS LTSInst sys) s s' := by
-  have hspec := strong_bisim_sigref_correct LTSInst sys hwf timing
+  have hspec := strong_bisim_sigref_correct LTSInst sys hwf hfit timing
   unfold StrongBisimSigrefCorrectSpec at hspec
-  rcases hspec with ⟨partition, blockOf, hret, hcoh, hcov, hstab, _hcomplete⟩
+  rcases hspec with ⟨partition, blockOf, hret, ⟨hcoh, hcov⟩, hstab, _hcomplete⟩
   refine ⟨partition, blockOf, ?_, ?_⟩
   · simpa using hret
   · intro n hns s s' hs hs' hbb
-    exact stable_implies_strong_fixpoint LTSInst sys hwf n hns blockOf (hstab n hns) s s' hs hs' hbb
+    exact stable_implies_strong_fixpoint LTSInst sys hwf hfit n hns blockOf (hstab n hns) s s' hs hs' hbb
 
 /-- The partition that `strong_bisim_sigref` returns puts exactly the
     `StrongFixPoint`-related (equivalently, by `StrongFixPoint.bisimilarity` /
@@ -280,7 +295,7 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
     the spec's own completeness conjunct. -/
 theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
           LTSInst
@@ -288,13 +303,13 @@ theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
       ∀ n, LTSInst.num_of_states sys = ok n →
         ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
           (blockOf s = blockOf s' ↔ StrongFixPoint (toLTS LTSInst sys) s s') := by
-  have hspec := strong_bisim_sigref_correct LTSInst sys hwf timing
+  have hspec := strong_bisim_sigref_correct LTSInst sys hwf hfit timing
   unfold StrongBisimSigrefCorrectSpec at hspec
-  rcases hspec with ⟨partition, blockOf, hret, hcoh, hcov, hstab, hcomplete⟩
+  rcases hspec with ⟨partition, blockOf, hret, ⟨hcoh, hcov⟩, hstab, hcomplete⟩
   refine ⟨partition, blockOf, ?_, ?_⟩
   · simpa using hret
   · intro n hns s s' hs hs'
-    exact ⟨stable_implies_strong_fixpoint LTSInst sys hwf n hns blockOf (hstab n hns) s s' hs hs',
+    exact ⟨stable_implies_strong_fixpoint LTSInst sys hwf hfit n hns blockOf (hstab n hns) s s' hs hs',
       hcomplete n hns s s' hs hs'⟩
 
 /-- The headline strong-bisimilarity statement: `strong_bisim_sigref`'s block
@@ -309,7 +324,7 @@ theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     `StrongFixPoint.bisimilarity`. -/
 theorem strong_bisim_sigref_same_block_iff_bisimilar
     {L Label : Type} (LTSInst : LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (timing : Timing) :
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
       strong_bisim_sigref
           LTSInst
@@ -320,7 +335,7 @@ theorem strong_bisim_sigref_same_block_iff_bisimilar
             Cslib.LTS.Bisimilarity (toLTS LTSInst sys)
               (toLTS LTSInst sys) s s') := by
   obtain ⟨partition, blockOf, hret, hiff⟩ :=
-    strong_bisim_sigref_same_block_iff_strong_fixpoint LTSInst sys hwf timing
+    strong_bisim_sigref_same_block_iff_strong_fixpoint LTSInst sys hwf hfit timing
   refine ⟨partition, blockOf, hret, ?_⟩
   intro n hns s s' hs hs'
   have hss' : blockOf s = blockOf s' ↔

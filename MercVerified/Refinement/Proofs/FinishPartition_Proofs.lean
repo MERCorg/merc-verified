@@ -62,6 +62,8 @@ theorem nbts_inner_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       congr 1
       exact (blkAt_eq_getElem hcb).symm
     have hbk := hp.blk _ hcb
+    have hbkWF : merc_reduction.block_partition.Block.WellFormed (blkAt p (nbi.val[i.val]'hiv).index.val) :=
+      partInv_blockWF hp hcb
     obtain ⟨cl, hcl, hclv, -⟩ := spec_imp_exists
       (Usize.sub_spec (x := (blkAt p (nbi.val[i.val]'hiv).index.val).«end»)
         (y := (blkAt p (nbi.val[i.val]'hiv).index.val).begin) (by omega))
@@ -76,11 +78,11 @@ theorem nbts_inner_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     by_cases hge : cl ≥ ml'
     · have hge' : ml'.val ≤ cl.val := hge
       refine ⟨it1.start, (nbi.val[i.val]'hiv, cl), hstart, ?_, hcmem⟩
-      simp [hnext, hidx, hblk, block_len_contract, hcl, hge']
+      simp [hnext, hidx, hblk, block_len_contract _ hbkWF, hcl, hge']
       exact hit1
     · have hge' : ¬ ml'.val ≤ cl.val := hge
       refine ⟨it1.start, (mx', ml'), hstart, ?_, hst⟩
-      simp [hnext, hidx, hblk, block_len_contract, hcl, hge']
+      simp [hnext, hidx, hblk, block_len_contract _ hbkWF, hcl, hge']
       exact hit1
   · intro i st hi hst
     obtain ⟨o, it1, hnext, ho, hid⟩ := next_range_none
@@ -184,6 +186,8 @@ theorem nbts_outer_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       have hc0mem : cur.val[0]'hne' ∈ cur.val := List.getElem_mem hne'
       have hc0 := hallcur _ hc0mem
       have hbk := hp.blk _ hc0
+      have hbkWF : merc_reduction.block_partition.Block.WellFormed (blkAt p (cur.val[0]'hne').index.val) :=
+        partInv_blockWF hp hc0
       obtain ⟨ml, hml, -, -⟩ := spec_imp_exists
         (Usize.sub_spec (x := (blkAt p (cur.val[0]'hne').index.val).«end»)
           (y := (blkAt p (cur.val[0]'hne').index.val).begin) (by omega))
@@ -191,7 +195,7 @@ theorem nbts_outer_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       refine ⟨(mx, cur), ?_, ?_, hmxmem⟩
       · unfold verified.merc_reduction.block_partition.BlockPartition.new_block_to_swap_loop0.body
         subst ho
-        simp [hnext, hidx0, block_lit_ok p _ hc0, block_len_contract, hml, hmx]
+        simp [hnext, hidx0, block_lit_ok p _ hc0, block_len_contract _ hbkWF, hml, hmx]
       · rw [hcur, hi]
   exact ⟨r.1, r.2, hr, hrpost⟩
 

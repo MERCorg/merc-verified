@@ -47,7 +47,7 @@ theorem blocks_index_mut_contract
     (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
   obtain ⟨⟨x, back⟩, hx, hxe, hb⟩ := Std.WP.spec_imp_exists this
   simp only [hx]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   subst hb
   simp [hxe]
 
@@ -60,14 +60,22 @@ theorem block_partition_block_val
   simp only [verified.merc_reduction.block_partition.BlockPartition.block]
   rw [vec_tagged_index_val p.blocks b h]
 
+/-- A block of a consistent partition is well-formed. -/
+theorem partInv_blockWF {n : Nat} {p : verified.merc_reduction.block_partition.BlockPartition}
+    (hp : MercVerified.Refinement.PartInv n p) {k : Nat} (hk : k < p.blocks.val.length) :
+    merc_reduction.block_partition.Block.WellFormed (MercVerified.Refinement.blkAt p k) := by
+  obtain ⟨h1, -, h3, h4⟩ := hp.blk k hk
+  exact ⟨h1, h3, h4⟩
+
 /-- `Block::len` is the derived length `end - begin`: the `assert_consistent`
-    integrity check always completes (vetted boundary axiom), so the result is
+    integrity check completes on a well-formed block (vetted boundary axiom), so the result is
     the scalar subtraction (which may itself fail on underflow). -/
 theorem block_len_contract
-    (b : verified.merc_reduction.block_partition.Block) :
+    (b : verified.merc_reduction.block_partition.Block)
+    (hb : merc_reduction.block_partition.Block.WellFormed b) :
     verified.merc_reduction.block_partition.Block.len b = b.end - b.begin := by
   unfold verified.merc_reduction.block_partition.Block.len
-  rcases merc_reduction.block_partition.Block.assert_consistent_ok b with ⟨u, hu⟩
+  rcases merc_reduction.block_partition.Block.assert_consistent_ok b hb with ⟨u, hu⟩
   rw [hu]
   simp
 
@@ -75,11 +83,12 @@ theorem block_len_contract
     `assert_consistent` integrity check always completes and the predicate is
     `marked_split < end` (decided into `Bool`). -/
 theorem block_has_marked_contract
-    (b : verified.merc_reduction.block_partition.Block) :
+    (b : verified.merc_reduction.block_partition.Block)
+    (hb : merc_reduction.block_partition.Block.WellFormed b) :
     verified.merc_reduction.block_partition.Block.has_marked b =
       ok (decide ((b.marked_split : Nat) < (b.«end» : Nat))) := by
   unfold verified.merc_reduction.block_partition.Block.has_marked
-  rcases merc_reduction.block_partition.Block.assert_consistent_ok b with ⟨u, hu⟩
+  rcases merc_reduction.block_partition.Block.assert_consistent_ok b hb with ⟨u, hu⟩
   rw [hu]
   simp
 
@@ -771,7 +780,7 @@ theorem mark_backward_closure_loop0_loop0_eq
     have hge : iter.start.val ≥ iter.«end».val := by omega
     obtain ⟨o, iter1, hnext, ho, hident⟩ := next_range_none iter hge
     rw [hnext, ho] at hr
-    simp only [bind_tc_ok] at hr
+    simp only [bind_ok] at hr
     simp at hr
     rw [← hr] at h
     simp at h
@@ -785,7 +794,7 @@ theorem mark_backward_closure_loop0_loop0_eq
     have hlt : iter.start.val < iter.«end».val := by omega
     obtain ⟨o, iter1, hnext, ho, hstart', hend'⟩ := next_range_some iter hlt
     rw [hnext, ho] at hr
-    simp only [bind_tc_ok] at hr
+    simp only [bind_ok] at hr
     obtain ⟨_, -, hr⟩ := ok_bind_elim hr
     obtain ⟨_, -, hr⟩ := ok_bind_elim hr
     obtain ⟨_, -, hr⟩ := ok_bind_elim hr
@@ -831,7 +840,7 @@ theorem mark_backward_closure_loop0_loop1_blocks_length
       rw [hru] at hr
       unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body at hr
       rw [intoIterNextNone it hnil] at hr
-      simp only [bind_tc_ok] at hr
+      simp only [bind_ok] at hr
       simp at hr
       rw [← hr] at h
       simp at h
@@ -853,7 +862,7 @@ theorem mark_backward_closure_loop0_loop1_blocks_length
         rw [hru] at hr
         unfold verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1.body at hr
         rw [hnext] at hr
-        simp only [bind_tc_ok] at hr
+        simp only [bind_ok] at hr
         obtain ⟨_, -, hr⟩ := ok_bind_elim hr
         obtain ⟨eqb, -, hr⟩ := ok_bind_elim hr
         by_cases hb : eqb = true
@@ -908,7 +917,7 @@ theorem mark_backward_closure_loop0_blocks_length
       have hge : it.start.val ≥ it.«end».val := by omega
       obtain ⟨o, it1, hnext, ho, hident⟩ := next_range_none it hge
       rw [hnext, ho] at hr
-      simp only [bind_tc_ok] at hr
+      simp only [bind_ok] at hr
       obtain ⟨self1, hself1, hr⟩ := ok_bind_elim hr
       simp at hr
       rw [← hr] at h
@@ -927,7 +936,7 @@ theorem mark_backward_closure_loop0_blocks_length
       have hlt : it.start.val < it.«end».val := by omega
       obtain ⟨o, it1, hnext, ho, hstart', hend'⟩ := next_range_some it hlt
       rw [hnext, ho] at hr
-      simp only [bind_tc_ok] at hr
+      simp only [bind_ok] at hr
       obtain ⟨i2, -, hr⟩ := ok_bind_elim hr
       obtain ⟨itv, -, hr⟩ := ok_bind_elim hr
       obtain ⟨b, -, hr⟩ := ok_bind_elim hr

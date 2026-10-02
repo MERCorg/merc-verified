@@ -107,7 +107,7 @@ theorem dirty_transition_step {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {
     rw [block_number_ok hp f hf, hoB]
   have hblock : verified.merc_reduction.block_partition.BlockPartition.block p oB = ok (blkAt p o) := by
     rw [block_partition_block_val p oB hoBlt, hblk]
-  have hhm := block_has_marked_contract (blkAt p o)
+  have hhm := block_has_marked_contract (blkAt p o) (partInv_blockWF hp hK)
   have hNle := hp.blocks_le_n
   have hbeg' : (blkAt p' o).begin = (blkAt p o).begin := hbeg
   have hend' : (blkAt p' o).«end» = (blkAt p o).«end» := hend
@@ -472,7 +472,7 @@ theorem markDirtyAcc_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS 
     rw [markDirtyAcc_cons]
     by_cases hb : block_index = nb
     · rw [markDirtyStep_pos false LTSInst lts incoming block_index num_blocks nb p w s hb]
-      simp only [bind_tc_ok]
+      simp only [bind_ok]
       obtain ⟨p2, w2, s2, hrest, hI2, hlen2, hsem2⟩ :=
         ih s (fun x hx => hl x (List.mem_cons_of_mem _ hx)) h hsem
       refine ⟨p2, w2, s2, hrest, hI2, hlen2, hsem2.congr (fun t _ => ?_)⟩
@@ -489,7 +489,7 @@ theorem markDirtyAcc_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS 
       obtain ⟨p1', w1, s1, hst, hI, hlen, hsem1⟩ := dirty_states_spec LTSInst lts incoming num_blocks hn hinc h hsem s nb
         (hl nb (List.mem_cons_self ..))
       rw [hst]
-      simp only [bind_tc_ok]
+      simp only [bind_ok]
       obtain ⟨p2, w2, s2, hrest, hI2, hlen2, hsem2⟩ := ih s1
         (fun x hx => by rw [hlen]; exact hl x (List.mem_cons_of_mem _ hx)) hI hsem1
       refine ⟨p2, w2, s2, hrest, hI2, by rw [hlen2, hlen], hsem2.congr (fun t _ => ?_)⟩

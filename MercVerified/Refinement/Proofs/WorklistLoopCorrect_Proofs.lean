@@ -85,7 +85,7 @@ theorem RefinesQ.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L
     the pre-split partition. -/
 theorem RefinesQ.split_preserved {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
     {p : BlockPartition} (hp : PartInv nU.val p) (b : BT) (nbi : VecTy BT) {p1 : BlockPartition}
     (hsplit : SplitPost LTSInst sys nU.val p b nbi p1)
@@ -206,7 +206,7 @@ theorem RefinesQ.split_preserved {L Label : Type}
     label, `Q`-equal target) and `hRQ` (on the *targets*) then puts those matching targets in the
     same new block too. -/
 theorem RefinesQ.fold_preserved {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
-    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (incoming : IncomingTransitions)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (incoming : IncomingTransitions)
     (hIC : MercVerified.Lts.IncomingTransitionsCorrect LTSInst sys incoming)
     (nU : Sz) (hns : LTSInst.num_of_states sys = ok nU) (hnmax : nU.val ≤ Usize.max)
     (hinc : ∀ s : ST, s.index.val < nU.val → ∃ res : alloc.vec.Vec FromTransition,
@@ -363,7 +363,7 @@ theorem SettledStable.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.
     literally equals `SigOf` relative to the pre-split one. -/
 theorem SettledStable.step_preserved {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
     {p : BlockPartition} (hp : PartInv nU.val p) (b : BT) (nbi : VecTy BT) {p1 : BlockPartition}
     (hsplit : SplitPost LTSInst sys nU.val p b nbi p1)
@@ -377,7 +377,7 @@ theorem SettledStable.step_preserved {L Label : Type}
     SettledStable LTSInst sys nU.val p2 := by
   obtain ⟨hp1, k, hN1, hnbi, hother, hmk⟩ := hsplit
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
-  have hn2 := hwf.2.2.1 nU hns
+  have hn2 := hfit nU hns
   have hlt2 : nU.val < 2 ^ UScalarTy.Usize.numBits := by have := usize_max_succ; omega
   have hN1n : p1.blocks.val.length ≤ nU.val := hp1.blocks_le_n
   have hsucc : ∀ s : ST, s.index.val < nU.val → ∀ μ s', MercVerified.Lts.tr LTSInst sys s μ s' →
@@ -503,7 +503,7 @@ theorem SettledStable.step_preserved {L Label : Type}
     reconcile against the executable computation. -/
 theorem strong_process_worklist_block_step_RQ {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU) (incoming : IncomingTransitions)
     (hIC : MercVerified.Lts.IncomingTransitionsCorrect LTSInst sys incoming)
     (hinc : ∀ s : ST, s.index.val < nU.val → ∃ res : alloc.vec.Vec FromTransition,
@@ -524,7 +524,7 @@ theorem strong_process_worklist_block_step_RQ {L Label : Type}
   have hbmem : b ∈ w.val ++ [b] := by simp
   obtain ⟨hbN, hbmark⟩ := hwl b hbmem
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
-  have hn2 := hwf.2.2.1 nU hns
+  have hn2 := hfit nU hns
   have hnbw : b ∉ w.val := by
     intro hbw
     have := (List.nodup_append.mp hnd).2.2 b hbw b (by simp)
@@ -536,17 +536,17 @@ theorem strong_process_worklist_block_step_RQ {L Label : Type}
   have hb0 : ctx.partition.blocks.slice.val[b.index.val]'hbN = blkAt ctx.partition b.index.val :=
     (blkAt_eq_getElem hbN).symm
   have hcon := strong_process_worklist_block_contract false LTSInst sys incoming
-    { ctx with worklist := w } b hbN _ hb0 hbmark
+    { ctx with worklist := w } b hbN _ hb0 (partInv_blockWF hp hbN) hbmark
   obtain ⟨idm, hidm, hid⟩ := std.collections.hash.map.HashMapKVSGlobal.default_spec
     (alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × BT)) BT
     verified.rustc_hash.FxBuildHasher.Insts.CoreDefaultDefault
   have hkts : (alloc.vec.Vec.new (VecTy ((TagIndex Std.Usize LabelTag) × BT))).val = [] := rfl
   obtain ⟨nbi, p1, id1, kts1, sigb1, sb1, stk1, hspm, hstk1, hsplit⟩ :=
-    strong_partition_marked_spec LTSInst sys hwf nU hns hp b hbN hbmark idm
-      (fun q => hid _ _ _ q) (alloc.vec.Vec.new _) hkts ctx.builder ctx.split_builder
+    strong_partition_marked_spec LTSInst sys hwf hfit nU hns hp b hbN hbmark idm
+      (fun q => hid _ _ _ internHash_total internBuildHasher_total q) (alloc.vec.Vec.new _) hkts ctx.builder ctx.split_builder
       ctx.state_to_key hstk
   have hRQ1 : RefinesQ Q nU.val p1 :=
-    RefinesQ.split_preserved LTSInst sys hwf nU hns hp b nbi hsplit Q hQstable hRQ
+    RefinesQ.split_preserved LTSInst sys hwf hfit nU hns hp b nbi hsplit Q hQstable hRQ
   have hsplit' := hsplit
   obtain ⟨hp1, k, hN1, hnbi, hother, hmk⟩ := hsplit
   have hND : DirtyInv nU.val p1 w := by
@@ -597,10 +597,10 @@ theorem strong_process_worklist_block_step_RQ {L Label : Type}
           subst hx
           exact absurd hxe.symm hne
   rw [hcon]
-  simp only [hidm, bind_tc_ok, massert, hbmark, decide_true, verified.merc_reduction.signature_refinement.maybe_mark_backward_closure]
-  simp only [Bool.false_eq_true, if_false, if_true, bind_tc_ok]
+  simp only [hidm, massert, hbmark, decide_true, verified.merc_reduction.signature_refinement.maybe_mark_backward_closure]
+  simp only [Bool.false_eq_true, if_false, if_true, bind_ok]
   rw [hspm]
-  simp only [bind_tc_ok, mark_dirty_new_blocks_contract]
+  simp only [bind_ok, mark_dirty_new_blocks_contract]
   show ∃ ctx', (do
       let r ← markDirtyAcc false LTSInst sys incoming b ctx.partition.blocks.len p1 w ctx.states nbi.val
       ok ({ partition := r.1, worklist := r.2.1, states := r.2.2, builder := sigb1,
@@ -628,17 +628,17 @@ theorem strong_process_worklist_block_step_RQ {L Label : Type}
           apply hne
           rw [hnbi'] at hnb
           simpa using hnb
-      exact SettledStable.step_preserved LTSInst sys hwf nU hns hp b nbi hsplit' incoming hIC
+      exact SettledStable.step_preserved LTSInst sys hwf hfit nU hns hp b nbi hsplit' incoming hIC
         hblk2 hmarkIff hDiff hSS
     rw [hnbi', markDirtyAcc_cons, markDirtyStep_pos false LTSInst sys incoming b _ b p1 w ctx.states rfl]
-    simp only [bind_tc_ok, markDirtyAcc]
+    simp only [bind_ok, markDirtyAcc]
     refine ⟨_, rfl, ⟨hND, hstk1, hbase.2.2⟩, ?_, hRQ1, hSS1⟩
     unfold worklistMeasure numBlocks
     simp only []
     rw [hN1, Nat.add_zero]
     omega
   · have hkpos : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
-    obtain ⟨p2, w2, s2, hrun, hI2, hlen2, hsem2, hRQ2⟩ := RefinesQ.fold_preserved LTSInst sys hwf
+    obtain ⟨p2, w2, s2, hrun, hI2, hlen2, hsem2, hRQ2⟩ := RefinesQ.fold_preserved LTSInst sys hwf hfit
       incoming hIC nU hns hnmax hinc b (alloc.vec.Vec.len ctx.partition.blocks) nbi.val p1 w ctx.states
       (by
         intro x hx
@@ -662,10 +662,10 @@ theorem strong_process_worklist_block_step_RQ {L Label : Type}
         simpa using this
       have hDiff : ∀ t : ST, (∃ nb ∈ nbi.val, nb ≠ b ∧ PredBlk incoming nU.val p1 nb.index.val t) ↔
           ∃ nb ∈ nbi.val, nb ≠ b ∧ PredBlk incoming nU.val p1 nb.index.val t := fun _ => Iff.rfl
-      exact SettledStable.step_preserved LTSInst sys hwf nU hns hp b nbi hsplit' incoming hIC
+      exact SettledStable.step_preserved LTSInst sys hwf hfit nU hns hp b nbi hsplit' incoming hIC
         hblk2 hmarkIff hDiff hSS
     rw [hrun]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     refine ⟨_, rfl, ⟨hI2, hstk1, hsem2.2.2⟩, ?_, hRQ2, hSS2⟩
     have hN2n : p2.blocks.val.length ≤ nU.val := hI2.1.blocks_le_n
     have hw2 : w2.val.length ≤ p2.blocks.val.length :=

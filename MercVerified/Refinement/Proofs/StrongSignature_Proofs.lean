@@ -278,14 +278,14 @@ theorem strong_bisim_signature_spec_general
       (verified.Pair.Insts.CoreCmpOrd
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
-      builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
+      entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
   rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
-      builder3) with ⟨result, hdedup, hdedupspec⟩
-  have hdedupmem := (hdedupspec entry_partialEq_lawful).1
+      entry_partialEq_lawful builder3) with ⟨result, hdedup, hdedupspec⟩
+  have hdedupmem := hdedupspec.1
   refine ⟨result, ?_, ?_⟩
   · rw [hb1]
     simp
@@ -337,13 +337,13 @@ theorem strong_bisim_signature_total
       (verified.Pair.Insts.CoreCmpOrd
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
-      builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
+      entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
   rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
-      builder3) with ⟨result, hdedup, -⟩
+      entry_partialEq_lawful builder3) with ⟨result, hdedup, -⟩
   refine ⟨result, ?_⟩
   rw [hb1]
   simp
@@ -386,14 +386,14 @@ theorem strong_bisim_signature_key
       (verified.Pair.Insts.CoreCmpOrd
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
-      builder2.slice) with ⟨s1, hs1, hs1perm, hs1sorted⟩
+      entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, hs1sorted⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
   rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
-      builder3) with ⟨result, hdedup, hdedupspec⟩
-  obtain ⟨hdmem, hdsub, hdchain⟩ := hdedupspec entry_partialEq_lawful
+      entry_partialEq_lawful builder3) with ⟨result, hdedup, hdedupspec⟩
+  obtain ⟨hdmem, hdsub, hdchain⟩ := hdedupspec
   refine ⟨result, ?_, ?_, ?_⟩
   · rw [hb1]
     simp
@@ -420,7 +420,7 @@ theorem strong_bisim_signature_key
             sigEntry_mem_iff LTSInst sys s blockNumber ts houtgoing μ β
   · have hb3 : builder3.val = s1.val := by simp [builder3, alloc.vec.Vec.val]
     have hsorted : List.Pairwise (fun a b => entryOrd.cmp a b ≠ ok Ordering.gt) result.val :=
-      List.Pairwise.sublist hdsub (by rw [hb3]; exact hs1sorted entry_ord_total)
+      List.Pairwise.sublist hdsub (by rw [hb3]; exact hs1sorted)
     exact sorted_chain_strict hsorted hdchain
 
 /-- `LabelledTransitionSystem`'s `LTS` instance is a specific `LTS`

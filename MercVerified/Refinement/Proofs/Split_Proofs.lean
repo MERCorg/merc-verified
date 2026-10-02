@@ -118,10 +118,8 @@ theorem is_trivially_partitioned_ok {n : Nat} {p : BlockPartition} (hp : PartInv
   obtain ⟨i, hi, hiv, -⟩ := spec_imp_exists
     (Usize.sub_spec (x := (blkAt p b.index.val).«end») (y := (blkAt p b.index.val).begin) (by omega))
   refine ⟨decide (i = 1#usize), ?_, ?_⟩
-  · rw [show (ok (blkAt p b.index.val) : Result _) = pure _ from rfl]
-    simp only [pure_bind]
-    rw [block_len_contract, hi]
-    simp
+  · simp only [bind_ok]
+    rw [block_len_contract _ (partInv_blockWF hp hb), hi, bind_ok]
   · intro h
     have h' : i = 1#usize := by simpa using h
     have : i.val = 1 := by rw [h']; rfl
@@ -300,7 +298,7 @@ theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.L
 /-- Contract of `strong_partition_marked` on a block that has marked elements. -/
 theorem strong_partition_marked_spec {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
     {p : BlockPartition} (hp : PartInv nU.val p) (b : BT) (hb : b.index.val < p.blocks.val.length)
     (hmark : (blkAt p b.index.val).marked_split.val < (blkAt p b.index.val).«end».val)
@@ -314,7 +312,7 @@ theorem strong_partition_marked_spec {L Label : Type}
         stk = ok (nbi, p', id1, kts1, sigb1, sb1, stk1) ∧
       stk1.val.length = nU.val ∧ SplitPost LTSInst sys nU.val p b nbi p' := by
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
-  have hn2 := hwf.2.2.1 nU hns
+  have hn2 := hfit nU hns
   have hn : nU.val < 2 ^ UScalarTy.Usize.numBits := by
     have := usize_max_succ; omega
   have h2n : 2 * nU.val ≤ Usize.max := by nlinarith
@@ -325,7 +323,7 @@ theorem strong_partition_marked_spec {L Label : Type}
     refine ⟨v0, p0, id, kts, sigb, sb, stk, ?_, hstk, ?_⟩
     · unfold verified.merc_reduction.signature_refinement.strong_partition_marked
       rw [htb]
-      simp only [bind_tc_ok, if_true]
+      simp only [bind_ok, if_true]
       rw [heq]
       simp
     · have hbk := hp.blk b.index.val hb
@@ -379,7 +377,7 @@ theorem strong_partition_marked_spec {L Label : Type}
     have hold : ∀ x ∈ sb1.old_elements.val, x.index.val < nU.val := fun x hx =>
       regionElems_lt hp _ _ (by omega) x (hperm1.subset hx)
     obtain ⟨id1, kts1, sigb1, sb2, stk1, hspme, hold2, hlen2, hstk2, htk, hcnt, hpos, hidinv, hsemcls⟩ :=
-      strong_process_marked_elements_dense LTSInst sys hwf nU hns hp hold (by omega) id hid kts hkts sigb
+      strong_process_marked_elements_dense LTSInst sys hwf hfit nU hns hp hold (by omega) id hid kts hkts sigb
         sb1 stk hstk rfl
         (by rw [hi2b1]; intro x hx; simp at hx; rw [hx.2]; rfl)
         (by rw [hi2b1]; simp [holdlen]) hbs1
@@ -393,9 +391,9 @@ theorem strong_partition_marked_spec {L Label : Type}
     obtain ⟨nbi, p3, bo1, hfin, hpost⟩ := finish_partition_marked_spec hp b hb hmark sb2 _ _ hd hn hnmax h2n
     refine ⟨nbi, p3, id1, kts1, sigb1, { sb2 with block_sizes := bo1 }, stk1, ?_, hstk2, ?_⟩
     · rw [strong_partition_marked_nontrivial_contract LTSInst sys p b id kts sigb sb stk htb, hsb1]
-      simp only [bind_tc_ok]
+      simp only [bind_ok]
       rw [hspme]
-      simp only [bind_tc_ok]
+      simp only [bind_ok]
       show (do
         let (v, partition1, split_builder3) ←
           verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked p b sb2

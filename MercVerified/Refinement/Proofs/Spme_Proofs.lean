@@ -278,7 +278,7 @@ theorem block_number_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (t : S
       p t = ok (p.element_to_block.val.getD t.index.val zBT) := by
   have h : t.index.val < p.element_to_block.val.length := by rw [hp.len_e2b]; exact ht
   unfold verified.merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
-  simp only [tag_value_id, bind_tc_ok]
+  simp only [tag_value_id, bind_ok]
   rw [vec_index_ok _ _ h, List.getD_eq_getElem _ _ h]
 
 theorem vec_index_mut_usize_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
@@ -310,7 +310,7 @@ theorem clsAt_set (spb : BlockPartitionBuilder) (ei : Sz) (m : Nat) (hei : ei.va
 /-- One iteration of `strong_process_marked_elements_loop` on a live element succeeds and keeps
     the invariant (structural and signature-key semantics). -/
 theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
     {p : BlockPartition} (hp : PartInv nU.val p) {olds : VecTy ST} {m : Nat} {id : InternMap}
     {kts : VecTy SigKey} {sigb : SigKey} {spb : BlockPartitionBuilder} {stk : VecTy BT} {ei : Sz}
@@ -362,7 +362,7 @@ theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     exact ⟨ei1, h1, by rw [usize_add_one_val ei ei1 h1, hinv.ei_eq]⟩
   obtain ⟨ei1, hadd, hei1v⟩ := hei1
   obtain ⟨o, ho⟩ := std.collections.hash.map.HashMap.get_key_value_ok internEqInst internHashInst
-    internBuildHasher id sigb1
+    internBuildHasher internEq_lawful internHash_total internBuildHasher_total id sigb1
   have hlt2 : kts.val.length < 2 ^ UScalarTy.Usize.numBits := by
     have := usize_max_succ; omega
   rcases o with _ | ⟨k, idx⟩
@@ -431,7 +431,7 @@ theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     empty `key_to_signature`) succeeds and leaves dense classes. -/
 theorem strong_process_marked_elements_dense {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
-    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (nU : Sz)
+    (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
     {p : BlockPartition} (hp : PartInv nU.val p) {olds : VecTy ST}
     (hold : ∀ x ∈ olds.val, x.index.val < nU.val) (holdn : olds.val.length ≤ nU.val)
@@ -498,7 +498,7 @@ theorem strong_process_marked_elements_dense {L Label : Type}
     (by
       intro m x hm hx
       obtain ⟨id1, kts1, sigb1, spb1, stk1, ei1, hb, hinv', hsem'⟩ :=
-        spme_step LTSInst sys hwf nU hns hp hold hx.1 hx.2 hm
+        spme_step LTSInst sys hwf hfit nU hns hp hold hx.1 hx.2 hm
       exact ⟨(id1, kts1, sigb1, spb1, stk1, ei1), hb, hinv', hsem'⟩)
     (by
       intro x hxx
