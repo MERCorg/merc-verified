@@ -40,6 +40,15 @@ THEOREMS = [
     "MercVerified.Refinement.Proofs.strong_bisim_sigref_correct",
     "MercVerified.Refinement.Proofs.strong_bisim_signature_spec",
     "MercVerified.Refinement.Proofs.strong_bisim_sigref_same_block_iff_bisimilar",
+    "traceRefines_iff_not_reachable_trWitness",
+    "stableFailuresRefines_iff_not_reachable_sfWitness",
+    "failuresDivergencesRefines_iff_not_reachable_fdWitness",
+    "foundWitness_iff_exists_witness",
+    "AlgRun.terminates",
+    "foundWitness_iff_exists_witness_finite",
+    "traceRefines_iff_not_foundWitness",
+    "stableFailuresRefines_iff_not_foundWitness",
+    "failuresDivergencesRefines_iff_not_foundWitness",
 ]
 
 # Theorems allowed to depend on `sorryAx` without failing the check (open,
@@ -52,6 +61,8 @@ IMPORTS = [
     "Signatures.Proofs.InductiveSignatures_Proofs",
     "MercVerified.Refinement.Proofs.Refinement_Proofs",
     "MercVerified.Refinement.Proofs.StrongSignature_Proofs",
+    "Refinement.Proofs.Product_Proofs",
+    "Refinement.Proofs.Algorithm_Proofs",
 ]
 
 KERNEL_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}
