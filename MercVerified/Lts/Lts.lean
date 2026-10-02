@@ -53,9 +53,7 @@ def NonEmpty {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
 
 /-- Well-formedness of an `LTS` implementor's concrete representation: a non-empty state space
     of `n` states in which `outgoing_transitions` succeeds on every state `< n` and only yields
-    transitions whose target is again `< n`, and whose state count is small enough
-    (`n * (n + 2) ≤ Usize::MAX`) that the signature-refinement loop's iteration counter, which
-    can reach roughly `n * (n + 1)`, never overflows. The trait's type signature does not imply
+    transitions whose target is again `< n`. The trait's type signature does not imply
     any of this (`outgoing_transitions` may `fail`, its targets are arbitrary indices), so
     algorithms over `LTS` implementors are only trusted under this hypothesis.
 
@@ -69,7 +67,6 @@ def WellFormed {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
     ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val →
       ∃ ts : alloc.vec.Vec Transition,
         LTSInst.outgoing_transitions sys s = ok ts ∧ ∀ t ∈ ts.val, t.to.index.val < n.val) ∧
-  (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n → n.val * (n.val + 2) ≤ Std.Usize.max) ∧
   (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
     ∃ (sv : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (m : Std.Usize),
       LTSInst.iter_states sys = ok sv ∧ sv.val.Nodup ∧

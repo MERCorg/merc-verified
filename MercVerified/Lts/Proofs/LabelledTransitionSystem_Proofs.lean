@@ -289,7 +289,7 @@ theorem lts_wellFormed {Label : Type}
     rw [hi1v']
     simp
 
-  refine ⟨?_, ?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_⟩
   · -- `NonEmpty`
     refine ⟨numStatesU, hnumOfStates, ?_⟩
     omega
@@ -298,10 +298,6 @@ theorem lts_wellFormed {Label : Type}
     have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
     obtain ⟨ts, h1, h2, -⟩ := key s (by omega)
     exact ⟨ts, h1, fun t ht => by have := h2 t ht; omega⟩
-  · intro n hn
-    have hnEq : n = numStatesU := Result.ok_injective (hn.symm.trans hnumOfStates)
-    have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
-    rw [hnval]; exact hsmall
   · intro n hn
     have hnEq : n = numStatesU := Result.ok_injective (hn.symm.trans hnumOfStates)
     have hnval : n.val = numStates := by rw [hnEq]; exact hnsu_valEq
@@ -349,7 +345,7 @@ theorem lts_wellFormed {Label : Type}
       have hnumOfStatesX : verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.num_of_states
           TLInst sys = ok numStatesU := hnumOfStates
       rw [hnumOfStatesX]
-      simp only [bind_tc_ok]
+      simp only [bind_ok]
       exact hsv
     have hsvl : sv.val = (List.range numStates).map (fun k => (uTag k : TagIndex Std.Usize StateTag)) := by
       apply List.ext_getElem

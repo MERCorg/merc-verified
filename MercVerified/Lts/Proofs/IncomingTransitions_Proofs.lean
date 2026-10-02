@@ -1122,7 +1122,7 @@ theorem count_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : 
   have hcount : verified.merc_lts.incoming_transitions.count_incoming
       LTSInst sys s counts = ok counts1 := by
     unfold verified.merc_lts.incoming_transitions.count_incoming
-    simp only [hout, alloc.vec.IntoIteratorVec.into_iter, bind_tc_ok]
+    simp only [hout, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
     exact hinner
   refine ⟨it1, counts1, ?_, hitl, hpost⟩
   unfold verified.merc_lts.incoming_transitions.count_all_incoming_loop.body
@@ -1282,7 +1282,7 @@ theorem count_all_incoming_state_spec {L Label : Type} (LTSInst : LTS L Label) (
   rcases count_all_incoming_spec LTSInst sys sv c0 hout hin hovf with ⟨counts, hloop, hpost⟩
   refine ⟨counts, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.count_all_incoming
-  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter, bind_tc_ok]
+  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
   exact hloop
 
 /-! ## A generic "for `i` in `[0, n)`, gather `source[i]`" loop
@@ -2334,7 +2334,7 @@ theorem place_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       hfill hadd with ⟨cursor1, labels1, src1, hloop, hpost⟩
   refine ⟨cursor1, labels1, src1, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.place_incoming
-  simp only [hout, alloc.vec.IntoIteratorVec.into_iter, bind_tc_ok]
+  simp only [hout, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
   exact hloop
 
 /-- State of the outer placement loop: the states still to visit and the three arrays. -/
@@ -2529,7 +2529,7 @@ theorem place_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : 
   refine ⟨it1, cursor1, labels1, src1, ?_, hit1, ?_⟩
   · unfold verified.merc_lts.incoming_transitions.place_all_incoming_loop.body
     rw [hnext]
-    simp [ho, hplace, bind_tc_ok]
+    simp [ho, hplace, bind_ok]
   · refine ⟨?_, hclen.trans hlenC, hllen.trans hlenL, hslen.trans hlenS, ?_, ?_⟩
     · -- the iterator is the tail of `sv`
       have h1 : sv.val.length - sl.length = k + 1 := by
@@ -2671,7 +2671,7 @@ theorem place_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
       hinv0 hout hin hlens hrlen hmono hcsr hfill hlenmax with ⟨cursor1, labels1, src1, hloop, hpost⟩
   refine ⟨cursor1, labels1, src1, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.place_all_incoming
-  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter, bind_tc_ok]
+  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
   exact hloop
 
 
@@ -2868,7 +2868,7 @@ theorem insert_sorted_done_cmp (start : Sz) (label : TagIndex Sz LabelTag)
     simpa using hcmp
   unfold verified.merc_lts.incoming_transitions.insert_sorted_loop.body
   rw [if_pos h', hi]
-  simp only [bind_tc_ok, alloc.vec.Vec.index_slice_index, hidxL, hget, tag_value_id]
+  simp only [bind_ok, alloc.vec.Vec.index_slice_index, hidxL, hget, tag_value_id]
   split
   · rename_i hbad
     exact absurd hbad hnD
@@ -2957,7 +2957,7 @@ theorem insert_sorted_step
     alloc.vec.Vec.set_val_eq src j _, ?_⟩
   · unfold verified.merc_lts.incoming_transitions.insert_sorted_loop.body
     rw [if_pos h', hj1]
-    simp only [bind_tc_ok, alloc.vec.Vec.index_slice_index, hidxL, hget, tag_value_id,
+    simp only [bind_ok, alloc.vec.Vec.index_slice_index, hidxL, hget, tag_value_id,
       hidxF1, hgetF1]
     split
     · simp [alloc.vec.Vec.index_mut_slice_index, himutLj, himutFj]
@@ -3140,7 +3140,7 @@ theorem insert_sorted_spec
   refine ⟨labels1.set j (labels0.val.getD i.val zeroLabel),
     src1.set j (src0.val.getD i.val zeroState), ?_, ?_⟩
   · unfold verified.merc_lts.incoming_transitions.insert_sorted
-    simp only [alloc.vec.Vec.index_slice_index, hidxL, hidxF, bind_tc_ok]
+    simp only [alloc.vec.Vec.index_slice_index, hidxL, hidxF, bind_ok]
     rw [hloop]
     simp [alloc.vec.Vec.index_mut_slice_index, himutLj, himutFj]
   · refine ⟨?_, ?_, ?_, ?_, ?_⟩
@@ -3471,7 +3471,7 @@ theorem sort_incoming_spec
   refine ⟨labels1, src1, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.sort_incoming
   rw [hadd_eq']
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   exact hloop
 
 /-! ## Stage 8: `sort_all_incoming`

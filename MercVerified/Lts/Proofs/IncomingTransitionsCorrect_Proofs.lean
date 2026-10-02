@@ -74,11 +74,11 @@ theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz 
         = ok s.index := rfl
     have hvi0 := vec_index_sz self.state2incoming s.index hs0
     have hvi1 := vec_index_sz self.state2incoming i1 hi1lt
-    simp only [hv, hi1, bind_tc_ok]
+    simp only [hv, hi1, bind_ok]
     rw [hvi0, hvi1]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     rw [hi2]
-    simp only [bind_tc_ok]
+    simp only [bind_ok]
     rfl
   have hwc : (alloc.vec.Vec.with_capacity FromTransition i2) = alloc.vec.Vec.new FromTransition := rfl
   rw [hcall, hwc]
@@ -225,11 +225,12 @@ theorem copy_prefix_ok (source : alloc.vec.Vec Sz) (n : Sz) (hn : n.val < Usize.
   obtain ⟨r, hr, hp⟩ := Std.WP.spec_imp_exists (copy_prefix_spec n source hn hsrc)
   exact ⟨r, hr, hp⟩
 
-/-- The structure `IncomingTransitions::new` leaves behind. -/
+/-- `IncomingTransitions::new` succeeds on a well-formed LTS, and the structure it leaves behind. -/
 theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L)
-    (hwf : WellFormed LTSInst sys) (incoming : IncomingTransitions)
-    (hinc : IncomingTransitions.new LTSInst sys = ok incoming)
+    (hwf : WellFormed LTSInst sys) (hfit : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+      n.val * (n.val + 2) ≤ Std.Usize.max)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n) :
+    ∃ incoming : IncomingTransitions, IncomingTransitions.new LTSInst sys = ok incoming ∧
     ∃ sv : alloc.vec.Vec (TagIndex Sz StateTag),
       sv.val.Nodup ∧ (∀ s, s ∈ sv.val ↔ s.index.val < n.val) ∧
       incoming.state2incoming.val.length = n.val + 1 ∧
@@ -248,8 +249,8 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
   obtain ⟨n0, hn0, hnpos⟩ := hwf.1
   have hnn : n0 = n := by have := hn0.symm.trans hns; simpa using this
   subst hnn
-  obtain ⟨sv, m, hiter, hnd, hmem, hnt, hmlt, hsum⟩ := hwf.2.2.2 n0 hns
-  have hn2 := hwf.2.2.1 n0 hns
+  obtain ⟨sv, m, hiter, hnd, hmem, hnt, hmlt, hsum⟩ := hwf.2.2 n0 hns
+  have hn2 := hfit n0 hns
   have hnmax : n0.val ≤ Usize.max := by scalar_tac
   have hN2 : n0.val + 2 ≤ Usize.max := by
     have : n0.val + 2 ≤ n0.val * (n0.val + 2) := Nat.le_mul_of_pos_left _ hnpos
@@ -273,7 +274,6 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
     rw [seenCount_full]
     refine le_trans (sum_map_le_sum_map _ _ _ (fun s _ => ?_)) htot
     exact List.length_filter_le _ _
-  unfold IncomingTransitions.new at hinc
   obtain ⟨labels0, hl0, hl0v⟩ := new_labels_spec m
   obtain ⟨src0, hs0, hs0v⟩ := new_states_spec m
   have hlen0 : labels0.val.length = m.val := by rw [hl0v]; simp
@@ -343,15 +343,17 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
   obtain ⟨labels2, src2, hsort, hsl, hss, hswin⟩ := sort_all_incoming_spec r n0 labels1 src1
     (by omega) (by omega) hrmono (fun j hj => by rw [hL1']; exact hrfill j hj |>.trans (by omega))
     (by rw [hL1', hS1']) (by omega)
-  simp only [hns, hnt, hl0, hs0, hi, hc0, hcount, hps, hcp, hpl, bind_tc_ok] at hinc
-  change (do
-      let (tl2, tf2) ← verified.merc_lts.incoming_transitions.sort_all_incoming r labels1 src1 n0
-      ok ({ transition_labels := tl2, transition_from := tf2, state2incoming := r } :
-        IncomingTransitions)) = ok incoming at hinc
-  simp only [hsort, bind_tc_ok] at hinc
-  have hinc' := Result.ok_injective hinc
-  subst hinc'
-  refine ⟨sv, hnd, hmem, hrlen', hrmono, ?_, ?_, ?_, ?_⟩
+  have hnew : IncomingTransitions.new LTSInst sys =
+      ok ({ transition_labels := labels2, transition_from := src2, state2incoming := r } :
+        IncomingTransitions) := by
+    unfold IncomingTransitions.new
+    simp only [hns, hnt, hl0, hs0, hi, hc0, hcount, hps, hcp, hpl, bind_ok]
+    change (do
+        let (tl2, tf2) ← verified.merc_lts.incoming_transitions.sort_all_incoming r labels1 src1 n0
+        ok ({ transition_labels := tl2, transition_from := tf2, state2incoming := r } :
+          IncomingTransitions)) = _
+    simp only [hsort, bind_tc_ok]
+  refine ⟨_, hnew, sv, hnd, hmem, hrlen', hrmono, ?_, ?_, ?_, ?_⟩
   · intro j hj
     show (r.val.getD j 0#usize).val ≤ labels2.val.length
     rw [hsl, hL1']; exact hrfill j hj |>.trans (by omega)
@@ -371,16 +373,20 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
 
 /-- `IncomingTransitions::new` builds a correct index of the incoming transitions. -/
 theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
-    (hwf : WellFormed LTSInst sys) (incoming : IncomingTransitions)
+    (hwf : WellFormed LTSInst sys) (hfit : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+      n.val * (n.val + 2) ≤ Std.Usize.max) (incoming : IncomingTransitions)
     (hinc : IncomingTransitions.new LTSInst sys = ok incoming) :
     IncomingTransitionsCorrect LTSInst sys incoming := by
   intro n hns s hs
-  obtain ⟨sv, hnd, hmem, hrlen, hrmono, hrfill, hlens, hlmax, hwin⟩ :=
-    incoming_new_structure LTSInst sys hwf incoming hinc n hns
+  obtain ⟨incoming', hinc', sv, hnd, hmem, hrlen, hrmono, hrfill, hlens, hlmax, hwin⟩ :=
+    incoming_new_structure LTSInst sys hwf hfit n hns
+  have hii : incoming' = incoming := by
+    have := hinc'.symm.trans hinc; simpa using this
+  subst hii
   obtain ⟨n0, hn0, hnpos⟩ := hwf.1
   have hnn : n0 = n := by have := hn0.symm.trans hns; simpa using this
   subst hnn
-  have hn2 := hwf.2.2.1 n0 hns
+  have hn2 := hfit n0 hns
   have hnmax : n0.val ≤ Usize.max := by scalar_tac
   have hN2 : n0.val + 2 ≤ Usize.max := by
     have : n0.val + 2 ≤ n0.val * (n0.val + 2) := Nat.le_mul_of_pos_left _ hnpos
@@ -388,7 +394,7 @@ theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (s
   have hsvlen : sv.val.length = n0.val := by
     have hNbits : n0.val < 2 ^ UScalarTy.Usize.numBits := lt_two_pow_of_le_max hnmax
     exact states_length sv.val n0.val hNbits hnd hmem
-  obtain ⟨res, hres, hresv⟩ := incoming_transitions_spec incoming s (by omega)
+  obtain ⟨res, hres, hresv⟩ := incoming_transitions_spec incoming' s (by omega)
     (hrmono _ (by omega)) (hrfill _ (by omega)) hlens hlmax
   refine ⟨res, hres, ?_⟩
   have hiff : ∀ i : FromTransition, i ∈ res.val ↔
@@ -429,5 +435,14 @@ theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (s
   have := congrArg Prod.snd heq
   simp only at this
   rw [this]; exact hs'
+
+/-- `IncomingTransitions::new` never fails on a well-formed LTS. -/
+theorem incoming_new_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+    (hwf : WellFormed LTSInst sys) (hfit : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+      n.val * (n.val + 2) ≤ Std.Usize.max) :
+    ∃ incoming, IncomingTransitions.new LTSInst sys = ok incoming := by
+  obtain ⟨n, hns, -⟩ := hwf.1
+  obtain ⟨incoming, hinc, -⟩ := incoming_new_structure LTSInst sys hwf hfit n hns
+  exact ⟨incoming, hinc⟩
 
 end MercVerified.Lts.Proofs

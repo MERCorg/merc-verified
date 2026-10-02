@@ -12,22 +12,23 @@ Rust body it is read off, by file and line number.
 open Aeneas Aeneas.Std Result
 open verified
 
-/-- `IncomingTransitions::new` never fails (it just indexes the transitions of
-    the LTS). -/
-axiom merc_lts.incoming_transitions.IncomingTransitions.new_spec
-  {L : Type} {Clause0_Label : Type} (ltsLTSInst : verified.merc_lts.lts.LTS L Clause0_Label) :
-  (lts : L) → ∃ incoming,
-    merc_lts.incoming_transitions.IncomingTransitions.new ltsLTSInst lts = ok incoming
+/-- A well-formed block: non-empty, with `marked_split` inside it. These are exactly the three
+    `debug_assert!`s of `Block::assert_consistent` (`block_partition.rs`). -/
+def merc_reduction.block_partition.Block.WellFormed
+    (b : merc_reduction.block_partition.Block) : Prop :=
+  b.begin.val < b.«end».val ∧ b.begin.val ≤ b.marked_split.val ∧
+    b.marked_split.val ≤ b.«end».val
 
 /-- `Block::assert_consistent` is the integrity check that every `Block` field
     access runs first. It is an Aeneas external (an axiom in
-    `MercVerified/Code/FunsExternal_Template.lean`), so its *success* is asserted
-    here at the boundary: it only validates `begin ≤ marked_split ≤ end` and so
-    never fails. `MercVerified/Refinement/Proofs/Partition_Proofs.lean` uses this
+    `MercVerified/Code/FunsExternal_Template.lean`) whose body is three `debug_assert!`s: it
+    returns `()` on a well-formed block and panics otherwise, so success is asserted
+    only under `Block.WellFormed`. `MercVerified/Refinement/Proofs/Partition_Proofs.lean` uses this
     to reduce `Block::len` and `Block::has_marked` to plain arithmetic and
     `decide` on their fields. -/
 axiom merc_reduction.block_partition.Block.assert_consistent_ok
-  (b : merc_reduction.block_partition.Block) :
+  (b : merc_reduction.block_partition.Block)
+  (h : merc_reduction.block_partition.Block.WellFormed b) :
   ∃ u : Unit, merc_reduction.block_partition.Block.assert_consistent b = ok u
 
 namespace MercVerified.Refinement
