@@ -3,7 +3,7 @@ import MercVerified.Refinement.Proofs.Partition_Proofs
 import MercVerified.Refinement.Proofs.PartitionInv_Proofs
 import MercVerified.Refinement.Proofs.LoopTools_Proofs
 import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-import MercVerified.Refinement.Proofs.CountingSort_Proofs
+import Sigref.Proofs.CountingSort_Proofs
 import MercVerified.Refinement.Proofs.FinishPartition_Proofs
 import Aeneas.Std.WP
 
@@ -26,6 +26,8 @@ open verified.merc_reduction.block_partition (BlockPartition Block)
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+
+open Sigref
 
 namespace MercVerified.Refinement.Proofs
 

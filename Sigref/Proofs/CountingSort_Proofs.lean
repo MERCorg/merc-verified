@@ -12,10 +12,11 @@ of each processed element `t` and the class sizes `szs`, element `t` is placed a
 `cumS ms szs (cls[t]) + rank t`, where `rank t` counts the earlier elements of the same class.
 The placement is a bijection from element indices onto `[ms, ms + |cls|)`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Aeneas-independent; moved here from `MercVerified.Refinement.Proofs`. Machine-generated; may be freely
+edited or regenerated (see CLAUDE.md).
 -/
 
-namespace MercVerified.Refinement.Proofs
+namespace Sigref
 
 /-- Start position of class `j`: `ms` plus the sizes of all earlier classes. -/
 def cumS (ms : Nat) (szs : List Nat) (j : Nat) : Nat := ms + (szs.take j).sum
@@ -229,4 +230,4 @@ theorem cumS_le_end (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length =
   · have : szs.take j = szs := List.take_of_length_le (by omega)
     unfold cumS; rw [this, hs]
 
-end MercVerified.Refinement.Proofs
+end Sigref
