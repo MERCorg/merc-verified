@@ -1,13 +1,14 @@
 import Sigref.Refinable
 import Sigref.Branching
+import Sigref.Proofs.Refinable_Proofs
 
 /-!
-# From the refinable partition to the abstract algorithm
+# Proofs: RPStep
 
-`RP.config` is the abstract view (partition, dirty set) of a refinable partition. This file shows
-that the paper's data-structure operations implement the operations of the abstract model:
+The backwards closure computes `inertClosure` of the dirty states of the block.
 
-* `closure_view`: the backwards closure computes `inertClosure` of the dirty states of the block.
+Machine-generated; may be freely edited or regenerated (see CLAUDE.md). The "headline" theorems
+are pinned in `Sigref/Pins/RPStep_Pins.lean` (human-vetted).
 -/
 
 namespace Sigref
@@ -17,9 +18,6 @@ open Cslib
 namespace RP
 
 variable {n : ℕ} {Label : Type} [HasTau Label]
-
-/-- The abstract view of a refinable partition. -/
-def config (rp : RP n) : Config (Fin n) := ⟨rp.setoid, {x | rp.Dirty x}⟩
 
 theorem inertReach_iff (lts : LTS (Fin n) Label) (rp : RP n) (x d : Fin n) :
     InertReach lts rp.setoid x d ↔

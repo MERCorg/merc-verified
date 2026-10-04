@@ -54,9 +54,4 @@ def splitSetoid {State Sg : Type} (π : Setoid State) (B D : Set State) (σ : St
       obtain ⟨b1, b2⟩ := h2 ((hB s t hst).1 hs)
       exact ⟨a1.trans b1, fun hsD => (a2 hsD).trans (b2 (a1.1 hsD))⟩
 
-/-- The signature-agnostic fact `splitSetoid` refines `π`. -/
-theorem splitSetoid_le {State Sg : Type} (π : Setoid State) (B D : Set State) (σ : State → Sg)
-    (hB : Saturated π B) {s t : State} (h : (splitSetoid π B D σ hB).r s t) : π.r s t :=
-  h.1
-
 end Sigref
