@@ -1,10 +1,29 @@
 import Sigref.Basic
-import Sigref.Strong
 import Sigref.RelBisim
-import Sigref.SigData
+import Sigref.Strong
 import Sigref.Branching
+import Sigref.SigData
 import Sigref.SigE
 import Sigref.Refinable
-import Sigref.RPStep
 import Sigref.Worklist
 import Sigref.Iteration
+
+import Sigref.Proofs.Basic_Proofs
+import Sigref.Proofs.RelBisim_Proofs
+import Sigref.Proofs.Strong_Proofs
+import Sigref.Proofs.Branching_Proofs
+import Sigref.Proofs.SigData_Proofs
+import Sigref.Proofs.SigE_Proofs
+import Sigref.Proofs.Refinable_Proofs
+import Sigref.Proofs.Worklist_Proofs
+import Sigref.Proofs.RPStep_Proofs
+import Sigref.Proofs.Split_Proofs
+import Sigref.Proofs.Iteration_Proofs
+import Sigref.Proofs.CountingSort_Proofs
+
+import Sigref.Pins.Strong_Pins
+import Sigref.Pins.Branching_Pins
+import Sigref.Pins.SigE_Pins
+import Sigref.Pins.Refinable_Pins
+import Sigref.Pins.Split_Pins
+import Sigref.Pins.Iteration_Pins

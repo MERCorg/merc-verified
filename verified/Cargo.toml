@@ -17,18 +17,40 @@ include = [
   "merc_reduction::partition",
   "merc_reduction::block_partition",
   "merc_reduction::signature_refinement",
+  "merc_reduction::divergence_preserving",
+  "merc_reduction::quotient::quotient_lts_naive",
+  "merc_reduction::quotient::quotient_collect_transitions",
+  "merc_reduction::quotient::quotient_build",
+  "merc_reduction::quotient::push_transitions",
+  "merc_reduction::scc_decomposition::tau_scc_decomposition_iterative",
+  "merc_reduction::scc_decomposition::SccContext",
+  "merc_reduction::scc_decomposition::SCC_UNVISITED",
+  "merc_reduction::scc_decomposition::scc_visit_roots",
+  "merc_reduction::scc_decomposition::scc_process_work",
+  "merc_reduction::scc_decomposition::scc_step",
+  "merc_reduction::scc_decomposition::scc_next_child",
+  "merc_reduction::scc_decomposition::scc_finish",
+  "merc_reduction::scc_decomposition::scc_pop_component",
+  "merc_reduction::sort_topological::Mark",
+  "merc_reduction::sort_topological::sort_topological_hidden",
+  "merc_reduction::sort_topological::sort_topological_visit_all",
+  "merc_reduction::sort_topological::sort_topological_visit_hidden",
+  "merc_reduction::sort_topological::push_unvisited_successors",
+  "merc_reduction::sort_topological::order_to_permutation",
+  "merc_collections::indexed_partition",
+  "merc_lts::lts::TransitionLabel::is_tau_label",
   "merc_lts::incoming_transitions",
   "merc_lts::labelled_transition_system",
   "merc_utilities::tagged_index",
 ]
-# `tau_cycle_elimination_and_reorder` pulls in `merc_collections::graph::Graph`
-# (via quotient_lts_naive / tau_scc_decomposition_iterative / sort_topological),
-# which uses a GAT that Aeneas's `--lift-associated-types` cannot handle.
+# The preprocessing (`tau_cycle_elimination_and_reorder`) uses `lean`-only variants of
+# the SCC decomposition, the quotient and the topological sort that do not go through
+# `merc_collections::Graph` (its `impl Iterator` methods are a GAT that Aeneas's
+# `--lift-associated-types` cannot handle), so only those items are listed above.
 exclude = [
   "merc_utilities::tagged_index::IdAllocator",
   "merc_utilities::tagged_index::_::fmt",
-  "merc_reduction::signatures::tau_cycle_elimination_and_reorder",
-  "merc_reduction::signature_refinement::branching_bisim_sigref_impl",
+  "merc_collections::indexed_partition::_::fmt",
 ]
 # `TagIndex` is translated as a real struct (`index` + `marker`). The parts that
 # Aeneas cannot handle are excluded: `IdAllocator` (fn-pointer PhantomData) and

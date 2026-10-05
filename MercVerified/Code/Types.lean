@@ -70,6 +70,16 @@ structure merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) where
 @[reducible, rust_type "merc_collections::indexed_partition::BlockTag"]
 def merc_collections.indexed_partition.BlockTag := Unit
 
+/-- [merc_collections::indexed_partition::IndexedPartition]
+    Source: '3rd-party/merc/crates/collections/src/indexed_partition.rs', lines 20:0-20:27
+    Name pattern: [merc_collections::indexed_partition::IndexedPartition]
+    Visibility: public -/
+@[rust_type "merc_collections::indexed_partition::IndexedPartition"]
+structure merc_collections.indexed_partition.IndexedPartition where
+  partition : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+  num_of_blocks : Std.Usize
+
 /-- [merc_lts::lts::LabelTag]
     Source: '3rd-party/merc/crates/lts/src/lts.rs', lines 15:0-15:19
     Name pattern: [merc_lts::lts::LabelTag]
@@ -107,6 +117,7 @@ structure merc_lts.lts.TransitionLabel (Self : Type) where
   corefmtDisplayInst : core.fmt.Display Self
   corefmtDebugInst : core.fmt.Debug Self
   tau_label : Result Self
+  is_tau_label : Self → Result Bool
   matches_label : Self → Str → Result Bool
   from_index : Std.Usize → Result Self
 
@@ -154,7 +165,7 @@ structure merc_lts.incoming_transitions.FromTransition where
     merc_lts.lts.StateTag
 
 /-- [merc_lts::labelled_transition_system::LabelledTransitionSystem]
-    Source: '3rd-party/merc/crates/lts/src/labelled_transition_system.rs', lines 28:0-28:42
+    Source: '3rd-party/merc/crates/lts/src/labelled_transition_system.rs', lines 29:0-29:42
     Name pattern: [merc_lts::labelled_transition_system::LabelledTransitionSystem]
     Visibility: public -/
 @[rust_type "merc_lts::labelled_transition_system::LabelledTransitionSystem"]
@@ -227,13 +238,47 @@ structure merc_reduction.block_partition.BlockPartitionBuilder where
   old_elements : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.StateTag)
 
-/-- [merc_reduction::signature_refinement::strong_signature_refinement::{closure}]
-    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1858:50-1858:52
-    Name pattern: [merc_reduction::signature_refinement::strong_signature_refinement::closure] -/
+/-- [merc_reduction::divergence_preserving::DivergencePreservingLts]
+    Source: '3rd-party/merc/crates/reduction/src/divergence_preserving.rs', lines 19:0-19:53
+    Name pattern: [merc_reduction::divergence_preserving::DivergencePreservingLts] -/
+@[rust_type "merc_reduction::divergence_preserving::DivergencePreservingLts"]
+structure merc_reduction.divergence_preserving.DivergencePreservingLts (L :
+  Type) (Clause0_Label : Type) where
+  tau_self_loops_label : merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag
+  labels : alloc.vec.Vec Clause0_Label
+  lts : L
+
+/-- [merc_reduction::scc_decomposition::SccContext]
+    Source: '3rd-party/merc/crates/reduction/src/scc_decomposition.rs', lines 65:0-65:17
+    Name pattern: [merc_reduction::scc_decomposition::SccContext] -/
+@[rust_type "merc_reduction::scc_decomposition::SccContext"]
+structure merc_reduction.scc_decomposition.SccContext where
+  partition : merc_collections.indexed_partition.IndexedPartition
+  low : alloc.vec.Vec Std.Usize
+  disc : alloc.vec.Vec Std.Usize
+  on_scc_stack : alloc.vec.Vec Bool
+  scc_stack : alloc.vec.Vec Std.Usize
+  work : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag) × Std.Usize)
+  discovery_time : Std.Usize
+  eq_class : Std.Usize
+
+/-- [merc_reduction::sort_topological::Mark]
+    Source: '3rd-party/merc/crates/reduction/src/sort_topological.rs', lines 70:0-70:9
+    Name pattern: [merc_reduction::sort_topological::Mark] -/
+@[discriminant isize, rust_type "merc_reduction::sort_topological::Mark"]
+inductive merc_reduction.sort_topological.Mark where
+| Temporary : merc_reduction.sort_topological.Mark
+| Permanent : merc_reduction.sort_topological.Mark
+
+/-- [merc_reduction::signature_refinement::branching_signature_refinement::{closure}]
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1780:50-1780:52
+    Name pattern: [merc_reduction::signature_refinement::branching_signature_refinement::closure] -/
 @[reducible, rust_type
-  "merc_reduction::signature_refinement::strong_signature_refinement::closure"]
-def merc_reduction.signature_refinement.strong_signature_refinement.closure (L
-  : Type) (Clause0_Label : Type) :=
+  "merc_reduction::signature_refinement::branching_signature_refinement::closure"]
+def merc_reduction.signature_refinement.branching_signature_refinement.closure
+  (L : Type) (Clause0_Label : Type) :=
 Unit
 
 /-- [rustc_hash::FxBuildHasher]
@@ -243,8 +288,43 @@ Unit
 @[reducible, rust_type "rustc_hash::FxBuildHasher"]
 def rustc_hash.FxBuildHasher := Unit
 
+/-- [merc_reduction::signature_refinement::WorklistContextBranching]
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1671:0-1671:31
+    Name pattern: [merc_reduction::signature_refinement::WorklistContextBranching] -/
+@[rust_type "merc_reduction::signature_refinement::WorklistContextBranching"]
+structure merc_reduction.signature_refinement.WorklistContextBranching where
+  partition : merc_reduction.block_partition.BlockPartition
+  worklist : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+  states : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.StateTag)
+  builder : alloc.vec.Vec ((merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_lts.lts.LabelTag) × (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag))
+  split_builder : merc_reduction.block_partition.BlockPartitionBuilder
+  state_to_key : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize
+    merc_collections.indexed_partition.BlockTag)
+
+/-- [merc_reduction::signature_refinement::branching_bisim_sigref_impl::{closure}]
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1236:32-1236:34
+    Name pattern: [merc_reduction::signature_refinement::branching_bisim_sigref_impl::closure] -/
+@[rust_type
+  "merc_reduction::signature_refinement::branching_bisim_sigref_impl::closure"]
+def merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure (L
+  : Type) (Clause0_Label : Type) :=
+  L × merc_lts.incoming_transitions.IncomingTransitions
+
+/-- [merc_reduction::signature_refinement::strong_signature_refinement::{closure}]
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1529:50-1529:52
+    Name pattern: [merc_reduction::signature_refinement::strong_signature_refinement::closure] -/
+@[reducible, rust_type
+  "merc_reduction::signature_refinement::strong_signature_refinement::closure"]
+def merc_reduction.signature_refinement.strong_signature_refinement.closure (L
+  : Type) (Clause0_Label : Type) :=
+Unit
+
 /-- [merc_reduction::signature_refinement::WorklistContextStrong]
-    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1741:0-1741:28
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1412:0-1412:28
     Name pattern: [merc_reduction::signature_refinement::WorklistContextStrong] -/
 @[rust_type "merc_reduction::signature_refinement::WorklistContextStrong"]
 structure merc_reduction.signature_refinement.WorklistContextStrong where
@@ -261,7 +341,7 @@ structure merc_reduction.signature_refinement.WorklistContextStrong where
     merc_collections.indexed_partition.BlockTag)
 
 /-- [merc_reduction::signature_refinement::strong_bisim_sigref::{closure}]
-    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1195:48-1195:50
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1220:48-1220:50
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure] -/
 @[rust_type
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure"]

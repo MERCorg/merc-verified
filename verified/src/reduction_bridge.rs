@@ -63,3 +63,36 @@ pub fn branching_bisim_signature_inductive<L: LTS>(
 ) {
     merc_reduction::branching_bisim_signature_inductive(state_index, lts, partition, state_to_key, builder)
 }
+
+/// Branching bisimulation partitioning of an LTS that is already free of
+/// tau-cycles and topologically sorted, see
+/// `merc_reduction::signature_refinement::branching_bisim_sigref_impl`.
+pub fn branching_bisim_sigref_impl<L: LTS>(preprocessed_lts: &L, timing: &Timing) -> BlockPartition {
+    merc_reduction::branching_bisim_sigref_impl(preprocessed_lts, timing)
+}
+
+pub fn tau_cycle_elimination_and_reorder<L: LTS>(
+    lts: L,
+    state: StateIndex,
+    eliminate_tau_selfloops: bool,
+) -> (LabelledTransitionSystem<L::Label>, StateIndex) {
+    merc_reduction::tau_cycle_elimination_and_reorder(lts, state, eliminate_tau_selfloops)
+}
+
+pub fn branching_bisim_sigref<L: LTS>(
+    lts: L,
+    state: StateIndex,
+    divergence_preserving: bool,
+    timing: &Timing,
+) -> (LabelledTransitionSystem<L::Label>, StateIndex, BlockPartition) {
+    merc_reduction::branching_bisim_sigref(lts, state, divergence_preserving, timing)
+}
+
+pub fn labelled_transition_system_branching_bisim_sigref<Label: TransitionLabel>(
+    lts: LabelledTransitionSystem<Label>,
+    state: StateIndex,
+    divergence_preserving: bool,
+    timing: &Timing,
+) -> (LabelledTransitionSystem<Label>, StateIndex, BlockPartition) {
+    branching_bisim_sigref(lts, state, divergence_preserving, timing)
+}

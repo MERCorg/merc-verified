@@ -246,6 +246,29 @@ axiom alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend
 axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
   (T : Type) : Result (alloc.vec.Vec T)
 
+/-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::new]:
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 37:4-37:40
+    Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::new]
+    Visibility: public -/
+@[rust_fun
+  "merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::new"]
+axiom merc_collections.compressed_vec.ByteCompressedVec.new
+  {T : Type} (CompressedEntryInst :
+  merc_collections.compressed_vec.CompressedEntry T) :
+  Result (merc_collections.compressed_vec.ByteCompressedVec T)
+
+/-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::push]:
+    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 72:4-72:36
+    Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::push]
+    Visibility: public -/
+@[rust_fun
+  "merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::push"]
+axiom merc_collections.compressed_vec.ByteCompressedVec.push
+  {T : Type} (CompressedEntryInst :
+  merc_collections.compressed_vec.CompressedEntry T) :
+  merc_collections.compressed_vec.ByteCompressedVec T → T → Result
+    (merc_collections.compressed_vec.ByteCompressedVec T)
+
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::index]:
     Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 98:4-98:42
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::index]
@@ -416,7 +439,7 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
 
 /-- [merc_reduction::signature_refinement::new_worklist_progress]:
-    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1655:0-1655:58
+    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1403:0-1403:58
     Name pattern: [merc_reduction::signature_refinement::new_worklist_progress] -/
 @[rust_fun "merc_reduction::signature_refinement::new_worklist_progress"]
 axiom merc_reduction.signature_refinement.new_worklist_progress
