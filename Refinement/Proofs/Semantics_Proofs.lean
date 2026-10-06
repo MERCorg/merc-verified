@@ -6,6 +6,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section SemanticsProofs
 
+namespace Refinement
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Helper lemmas about
 `WeakTr`'s composability, used throughout `Refinement/Proofs/Product_Proofs.lean`. -/
 
@@ -102,5 +104,7 @@ theorem not_divergent_has_stable [HasTau Label] {lts : LTS State Label} {s : Sta
     exact hnext (ss i)
   · show (ss 0).1 = s
     simp [hss_def]
+
+end Refinement
 
 end SemanticsProofs

@@ -9,6 +9,8 @@ public import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section InductiveSignaturesProofs
 
+namespace Signatures
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Contract pins for the
 "headline" theorems below live in `Signatures/InductiveSignatures_Pins.lean` (human-vetted). -/
 
@@ -609,5 +611,7 @@ theorem BranchingBisimilarity.inductiveBranchingFixPoint.{u, v}
   · -- Stability
     intro a b hab
     exact BranchingBisimilarity.buildSig_stable hWF a b hab
+
+end Signatures
 
 end InductiveSignaturesProofs

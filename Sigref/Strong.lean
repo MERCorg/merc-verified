@@ -37,7 +37,7 @@ def sigS (lts : LTS State Label) (π : Setoid State) (s : State) : Set (Label ×
 def cls (π : Setoid State) (s0 : State) : Set State := {t | π.r s0 t}
 
 theorem cls_saturated (π : Setoid State) (s0 : State) : Saturated π (cls π s0) :=
-  fun s t h => ⟨fun hs => π.trans hs h, fun ht => π.trans ht (π.symm h)⟩
+  fun _ _ h => ⟨fun hs => π.trans hs h, fun ht => π.trans ht (π.symm h)⟩
 
 /-- The partition after splitting the class of `s0`: dirty states regrouped by `sigS`. -/
 def stepSetoid (lts : LTS State Label) (π : Setoid State) (X : Set State) (s0 : State) :

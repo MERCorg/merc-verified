@@ -8,6 +8,8 @@ public import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section SignatureProofs
 
+namespace Signatures
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Contract pins for the
 "headline" theorems below live in `Signatures/Signature_Pins.lean` (human-vetted). -/
 
@@ -93,7 +95,7 @@ theorem IsStable.bisimilarity_ofSplit (lts : Cslib.LTS State Label)
     (h : IsStable (fun s => SplitSignature lts s partition) partition)
     {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
     Cslib.LTS.Bisimilarity lts lts s₁ s₂ :=
-  ⟨fun a b => partition a = partition b, hRel, h.isHomBisimulation_ofSplit lts partition⟩
+  ⟨fun a b => partition a = partition b, hRel, IsStable.isHomBisimulation_ofSplit lts partition h⟩
 
 -- Same-block states under a StrongSignature-stable partition are bisimilar: bisimilarity is the
 -- largest bisimulation, and the same-block relation is a bisimulation by IsStable.isHomBisimulation.
@@ -102,7 +104,7 @@ theorem IsStable.bisimilarity (lts : Cslib.LTS State Label)
     (h : IsStable (fun s => StrongSignature lts s partition) partition)
     {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
     Cslib.LTS.Bisimilarity lts lts s₁ s₂ :=
-  ⟨fun a b => partition a = partition b, hRel, h.isHomBisimulation lts partition⟩
+  ⟨fun a b => partition a = partition b, hRel, IsStable.isHomBisimulation lts partition h⟩
 
 -- The coarsest StrongSignature-stable partition is contained in bisimilarity: FixPoint-related
 -- states are bisimilar. Partition-independent statement — the witness partition is existentially
@@ -116,7 +118,7 @@ theorem StrongFixPoint.bisimilarity (lts : Cslib.LTS State Label)
 -- Reverse direction (strong): bisimilarity implies StrongFixPoint. We use the bisim quotient
 -- as the witness partition. Together with StrongFixPoint.bisimilarity, this makes
 -- StrongFixPoint = Bisimilarity.
-theorem Cslib.LTS.Bisimilarity.strongFixPoint (lts : Cslib.LTS State Label)
+theorem strongFixPoint (lts : Cslib.LTS State Label)
     {s s' : State} (h : Cslib.LTS.Bisimilarity lts lts s s') :
     StrongFixPoint lts s s' := by
   let bisimSetoid : Setoid State :=
@@ -149,7 +151,7 @@ theorem SplitFixPoint.bisimilarity (lts : Cslib.LTS State Label)
 -- Reverse direction (split): bisimilarity implies SplitFixPoint. Uses the bisim quotient as the
 -- witness partition, with SplitSignature stability proved via funext + set extensionality.
 -- Together with SplitFixPoint.bisimilarity, this makes SplitFixPoint = Bisimilarity.
-theorem Cslib.LTS.Bisimilarity.splitFixPoint (lts : Cslib.LTS State Label)
+theorem splitFixPoint (lts : Cslib.LTS State Label)
     {s s' : State} (h : Cslib.LTS.Bisimilarity lts lts s s') :
     SplitFixPoint lts s s' := by
   let bisimSetoid : Setoid State :=
@@ -221,7 +223,7 @@ theorem IsStable.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS Sta
     (h : IsStable (fun s => BranchingSignature lts s partition) partition)
     {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
     BranchingBisimilarity lts s₁ s₂ :=
-  ⟨fun a b => partition a = partition b, hRel, h.isHomBranchingBisimulation lts partition⟩
+  ⟨fun a b => partition a = partition b, hRel, IsStable.isHomBranchingBisimulation lts partition h⟩
 
 -- The coarsest BranchingSignature-stable partition is contained in branching bisimilarity.
 theorem BranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
@@ -278,5 +280,7 @@ theorem BranchingBisimilarity.branchingFixPoint [Cslib.HasTau Label] (lts : Csli
           exact (Quotient.sound (s := brSetoid) ⟨r, hrU'W', hrBis⟩).symm
     exact Set.eq_of_subset_of_subset (aux hAB) (aux (BranchingBisimilarity.symm hAB))
   · exact Quotient.sound h
+
+end Signatures
 
 end SignatureProofs

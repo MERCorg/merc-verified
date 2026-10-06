@@ -26,7 +26,7 @@ open MercVerified.Lts (toLTS toLTS_Tr tr)
 
 open MercVerified.Lts.Proofs
 
-namespace MercVerified.Refinement
+namespace MercVerified.Refinement.Proofs
 
 /-- Contract: the translated `strong_bisim_signature` computes `StrongSignature`. -/
 def StrongBisimSignatureSpec
@@ -46,10 +46,6 @@ def StrongBisimSignatureSpec
         LTSInst PInst s sys partition builder0 = ok result
     ∧ ∀ μ β, (μ, β) ∈ result.val ↔
         (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber
-
-end MercVerified.Refinement
-
-namespace MercVerified.Refinement.Proofs
 
 set_option maxHeartbeats 800000
 

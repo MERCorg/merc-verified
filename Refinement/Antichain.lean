@@ -9,6 +9,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section Antichain
 
+namespace Refinement
+
 /-!
 # The antichain order
 
@@ -46,5 +48,7 @@ def AntichainMem (A : Set (Set State1 × State2)) (x : Set State1 × State2) : P
 def AntichainInsert (A : Set (Set State1 × State2)) (x : Set State1 × State2) :
     Set (Set State1 × State2) :=
   { y | y = x ∨ (y ∈ A ∧ ¬ ProductLE x y) }
+
+end Refinement
 
 end Antichain

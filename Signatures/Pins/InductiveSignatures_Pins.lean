@@ -5,6 +5,8 @@ import Signatures.Signature
 import Signatures.InductiveSignatures
 import Signatures.Proofs.InductiveSignatures_Proofs
 
+open Signatures
+
 -- Contract pin: fails to compile if `IsStable.branchingBisimilarity_inductive`'s signature drifts.
 example [Cslib.HasTau Label]
     {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)

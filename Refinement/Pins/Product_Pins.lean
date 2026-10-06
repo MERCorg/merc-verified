@@ -2,6 +2,8 @@ import Refinement.Semantics
 import Refinement.Product
 import Refinement.Proofs.Product_Proofs
 
+open Refinement
+
 -- Contract pin: fails to compile if `traceRefines_iff_not_reachable_trWitness`'s signature
 -- drifts (Theorem 3.11).
 example [Cslib.HasTau Label]

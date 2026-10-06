@@ -8,6 +8,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section AntichainProofs
 
+namespace Refinement
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). -/
 
 @[refl] theorem ProductLE.refl (p : Set State1 × State2) : ProductLE p p := ⟨rfl, le_refl _⟩
@@ -116,5 +118,7 @@ theorem IsFDWitness.antitone [HasTau Label]
   · refine Or.inr (Or.inl ⟨hstable, fun hsub => hnsub ?_⟩)
     exact hsub.trans (fun _ ⟨s', hs', hstab, hX⟩ => ⟨s', hU hs', hstab, hX⟩)
   · exact Or.inr (Or.inr hsdiv)
+
+end Refinement
 
 end AntichainProofs

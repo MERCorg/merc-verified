@@ -9,6 +9,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section Product
 
+namespace Refinement
+
 /-!
 # Product, normal form and witnesses
 
@@ -75,5 +77,7 @@ def IsFDWitness [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (U : Set State1) (s : State2) : Prop :=
   ¬ SetDivergent lts1 U ∧
     (U = ∅ ∨ (Stable lts2 s ∧ ¬ refusalsOf lts2 s ⊆ refusals lts1 U) ∨ lts2.Divergent s)
+
+end Refinement
 
 end Product

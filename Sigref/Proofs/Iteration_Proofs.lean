@@ -108,7 +108,7 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
   have hU : ∀ u, u ∈ cls c.rp.setoid x0 \ cls (markAllW (markTargets inc rp2 (closure b preds c.rp).nb)
       (⟨rp2, wl'⟩ : Ctx n)).rp.setoid x1 ↔ (closure b preds c.rp).nb ≤ rp2.blk u := by
     intro u
-    simp only [Set.mem_diff, cls, Set.mem_setOf_eq]
+    simp only [Set.mem_sdiff, cls, Set.mem_setOf_eq]
     show (c.rp.blk x0 = c.rp.blk u ∧ ¬ ((markAllW (markTargets inc rp2 (closure b preds c.rp).nb) (⟨rp2, wl'⟩ : Ctx n)).rp.blk x1 =
       (markAllW (markTargets inc rp2 (closure b preds c.rp).nb) (⟨rp2, wl'⟩ : Ctx n)).rp.blk u)) ↔ _
     rw [hblk3]
@@ -190,7 +190,7 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
         exact ⟨fun h => ⟨hzb, h⟩, fun h => h.2⟩
     have hXD : (z ∈ {w | c.rp.Dirty w} \ inertClosure lts c.rp.setoid
         (cls c.rp.setoid x0 ∩ {w | c.rp.Dirty w})) ↔ (c.rp.blk z ≠ b ∧ c.rp.Dirty z) := by
-      simp only [Set.mem_diff, Set.mem_setOf_eq, hDmem]
+      simp only [Set.mem_sdiff, Set.mem_setOf_eq, hDmem]
       by_cases hzb : c.rp.blk z = b
       · constructor
         · rintro ⟨hd, hn⟩

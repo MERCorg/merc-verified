@@ -290,7 +290,7 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
 
 /-- The partition that `strong_bisim_sigref` returns puts exactly the
     `StrongFixPoint`-related (equivalently, by `StrongFixPoint.bisimilarity` /
-    `Cslib.LTS.Bisimilarity.strongFixPoint`, the bisimilar) in-range states in the same
+    `Signatures.strongFixPoint`, the bisimilar) in-range states in the same
     block: soundness from `stable_implies_strong_fixpoint`, completeness from
     the spec's own completeness conjunct. -/
 theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
@@ -319,7 +319,7 @@ theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     are strongly bisimilar in the `toLTS` view of the
     `LTS` implementor. The right-to-left direction is the spec's
     `StrongFixPoint`-completeness conjunct chained through
-    `Cslib.LTS.Bisimilarity.strongFixPoint`; the left-to-right is the spec's
+    `Signatures.strongFixPoint`; the left-to-right is the spec's
     stability conjunct witnessed through `stable_implies_strong_fixpoint` and
     `StrongFixPoint.bisimilarity`. -/
 theorem strong_bisim_sigref_same_block_iff_bisimilar
@@ -342,8 +342,8 @@ theorem strong_bisim_sigref_same_block_iff_bisimilar
       StrongFixPoint (toLTS LTSInst sys) s s' := hiff n hns s s' hs hs'
   constructor
   · intro hab
-    exact StrongFixPoint.bisimilarity (toLTS LTSInst sys) (hss'.1 hab)
+    exact Signatures.StrongFixPoint.bisimilarity (toLTS LTSInst sys) (hss'.1 hab)
   · intro hb
-    exact hss'.2 (Cslib.LTS.Bisimilarity.strongFixPoint (toLTS LTSInst sys) hb)
+    exact hss'.2 (Signatures.strongFixPoint (toLTS LTSInst sys) hb)
 
 end MercVerified.Refinement.Proofs

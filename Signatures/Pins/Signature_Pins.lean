@@ -5,6 +5,8 @@ import Signatures.BranchingBisimilarity
 import Signatures.Signature
 import Signatures.Proofs.Signature_Proofs
 
+open Signatures
+
 -- Contract pin: fails to compile if `IsStable.bisimilarity`'s signature drifts.
 example (lts : Cslib.LTS State Label)
     (partition : State → Block)
@@ -19,11 +21,11 @@ example (lts : Cslib.LTS State Label)
     Cslib.LTS.Bisimilarity lts lts s s' :=
   StrongFixPoint.bisimilarity lts h
 
--- Contract pin: fails to compile if `Cslib.LTS.Bisimilarity.strongFixPoint`'s signature drifts.
+-- Contract pin: fails to compile if `strongFixPoint`'s signature drifts.
 example (lts : Cslib.LTS State Label)
     {s s' : State} (h : Cslib.LTS.Bisimilarity lts lts s s') :
     StrongFixPoint lts s s' :=
-  Cslib.LTS.Bisimilarity.strongFixPoint lts h
+  strongFixPoint lts h
 
 -- Contract pin: fails to compile if `IsStable.branchingBisimilarity`'s signature drifts.
 example [Cslib.HasTau Label] (lts : Cslib.LTS State Label)

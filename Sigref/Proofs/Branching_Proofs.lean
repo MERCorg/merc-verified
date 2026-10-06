@@ -53,6 +53,7 @@ variable {lts : LTS State Label} {c c' : Config State} {s0 s1 : State}
 
 include f
 
+set_option linter.unusedSectionVars false in
 /-- The processed part `D` of the block is exactly its intersection with the dirty closure. -/
 theorem D_iff {s : State} :
     s ∈ inertClosure lts c.π (cls c.π s0 ∩ c.X) ↔
@@ -115,7 +116,7 @@ theorem M_base (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     have hxD : x ∉ inertClosure lts c.π (cls c.π s0 ∩ c.X) := fun h => hxB ((f.D_iff.1 h).1)
     refine ⟨x, ?_, f.inertReach_out htB hp⟩
     rw [f.dX]; exact Or.inl ⟨hxX, hxD⟩
-  · have hc := BranchingBisimilarity.isBranchingBisimulation (lts := lts) hb
+  · have hc := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := lts) hb
     have hst : c'.π.r s t := f.R' hWF inv hb
     rcases (hc μ).1 u hTr with ⟨hμτ, hb1⟩ | ⟨t', t'', hSTr, hTr', hb2, hb3⟩
     · exfalso
@@ -124,7 +125,7 @@ theorem M_base (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     · have hp : lts.τSTr t t' := (LTS.sTr_τSTr lts).mp hSTr
       have hIR : InertReach lts c'.π t t' :=
         inertReach_of_bb lts c'.π hWF (fun a b h => f.R' hWF inv h) hp
-          (BranchingBisimilarity.trans (BranchingBisimilarity.symm hb) hb2)
+          (Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm hb) hb2)
       have ht''U := f.U_sat (f.R' hWF inv hb3) huU
       refine ⟨t', ?_, hIR⟩
       rw [f.dX]
@@ -140,13 +141,13 @@ theorem M' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
   | refl => exact f.M_base hWF inv hb hd
   | head hab hrest ih =>
     rename_i a b
-    have hc := BranchingBisimilarity.isBranchingBisimulation (lts := lts) hb
+    have hc := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := lts) hb
     rcases (hc HasTau.τ).1 b hab.1 with ⟨_, hb1⟩ | ⟨t', t'', hSTr, hTr', hb2, hb3⟩
     · exact ih hb1
     · have hp : lts.τSTr t t' := (LTS.sTr_τSTr lts).mp hSTr
       have hIR : InertReach lts c'.π t t' :=
         inertReach_of_bb lts c'.π hWF (fun a b h => f.R' hWF inv h) hp
-          (BranchingBisimilarity.trans (BranchingBisimilarity.symm hb) hb2)
+          (Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm hb) hb2)
       have hπ : c'.π.r t' t'' :=
         c'.π.trans (c'.π.symm (f.R' hWF inv hb2)) (c'.π.trans hab.2 (f.R' hWF inv hb3))
       exact inertClosure_path (hIR.tail ⟨hTr', hπ⟩) (ih hb3)
@@ -261,7 +262,7 @@ theorem tails_pi' {u v u1 v1 : State} {a : Label} (hu : u ∉ inertClosure lts c
   · exact (f.out hB).2 h
 
 /-- Separation is preserved: a clean and a dirty state of one new block are not `E π'`-related. -/
-theorem S' (inv : BranchingInv lts c) {s t : State} (hst : c'.π.r s t)
+theorem S' (inv : BranchingInv lts c) {s t : State} (_hst : c'.π.r s t)
     (hs : s ∉ inertClosure lts c'.π c'.X) (ht : t ∈ inertClosure lts c'.π c'.X) :
     ¬ E lts c'.π s t := by
   intro hE
@@ -426,7 +427,7 @@ theorem branchingInv_step (lts : LTS State Label) (hWF : TauLoopFree lts) {c c' 
     (inv : BranchingInv lts c) (h : BranchingStep lts c c') : BranchingInv lts c' := by
   obtain ⟨s0, s1, f⟩ := h
   exact ⟨fun s t hb => f.R' hWF inv hb,
-    fun s t hb => ⟨f.M' hWF inv hb, f.M' hWF inv (BranchingBisimilarity.symm hb)⟩,
+    fun s t hb => ⟨f.M' hWF inv hb, f.M' hWF inv (Signatures.BranchingBisimilarity.symm hb)⟩,
     fun s t hst hs ht => f.U' hWF inv hst hs ht,
     fun s t hst hs ht => f.S' inv hst hs ht⟩
 
@@ -467,7 +468,7 @@ theorem branchingStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : 
   by_cases heq : ∀ p : State × State, c.π.r p.1 p.2 → c'.π.r p.1 p.2
   · have hcls : cls c.π s0 \ cls c'.π s1 = ∅ := by
       ext t
-      simp only [Set.mem_diff, Set.mem_empty_iff_false, iff_false, not_and, not_not]
+      simp only [Set.mem_sdiff, Set.mem_empty_iff_false, iff_false, not_and, not_not]
       intro ht
       exact heq (s1, t) (c.π.trans (c.π.symm f.mem) ht)
     have hX' : c'.X = c.X \ inertClosure lts c.π (cls c.π s0 ∩ c.X) := by

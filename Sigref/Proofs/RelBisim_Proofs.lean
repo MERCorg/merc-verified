@@ -64,7 +64,7 @@ theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : 
       ((a = HasTau.τ ∧ π.r s s1 ∧ E lts π s1 t1) ∨
         ((a ≠ HasTau.τ ∨ ¬ π.r s s1) ∧ π.r s1 t1)) := by
   obtain ⟨hπ, hbb⟩ := h
-  have hc := BranchingBisimilarity.isBranchingBisimulation (lts := relLTS lts π) hbb
+  have hc := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := relLTS lts π) hbb
   by_cases hin : a = HasTau.τ ∧ π.r s s1
   · have edge : (relLTS lts π).Tr (.inl s) HasTau.τ (.inl s1) := by
       refine ⟨rfl, ?_⟩
@@ -83,7 +83,7 @@ theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : 
     · exact absurd (congrArg Prod.snd hμ) (by simp [HasTau.τ])
     · obtain ⟨t', rfl, hIR⟩ := tauSTr_inl lts π ((LTS.sTr_τSTr (relLTS lts π)).mp hSTr)
       rcases t2'' with x0 | u
-      · exact absurd (congrArg Prod.snd hTr'.1) (by simp [HasTau.τ])
+      · exact absurd (congrArg Prod.snd hTr'.1) (by simp)
       · obtain ⟨a', x, hl, hTrx, _⟩ := hTr'
         have ha : a = a' := congrArg Prod.fst hl
         subst ha
@@ -157,13 +157,13 @@ theorem E_coind (R : State → State → Prop) (hsymm : ∀ s t, R s t → R t s
   intro s t h
   exact ⟨(hR s t h).1, r', h, hbis⟩
 
-theorem E.refl (s : State) : E lts π s s := ⟨π.refl s, BranchingBisimilarity.refl _⟩
+theorem E.refl (s : State) : E lts π s s := ⟨π.refl s, Signatures.BranchingBisimilarity.refl _⟩
 
 theorem E.symm {s t : State} (h : E lts π s t) : E lts π t s :=
-  ⟨π.symm h.1, BranchingBisimilarity.symm h.2⟩
+  ⟨π.symm h.1, Signatures.BranchingBisimilarity.symm h.2⟩
 
 theorem E.trans {s t u : State} (h1 : E lts π s t) (h2 : E lts π t u) : E lts π s u :=
-  ⟨π.trans h1.1 h2.1, BranchingBisimilarity.trans h1.2 h2.2⟩
+  ⟨π.trans h1.1 h2.1, Signatures.BranchingBisimilarity.trans h1.2 h2.2⟩
 
 theorem E.rel {s t : State} (h : E lts π s t) : π.r s t := h.1
 
@@ -190,22 +190,22 @@ theorem E_stutter (hWF : TauLoopFree lts) {s t m t' : State} (hst : E lts π s t
     (h1 : InertReach lts π t m) (h2 : InertReach lts π m t') (hst' : E lts π s t') :
     E lts π s m := by
   have hbb : BranchingBisimilarity (relLTS lts π) (.inl t) (.inl t') :=
-    BranchingBisimilarity.trans (BranchingBisimilarity.symm hst.2) hst'.2
-  have hmid := BranchingBisimilarity.tauPath_mid (tauLoopFree_relLTS lts π hWF)
+    Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm hst.2) hst'.2
+  have hmid := Signatures.BranchingBisimilarity.tauPath_mid (tauLoopFree_relLTS lts π hWF)
     (inertReach_tauSTr lts π h1) (inertReach_tauSTr lts π h2) hbb
   exact ⟨π.trans hst.1 (InertReach.rel lts π h1),
-    BranchingBisimilarity.trans hst.2 (BranchingBisimilarity.symm hmid)⟩
+    Signatures.BranchingBisimilarity.trans hst.2 (Signatures.BranchingBisimilarity.symm hmid)⟩
 
 /-- Path lifting: an inert path on one side of an `E`-pair is mimicked on the other side. -/
 theorem E_lift {s t d : State} (hst : E lts π s t) (h : InertReach lts π t d) :
     ∃ s', InertReach lts π s s' ∧ E lts π s' d := by
-  have hr := BranchingBisimilarity.isBranchingBisimulation (lts := relLTS lts π)
-  obtain ⟨z, hz, hbz⟩ := LTS.IsBranchingBisimulation.stutter hr
-    (BranchingBisimilarity.symm hst.2) (inertReach_tauSTr lts π h)
+  have hr := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := relLTS lts π)
+  obtain ⟨z, hz, hbz⟩ := Signatures.LTS.IsBranchingBisimulation.stutter hr
+    (Signatures.BranchingBisimilarity.symm hst.2) (inertReach_tauSTr lts π h)
   obtain ⟨s', rfl, hIR⟩ := tauSTr_inl lts π hz
   have hπ : π.r s' d := π.trans (π.symm (InertReach.rel lts π hIR))
     (π.trans hst.1 (InertReach.rel lts π h))
-  exact ⟨s', hIR, hπ, BranchingBisimilarity.symm hbz⟩
+  exact ⟨s', hIR, hπ, Signatures.BranchingBisimilarity.symm hbz⟩
 
 /-- A τ-path between branching-bisimilar states is inert whenever branching bisimilarity refines
 `π`. -/
@@ -216,23 +216,23 @@ theorem inertReach_of_bb (hWF : TauLoopFree lts)
   | refl => exact Relation.ReflTransGen.refl
   | @tail w t' hrest hstep ih =>
     have hwt : BranchingBisimilarity lts w t :=
-      BranchingBisimilarity.tauPath_mid hWF hrest (Relation.ReflTransGen.single hstep) hb
-    have htw : BranchingBisimilarity lts t w := BranchingBisimilarity.symm hwt
-    exact (ih htw).tail ⟨hstep, hπ _ _ (BranchingBisimilarity.trans hwt hb)⟩
+      Signatures.BranchingBisimilarity.tauPath_mid hWF hrest (Relation.ReflTransGen.single hstep) hb
+    have htw : BranchingBisimilarity lts t w := Signatures.BranchingBisimilarity.symm hwt
+    exact (ih htw).tail ⟨hstep, hπ _ _ (Signatures.BranchingBisimilarity.trans hwt hb)⟩
 
 /-- Branching bisimilarity is contained in `E π` as soon as it is contained in `π`. -/
 theorem E_of_bisim (hWF : TauLoopFree lts)
     (hπ : ∀ s t, BranchingBisimilarity lts s t → π.r s t) {s t : State}
     (h : BranchingBisimilarity lts s t) : E lts π s t := by
-  refine E_coind lts π (BranchingBisimilarity lts) (fun _ _ => BranchingBisimilarity.symm) ?_ s t h
+  refine E_coind lts π (BranchingBisimilarity lts) (fun _ _ => Signatures.BranchingBisimilarity.symm) ?_ s t h
   intro s t h
   refine ⟨hπ s t h, fun a s1 hTr => ?_⟩
-  have hc := BranchingBisimilarity.isBranchingBisimulation (lts := lts) h
+  have hc := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := lts) h
   rcases (hc a).1 s1 hTr with ⟨ha, hb1⟩ | ⟨t', t'', hSTr, hTr', hb1, hb2⟩
-  · exact Or.inl ⟨ha, hπ s s1 (BranchingBisimilarity.trans h (BranchingBisimilarity.symm hb1)), hb1⟩
+  · exact Or.inl ⟨ha, hπ s s1 (Signatures.BranchingBisimilarity.trans h (Signatures.BranchingBisimilarity.symm hb1)), hb1⟩
   · have hp : lts.τSTr t t' := (LTS.sTr_τSTr lts).mp hSTr
     have hIR := inertReach_of_bb lts π hWF hπ hp
-      (BranchingBisimilarity.trans (BranchingBisimilarity.symm h) hb1)
+      (Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm h) hb1)
     refine Or.inr ⟨t', t'', hIR, hb1, hTr', ?_⟩
     by_cases hin : a = HasTau.τ ∧ π.r s s1
     · exact Or.inl ⟨hin.1, hin.2, hb2⟩

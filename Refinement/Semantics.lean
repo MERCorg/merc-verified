@@ -8,6 +8,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section Semantics
 
+namespace Refinement
+
 /-!
 # Weak traces, refusals, failures and divergences
 
@@ -115,5 +117,7 @@ notation s1:max " ⊑sfr[" lts1 "," lts2 "] " s2:max => StableFailuresRefines lt
 
 /-- Notation for failures-divergences refinement, `L1 ⊑fdr L2`. -/
 notation s1:max " ⊑fdr[" lts1 "," lts2 "] " s2:max => FailuresDivergencesRefines lts1 s1 lts2 s2
+
+end Refinement
 
 end Semantics

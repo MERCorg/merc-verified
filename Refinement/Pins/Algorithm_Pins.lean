@@ -4,6 +4,8 @@ import Refinement.Antichain
 import Refinement.Algorithm
 import Refinement.Proofs.Algorithm_Proofs
 
+open Refinement
+
 -- Contract pin: fails to compile if `foundWitness_iff_exists_witness`'s signature drifts
 -- (Theorem 5.2/5.14, conditional on termination - see that file's module docstring).
 example [Cslib.HasTau Label]

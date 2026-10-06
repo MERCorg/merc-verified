@@ -12,6 +12,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section AlgorithmProofs
 
+namespace Refinement
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
 
 This file proves the algorithm's structural invariants, termination for finite `State1`/`State2`
@@ -303,5 +305,7 @@ theorem failuresDivergencesRefines_iff_not_foundWitness [HasTau Label]
   rw [failuresDivergencesRefines_iff_not_reachable_fdWitness,
     foundWitness_iff_exists_witness_finite (fdrNormTr_isMonotone lts1)
       (fun hle hwit => IsFDWitness.antitone lts1 lts2 hle hwit), Prod.exists]
+
+end Refinement
 
 end AlgorithmProofs

@@ -8,12 +8,14 @@ open Cslib (LTS HasTau)
 
 @[expose] public section ProductProofs
 
+namespace Refinement
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Contract pins for the
 "headline" theorem below live in `Refinement/Pins/Product_Pins.lean`. -/
 
 /-- Two states of a product are related by `CanReach` whenever one is, composed transitively
     (`Cslib.LTS.CanReach` has no transitivity lemma of its own). -/
-theorem Cslib.LTS.CanReach.trans {lts : LTS State Label} {s t u : State}
+theorem canReach_trans {lts : LTS State Label} {s t u : State}
     (h1 : lts.CanReach s t) (h2 : lts.CanReach t u) : lts.CanReach s u := by
   obtain ⟨μs1, h1⟩ := h1
   obtain ⟨μs2, h2⟩ := h2
@@ -89,7 +91,7 @@ theorem product_zip [HasTau Label]
   | comp _ _ ih1 ih2 =>
     intro U0 U h1
     obtain ⟨V, hV1, hV2⟩ := h1.split
-    exact (ih1 hV1).trans (ih2 hV2)
+    exact canReach_trans (ih1 hV1) (ih2 hV2)
 
 /-- The normal form's transition relation is total on visible-only label sequences: every state
     has *some* `ρ`-derivative (possibly `∅`), for any sequence of visible labels `ρ`. -/
@@ -347,5 +349,7 @@ theorem failuresDivergencesRefines_iff_not_reachable_fdWitness [HasTau Label]
         IsFDWitness lts1 lts2 U s :=
   ⟨fun ⟨hb, hd⟩ => failuresDivergencesRefines_of_not_reachable_fdWitness_aux lts1 s1 lts2 s2 hb hd,
     failuresDivergencesRefines_of_not_reachable_fdWitness lts1 s1 lts2 s2⟩
+
+end Refinement
 
 end ProductProofs

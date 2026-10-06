@@ -3,6 +3,8 @@ import Cslib.Foundations.Semantics.LTS.HasTau
 import Signatures.BranchingBisimilarity
 import Signatures.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
+open Signatures
+
 open Cslib (LTS HasTau)
 
 -- Contract pin: fails to compile if `BranchingBisimilarity.refl`'s signature drifts.

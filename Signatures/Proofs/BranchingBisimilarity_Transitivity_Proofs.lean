@@ -8,6 +8,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section BranchingBisimilarityTransitivity
 
+namespace Signatures
+
 /-! Machine-generated; may be freely edited or regenerated (see CLAUDE.md). Contract pins for the
 "headline" theorems below live in `Signatures/BranchingBisimilarity_Pins.lean` (human-vetted). -/
 
@@ -324,5 +326,7 @@ theorem BranchingBisimilarity.trans [HasTau Label] {lts : LTS State Label}
     (SemiBranchingBisimilarity.trans
       (BranchingBisimilarity.toSemi h12)
       (BranchingBisimilarity.toSemi h23))
+
+end Signatures
 
 end BranchingBisimilarityTransitivity

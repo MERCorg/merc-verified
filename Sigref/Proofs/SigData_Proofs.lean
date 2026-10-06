@@ -167,6 +167,7 @@ theorem sigData_exists (lts : LTS State Label) (hWF : TauLoopFree lts) (π : Set
     rcases htot a b hne with h' | h'
     · exact H2 b a b (Or.inr h') (Or.inl rfl) h
     · exact H2 a a b (Or.inl rfl) (Or.inr h') h
+omit [Finite State] in
 /-- Headline: hash-coherent signature data exists. -/
 theorem sigDataExists [Finite State] (lts : LTS State Label) (π : Setoid State) :
     SigDataExists lts π :=

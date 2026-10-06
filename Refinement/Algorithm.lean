@@ -10,6 +10,8 @@ open Cslib (LTS HasTau)
 
 @[expose] public section Algorithm
 
+namespace Refinement
+
 /-!
 # The antichain-based exploration algorithm (Algorithms 4-6)
 
@@ -79,5 +81,7 @@ def AlgState.Terminal (s : AlgState State1 State2) : Prop := s.working = ∅
 def FoundWitness [HasTau Label] (L1 : LTS (Set State1) Label) (lts2 : LTS State2 Label)
     (IsWitness : Set State1 → State2 → Prop) (p0 : Set State1 × State2) : Prop :=
   ∃ c, AlgRun L1 lts2 (AlgState.initial p0) c ∧ ∃ p ∈ c.done, IsWitness p.1 p.2
+
+end Refinement
 
 end Algorithm
