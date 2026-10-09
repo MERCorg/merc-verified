@@ -108,7 +108,7 @@ theorem strongInv_step (lts : LTS State Label) {c c' : Config State} (inv : Stro
 theorem strongInv_final (lts : LTS State Label) {c : Config State} (inv : StrongInv lts c)
     (hX : ∀ s, s ∉ c.X) (s t : State) : c.π.r s t ↔ LTS.Bisimilarity lts lts s t := by
   refine ⟨fun h => ?_, inv.R s t⟩
-  refine IsStable.bisimilarity lts (Quotient.mk c.π) (fun a b hab => ?_) (Quotient.sound h)
+  refine Signatures.IsStable.bisimilarity lts (Quotient.mk c.π) (fun a b hab => ?_) (Quotient.sound h)
   exact inv.U a b (Quotient.exact hab) (hX a) (hX b)
 
 /-- The termination measure: the size of the relation (decreasing as blocks split), then the number
@@ -128,7 +128,7 @@ theorem strongStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : Con
   · -- no split: the kept part is the whole class, so the dirty states of the class are removed
     have hcls : cls c.π s0 \ cls c'.π s1 = ∅ := by
       ext t
-      simp only [Set.mem_diff, Set.mem_empty_iff_false, iff_false, not_and, not_not]
+      simp only [Set.mem_sdiff, Set.mem_empty_iff_false, iff_false, not_and, not_not]
       intro ht
       have h1 : c.π.r s1 t := c.π.trans (c.π.symm hs1) ht
       exact heq (s1, t) h1

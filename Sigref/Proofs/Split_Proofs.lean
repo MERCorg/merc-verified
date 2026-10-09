@@ -111,7 +111,7 @@ theorem blk_at (hwf : rp.WF) (hb : b < rp.nb) {p : ℕ} (h1 : rp.bs b ≤ p) (h2
     rp.blk (rp.loc.symm ⟨p, hpn⟩) = b :=
   hwf.unique _ b hb (by simpa using h1) (by simpa using h2)
 
-theorem loc_mem (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
+theorem loc_mem (hwf : rp.WF) (_hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
     rp.bs b ≤ (rp.loc x).val ∧ (rp.loc x).val < rp.be b := by
   have := hwf.state x; rw [hx] at this; exact this.2
 
@@ -225,8 +225,8 @@ theorem Pfun_lt_n (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b)
   have h3 := cumS_ge (rp.bs b) (szsL rp b grp) (rr rp b grp x)
   omega
 
-theorem range_unique (hwf : rp.WF) (hb : b < rp.nb) {j j' p : ℕ}
-    (hj : j < numPieces rp b grp) (hj' : j' < numPieces rp b grp)
+theorem range_unique (_hwf : rp.WF) (_hb : b < rp.nb) {j j' p : ℕ}
+    (_hj : j < numPieces rp b grp) (_hj' : j' < numPieces rp b grp)
     (h1 : cumS (rp.bs b) (szsL rp b grp) j ≤ p) (h2 : p < cumS (rp.bs b) (szsL rp b grp) (j + 1))
     (h3 : cumS (rp.bs b) (szsL rp b grp) j' ≤ p) (h4 : p < cumS (rp.bs b) (szsL rp b grp) (j' + 1)) :
     j = j' := by
@@ -284,6 +284,7 @@ section Ids
 variable (hwf : rp.WF) (hb : b < rp.nb)
 include hwf hb
 
+set_option linter.unusedSectionVars false in
 theorem pid_cases {j : ℕ} : pid rp b grp j = b ∨ rp.nb ≤ pid rp b grp j := by
   unfold pid; split_ifs <;> omega
 
@@ -292,7 +293,7 @@ theorem pid_lt {j : ℕ} (hj : j < numPieces rp b grp) :
   have := keepPiece_lt hwf hb (grp := grp)
   unfold pid; split_ifs <;> omega
 
-theorem pieceOf_pid {j : ℕ} (hj : j < numPieces rp b grp) : pieceOf rp b grp (pid rp b grp j) = j := by
+theorem pieceOf_pid {j : ℕ} (_hj : j < numPieces rp b grp) : pieceOf rp b grp (pid rp b grp j) = j := by
   have := keepPiece_lt hwf hb (grp := grp)
   unfold pid pieceOf; split_ifs <;> omega
 
