@@ -7,6 +7,10 @@ import Sigref.SigE
 import Sigref.Refinable
 import Sigref.Worklist
 import Sigref.Iteration
+import Sigref.KeyComp
+import Sigref.Scc
+import Sigref.TopoSort
+import Sigref.Tarjan
 
 import Sigref.Proofs.Basic_Proofs
 import Sigref.Proofs.RelBisim_Proofs
@@ -20,6 +24,13 @@ import Sigref.Proofs.RPStep_Proofs
 import Sigref.Proofs.Split_Proofs
 import Sigref.Proofs.Iteration_Proofs
 import Sigref.Proofs.CountingSort_Proofs
+import Sigref.Proofs.Absorb_Proofs
+import Sigref.Proofs.KeyComp_Proofs
+import Sigref.Proofs.IterK_Proofs
+import Sigref.Proofs.Scc_Proofs
+import Sigref.Proofs.TopoSort_Proofs
+import Sigref.Proofs.TarjanBridge_Proofs
+import Sigref.Proofs.TarjanBounds_Proofs
 
 import Sigref.Pins.Strong_Pins
 import Sigref.Pins.Branching_Pins
@@ -27,3 +38,7 @@ import Sigref.Pins.SigE_Pins
 import Sigref.Pins.Refinable_Pins
 import Sigref.Pins.Split_Pins
 import Sigref.Pins.Iteration_Pins
+import Sigref.Pins.KeyComp_Pins
+import Sigref.Pins.Scc_Pins
+import Sigref.Pins.TopoSort_Pins
+import Sigref.Pins.Tarjan_Pins
