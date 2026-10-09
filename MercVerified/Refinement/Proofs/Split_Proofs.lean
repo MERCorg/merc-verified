@@ -47,6 +47,21 @@ def SplitSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys
           (IsMarked p s.index.val ∧ IsMarked p s'.index.val ∧
             SigOf LTSInst sys p s = SigOf LTSInst sys p s'))))
 
+/-- `SplitSem` for an arbitrary signature function `sg` on states: two marked states of the block
+    share a block afterwards iff their `sg` agree. -/
+def SplitSemG {X : Type} (sg : ST → X) (n : Nat)
+    (p : BlockPartition) (b : BT) (k : Nat) (p1 : BlockPartition) : Prop :=
+  (∀ s : ST, s.index.val < n → e2bAt p s.index.val ≠ b.index.val →
+      e2bAt p1 s.index.val = e2bAt p s.index.val ∧ offAt p1 s.index.val = offAt p s.index.val) ∧
+  (∀ s : ST, s.index.val < n → e2bAt p s.index.val = b.index.val →
+      e2bAt p1 s.index.val = b.index.val ∨
+        (p.blocks.val.length ≤ e2bAt p1 s.index.val ∧ e2bAt p1 s.index.val < p.blocks.val.length + k)) ∧
+  (∀ s s' : ST, s.index.val < n → s'.index.val < n → e2bAt p s.index.val = b.index.val →
+      e2bAt p s'.index.val = b.index.val →
+      (e2bAt p1 s.index.val = e2bAt p1 s'.index.val ↔
+        ((¬ IsMarked p s.index.val ∧ ¬ IsMarked p s'.index.val) ∨
+          (IsMarked p s.index.val ∧ IsMarked p s'.index.val ∧ sg s = sg s'))))
+
 theorem swapIdx_inj {l r a a' : Nat} (h : swapIdx l r a = swapIdx l r a') : a = a' := by
   have := congrArg (swapIdx l r) h
   rwa [swapIdx_invol, swapIdx_invol] at this
@@ -145,7 +160,7 @@ theorem tag_eq_of_val {Tag : Type} {a b : TagIndex Std.Usize Tag} (h : a.index.v
 
 /-- The semantic effect of `finish_partition_marked` (`FinishSem`) together with the class/signature
     correspondence gives `SplitSem`. -/
-theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+theorem split_sem_nontrivialG {X : Type} (sg : ST → X)
     {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : BT) (hb : b.index.val < p.blocks.val.length)
     (K : Nat) (u : Bool)
     (hu : u = decide ((blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val))
@@ -157,8 +172,8 @@ theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.L
     (hsem : FinishSem n p b K u cls old p3)
     (hsig : ∀ t t', t < cls.length → t' < cls.length →
       (cls.getD t 0 = cls.getD t' 0 ↔
-        SigOf LTSInst sys p (old.getD t zST) = SigOf LTSInst sys p (old.getD t' zST))) :
-    SplitSem LTSInst sys n p b (K - firstNew u) p3 := by
+        sg (old.getD t zST) = sg (old.getD t' zST))) :
+    SplitSemG sg n p b (K - firstNew u) p3 := by
   obtain ⟨mx, hmx, hA, hB⟩ := hsem
   have hbkr := hp.blk b.index.val hb
   have hle : (blkAt p b.index.val).marked_split.val + cls.length ≤ n := by omega
@@ -295,6 +310,22 @@ theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.L
         rw [hb0 s hs hX h1, hb0 s' hs' hX' h2]
         exact ⟨fun _ => Or.inl ⟨hm1, hm2⟩, fun _ => rfl⟩
 
+theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+    {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : BT) (hb : b.index.val < p.blocks.val.length)
+    (K : Nat) (u : Bool)
+    (hu : u = decide ((blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val))
+    (cls : List Nat) (old : List ST) (p3 : BlockPartition)
+    (hlen : cls.length = (blkAt p b.index.val).«end».val - (blkAt p b.index.val).marked_split.val)
+    (holdlen : old.length = cls.length)
+    (hperm : old.Perm (regionElems p (blkAt p b.index.val).marked_split.val cls.length))
+    (hlt : ∀ x ∈ cls, x < K)
+    (hsem : FinishSem n p b K u cls old p3)
+    (hsig : ∀ t t', t < cls.length → t' < cls.length →
+      (cls.getD t 0 = cls.getD t' 0 ↔
+        SigOf LTSInst sys p (old.getD t zST) = SigOf LTSInst sys p (old.getD t' zST))) :
+    SplitSem LTSInst sys n p b (K - firstNew u) p3 :=
+  split_sem_nontrivialG (SigOf LTSInst sys p) hp b hb K u hu cls old p3 hlen holdlen hperm hlt hsem hsig
+
 /-- Contract of `strong_partition_marked` on a block that has marked elements. -/
 theorem strong_partition_marked_spec {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
@@ -367,7 +398,7 @@ theorem strong_partition_marked_spec {L Label : Type}
         · exact ⟨fun _ => Or.inr ⟨hm, hm, rfl⟩, fun _ => rfl⟩
         · exact ⟨fun _ => Or.inl ⟨hm, hm⟩, fun _ => rfl⟩
   | false =>
-    obtain ⟨sb1, hsb1, hbs1, hi2b1, hperm1⟩ := marked_elements_sorted_spec hp b hb sb
+    obtain ⟨sb1, hsb1, hbs1, hi2b1, hperm1, -⟩ := marked_elements_sorted_spec hp b hb sb
     have hbk := hp.blk b.index.val hb
     set bk := blkAt p b.index.val with hbkdef
     have hreg_len : (regionElems p bk.marked_split.val (bk.«end».val - bk.marked_split.val)).length

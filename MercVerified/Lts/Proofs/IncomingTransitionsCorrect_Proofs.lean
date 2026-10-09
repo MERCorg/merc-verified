@@ -241,11 +241,14 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
         (incoming.state2incoming.val.getD j 0#usize).val ≤ incoming.transition_labels.val.length) ∧
       incoming.transition_labels.val.length = incoming.transition_from.val.length ∧
       incoming.transition_labels.val.length ≤ Usize.max ∧
-      ∀ j, j < n.val → ∀ x,
+      (∀ j, j < n.val → ∀ x,
         x ∈ slotEntries incoming.transition_labels.val incoming.transition_from.val
           (incoming.state2incoming.val.getD j 0#usize).val
           (incoming.state2incoming.val.getD (j + 1) 0#usize).val
-        ↔ x ∈ towards LTSInst sys sv.val sv.val.length j := by
+        ↔ x ∈ towards LTSInst sys sv.val sv.val.length j) ∧
+      (∀ j, j < n.val → Zp incoming.transition_labels.val
+        (incoming.state2incoming.val.getD j 0#usize).val
+        (incoming.state2incoming.val.getD (j + 1) 0#usize).val) := by
   obtain ⟨n0, hn0, hnpos⟩ := hwf.1
   have hnn : n0 = n := by have := hn0.symm.trans hns; simpa using this
   subst hnn
@@ -353,7 +356,7 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
         ok ({ transition_labels := tl2, transition_from := tf2, state2incoming := r } :
           IncomingTransitions)) = _
     simp only [hsort, bind_tc_ok]
-  refine ⟨_, hnew, sv, hnd, hmem, hrlen', hrmono, ?_, ?_, ?_, ?_⟩
+  refine ⟨_, hnew, sv, hnd, hmem, hrlen', hrmono, ?_, ?_, ?_, ?_, ?_⟩
   · intro j hj
     show (r.val.getD j 0#usize).val ≤ labels2.val.length
     rw [hsl, hL1']; exact hrfill j hj |>.trans (by omega)
@@ -363,11 +366,13 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
     rw [hsl, hL1']; omega
   · intro j hj x
     show x ∈ slotEntries labels2.val src2.val _ _ ↔ _
-    rw [hswin j hj x]
+    rw [(hswin j hj).1 x]
     have h1 := hslot j (by omega)
     have h2 := hcv1 j (by omega)
     have h3 := hrcsr j (by omega)
     rw [← h3, ← h2, h1]
+  · intro j hj
+    exact (hswin j hj).2
 
 
 
@@ -378,7 +383,7 @@ theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (s
     (hinc : IncomingTransitions.new LTSInst sys = ok incoming) :
     IncomingTransitionsCorrect LTSInst sys incoming := by
   intro n hns s hs
-  obtain ⟨incoming', hinc', sv, hnd, hmem, hrlen, hrmono, hrfill, hlens, hlmax, hwin⟩ :=
+  obtain ⟨incoming', hinc', sv, hnd, hmem, hrlen, hrmono, hrfill, hlens, hlmax, hwin, -⟩ :=
     incoming_new_structure LTSInst sys hwf hfit n hns
   have hii : incoming' = incoming := by
     have := hinc'.symm.trans hinc; simpa using this

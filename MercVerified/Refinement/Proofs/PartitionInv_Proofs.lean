@@ -439,7 +439,8 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
         (blkAt p (e2bAt p s.index.val)).marked_split.val ∧
       (blkAt p' (e2bAt p s.index.val)).marked_split.val <
         (blkAt p (e2bAt p s.index.val)).«end».val ∧
-      (∀ t, t < n → (IsMarked p' t ↔ IsMarked p t ∨ t = s.index.val)) := by
+      (∀ t, t < n → (IsMarked p' t ↔ IsMarked p t ∨ t = s.index.val)) ∧
+      (∀ i, (blkAt p (e2bAt p s.index.val)).marked_split.val ≤ i → eAt p' i = eAt p i) := by
   obtain ⟨hK, ho1, ho2⟩ := h.own _ hs
   unfold verified.merc_reduction.block_partition.BlockPartition.mark_element
   have h1 : s.index.val < p.element_to_block.length := by
@@ -519,7 +520,7 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
     refine ⟨{ self1 with blocks :=
         ({ slice := self1.blocks.slice.set bi.index ({ begin := (blkAt p K).begin, marked_split := i1, «end» := (blkAt p K).«end» } : Block) } :
           alloc.vec.Vec Block) },
-      ?_, ?_, he1, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      ?_, ?_, he1, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · simp [hi1, vec_tagged_index_val _ bi hlen, Slice.set_val_eq, hu]
     · have := hP1.set_marked_split bi.index hbN1 i1 (by rw [hbkK]; omega) (by rw [hbkK]; omega)
       rw [hnb] at this
@@ -555,12 +556,41 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
         rw [hoff1 s', hef, hKdef, ← hoK]
         have hi1' : i.val = (blkAt p K).marked_split.val - 1 := hival
         rw [hi1']
+    · -- positions from the old `marked_split` on are untouched
+      intro i0 hi0
+      by_cases hi0n : i0 < n
+      swap
+      · have hl1 : p.elements.val.length ≤ i0 := by rw [h.len_e]; omega
+        have hl2 : self1.elements.val.length ≤ i0 := by rw [hP1.len_e]; omega
+        simp only [eAt, List.getD_eq_getElem?_getD, List.getElem?_eq_none hl1,
+          List.getElem?_eq_none hl2]
+      obtain ⟨hx1, hx2⟩ := h.perm i0 hi0n
+      set x := eAt p i0 with hxdef
+      have hne1 : x.index.val ≠ (eAt p o.val).index.val := by
+        intro heq
+        have h1' := (h.perm o.val hon).2
+        have : offAt p x.index.val = offAt p (eAt p o.val).index.val := by rw [heq]
+        rw [hx2, h1'] at this
+        omega
+      have hne2 : x.index.val ≠ (eAt p i.val).index.val := by
+        intro heq
+        have h1' := (h.perm i.val hin).2
+        have : offAt p x.index.val = offAt p (eAt p i.val).index.val := by rw [heq]
+        rw [hx2, h1'] at this
+        omega
+      have hoffx : offAt self1 x.index.val = i0 := by
+        rw [hoff1, if_neg hne1, if_neg hne2, hx2]
+      have := hP1.inv x.index.val hx1
+      rw [hoffx] at this
+      -- `eAt self1 i0` is `x`
+      have hxx : (eAt self1 i0).index.val = x.index.val := this
+      exact merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq hxx)
   · rw [if_neg hlt]
     simp only [bind_ok]
     obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok (blkAt p K)
       ⟨hbe, hms1, hms2⟩
     have hlt' : ¬ o.val < (blkAt p K).marked_split.val := fun hh => hlt hh
-    refine ⟨p, ?_, h, rfl, rfl, fun _ _ => rfl, rfl, rfl, le_refl _, ?_, ?_⟩
+    refine ⟨p, ?_, h, rfl, rfl, fun _ _ => rfl, rfl, rfl, le_refl _, ?_, ?_, fun _ _ => rfl⟩
     · simp [vec_tagged_index_val p.blocks bi hbN, hb0, hu]
     · omega
     · intro t ht

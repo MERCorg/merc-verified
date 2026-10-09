@@ -2700,6 +2700,27 @@ def sameWindow (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz S
     (a b : Nat) : Prop :=
   ∀ x, x ∈ slotEntries labels src a b ↔ x ∈ slotEntries labels0 src0 a b
 
+/-- The labels of the window `[a, b)` are silent-first: once a position holds label `0`, so do
+all the positions before it (in the window). -/
+def Zp (labels : List (TagIndex Sz LabelTag)) (a b : Nat) : Prop :=
+  ∀ p q, a ≤ p → p < q → q < b → (labels.getD q zeroLabel).index.val = 0 →
+    (labels.getD p zeroLabel).index.val = 0
+
+theorem Zp_mono {labels : List (TagIndex Sz LabelTag)} {a b b' : Nat} (h : Zp labels a b)
+    (hb : b' ≤ b) : Zp labels a b' :=
+  fun p q h1 h2 h3 h4 => h p q h1 h2 (by omega) h4
+
+theorem Zp_congr {l1 l2 : List (TagIndex Sz LabelTag)} {a b : Nat}
+    (h : ∀ p, a ≤ p → p < b → l1.getD p zeroLabel = l2.getD p zeroLabel) (hz : Zp l1 a b) :
+    Zp l2 a b := fun p q h1 h2 h3 h4 => by
+  rw [← h p h1 (by omega)]
+  apply hz p q h1 h2 h3
+  rw [h q (by omega) h3]
+  exact h4
+
+theorem Zp_single (labels : List (TagIndex Sz LabelTag)) (a : Nat) : Zp labels a (a + 1) :=
+  fun p q h1 h2 h3 _ => by omega
+
 /-- Every position of `[a, b)` is one of the positions a window runs over. -/
 private theorem mem_range'_of_lt {a b p : Nat} (h1 : a ≤ p) (h2 : p < b) :
     p ∈ List.range' a (b - a) := by
@@ -2819,7 +2840,9 @@ def IsInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (∀ p, p < j → pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val p) ∧
     (∀ p, j < p → p ≤ i →
       pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val (p - 1)) ∧
-    (∀ p, i < p → pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val p)
+    (∀ p, i < p → pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val p) ∧
+    (∀ p, j < p → p ≤ i →
+      (labels0.val.getD i zeroLabel).index.val < (labels0.val.getD (p - 1) zeroLabel).index.val)
 
 /-- The scalar carried by `1#usize`; `omega` treats `UScalar.val` of a literal as an opaque
     atom, so the generated `j - 1#usize` has to be opened up explicitly. -/
@@ -2884,6 +2907,7 @@ theorem insert_sorted_step
     (src : alloc.vec.Vec (TagIndex Sz StateTag))
     (hi : i.val < labels0.val.length) (hstart : start.val < j.val)
     (hcmp : label.index.val < (labels.val.getD (j.val - 1) zeroLabel).index.val)
+    (hlab : label = labels0.val.getD i.val zeroLabel)
     (hinv : IsInv labels0 src0 start.val i.val j.val (labels, src, j)) :
     ∃ (labels1 : alloc.vec.Vec (TagIndex Sz LabelTag))
       (src1 : alloc.vec.Vec (TagIndex Sz StateTag)) (j1 : Sz),
@@ -2893,8 +2917,8 @@ theorem insert_sorted_step
       labels1.val = labels.val.set j.val (labels.val.getD (j.val - 1) zeroLabel) ∧
       src1.val = src.val.set j.val (src.val.getD (j.val - 1) zeroState) ∧
       IsInv labels0 src0 start.val i.val j1.val (labels1, src1, j1) := by
-  rcases hinv with ⟨hstart0, hji, hlenL, hlenS, hlen0, hA, hB, hC⟩
-  simp only [] at hstart0 hji hlenL hlenS hlen0 hA hB hC
+  rcases hinv with ⟨hstart0, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩
+  simp only [] at hstart0 hji hlenL hlenS hlen0 hA hB hC hD
   have hi' : i.val < src.val.length := by omega
   have h' : j > start := by simp [hstart]
   have hpos : j.val - 1 < labels.val.length := by omega
@@ -2963,7 +2987,7 @@ theorem insert_sorted_step
     · simp [alloc.vec.Vec.index_mut_slice_index, himutLj, himutFj]
     · rename_i hbad
       exact absurd hgtD (by simpa using hbad)
-  · refine ⟨by omega, by omega, ?_, ?_, hlen0, ?_, ?_, ?_⟩
+  · refine ⟨by omega, by omega, ?_, ?_, hlen0, ?_, ?_, ?_, ?_⟩
     · simp only [alloc.vec.Vec.set_val_eq, List.length_set]; omega
     · simp only [alloc.vec.Vec.set_val_eq, List.length_set]; omega
     · intro p hp
@@ -2979,6 +3003,14 @@ theorem insert_sorted_step
     · intro p hp
       simp only [alloc.vec.Vec.set_val_eq]
       rw [pairAt_set_ne labels.val src.val p j.val _ _ (by omega), hC p hp]
+    · intro p hp1 hp2
+      by_cases hpj : p = j.val
+      · subst hpj
+        have h1 : labels.val.getD (j.val - 1) zeroLabel = labels0.val.getD (j.val - 1) zeroLabel :=
+          congrArg Prod.fst (hA (j.val - 1) (by omega))
+        rw [← h1, ← hlab]
+        exact hcmp
+      · exact hD p (by omega) hp2
 
 /-- Loop invariant of the insertion scan, at whatever position the scan has reached: the
     pairs seen so far are only the ones of the range it walks over, and the position is
@@ -3000,21 +3032,30 @@ def IsPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (∀ p, p < st.2.2.val → pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val p) ∧
     (∀ p, st.2.2.val < p → p ≤ i → pairAt st.1.val st.2.1.val p
       = pairAt labels0.val src0.val (p - 1)) ∧
-    (∀ p, i < p → pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val p)
+    (∀ p, i < p → pairAt st.1.val st.2.1.val p = pairAt labels0.val src0.val p) ∧
+    (∀ p, st.2.2.val < p → p ≤ i →
+      (labels0.val.getD i zeroLabel).index.val < (labels0.val.getD (p - 1) zeroLabel).index.val) ∧
+    (st.2.2.val ≤ start ∨
+      (labels0.val.getD (st.2.2.val - 1) zeroLabel).index.val ≤
+        (labels0.val.getD i zeroLabel).index.val)
 
 /-- The pair arrays have equally long, and the position the scan reaches is inside them. -/
 theorem isPost_of_inv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start i : Nat) (st : IsSt)
-    (hinv : IsInv labels0 src0 start i st.2.2.val st) :
+    (hinv : IsInv labels0 src0 start i st.2.2.val st)
+    (hstop : st.2.2.val ≤ start ∨
+      (labels0.val.getD (st.2.2.val - 1) zeroLabel).index.val ≤
+        (labels0.val.getD i zeroLabel).index.val) :
     IsPost labels0 src0 start i st := by
-  rcases hinv with ⟨hstart, hjle, hlenL, hlenS, _, hA, hB, hC⟩
-  exact ⟨hstart, hjle, hlenL, hlenS, hA, hB, hC⟩
+  rcases hinv with ⟨hstart, hjle, hlenL, hlenS, _, hA, hB, hC, hD⟩
+  exact ⟨hstart, hjle, hlenL, hlenS, hA, hB, hC, hD, hstop⟩
 
 theorem insert_sorted_loop_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (start : Sz) (label : TagIndex Sz LabelTag) (i : Sz) (j : Sz)
     (hi : i.val < labels0.val.length)
+    (hlab : label = labels0.val.getD i.val zeroLabel)
     (hloop : IsLoop labels0 src0 start.val i.val (labels0, src0, j)) :
     ∃ (st : IsSt),
       verified.merc_lts.incoming_transitions.insert_sorted_loop labels0 src0 start label j
@@ -3034,20 +3075,20 @@ theorem insert_sorted_loop_spec
       (x := (labels0, src0, j))
     · intro st hinv
       rcases hinv with ⟨hinv, hjlt⟩
-      rcases hinv with ⟨hstart0, hji, hlenL, hlenS, hlen0, hA, hB, hC⟩
+      rcases hinv with ⟨hstart0, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩
       by_cases hle : st.2.2.val ≤ start.val
       · refine Std.WP.exists_imp_spec
           ⟨done st, insert_sorted_done_start start label st.1 st.2.1 st.2.2 hle, ?_⟩
         exact isPost_of_inv labels0 src0 start.val i.val st
-          ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC⟩
+          ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩ (Or.inl hle)
       · have hgt : start.val < st.2.2.val := by omega
         have hjlt' : st.2.2.val < src0.val.length := by omega
         by_cases hcmp :
             (st.1.val.getD (st.2.2.val - 1) zeroLabel).index.val > label.index.val
         · obtain ⟨labels1, src1, j1, hbody, hj1val, hlenL', hlenS', hinv'⟩ :=
             insert_sorted_step labels0 src0 start label i st.2.2 st.1 st.2.1
-              hi hgt (by simpa using hcmp)
-              ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC⟩
+              hi hgt (by simpa using hcmp) hlab
+              ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩
           refine Std.WP.exists_imp_spec ⟨cont (labels1, src1, j1), hbody, ?_⟩
           show IsLoop labels0 src0 start.val i.val (labels1, src1, j1) ∧ j1.val < st.2.2.val
           unfold IsLoop
@@ -3060,8 +3101,13 @@ theorem insert_sorted_loop_spec
               insert_sorted_done_cmp start label st.1 st.2.1 st.2.2 (by omega) (by omega) hgt
                 (by simpa using hcmp),
               ?_⟩
-          exact isPost_of_inv labels0 src0 start.val i.val st
-            ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC⟩
+          refine isPost_of_inv labels0 src0 start.val i.val st
+            ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩ (Or.inr ?_)
+          have h1 : st.1.val.getD (st.2.2.val - 1) zeroLabel
+              = labels0.val.getD (st.2.2.val - 1) zeroLabel :=
+            congrArg Prod.fst (hA (st.2.2.val - 1) (by omega))
+          rw [← h1, ← hlab]
+          omega
 
     · exact hloop
   rcases Std.WP.spec_imp_exists hspec with ⟨st, hloop', hpost⟩
@@ -3078,7 +3124,8 @@ def IsIns (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
   (∀ p, i < p → pairAt labels1.val src1.val p = pairAt labels0.val src0.val p) ∧
   labels1.val.length = labels0.val.length ∧
   src1.val.length = src0.val.length ∧
-  (∀ p, p < start → pairAt labels1.val src1.val p = pairAt labels0.val src0.val p)
+  (∀ p, p < start → pairAt labels1.val src1.val p = pairAt labels0.val src0.val p) ∧
+  (Zp labels0.val start i → Zp labels1.val start (i + 1))
 
 theorem insert_sorted_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
@@ -3104,21 +3151,23 @@ theorem insert_sorted_spec
     rw [alloc.vec.Vec.index_slice_index, hy, hyv,
       getElem_eq_getD src0.val i.val zeroState hi']
   have hinv0 : IsInv labels0 src0 start.val i.val i.val (labels0, src0, i) := by
-    refine ⟨hstart, le_rfl, rfl, rfl, hlen0, ?_, ?_, ?_⟩
+    refine ⟨hstart, le_rfl, rfl, rfl, hlen0, ?_, ?_, ?_, ?_⟩
     · intro p _
       rfl
     · intro p h1 h2
       omega
     · intro p _
       rfl
+    · intro p h1 h2
+      omega
   obtain ⟨st, hloop, hpost⟩ :=
-    insert_sorted_loop_spec labels0 src0 start (labels0.val.getD i.val zeroLabel) i i hi
+    insert_sorted_loop_spec labels0 src0 start (labels0.val.getD i.val zeroLabel) i i hi rfl
       ⟨hinv0, hi⟩
   rcases st with ⟨labels1, src1, j⟩
   have htuple : (labels1, src1, j).2.2.val = j.val := rfl
   unfold IsPost at hpost
   rw [htuple] at hpost
-  rcases hpost with ⟨hstartj, hjle, hlenL, hlenS, hA, hB, hC⟩
+  rcases hpost with ⟨hstartj, hjle, hlenL, hlenS, hA, hB, hC, hD, hstop⟩
   have hjlt : j.val < labels1.val.length := by rw [hlenL]; omega
   have hjlt' : j.val < src1.val.length := by rw [hlenS]; omega
   have hidxLj : labels1.index_usize j = ok (labels1.val[j.val]'hjlt) := by
@@ -3143,7 +3192,7 @@ theorem insert_sorted_spec
     simp only [alloc.vec.Vec.index_slice_index, hidxL, hidxF, bind_ok]
     rw [hloop]
     simp [alloc.vec.Vec.index_mut_slice_index, himutLj, himutFj]
-  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
     · intro x
       unfold slotEntries
       refine mem_map_eq_of_reindex
@@ -3199,6 +3248,43 @@ theorem insert_sorted_spec
       simp only [alloc.vec.Vec.set_val_eq]
       rw [pairAt_set_ne labels1.val src1.val p j.val _ _ (by omega)]
       exact hA p (by omega)
+    · intro hZ p q hpa hpq hqb hq0
+      simp only [alloc.vec.Vec.set_val_eq] at hq0 ⊢
+      have hNlt : ∀ r, r < j.val →
+          (labels1.val.set j.val (labels0.val.getD i.val zeroLabel)).getD r zeroLabel
+            = labels0.val.getD r zeroLabel := fun r hr => by
+        have h := pairAt_set_ne labels1.val src1.val r j.val (labels0.val.getD i.val zeroLabel)
+          zeroState (by omega)
+        rw [hA r hr] at h
+        exact congrArg Prod.fst h
+      have hNj : (labels1.val.set j.val (labels0.val.getD i.val zeroLabel)).getD j.val zeroLabel
+            = labels0.val.getD i.val zeroLabel := by
+        have h := pairAt_set_self labels1.val src1.val j.val (labels0.val.getD i.val zeroLabel)
+          zeroState hjlt hjlt'
+        exact congrArg Prod.fst h
+      have hNgt : ∀ r, j.val < r → r ≤ i.val →
+          (labels1.val.set j.val (labels0.val.getD i.val zeroLabel)).getD r zeroLabel
+            = labels0.val.getD (r - 1) zeroLabel := fun r hr1 hr2 => by
+        have h := pairAt_set_ne labels1.val src1.val r j.val (labels0.val.getD i.val zeroLabel)
+          zeroState (by omega)
+        rw [hB r hr1 hr2] at h
+        exact congrArg Prod.fst h
+      rcases lt_trichotomy q j.val with hq | hq | hq
+      · rw [hNlt q hq] at hq0
+        rw [hNlt p (by omega)]
+        exact hZ p q hpa hpq (by omega) hq0
+      · subst hq
+        rw [hNj] at hq0
+        rw [hNlt p hpq]
+        rcases hstop with hst | hst
+        · omega
+        · have hj1 : (labels0.val.getD (j.val - 1) zeroLabel).index.val = 0 := by omega
+          by_cases hpe : p = j.val - 1
+          · rw [hpe]; exact hj1
+          · exact hZ p (j.val - 1) hpa (by omega) (by omega) hj1
+      · rw [hNgt q hq (by omega)] at hq0
+        have := hD q hq (by omega)
+        omega
 
 /-- Two windows that are chained hold the same pairs. -/
 private theorem sameWindow_trans (labels : List (TagIndex Sz LabelTag))
@@ -3222,7 +3308,7 @@ abbrev SorSt := (core.ops.range.Range Std.Usize)
     * the range `[start, it.start)` holds the pairs it held before, and nothing from `it.start`
       on has been touched;
     * both arrays keep their length. -/
-def SorInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+def SorInvD (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start stop : Sz) : SorSt → Prop :=
   fun st =>
     (st.1.start.val = start.val + 1 ∧
@@ -3244,6 +3330,11 @@ def SorInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
      (∀ p, p < start.val → pairAt st.2.1.val st.2.2.val p
        = pairAt labels0.val src0.val p))
 
+/-- The scan invariant, together with silent-first order of the sorted prefix. -/
+def SorInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+    (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start stop : Sz) : SorSt → Prop :=
+  fun st => SorInvD labels0 src0 start stop st ∧ Zp st.2.1.val start.val st.1.start.val
+
 /-- What the scan leaves behind: the range `[start, stop)` holds the pairs it held before, both
     arrays keep their length, and the points outside that range are untouched - below `start`
     because the scan never writes there, and from `stop` on because the scan never reaches there. -/
@@ -3254,7 +3345,8 @@ def SorPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
   r.1.val.length = labels0.val.length ∧
   r.2.val.length = src0.val.length ∧
   (∀ p, p < start.val → pairAt r.1.val r.2.val p = pairAt labels0.val src0.val p) ∧
-  (∀ p, stop.val ≤ p → pairAt r.1.val r.2.val p = pairAt labels0.val src0.val p)
+  (∀ p, stop.val ≤ p → pairAt r.1.val r.2.val p = pairAt labels0.val src0.val p) ∧
+  Zp r.1.val start.val stop.val
 
 theorem sort_incoming_loop_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
@@ -3280,8 +3372,9 @@ theorem sort_incoming_loop_spec
         st.1 st.2.1 st.2.2)
       (x := (iter, labels0, src0))
     · intro st hinv
-      unfold SorInv at hinv
-      rcases hinv with ⟨hit, hsameL, hsameS, hend, hbound, hlen0⟩ | ⟨hstart0, hnext0, hend,
+      rcases hinv with ⟨hinvD, hZ⟩
+      unfold SorInvD at hinvD
+      rcases hinvD with ⟨hit, hsameL, hsameS, hend, hbound, hlen0⟩ | ⟨hstart0, hnext0, hend,
         hbound, hlen0, hwin, habove, hlenL, hlenS, hbelow0⟩
       · by_cases hdone : st.1.end.val ≤ st.1.start.val
         · obtain ⟨o, iter1, hnext, hone, hident⟩ := next_range_none st.1 hdone
@@ -3297,9 +3390,11 @@ theorem sort_incoming_loop_spec
             (∀ p, p < start.val → pairAt st.2.1.val st.2.2.val p
               = pairAt labels0.val src0.val p) ∧
             (∀ p, iter.end.val ≤ p → pairAt st.2.1.val st.2.2.val p
-              = pairAt labels0.val src0.val p)
+              = pairAt labels0.val src0.val p) ∧ Zp st.2.1.val start.val iter.end.val
+          have hz : Zp st.2.1.val start.val iter.end.val := Zp_mono hZ (by omega)
           rw [hsameL, hsameS]
-          exact ⟨fun _ => Iff.rfl, rfl, rfl, fun _ _ => rfl, fun _ _ => rfl⟩
+          exact ⟨fun _ => Iff.rfl, rfl, rfl, fun _ _ => rfl, fun _ _ => rfl, by
+            rw [← hsameL]; exact hz⟩
         · have hlt : st.1.start.val < st.1.end.val := by omega
           obtain ⟨o, iter1, hnext, hsome, hstart1, hend1⟩ := next_range_some st.1 hlt
           have hstart0 : start.val ≤ st.1.start.val := by omega
@@ -3315,10 +3410,10 @@ theorem sort_incoming_loop_spec
           refine Std.WP.exists_imp_spec ⟨cont (iter1, labels1, src1), hbody, ?_⟩
           change SorInv labels0 src0 start iter.end (iter1, labels1, src1) ∧
             (iter1.end.val - iter1.start.val) < (st.1.end.val - st.1.start.val)
-          rcases hins with ⟨hwin', htail, hlenL', hlenS', hbelow⟩
+          rcases hins with ⟨hwin', htail, hlenL', hlenS', hbelow, hzins⟩
           have hlt' : (iter1.end.val - iter1.start.val) < (st.1.end.val - st.1.start.val) := by
             omega
-          have hinv' : SorInv labels0 src0 start iter.end (iter1, labels1, src1) := by
+          have hinv' : SorInvD labels0 src0 start iter.end (iter1, labels1, src1) := by
             show (iter1.start.val = start.val + 1 ∧
               labels1.val = labels0.val ∧
               src1.val = src0.val ∧
@@ -3354,7 +3449,9 @@ theorem sort_incoming_loop_spec
             · exact hlenS'.trans (congrArg _ hsameS)
             · intro p hp
               exact (hbelow p hp).trans (by rw [hsameL, hsameS])
-          exact ⟨hinv', hlt'⟩
+          exact ⟨⟨hinv', by
+            show Zp labels1.val start.val iter1.start.val
+            rw [hstart1]; exact hzins hZ⟩, hlt'⟩
       · by_cases hdone : st.1.end.val ≤ st.1.start.val
         · obtain ⟨o, iter1, hnext, hone, hident⟩ := next_range_none st.1 hdone
           have hbody :
@@ -3369,10 +3466,10 @@ theorem sort_incoming_loop_spec
             (∀ p, p < start.val → pairAt st.2.1.val st.2.2.val p
               = pairAt labels0.val src0.val p) ∧
             (∀ p, iter.end.val ≤ p → pairAt st.2.1.val st.2.2.val p
-              = pairAt labels0.val src0.val p)
+              = pairAt labels0.val src0.val p) ∧ Zp st.2.1.val start.val iter.end.val
           have heq : st.1.start.val = iter.end.val := by omega
-          rw [heq] at hwin habove
-          exact ⟨hwin, hlenL, hlenS, hbelow0, habove⟩
+          rw [heq] at hwin habove hZ
+          exact ⟨hwin, hlenL, hlenS, hbelow0, habove, hZ⟩
         · have hlt : st.1.start.val < st.1.end.val := by omega
           obtain ⟨o, iter1, hnext, hsome, hstart1, hend1⟩ := next_range_some st.1 hlt
           have hend1v : iter1.end.val = st.1.end.val := congrArg _ hend1
@@ -3387,7 +3484,7 @@ theorem sort_incoming_loop_spec
           refine Std.WP.exists_imp_spec ⟨cont (iter1, labels1, src1), hbody, ?_⟩
           change SorInv labels0 src0 start iter.end (iter1, labels1, src1) ∧
             (iter1.end.val - iter1.start.val) < (st.1.end.val - st.1.start.val)
-          rcases hins with ⟨hwin', htail, hlenL', hlenS', hbelow⟩
+          rcases hins with ⟨hwin', htail, hlenL', hlenS', hbelow, hzins⟩
           have hlt' : (iter1.end.val - iter1.start.val) < (st.1.end.val - st.1.start.val) := by
             omega
           have hwin'' : sameWindow labels1.val src1.val labels0.val src0.val start.val
@@ -3396,7 +3493,7 @@ theorem sort_incoming_loop_spec
               start.val (st.1.start.val + 1) hwin'
               (sameWindow_succ st.2.1.val st.2.2.val labels0.val src0.val start.val
                 st.1.start.val (by omega) hwin (habove st.1.start.val (by omega)))
-          have hinv' : SorInv labels0 src0 start iter.end (iter1, labels1, src1) := by
+          have hinv' : SorInvD labels0 src0 start iter.end (iter1, labels1, src1) := by
             show (iter1.start.val = start.val + 1 ∧
               labels1.val = labels0.val ∧
               src1.val = src0.val ∧
@@ -3427,7 +3524,9 @@ theorem sort_incoming_loop_spec
             · exact hlenS'.trans hlenS
             · intro p hp
               exact (hbelow p hp).trans (hbelow0 p hp)
-          exact ⟨hinv', hlt'⟩
+          exact ⟨⟨hinv', by
+            show Zp labels1.val start.val iter1.start.val
+            rw [hstart1]; exact hzins hZ⟩, hlt'⟩
     · exact hinv
   rcases Std.WP.spec_imp_exists hspec with ⟨r, hloop', hpost⟩
   exact ⟨r.1, r.2, hloop', hpost⟩
@@ -3459,12 +3558,15 @@ theorem sort_incoming_spec
     hadd_eq.trans (congrArg ok hi)
   have hinv0 : SorInv labels0 src0 start stop
       ({ start := uTotal (start.val + 1), «end» := stop }, labels0, src0) := by
-    refine Or.inl ⟨?_, ?_, ?_, ?_, hbound, hlen0⟩
+    refine ⟨Or.inl ⟨?_, ?_, ?_, ?_, hbound, hlen0⟩, ?_⟩
     · show (uTotal (start.val + 1)).val = start.val + 1
       exact uTotal_val_of_lt (lt_two_pow_of_le_max hnoovf)
     · rfl
     · rfl
     · rfl
+    · show Zp labels0.val start.val (uTotal (start.val + 1)).val
+      rw [uTotal_val_of_lt (lt_two_pow_of_le_max hnoovf)]
+      exact Zp_single _ _
   obtain ⟨labels1, src1, hloop, hpost⟩ :=
     sort_incoming_loop_spec labels0 src0
       { start := uTotal (start.val + 1), «end» := stop } start hinv0
@@ -3575,7 +3677,8 @@ def SaInv (c : alloc.vec.Vec Sz) (n : Sz)
     (∀ j, j < n.val →
       (j < st.1.start.val →
         sameWindow st.2.1.val st.2.2.val labels0.val src0.val
-          (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val) ∧
+          (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val ∧
+        Zp st.2.1.val (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val) ∧
       (st.1.start.val ≤ j →
         ∀ p, (c.val.getD j 0#usize).val ≤ p → p < (c.val.getD (j + 1) 0#usize).val →
           pairAt st.2.1.val st.2.2.val p = pairAt labels0.val src0.val p))
@@ -3589,7 +3692,8 @@ def SaPost (c : alloc.vec.Vec Sz) (n : Sz)
   r.1.val.length = labels0.val.length ∧
   r.2.val.length = src0.val.length ∧
   (∀ j, j < n.val → sameWindow r.1.val r.2.val labels0.val src0.val
-    (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val)
+    (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val ∧
+    Zp r.1.val (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val)
 
 /-- The exhausted walk returns the arrays as they are. -/
 private theorem sort_all_incoming_done (c : alloc.vec.Vec Sz) (n : Sz)
@@ -3693,15 +3797,21 @@ private theorem sort_all_incoming_step (c : alloc.vec.Vec Sz) (n : Sz)
       -- `SorPost` leaves every point alone, so the window still holds the pairs of `labels0`
       refine ⟨?_, ?_⟩
       · intro hjl
-        refine sameWindow_trans labels1.val src1.val st.2.1.val st.2.2.val labels0.val src0.val
-          (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val ?_ ((hwin j hj).1 hltj)
-        refine sameWindow_congr ?_
-        intro p hp1 hp2
         have hm : (c.val.getD (j + 1) 0#usize).val
             ≤ (c.val.getD st.1.start.val 0#usize).val :=
           getD_mono hmono (by omega) (by omega)
-        exact hpost.2.2.2.1 p
-          (by simpa [one_val] using lt_of_lt_of_le (by simpa [one_val] using hp2) hm)
+        refine ⟨?_, ?_⟩
+        · refine sameWindow_trans labels1.val src1.val st.2.1.val st.2.2.val labels0.val src0.val
+            (c.val.getD j 0#usize).val (c.val.getD (j + 1) 0#usize).val ?_ ((hwin j hj).1 hltj).1
+          refine sameWindow_congr ?_
+          intro p hp1 hp2
+          exact hpost.2.2.2.1 p
+            (by simpa [one_val] using lt_of_lt_of_le (by simpa [one_val] using hp2) hm)
+        · refine Zp_congr (l1 := st.2.1.val) ?_ ((hwin j hj).1 hltj).2
+          intro p hp1 hp2
+          have := hpost.2.2.2.1 p
+            (by simpa [one_val] using lt_of_lt_of_le (by simpa [one_val] using hp2) hm)
+          exact (congrArg Prod.fst this).symm
       · intro hjl
         have hjl' : iter1.start.val ≤ j := hjl
         have hfalse : False := by omega
@@ -3711,13 +3821,14 @@ private theorem sort_all_incoming_step (c : alloc.vec.Vec Sz) (n : Sz)
         subst hjeq
         refine ⟨?_, ?_⟩
         · intro hjl
-          refine sameWindow_trans labels1.val src1.val st.2.1.val st.2.2.val labels0.val src0.val
+          refine ⟨sameWindow_trans labels1.val src1.val st.2.1.val st.2.2.val labels0.val src0.val
             (c.val.getD st.1.start.val 0#usize).val
             (c.val.getD (st.1.start.val + 1) 0#usize).val hpost.1
             (sameWindow_of_pairAt_eq st.2.1.val st.2.2.val labels0.val src0.val
               (c.val.getD st.1.start.val 0#usize).val
               (c.val.getD (st.1.start.val + 1) 0#usize).val
-              (fun p hp1 hp2 => (hwin st.1.start.val hj).2 (by omega) p hp1 hp2))
+              (fun p hp1 hp2 => (hwin st.1.start.val hj).2 (by omega) p hp1 hp2)),
+            hpost.2.2.2.2.2⟩
         · intro hjl
           have hjl' : iter1.start.val ≤ st.1.start.val := hjl
           have hfalse : False := by omega
@@ -3733,7 +3844,7 @@ private theorem sort_all_incoming_step (c : alloc.vec.Vec Sz) (n : Sz)
           have hm : (c.val.getD (st.1.start.val + 1) 0#usize).val
               ≤ (c.val.getD j 0#usize).val :=
             getD_mono hmono (by omega) (by omega)
-          exact (hpost.2.2.2.2 p (le_trans hm hp1)).trans
+          exact (hpost.2.2.2.2.1 p (le_trans hm hp1)).trans
             ((hwin j hj).2 (by omega) p hp1 hp2)
 
 /-- `sort_all_incoming` over the states `0, …, n-1`. -/

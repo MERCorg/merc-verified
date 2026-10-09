@@ -52,7 +52,9 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
         ((blkAt p b.index.val).«end».val - (blkAt p b.index.val).marked_split.val)
         ({ index := 0#usize, marker := () } : TagIndex Std.Usize BlockTag) ∧
       sb'.old_elements.val.Perm (regionElems p (blkAt p b.index.val).marked_split.val
-        ((blkAt p b.index.val).«end».val - (blkAt p b.index.val).marked_split.val)) := by
+        ((blkAt p b.index.val).«end».val - (blkAt p b.index.val).marked_split.val)) ∧
+      List.Pairwise (fun a c : TagIndex Std.Usize StateTag => a.index.val < c.index.val)
+        sb'.old_elements.val := by
   set bk := blkAt p b.index.val with hbk
   have hbkr : bk.begin.val < bk.«end».val ∧ bk.«end».val ≤ n ∧ bk.begin.val ≤ bk.marked_split.val ∧
       bk.marked_split.val ≤ bk.«end».val := hp.blk b.index.val hb
@@ -84,10 +86,10 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
   obtain ⟨v4, hv4, hv4v⟩ := alloc.vec.Vec.extend_blockIter_spec v2
     { elements := alloc.vec.Vec.deref p.elements, index := bk.marked_split, «end» := bk.«end» }
     (by simp only []; omega) (by simp only []; rw [hv20]; simp; omega)
-  obtain ⟨s2, hs2, hs2p, -⟩ := core.slice.Slice.sort_unstable_spec
+  obtain ⟨s2, hs2, hs2p, hs2s⟩ := core.slice.Slice.sort_unstable_spec
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd StateTag core.cmp.OrdUsize)
     (tagIndex_ord_total StateTag) (alloc.vec.Vec.deref_mut v4).1
-  refine ⟨{ index_to_block := v3, block_sizes := v1, old_elements := (alloc.vec.Vec.deref_mut v4).2 s2 }, ?_, hv10, ?_, ?_⟩
+  refine ⟨{ index_to_block := v3, block_sizes := v1, old_elements := (alloc.vec.Vec.deref_mut v4).2 s2 }, ?_, hv10, ?_, ?_, ?_⟩
   · unfold verified.merc_reduction.block_partition.BlockPartition.marked_elements_sorted
     simp [vec_tagged_index_val p.blocks b hb, hbkread, hv, hv1, hv2, hlm,
       verified.merc_utilities.tagged_index.TagIndex.new, hv3,
@@ -110,5 +112,28 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
       rw [hv4v, hv20, region_eq_window hp _ _ (by omega)]
       simp [alloc.vec.Vec.deref, Slice.from_val]
     rw [hwin]
+  · show List.Pairwise _ s2.val
+    have hperm : s2.val.Perm (regionElems p bk.marked_split.val (bk.«end».val - bk.marked_split.val)) := by
+      refine hs2p.trans ?_
+      have hwin : v4.deref_mut.1.val = regionElems p bk.marked_split.val (bk.«end».val - bk.marked_split.val) := by
+        show v4.val = _
+        rw [hv4v, hv20, region_eq_window hp _ _ (by omega)]
+        simp [alloc.vec.Vec.deref, Slice.from_val]
+      rw [hwin]
+    have hnd : s2.val.Nodup :=
+      hperm.nodup_iff.2 (regionElems_nodup hp _ _ (by omega))
+    have hle : List.Pairwise (fun a c : TagIndex Std.Usize StateTag => a.index.val ≤ c.index.val) s2.val := by
+      refine hs2s.imp ?_
+      intro a c h
+      have hc : (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd StateTag core.cmp.OrdUsize).cmp a c
+          = ok (compare a.index.val c.index.val) := rfl
+      rw [hc] at h
+      by_contra hlt
+      exact h (by simp only [ok.injEq, compare_gt_iff_gt]; omega)
+    refine (hle.and hnd).imp ?_
+    rintro a c ⟨h1, h2⟩
+    rcases Nat.eq_or_lt_of_le h1 with h | h
+    · exact absurd (merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq h)) h2
+    · exact h
 
 end MercVerified.Refinement.Proofs

@@ -1,5 +1,6 @@
 import MercVerified.Refinement.Refinement
 import MercVerified.Refinement.Proofs.Refinement_Proofs
+import MercVerified.Refinement.Proofs.BranchingTop_Proofs
 
 open Aeneas Aeneas.Std Result
 open verified.merc_utilities.tagged_index (TagIndex)
@@ -31,3 +32,11 @@ example : ∀ {L Label : Type} (LTSInst : LTS L Label)
             Cslib.LTS.Bisimilarity (MercVerified.Lts.toLTS LTSInst sys)
               (MercVerified.Lts.toLTS LTSInst sys) s s') :=
   MercVerified.Refinement.Proofs.strong_bisim_sigref_same_block_iff_bisimilar
+
+-- Contract pin: fails to compile if `branching_bisim_sigref_impl_correct`'s signature drifts.
+example : ∀ {L Label : Type} (LTSInst : LTS L Label)
+    (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
+    (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
+    (hasm : MercVerified.Refinement.BranchingLtsAssumptions LTSInst sys) (timing : Timing),
+    MercVerified.Refinement.BranchingBisimSigrefImplCorrectSpec LTSInst sys hwf hfit hasm timing :=
+  MercVerified.Refinement.Proofs.branching_bisim_sigref_impl_correct

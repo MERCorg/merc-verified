@@ -31,6 +31,48 @@ axiom merc_reduction.block_partition.Block.assert_consistent_ok
   (h : merc_reduction.block_partition.Block.WellFormed b) :
   ∃ u : Unit, merc_reduction.block_partition.Block.assert_consistent b = ok u
 
+/-! ### A functional model of the opaque `ByteCompressedVec`
+
+`ByteCompressedVec<T>` (`compressed_vec.rs`) is a vector of `T`s stored in as few bytes per entry as
+suffices; its translation is opaque. `toList` is the sequence of entries it holds; `new`, `push`,
+`len` and `index` are specified against it. These specs assume no allocation failure and, for
+`index`, an in-bounds position (an out-of-bounds `index` panics). -/
+
+/-- The entries of a `ByteCompressedVec`, in order. -/
+axiom merc_collections.compressed_vec.ByteCompressedVec.toList {T : Type} :
+  merc_collections.compressed_vec.ByteCompressedVec T → List T
+
+/-- `ByteCompressedVec::new` (`compressed_vec.rs:37`) is an empty vector. -/
+axiom merc_collections.compressed_vec.ByteCompressedVec.new_spec {T : Type}
+  (I : merc_collections.compressed_vec.CompressedEntry T) :
+  ∃ v, merc_collections.compressed_vec.ByteCompressedVec.new I = ok v ∧
+    merc_collections.compressed_vec.ByteCompressedVec.toList v = []
+
+/-- `ByteCompressedVec::push` (`compressed_vec.rs:72`) appends an entry. -/
+axiom merc_collections.compressed_vec.ByteCompressedVec.push_spec {T : Type}
+  (I : merc_collections.compressed_vec.CompressedEntry T)
+  (v : merc_collections.compressed_vec.ByteCompressedVec T) (x : T)
+  (h : (merc_collections.compressed_vec.ByteCompressedVec.toList v).length < Std.Usize.max) :
+  ∃ v', merc_collections.compressed_vec.ByteCompressedVec.push I v x = ok v' ∧
+    merc_collections.compressed_vec.ByteCompressedVec.toList v' =
+      merc_collections.compressed_vec.ByteCompressedVec.toList v ++ [x]
+
+/-- `ByteCompressedVec::len` (`compressed_vec.rs:118`) is the number of entries. -/
+axiom merc_collections.compressed_vec.ByteCompressedVec.len_spec {T : Type}
+  (I : merc_collections.compressed_vec.CompressedEntry T)
+  (v : merc_collections.compressed_vec.ByteCompressedVec T)
+  (h : (merc_collections.compressed_vec.ByteCompressedVec.toList v).length ≤ Std.Usize.max) :
+  ∃ l, merc_collections.compressed_vec.ByteCompressedVec.len I v = ok l ∧
+    l.val = (merc_collections.compressed_vec.ByteCompressedVec.toList v).length
+
+/-- `ByteCompressedVec::index` (`compressed_vec.rs:98`) reads an entry. -/
+axiom merc_collections.compressed_vec.ByteCompressedVec.index_spec {T : Type}
+  (I : merc_collections.compressed_vec.CompressedEntry T)
+  (v : merc_collections.compressed_vec.ByteCompressedVec T) (i : Std.Usize)
+  (h : i.val < (merc_collections.compressed_vec.ByteCompressedVec.toList v).length) :
+  merc_collections.compressed_vec.ByteCompressedVec.index I v i =
+    ok ((merc_collections.compressed_vec.ByteCompressedVec.toList v)[i.val])
+
 namespace MercVerified.Refinement
 
 open verified.merc_utilities.tagged_index (TagIndex)

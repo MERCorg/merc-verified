@@ -97,7 +97,7 @@ theorem dirty_transition_step {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {
   obtain ⟨hp, hnd, hw⟩ := h
   obtain ⟨hK, ho1, ho2⟩ := hp.own _ hf
   set o := e2bAt p f.index.val with ho
-  obtain ⟨p', hmark, hp', he2b', hlen', hother, hbeg, hend, hle, hlt, hmk⟩ := mark_element_spec hp f hf
+  obtain ⟨p', hmark, hp', he2b', hlen', hother, hbeg, hend, hle, hlt, hmk, -⟩ := mark_element_spec hp f hf
   generalize hoB : p.element_to_block.val.getD f.index.val zBT = oB
   have hoBv : oB.index.val = o := by rw [← hoB]; exact e2bAt_eq hp _ hf
   have hoBlt : oB.index.val < p.blocks.val.length := by rw [hoBv]; exact hK
