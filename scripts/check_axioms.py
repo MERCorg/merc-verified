@@ -124,6 +124,27 @@ THEOREMS = [
     "ParityGame.Game.twoSidedCorrect",
     "ParityGame.Game.removalShrinks",
     "ParityGame.Game.removalBound",
+    "ParityGame.TwoSidedCost.navigationCost",
+    "ParityGame.TwoSidedCost.regionInfoCost",
+    "ParityGame.TwoSidedCost.evaluateCost",
+    "ParityGame.TwoSidedCost.accelerateCost",
+    "ParityGame.TwoSidedCost.liftingAmortised",
+    "ParityGame.TwoSidedCost.certifiedCost",
+    "ParityGame.TwoSidedCost.attractorCost",
+    "ParityGame.TwoSidedCost.solveTimeBound",
+    "ParityGame.TwoSidedCost.solvePolyOfSteps",
+    "ParityGame.TwoSidedCost.restartProgress",
+    "ParityGame.TwoSidedCost.outerFuelSuffices",
+    "ParityGame.Game.chainTreeCompleteBy",
+    "ParityGame.TwoSidedCost.levelsCorrect",
+    "ParityGame.TwoSidedCost.childrenComplete",
+    "ParityGame.TwoSidedCost.chainBoundDominates",
+    "ParityGame.TwoSidedCost.progSound",
+    "ParityGame.TwoSidedCost.progLeast",
+    "ParityGame.TwoSidedCost.attractorComputesAttr",
+    "ParityGame.TwoSidedCost.liftingCorrect",
+    "ParityGame.TwoSidedCost.solveCorrect",
+    "ParityGame.TwoSidedCost.solveTerminates",
 ]
 
 # Theorems allowed to depend on `sorryAx` without failing the check (open,
@@ -172,6 +193,8 @@ IMPORTS = [
     "ParityGame.Proofs.TwoSidedLifting_Proofs",
     "ParityGame.Proofs.Lifting_Proofs",
     "ParityGame.Proofs.TwoSidedAlgorithm_Proofs",
+    "ParityGame.Proofs.TwoSidedCost_Proofs",
+    "ParityGame.Proofs.TwoSidedCostCorrect_Proofs",
 ]
 
 KERNEL_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}
