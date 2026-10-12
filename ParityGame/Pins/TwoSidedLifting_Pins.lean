@@ -62,3 +62,15 @@ example {V : Type*} [Finite V] (G : Game V) (X : Set V) (C : Codomain (ℕ → �
       (∀ v ∈ W, ∀ w, G.Step X .zero σ v w → w ∈ W) →
       ∃ μ : V → ℕ → ℕ, G.IsProgressMeasure X C W μ σ ∧ ∀ v ∈ W, G.IsChainLeaf X (μ v) :=
   Game.chainTreeComplete G X C
+
+-- Contract pin: fails to compile if `Game.chainTreeCompleteBy`'s signature drifts: completeness
+-- of the chain tree for every numbering `nb` of sibling components that lists every component
+-- of every region inside `X`.
+example {V : Type*} [Finite V] (G : Game V) (X : Set V) (C : Codomain (ℕ → ℕ))
+    (nb : Set V → ℕ → List (Set V)) :
+    (∀ R ⊆ X, ∀ q, ∀ K ∈ G.lowComps R q, K ∈ nb R q) →
+    (∀ p a b, C.le p a b ↔ LexLE (G.chainDepth X p) a b) →
+    ∀ (W : Set V) (σ : V → V), (∀ v ∈ W, G.WinsFrom X .zero σ v) →
+      (∀ v ∈ W, ∀ w, G.Step X .zero σ v w → w ∈ W) →
+      ∃ μ : V → ℕ → ℕ, G.IsProgressMeasure X C W μ σ ∧ ∀ v ∈ W, G.IsChainLeafBy X nb (μ v) :=
+  Game.chainTreeCompleteBy G X C nb

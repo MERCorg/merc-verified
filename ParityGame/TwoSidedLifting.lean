@@ -51,6 +51,9 @@ dual game (priorities `+ 1`, owners swapped), which is not modelled here.
 * Leaves (`Game.IsChainLeaf`) are `ℕ → ℕ` tuples, interleaved `a (2l) = k_l`, `a (2l+1) = c_l`,
   zero from coordinate `2h` on; `k₀ = 0` (the root region `X`), each `k_{l+1}` a valid child index
   of the region selected so far, each `c_l ≤` the chain bound of that region at `q_l`.
+* `Game.IsChainLeafBy` / `Game.ChainTreeCompleteBy` (end of the file) restate leaves and
+  completeness for an arbitrary list numbering of sibling components (as used by an
+  implementation, e.g. least vertex first); the definitions above are unchanged.
 -/
 
 variable {V M : Type*}
@@ -189,6 +192,46 @@ def Game.ChainTreeComplete [Finite V] (G : Game V) (X : Set V) (C : Codomain (�
   ∀ (W : Set V) (σ : Strategy V), (∀ v ∈ W, G.WinsFrom X .zero σ v) →
     (∀ v ∈ W, ∀ w, G.Step X .zero σ v w → w ∈ W) →
     ∃ μ : V → ℕ → ℕ, G.IsProgressMeasure X C W μ σ ∧ ∀ v ∈ W, G.IsChainLeaf X (μ v)
+
+/-! ### The chain tree for an arbitrary numbering of sibling components
+
+The definitions above number sibling components by an arbitrary classical bijection. An
+implementation numbers them in its own way (the Rust code and `ParityGame.TwoSidedCost` by least
+vertex). `nb R q` lists the child regions of `R` at odd level `q` in the implementation's order
+(entries may repeat, and extra entries are allowed); `Game.CompNumbering` requires every
+component of every region inside `X` to occur in the list. Leaves and completeness are then
+stated for the numbering `nb`; `Game.IsChainLeaf` is the special case of the classical
+numbering, but is kept unchanged. -/
+
+/-- The region at level `l` selected by the component indices `a 2, a 4, …, a (2l)` of a tuple,
+    numbering the children of a region `R` at level `q` by the list `nb R q`. -/
+noncomputable def Game.leafRegionBy [Finite V] (G : Game V) (X : Set V)
+    (nb : Set V → ℕ → List (Set V)) (a : ℕ → ℕ) : ℕ → Set V
+  | 0 => X
+  | l + 1 => (nb (G.leafRegionBy X nb a l) (G.level X l)).getD (a (2 * (l + 1))) ∅
+
+/-- `a` is a leaf of the chain tree of `X` for the numbering `nb` (cf. `Game.IsChainLeaf`). -/
+def Game.IsChainLeafBy [Finite V] (G : Game V) (X : Set V) (nb : Set V → ℕ → List (Set V))
+    (a : ℕ → ℕ) : Prop :=
+  a 0 = 0 ∧
+  (∀ l, l + 1 < G.height X →
+    a (2 * (l + 1)) < max 1 (nb (G.leafRegionBy X nb a l) (G.level X l)).length) ∧
+  (∀ l < G.height X, a (2 * l + 1) ≤ G.chainBound (G.leafRegionBy X nb a l) (G.level X l)) ∧
+  ∀ i, 2 * G.height X ≤ i → a i = 0
+
+/-- `nb` lists every weakly connected component of `R ∩ {prio < q}`, for every region `R ⊆ X`. -/
+def Game.CompNumbering (G : Game V) (X : Set V) (nb : Set V → ℕ → List (Set V)) : Prop :=
+  ∀ R ⊆ X, ∀ q, ∀ K ∈ G.lowComps R q, K ∈ nb R q
+
+/-- Contract (completeness of the chain tree, any numbering): as `Game.ChainTreeComplete`, with
+    the leaves taken for an arbitrary numbering `nb` of sibling components listing every
+    component. -/
+def Game.ChainTreeCompleteBy [Finite V] (G : Game V) (X : Set V) (C : Codomain (ℕ → ℕ))
+    (nb : Set V → ℕ → List (Set V)) : Prop :=
+  G.CompNumbering X nb → (∀ p a b, C.le p a b ↔ LexLE (G.chainDepth X p) a b) →
+  ∀ (W : Set V) (σ : Strategy V), (∀ v ∈ W, G.WinsFrom X .zero σ v) →
+    (∀ v ∈ W, ∀ w, G.Step X .zero σ v w → w ∈ W) →
+    ∃ μ : V → ℕ → ℕ, G.IsProgressMeasure X C W μ σ ∧ ∀ v ∈ W, G.IsChainLeafBy X nb (μ v)
 
 end ParityGame
 

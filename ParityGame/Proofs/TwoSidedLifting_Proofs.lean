@@ -665,6 +665,169 @@ theorem Game.chainTreeComplete_truncLex [Finite V] (G : Game V) (X : Set V) :
     G.ChainTreeComplete X (truncLexCodomain (G.chainDepth X) (G.chainDepth_antitone X)) :=
   G.chainTreeComplete X _
 
+/-! ### Completeness for an arbitrary numbering of sibling components
+
+The same measure as `Game.chainMeasure`, with the component index taken as a position of the
+node's region in the list `nb R q` (which contains it by `Game.CompNumbering`). -/
+
+theorem Game.eqvGen_lowEdge (G : Game V) {R : Set V} {q : ℕ} {x y : V}
+    (h : Relation.EqvGen (G.LowEdge R q) x y) : x = y ∨ (x ∈ R ∧ y ∈ R) := by
+  induction h with
+  | rel a b h => exact Or.inr ⟨h.1, h.2.1⟩
+  | refl => exact Or.inl rfl
+  | symm a b _ ih =>
+    rcases ih with h | h
+    · exact Or.inl h.symm
+    · exact Or.inr ⟨h.2, h.1⟩
+  | trans a b c _ _ ih1 ih2 =>
+    rcases ih1 with rfl | h1
+    · exact ih2
+    · rcases ih2 with rfl | h2
+      · exact Or.inr h1
+      · exact Or.inr ⟨h1.1, h2.2⟩
+
+theorem Game.region_subset [Finite V] (G : Game V) (X : Set V) {v : V} (hv : v ∈ X) :
+    ∀ l, G.region X l v ⊆ X
+  | 0 => le_rfl
+  | l + 1 => by
+    intro w hw
+    rcases G.eqvGen_lowEdge (show Relation.EqvGen _ v w from hw) with rfl | h
+    · exact hv
+    · exact G.region_subset X hv l h.2
+
+open scoped Classical in
+/-- A position of `K` in the list `L` (`0` if `K` does not occur). -/
+noncomputable def listIdx {α : Type*} (L : List α) (K : α) : ℕ :=
+  if h : ∃ i, ∃ hi : i < L.length, L[i] = K then h.choose else 0
+
+theorem listIdx_spec {α : Type*} {L : List α} {K : α} (h : K ∈ L) (d : α) :
+    listIdx L K < L.length ∧ L.getD (listIdx L K) d = K := by
+  classical
+  have hex : ∃ i, ∃ hi : i < L.length, L[i] = K := List.mem_iff_getElem.mp h
+  unfold listIdx
+  rw [dif_pos hex]
+  obtain ⟨hi, hK⟩ := hex.choose_spec
+  exact ⟨hi, by rw [List.getD_eq_getElem _ _ hi, hK]⟩
+
+open scoped Classical in
+/-- The component index of `v` at level `l` for the numbering `nb` (`0` where `v` does not
+    belong). -/
+noncomputable def Game.kIdxBy [Finite V] (G : Game V) (X : Set V)
+    (nb : Set V → ℕ → List (Set V)) : ℕ → V → ℕ
+  | 0, _ => 0
+  | l + 1, v => if G.Belongs X (l + 1) v then
+      listIdx (nb (G.region X l v) (G.level X l)) (G.region X (l + 1) v) else 0
+
+/-- The chain-tree measure of a strategy for the numbering `nb`. -/
+noncomputable def Game.chainMeasureBy [Finite V] (G : Game V) (X : Set V)
+    (nb : Set V → ℕ → List (Set V)) (σ : Strategy V) (v : V) (i : ℕ) : ℕ :=
+  if i < 2 * G.height X then
+    (if i % 2 = 0 then G.kIdxBy X nb (i / 2) v else G.cnt X σ (G.level X (i / 2)) v)
+  else 0
+
+theorem Game.chainMeasureBy_even [Finite V] (G : Game V) (X : Set V)
+    (nb : Set V → ℕ → List (Set V)) (σ : Strategy V) (v : V)
+    {l : ℕ} (hl : l < G.height X) : G.chainMeasureBy X nb σ v (2 * l) = G.kIdxBy X nb l v := by
+  unfold Game.chainMeasureBy
+  rw [if_pos (by omega), if_pos (by omega), show 2 * l / 2 = l by omega]
+
+theorem Game.chainMeasureBy_odd [Finite V] (G : Game V) (X : Set V)
+    (nb : Set V → ℕ → List (Set V)) (σ : Strategy V) (v : V)
+    {l : ℕ} (hl : l < G.height X) :
+    G.chainMeasureBy X nb σ v (2 * l + 1) = G.cnt X σ (G.level X l) v := by
+  unfold Game.chainMeasureBy
+  rw [if_pos (by omega), if_neg (by omega), show (2 * l + 1) / 2 = l by omega]
+
+theorem Game.leafRegionBy_chainMeasureBy [Finite V] (G : Game V) (X : Set V)
+    {nb : Set V → ℕ → List (Set V)} (hnb : G.CompNumbering X nb) (σ : Strategy V) {v : V}
+    (hv : v ∈ X) : ∀ l, l < G.height X → G.Belongs X l v →
+      G.leafRegionBy X nb (G.chainMeasureBy X nb σ v) l = G.region X l v
+  | 0, _, _ => rfl
+  | l + 1, hl, hb => by
+    show (nb (G.leafRegionBy X nb (G.chainMeasureBy X nb σ v) l) (G.level X l)).getD
+      (G.chainMeasureBy X nb σ v (2 * (l + 1))) ∅ = G.region X (l + 1) v
+    rw [G.leafRegionBy_chainMeasureBy X hnb σ hv l (by omega) (hb.mono (by omega)),
+      G.chainMeasureBy_even X nb σ v hl, Game.kIdxBy, if_pos hb]
+    exact (listIdx_spec (hnb _ (G.region_subset X hv l) _ _
+      (G.region_mem_lowComps X hv hb)) ∅).2
+
+/-- The measure of a won node is a chain-tree leaf for the numbering `nb`. -/
+theorem Game.chainMeasureBy_isChainLeafBy [Finite V] (G : Game V) (X : Set V)
+    {nb : Set V → ℕ → List (Set V)} (hnb : G.CompNumbering X nb) {σ : Strategy V}
+    {v : V} (hwin : G.WinsFrom X .zero σ v) :
+    G.IsChainLeafBy X nb (G.chainMeasureBy X nb σ v) := by
+  have hv := G.winsFrom_mem hwin
+  refine ⟨?_, fun l hl => ?_, fun l hl => ?_, fun i hi => ?_⟩
+  · unfold Game.chainMeasureBy
+    split_ifs <;> simp_all [Game.kIdxBy]
+  · rw [G.chainMeasureBy_even X nb σ v hl, Game.kIdxBy]
+    split_ifs with hb
+    · rw [G.leafRegionBy_chainMeasureBy X hnb σ hv l (by omega) (hb.mono (by omega))]
+      exact lt_max_of_lt_right (listIdx_spec (hnb _ (G.region_subset X hv l) _ _
+        (G.region_mem_lowComps X hv hb)) ∅).1
+    · exact lt_max_of_lt_left zero_lt_one
+  · rw [G.chainMeasureBy_odd X nb σ v hl]
+    by_cases hp : G.prio v ≤ G.level X l
+    · rw [G.leafRegionBy_chainMeasureBy X hnb σ hv l hl (G.belongs_of_le X hl hp)]
+      exact G.cnt_le_chainBound X hwin hl
+    · rw [G.cnt_eq_zero X σ (by omega)]
+      exact Nat.zero_le _
+  · unfold Game.chainMeasureBy
+    rw [if_neg (by omega)]
+
+theorem Game.chainMeasureBy_prog [Finite V] (G : Game V) (X : Set V) (C : Codomain (ℕ → ℕ))
+    (nb : Set V → ℕ → List (Set V))
+    (hC : ∀ p a b, C.le p a b ↔ LexLE (G.chainDepth X p) a b) {σ : Strategy V} {v w : V}
+    (hwv : G.WinsFrom X .zero σ v) (hww : G.WinsFrom X .zero σ w) (hs : G.Step X .zero σ v w) :
+    G.Prog C (G.chainMeasureBy X nb σ) v w := by
+  obtain ⟨hvX, hwX, hedge, -⟩ := id hs
+  have hle : ∀ i < G.chainDepth X (G.prio v),
+      G.chainMeasureBy X nb σ w i ≤ G.chainMeasureBy X nb σ v i := by
+    intro i hi
+    unfold Game.chainDepth at hi
+    obtain ⟨l, rfl | rfl⟩ := Nat.even_or_odd' i
+    · obtain ⟨hlh, hpl⟩ := (G.lt_levelDepth_iff X).mp (show l < G.levelDepth X (G.prio v) by omega)
+      rw [G.chainMeasureBy_even X nb σ w hlh, G.chainMeasureBy_even X nb σ v hlh]
+      cases l with
+      | zero => simp [Game.kIdxBy]
+      | succ l =>
+        have hbv : G.Belongs X (l + 1) v := G.belongs_of_le X hlh hpl
+        by_cases hbw : G.Belongs X (l + 1) w
+        · rw [Game.kIdxBy, Game.kIdxBy, if_pos hbv, if_pos hbw,
+            G.region_eq X hvX hwX hedge (l + 1) hbv hbw,
+            G.region_eq X hvX hwX hedge l (hbv.mono (by omega)) (hbw.mono (by omega))]
+        · rw [Game.kIdxBy, if_neg hbw]
+          exact Nat.zero_le _
+    · obtain ⟨hlh, hpl⟩ := (G.lt_levelDepth_iff X).mp (show l < G.levelDepth X (G.prio v) by omega)
+      rw [G.chainMeasureBy_odd X nb σ w hlh, G.chainMeasureBy_odd X nb σ v hlh]
+      exact le_trans (Nat.le_add_right _ _) (G.cnt_step X hwv hww hs hlh hpl)
+  refine ⟨(hC _ _ _).mpr (LexLE.of_le hle), fun hodd => ?_⟩
+  rw [hC]
+  obtain ⟨m, hm, hqm⟩ := G.exists_level_eq X hvX hodd
+  have hdep : m < G.levelDepth X (G.prio v) := (G.lt_levelDepth_iff X).mpr ⟨hm, hqm.ge⟩
+  apply LexLE.not_of_lt hle (i := 2 * m + 1) (by unfold Game.chainDepth; omega)
+  rw [G.chainMeasureBy_odd X nb σ w hm, G.chainMeasureBy_odd X nb σ v hm]
+  have := G.cnt_step X hwv hww hs hm hqm.ge
+  rw [if_pos hqm.symm] at this
+  omega
+
+/-- Completeness of the chain tree for any numbering listing every component (headline). -/
+theorem Game.chainTreeCompleteBy [Finite V] (G : Game V) (X : Set V) (C : Codomain (ℕ → ℕ))
+    (nb : Set V → ℕ → List (Set V)) : G.ChainTreeCompleteBy X C nb := by
+  intro hnb hC W σ hwin hclosed
+  refine ⟨G.chainMeasureBy X nb σ, ⟨fun v hv => G.winsFrom_mem (hwin v hv), ?_, ?_⟩,
+    fun v hv => G.chainMeasureBy_isChainLeafBy X hnb (hwin v hv)⟩
+  · intro v hv ho
+    obtain ⟨u, hu⟩ := (hwin v hv).1 v Relation.ReflTransGen.refl
+    obtain rfl : u = σ v := hu.2.2.2 ho
+    have hu' := hclosed v hv _ hu
+    exact ⟨hu', hu.2.2.1, G.chainMeasureBy_prog X C nb hC (hwin v hv) (hwin _ hu') hu⟩
+  · intro v hv ho w hwX hedge
+    have hs : G.Step X .zero σ v w :=
+      ⟨G.winsFrom_mem (hwin v hv), hwX, hedge, fun h => by rw [ho] at h; cases h⟩
+    exact ⟨hclosed v hv w hs, G.chainMeasureBy_prog X C nb hC (hwin v hv) (hwin w
+      (hclosed v hv w hs)) hs⟩
+
 end ChainTree
 
 end ParityGame

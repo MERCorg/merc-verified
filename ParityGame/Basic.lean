@@ -9,6 +9,8 @@ import ParityGame.ProgressMeasure
 import ParityGame.TwoSidedLifting
 import ParityGame.Lifting
 import ParityGame.TwoSidedAlgorithm
+import ParityGame.TwoSidedCost
+import ParityGame.TwoSidedCostCorrect
 
 import ParityGame.Proofs.Defs_Proofs
 import ParityGame.Proofs.Region_Proofs
@@ -22,6 +24,14 @@ import ParityGame.Proofs.ProgressMeasure_Proofs
 import ParityGame.Proofs.TwoSidedLifting_Proofs
 import ParityGame.Proofs.Lifting_Proofs
 import ParityGame.Proofs.TwoSidedAlgorithm_Proofs
+import ParityGame.Proofs.TwoSidedCost_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Order_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Graph_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Tree_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Lift_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Win_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Fuel_Proofs
+import ParityGame.Proofs.TwoSidedCostCorrect_Proofs
 
 import ParityGame.Pins.Defs_Pins
 import ParityGame.Pins.Attractor_Pins
@@ -34,3 +44,5 @@ import ParityGame.Pins.ProgressMeasure_Pins
 import ParityGame.Pins.TwoSidedLifting_Pins
 import ParityGame.Pins.Lifting_Pins
 import ParityGame.Pins.TwoSidedAlgorithm_Pins
+import ParityGame.Pins.TwoSidedCost_Pins
+import ParityGame.Pins.TwoSidedCostCorrect_Pins
