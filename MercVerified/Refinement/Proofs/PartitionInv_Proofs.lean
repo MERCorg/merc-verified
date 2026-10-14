@@ -127,18 +127,18 @@ theorem swap_elements_content (p : BlockPartition) (a b : Std.Usize)
       rw [List.getElem_set]
       by_cases hib : b.val = i
       · subst hib
-        simp only [if_true]
+        simp only [ite_true]
         have := hB
         simp only [getElem!_pos, hsb, haS] at this
         exact this
-      · rw [if_neg hib, List.getElem_set]
+      · rw [ite_eq_right hib, List.getElem_set]
         by_cases hia : a.val = i
         · subst hia
-          simp only [if_true]
+          simp only [ite_true]
           have := hA
           simp only [getElem!_pos, hsa, hbS] at this
           exact this
-        · rw [if_neg hia]
+        · rw [ite_eq_right hia]
           have := hO i (Ne.symm hia) (Ne.symm hib)
           simp only [getElem!_pos, hi2, hi3] at this
           exact this
@@ -225,45 +225,45 @@ theorem swap_elements_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     · intro i hi
       rw [hE i]
       by_cases hib : i = b.val
-      · rw [if_pos hib]
+      · rw [ite_eq_left hib]
         refine ⟨hxlt, ?_⟩
-        rw [hO, if_pos rfl]; exact hib.symm
-      · rw [if_neg hib]
+        rw [hO, ite_eq_left rfl]; exact hib.symm
+      · rw [ite_eq_right hib]
         by_cases hia : i = a.val
-        · rw [if_pos hia]
+        · rw [ite_eq_left hia]
           refine ⟨hylt, ?_⟩
           have hne : y.index.val ≠ x.index.val := by
             intro h; apply hib; rw [h] at hyoff; omega
-          rw [hO, if_neg hne, if_pos rfl]; exact hia.symm
-        · rw [if_neg hia]
+          rw [hO, ite_eq_right hne, ite_eq_left rfl]; exact hia.symm
+        · rw [ite_eq_right hia]
           obtain ⟨hz1, hz2⟩ := hp.perm i hi
           refine ⟨hz1, ?_⟩
           have h1 : (eAt p i).index.val ≠ x.index.val := by
             intro h; rw [h] at hz2; omega
           have h2 : (eAt p i).index.val ≠ y.index.val := by
             intro h; rw [h] at hz2; omega
-          rw [hO, if_neg h1, if_neg h2]; exact hz2
+          rw [hO, ite_eq_right h1, ite_eq_right h2]; exact hz2
     · intro s hs
       rw [hO s]
       by_cases h1 : s = x.index.val
-      · rw [if_pos h1, hE, if_pos rfl]; exact h1.symm
-      · rw [if_neg h1]
+      · rw [ite_eq_left h1, hE, ite_eq_left rfl]; exact h1.symm
+      · rw [ite_eq_right h1]
         by_cases h2 : s = y.index.val
-        · rw [if_pos h2]
+        · rw [ite_eq_left h2]
           have hab : a.val ≠ b.val := by
             intro hab
             apply h1
             have : x = y := by simp only [hxdef, hydef, hab]
             rw [h2, this]
-          rw [hE, if_neg hab, if_pos rfl]; exact h2.symm
-        · rw [if_neg h2]
+          rw [hE, ite_eq_right hab, ite_eq_left rfl]; exact h2.symm
+        · rw [ite_eq_right h2]
           have hq := hp.inv s hs
           rw [hE]
           by_cases hqb : offAt p s = b.val
           · exfalso; apply h2; rw [hqb, hyB] at hq; exact hq.symm
           · by_cases hqa : offAt p s = a.val
             · exfalso; apply h1; rw [hqa, hxA] at hq; exact hq.symm
-            · rw [if_neg hqb, if_neg hqa]; exact hq
+            · rw [ite_eq_right hqb, ite_eq_right hqa]; exact hq
     · intro j hj
       rw [hblk, hN] at *
       exact hp.blk j (hN ▸ hj)
@@ -383,16 +383,16 @@ theorem isMarked_after_mark {n : Nat} {p p' : BlockPartition} (hp : PartInv n p)
   unfold IsMarked
   rw [he2b, hoff t]
   by_cases htK : e2bAt p t = K
-  · rw [hms, if_pos htK, htK]
+  · rw [hms, ite_eq_left htK, htK]
     by_cases htf : t = f
     · subst htf
-      simp only [if_true]
+      simp only [ite_true]
       constructor
       · intro _; exact Or.inr trivial
       · intro _; omega
-    · rw [if_neg htf]
+    · rw [ite_eq_right htf]
       by_cases hty : t = y
-      · rw [if_pos hty]
+      · rw [ite_eq_left hty]
         have hne : offAt p f ≠ ms - 1 := by
           intro h
           apply htf
@@ -405,7 +405,7 @@ theorem isMarked_after_mark {n : Nat} {p p' : BlockPartition} (hp : PartInv n p)
         · rintro (h | h)
           · rw [hty, hy2] at h; omega
           · exact absurd h htf
-      · rw [if_neg hty]
+      · rw [ite_eq_right hty]
         have hne : offAt p t ≠ ms - 1 := by
           intro h
           apply hty
@@ -417,10 +417,10 @@ theorem isMarked_after_mark {n : Nat} {p p' : BlockPartition} (hp : PartInv n p)
         · rintro (h | h)
           · omega
           · exact absurd h htf
-  · rw [hms, if_neg htK]
+  · rw [hms, ite_eq_right htK]
     have htf : t ≠ f := fun h => htK (by rw [h])
     have hty : t ≠ y := fun h => htK (by rw [h]; exact hyK)
-    rw [if_neg htf, if_neg hty]
+    rw [ite_eq_right htf, ite_eq_right hty]
     constructor
     · intro h; exact Or.inl h
     · rintro (h | h)
@@ -476,7 +476,7 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
   obtain ⟨hbe, hbn, hms1, hms2⟩ := h.blk K hK
   by_cases hlt : o < (blkAt p K).marked_split
   · have hlt' : o.val < (blkAt p K).marked_split.val := hlt
-    rw [if_pos hlt]
+    rw [ite_eq_left hlt]
     have hsub : (1#usize).val ≤ (blkAt p K).marked_split.val := by rw [usize_one_val]; omega
     obtain ⟨i, hi, hival, -⟩ := spec_imp_exists
       (Usize.sub_spec (x := (blkAt p K).marked_split) (y := 1#usize) hsub)
@@ -529,12 +529,12 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
       rw [Slice.set_val_eq, List.length_set, hbl1]
       rfl
     · intro j hj
-      rw [blkAt_set bi.index hbN1, if_neg (by omega)]
+      rw [blkAt_set bi.index hbN1, ite_eq_right (by omega)]
       simp [blkAt, hbl1]
-    · rw [blkAt_set bi.index hbN1, if_pos hbi]
-    · rw [blkAt_set bi.index hbN1, if_pos hbi]
-    · rw [blkAt_set bi.index hbN1, if_pos hbi]; simp only []; omega
-    · rw [blkAt_set bi.index hbN1, if_pos hbi]; simp only []; omega
+    · rw [blkAt_set bi.index hbN1, ite_eq_left hbi]
+    · rw [blkAt_set bi.index hbN1, ite_eq_left hbi]
+    · rw [blkAt_set bi.index hbN1, ite_eq_left hbi]; simp only []; omega
+    · rw [blkAt_set bi.index hbN1, ite_eq_left hbi]; simp only []; omega
     · -- exactly `s` becomes marked
       have hoK : o.val = offAt p s.index.val := by rw [hoo, hoffdef]
       have hef : (eAt p o.val).index.val = s.index.val := by rw [hoK]; exact h.inv _ hs
@@ -546,10 +546,10 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
       · intro j
         rw [blkAt_set bi.index hbN1, hKdef]
         by_cases hj : j = K
-        · rw [if_pos (by omega : bi.index.val = j), if_pos hj]
+        · rw [ite_eq_left (by omega : bi.index.val = j), ite_eq_left hj]
           simp only []
           rw [hi1v, hj]
-        · rw [if_neg (by omega : ¬ bi.index.val = j), if_neg hj]
+        · rw [ite_eq_right (by omega : ¬ bi.index.val = j), ite_eq_right hj]
           simp [blkAt, hbl1]
       · intro s'
         show offAt self1 s' = _
@@ -579,13 +579,13 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
         rw [hx2, h1'] at this
         omega
       have hoffx : offAt self1 x.index.val = i0 := by
-        rw [hoff1, if_neg hne1, if_neg hne2, hx2]
+        rw [hoff1, ite_eq_right hne1, ite_eq_right hne2, hx2]
       have := hP1.inv x.index.val hx1
       rw [hoffx] at this
       -- `eAt self1 i0` is `x`
       have hxx : (eAt self1 i0).index.val = x.index.val := this
       exact merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq hxx)
-  · rw [if_neg hlt]
+  · rw [ite_eq_right hlt]
     simp only [bind_ok]
     obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok (blkAt p K)
       ⟨hbe, hms1, hms2⟩
@@ -643,7 +643,7 @@ theorem init_partInv (num : Std.Usize) (hpos : 0 < num.val) :
     rw [hN] at hk
     have hk0 : k = 0 := by omega
     subst hk0
-    simp only [hblk, if_true]
+    simp only [hblk, ite_true]
     simp
     omega
   · intro s hs
@@ -653,7 +653,7 @@ theorem init_partInv (num : Std.Usize) (hpos : 0 < num.val) :
     have o : offAt p s = s := by
       simp [offAt, hoff, List.getD_eq_getElem?_getD, hs, uTotal_val_of_lt (hlt s hs)]
     rw [e, o, hN]
-    simp only [hblk, if_true]
+    simp only [hblk, ite_true]
     simp
     omega
   · intro j k hj hk hne

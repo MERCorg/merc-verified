@@ -598,7 +598,7 @@ theorem strong_process_worklist_block_step_RQ {L Label : Type}
           exact absurd hxe.symm hne
   rw [hcon]
   simp only [hidm, massert, hbmark, decide_true, verified.merc_reduction.signature_refinement.maybe_mark_backward_closure]
-  simp only [Bool.false_eq_true, if_false, if_true, bind_ok]
+  simp only [Bool.false_eq_true, ite_false, ite_true, bind_ok]
   rw [hspm]
   simp only [bind_ok, mark_dirty_new_blocks_contract]
   show ∃ ctx', (do

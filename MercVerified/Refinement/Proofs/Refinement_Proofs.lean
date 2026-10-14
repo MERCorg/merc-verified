@@ -158,6 +158,11 @@ private theorem signature_refinement_spec
   rw [hloop]
   simp
 
+/-- Kernel-checked length bound for the `"reduction"` timing label, so the proof below does not
+    pick up `toStr`'s default `decide +native` axiom. -/
+theorem reduction_str_bound : "reduction".toByteArray.size ≤ U32.max := by
+  rw [show "reduction".toByteArray.size = 9 from rfl]; simp [U32.max, U32.numBits]
+
 /-- Contract pin theorem: for any `LTS` trait implementor `L`/`LTSInst` with a
     well-formed state space (`hwf`), `strong_bisim_sigref` returns a partition
     of the input LTS that is stable for the strong signature (sound) and
@@ -176,13 +181,13 @@ theorem strong_bisim_sigref_correct
   have hcall0 : (fnOnceInst LTSInst).call_once (sys, incoming) () = ok partition' := by
     rw [fnOnceInst]
     dsimp
-    rw [verified.merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once]
+    unfold verified.merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once
     simpa using hsr
   have hmeasure := merc_utilities.timing.Timing.measure_spec (fnOnceInst LTSInst) timing
-    (toStr "reduction") (sys, incoming)
+    (toStr "reduction" reduction_str_bound) (sys, incoming)
   rw [hcall0] at hmeasure
   obtain ⟨partition, hmeasure, hcall⟩ : ∃ partition, merc_utilities.timing.Timing.measure
-      (fnOnceInst LTSInst) timing (toStr "reduction") (sys, incoming) = ok partition ∧
+      (fnOnceInst LTSInst) timing (toStr "reduction" reduction_str_bound) (sys, incoming) = ok partition ∧
       (fnOnceInst LTSInst).call_once (sys, incoming) () = ok partition :=
     ⟨partition', hmeasure, hcall0⟩
   have hcall' :
@@ -190,7 +195,7 @@ theorem strong_bisim_sigref_correct
         sys incoming = ok partition := by
     rw [fnOnceInst] at hcall
     dsimp at hcall
-    rw [verified.merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once] at hcall
+    unfold verified.merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once at hcall
     simpa using hcall
   have hp' : partition' = partition := by
     exact Result.ok_injective (hsr.symm.trans hcall')
@@ -242,11 +247,11 @@ theorem stable_implies_strong_fixpoint
           StrongSignature (toLTS LTSInst sys) q blockOf := by
     intro q hq
     ext ⟨μ, α⟩
-    simp only [StrongSignature, Set.mem_setOf_eq, Set.mem_image, Prod.mk.injEq, Prod.exists]
+    simp only [StrongSignature, Set.mem_ofPred_eq, Set.mem_image, Prod.mk.injEq, Prod.exists]
     constructor
     · rintro ⟨t, htr, hPt⟩
       have ht := htgt q μ t hq htr
-      simp only [P, ht, if_true] at hPt
+      simp only [P, ht, ite_true] at hPt
       subst hPt
       exact ⟨μ, blockOf t, ⟨t, htr, rfl⟩, rfl, rfl⟩
     · rintro ⟨μ', β, ⟨t, htr, rfl⟩, rfl, rfl⟩

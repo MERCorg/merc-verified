@@ -93,7 +93,7 @@ theorem list_drop_succ_set {α : Type} (l : List α) (m : Nat) (c : α) :
   · simp
   · intro i h1 h2
     simp only [List.getElem_drop, List.getElem_set]
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
 
 theorem list_take_set_lt {α : Type} (l : List α) (m : Nat) (c : α) :
     (l.set m c).take m = l.take m := by
@@ -102,7 +102,7 @@ theorem list_take_set_lt {α : Type} (l : List α) (m : Nat) (c : α) :
   · intro i h1 h2
     simp only [List.getElem_take, List.getElem_set]
     have : i < m := by simp at h1; omega
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
 
 
 /-- Commit step, the signature was already interned (class `idx < K`). -/
@@ -302,9 +302,9 @@ theorem clsAt_set (spb : BlockPartitionBuilder) (ei : Sz) (m : Nat) (hei : ei.va
   rw [hnew]
   by_cases htm : t = m
   · subst htm
-    rw [if_pos rfl, List.getD_eq_getElem?_getD, List.getElem?_set_self hm]
+    rw [ite_eq_left rfl, List.getD_eq_getElem?_getD, List.getElem?_set_self hm]
     rfl
-  · rw [if_neg htm, List.getD_eq_getElem?_getD, List.getElem?_set_ne (Ne.symm htm),
+  · rw [ite_eq_right htm, List.getD_eq_getElem?_getD, List.getElem?_set_ne (Ne.symm htm),
       ← List.getD_eq_getElem?_getD]
 
 /-- One iteration of `strong_process_marked_elements_loop` on a live element succeeds and keeps
@@ -391,14 +391,14 @@ theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
       rw [clsAt_set spb ei m hinv.ei_eq idx0 hm_i2b' v _ rfl t]
       by_cases htm : t = m
       · subst htm
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hi0 : idx0.index.val = kts.val.length := hidx
         rw [hi0]
         refine ⟨by rw [hkts1]; omega, ?_⟩
         have : kts1.val.getD kts.val.length emptyKey = sigb1 := by
           rw [hk1]; simp [List.getD_eq_getElem?_getD]
         rw [this, holdsm]; exact hkey
-      · rw [if_neg htm]
+      · rw [ite_eq_right htm]
         have ht' : t < m := by omega
         obtain ⟨hc1, hc2⟩ := hsem.cls t ht'
         refine ⟨by rw [hkts1]; omega, ?_⟩
@@ -418,13 +418,13 @@ theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     · refine ⟨hsem.idinv, fun t ht => ?_⟩
       rw [clsAt_set spb ei m hinv.ei_eq idx hm_i2b' v _ rfl t]
       by_cases htm : t = m
-      · subst htm; rw [if_pos rfl]
+      · subst htm; rw [ite_eq_left rfl]
         obtain ⟨hk, hv, hkv⟩ := hsem.idinv.1 sigb1 k idx ho
         refine ⟨hidxlt, ?_⟩
         have : kts.val.getD idx.index.val emptyKey = sigb1 := by
           rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hv]; simpa using hkv
         rw [this, holdsm]; exact hkey
-      · rw [if_neg htm]; exact hsem.cls t (by omega)
+      · rw [ite_eq_right htm]; exact hsem.cls t (by omega)
 
 
 /-- `strong_process_marked_elements` on the builder left by `marked_elements_sorted` (fresh `id`,

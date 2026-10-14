@@ -175,7 +175,7 @@ theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
       cases done with
       | true =>
         unfold renumber_branching_loop.body
-        simp only [if_true, spec_ok]
+        simp only [ite_true, spec_ok]
         exact hF2 rfl
       | false =>
         obtain ⟨hres, hFe⟩ := hF1 rfl
@@ -192,20 +192,20 @@ theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
                 x ∈ (kts.val.map (·.val)).getD (sig.val[index.val - 1]'hm).2.index.val []
             · rw [hc1 hhat hsub]; simp only [spec_ok]
               refine ⟨⟨by omega, fun h => absurd h (by simp), fun _ => ?_⟩, ?_⟩
-              · rw [← hFe, hstep, if_pos hhat, if_pos hsub]
+              · rw [← hFe, hstep, ite_eq_left hhat, ite_eq_left hsub]
               · simp [hi1v]; try omega
             · rw [hc2 hhat hsub]; simp only [spec_ok]
               refine ⟨⟨by omega, fun _ => ⟨hres, ?_⟩, fun h => absurd h (by simp)⟩, ?_⟩
-              · rw [hi1v, ← hFe, hstep, if_pos hhat, if_neg hsub]
+              · rw [hi1v, ← hFe, hstep, ite_eq_left hhat, ite_eq_right hsub]
               · simp [hi1v]; try omega
           · rw [hc3 hhat]; simp only [spec_ok]
             refine ⟨⟨by omega, fun h => absurd h (by simp), fun _ => ?_⟩, ?_⟩
-            · rw [hres, ← hFe, hstep, if_neg hhat]
+            · rw [hres, ← hFe, hstep, ite_eq_right hhat]
             · simp [hi1v]; try omega
         · have hz : index.val = 0 := by omega
           have hnz : ¬ index > 0#usize := by simp [UScalar.lt_equiv]; omega
           unfold renumber_branching_loop.body
-          simp only [Bool.false_eq_true, if_false, hnz, spec_ok]
+          simp only [Bool.false_eq_true, ite_false, hnz, spec_ok]
           rw [hres, ← hFe, hz]; simp [rnScan]
     · refine ⟨by simp [Slice.len], fun _ => ⟨rfl, ?_⟩, fun h => absurd h (by simp)⟩
       simp [Slice.len, hF]

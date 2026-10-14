@@ -93,7 +93,7 @@ theorem finish0_step_first_unmarked
           | none => it'
           | some x => { it' with slice := it'.slice.setAtNat m x }) := by
     unfold core.slice.iter.IteratorIterMut.next
-    rw [dif_pos (by simpa [Slice.len] using hmS)]
+    rw [dite_eq_left (by simpa [Slice.len] using hmS)]
     simp only []
     congr
     funext it' x
@@ -139,7 +139,7 @@ theorem finish0_step_first_plain
           | none => it'
           | some x => { it' with slice := it'.slice.setAtNat m x }) := by
     unfold core.slice.iter.IteratorIterMut.next
-    rw [dif_pos (by simpa [Slice.len] using hmS)]
+    rw [dite_eq_left (by simpa [Slice.len] using hmS)]
     simp only []
     congr
     funext it' x
@@ -190,7 +190,7 @@ theorem finish0_step_later
           | none => it'
           | some x => { it' with slice := it'.slice.setAtNat m x }) := by
     unfold core.slice.iter.IteratorIterMut.next
-    rw [dif_pos (by simpa [Slice.len] using hmS)]
+    rw [dite_eq_left (by simpa [Slice.len] using hmS)]
     simp only []
     congr
     funext it' x
@@ -229,7 +229,7 @@ theorem blkSeq_getD_new (blocks : List Block) (b : Nat) (u : Bool) (block : Bloc
     (blkSeq blocks b u block ms szs K).getD (blocks.length + (c - firstNew u)) blk0 =
       pieceRec ms szs c := by
   unfold blkSeq
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_right (by simp)]
   simp only [List.length_set, Nat.add_sub_cancel_left]
   rw [List.getElem?_map, List.getElem?_range' (by omega)]
@@ -241,7 +241,7 @@ theorem blkSeq_getD_first (blocks : List Block) (b : Nat) (u : Bool) (block : Bl
     (szs : List Nat) (K : Nat) (hK : 0 < K) (hb : b < blocks.length) :
     (blkSeq blocks b u block ms szs K).getD b blk0 = firstRec u block ms szs := by
   unfold blkSeq
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by simp; omega)]
   simp [hb]
 
@@ -249,13 +249,13 @@ theorem blkSeq_getD_old (blocks : List Block) (b : Nat) (u : Bool) (block : Bloc
     (szs : List Nat) (K : Nat) (hK : 0 < K) (j : Nat) (hj : j < blocks.length) (hjb : j ≠ b) :
     (blkSeq blocks b u block ms szs K).getD j blk0 = blocks.getD j blk0 := by
   unfold blkSeq
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by simp; omega)]
   simp [hjb.symm, List.getD_eq_getElem?_getD]
 
 theorem drop_set_self {α : Type} (l : List α) (m : Nat) (x : α) (h : m < l.length) :
     (l.set m x).drop m = x :: l.drop (m + 1) := by
-  rw [List.set_eq_take_append_cons_drop, if_pos h]
+  rw [List.set_eq_take_append_cons_drop, ite_eq_left h]
   simp [List.length_take, Nat.min_eq_left h.le]
 
 theorem unmRec_eq_pieceRec (ms : Nat) (szs : List Nat) (K : Nat) (a e : Std.Usize) (c : Nat)
@@ -320,7 +320,7 @@ theorem blkSeq_succ (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (
     blkSeq blocks b u block ms szs (m + 1) =
       blkSeq blocks b u block ms szs m ++ [pieceRec ms szs m] := by
   unfold blkSeq
-  rw [if_neg (by omega), if_neg (by omega)]
+  rw [ite_eq_right (by omega), ite_eq_right (by omega)]
   have hfn : firstNew u ≤ 1 := by unfold firstNew; split_ifs <;> omega
   have hr : m + 1 - firstNew u = (m - firstNew u) + 1 := by omega
   rw [hr, List.range'_concat, List.map_append, ← List.append_assoc]
@@ -396,12 +396,12 @@ theorem loop0_inv_step
         (by rw [hlenv5]; simp; omega)
       refine ⟨_, hbody, [block.marked_split], rfl, by omega, ?_, rfl, ?_, by simp, ?_, ?_⟩
       · show v6.val = _
-        rw [hv6, hv5, blkSeq_one, firstRec, if_pos hu1, if_pos hu1, hb]
+        rw [hv6, hv5, blkSeq_one, firstRec, ite_eq_left hu1, ite_eq_left hu1, hb]
         congr 2
         exact unmRec_eq_pieceRec ms szs K block.marked_split i1 0 hm hbnd
           (by rw [hms, hcum0]) (by omega)
       · show i1.val = if 0 + 1 = 0 then 0 else cumS ms szs (0 + 1)
-        rw [if_neg (by omega)]; omega
+        rw [ite_eq_right (by omega)]; omega
       · intro j hj
         obtain rfl : j = 0 := by omega
         simp [hms, hcum0]
@@ -413,19 +413,19 @@ theorem loop0_inv_step
           rw [hbg]; rw [hms] at hadd; exact hadd)
       refine ⟨_, hbody, [block.begin], rfl, by omega, ?_, rfl, ?_, by simp, ?_, ?_⟩
       · show v6.val = _
-        rw [hv6, hv5, blkSeq_one, firstRec, if_neg (by simp [hu0]), if_neg (by simp [hu0]), hb]
+        rw [hv6, hv5, blkSeq_one, firstRec, ite_eq_right (by simp [hu0]), ite_eq_right (by simp [hu0]), hb]
         simp only [List.append_nil]
         congr 1
         exact unmRec_eq_pieceRec ms szs K block.begin i1 0 hm hbnd
           (by rw [hbg, hcum0]) (by omega)
       · show i1.val = if 0 + 1 = 0 then 0 else cumS ms szs (0 + 1)
-        rw [if_neg (by omega)]; omega
+        rw [ite_eq_right (by omega)]; omega
       · intro j hj
         obtain rfl : j = 0 := by omega
         simp [hbg, hcum0]
       · exact back_step back [] 0 block.begin rfl h8
   · have hcur : cur.val ≠ 0 := by
-      rw [h5, if_neg hm0]
+      rw [h5, ite_eq_right hm0]
       have := hszpos 0 (by omega)
       have h0 : cumS ms szs m ≥ cumS ms szs 1 := cumS_mono ms szs (by omega)
       have h1' : cumS ms szs 1 = cumS ms szs 0 + szs[0]'(by omega) := cumS_succ ms szs 0 (by omega)
@@ -434,18 +434,18 @@ theorem loop0_inv_step
       omega
     have hadd : cur.val + (S.val[m]'hSm).val ≤ Usize.max := by
       have := hcumle (m + 1) (by omega); rw [hcm] at this
-      rw [h5, if_neg hm0]; exact this
+      rw [h5, ite_eq_right hm0]; exact this
     obtain ⟨i1, v6, hi1, hv6, hbody⟩ := finish0_step_later deref_mut_back iter_mut_back E B O
       block_index idxv old eob nbiU S m back v5 block hSm hpos cur hcur hadd
-      (by rw [hlenv5, if_neg hm0]; omega)
+      (by rw [hlenv5, ite_eq_right hm0]; omega)
     refine ⟨_, hbody, vals ++ [cur], rfl, by omega, ?_, rfl, ?_, by simp [h6], ?_, ?_⟩
     · show v6.val = _
       rw [hv6, h3, blkSeq_succ _ _ _ _ _ _ m (by omega)]
       congr 2
-      exact unmRec_eq_pieceRec ms szs K cur i1 m hm hbnd (by rw [h5, if_neg hm0])
-        (by rw [hi1, hcm, h5, if_neg hm0])
+      exact unmRec_eq_pieceRec ms szs K cur i1 m hm hbnd (by rw [h5, ite_eq_right hm0])
+        (by rw [hi1, hcm, h5, ite_eq_right hm0])
     · show i1.val = _
-      rw [if_neg (Nat.succ_ne_zero m), hi1, hcm, h5, if_neg hm0]
+      rw [ite_eq_right (Nat.succ_ne_zero m), hi1, hcm, h5, ite_eq_right hm0]
     · intro j hj
       by_cases hjm : j < m
       · rw [List.getD_append _ _ _ _ (by omega)]
@@ -453,7 +453,7 @@ theorem loop0_inv_step
       · have : j = m := by omega
         subst this
         rw [List.getD_append_right _ _ _ _ (by omega)]
-        simp [h6, h5, if_neg hm0]
+        simp [h6, h5, ite_eq_right hm0]
     · exact back_step back vals m cur h6 h8
 
 /-- The number of the block that class `c` gets: the old block for class `0` when the block has no
@@ -467,8 +467,8 @@ theorem labelNat_index (b : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.U
     (labelNat b u nbi c).index.val = labelIdx b.index.val u N c := by
   unfold labelNat labelIdx
   by_cases h : c = 0 ∧ u = false
-  · rw [if_pos h, if_pos h]
-  · rw [if_neg h, if_neg h]
+  · rw [ite_eq_left h, ite_eq_left h]
+  · rw [ite_eq_right h, ite_eq_right h]
     show (uTag (Tag := BlockTag) (nbi.val + c)).index.val = _
     have hlt : nbi.val + c < 2 ^ UScalarTy.Usize.numBits := by
       rw [hnbi]; split_ifs <;> omega
@@ -545,7 +545,7 @@ theorem finish0_tail
       = ok (none, ({ slice := S, i := K } : core.slice.iter.IterMut Std.Usize),
         fun it _ => it) := by
     unfold core.slice.iter.IteratorIterMut.next
-    rw [dif_neg (by simp [Slice.len]; omega)]
+    rw [dite_eq_right (by simp [Slice.len]; omega)]
   have hback : (back ({ slice := S, i := K } : core.slice.iter.IterMut Std.Usize)).slice.val = vals := by
     have := (h8 ({ slice := S, i := K } : core.slice.iter.IterMut Std.Usize) (by simp; omega)).1
     rw [this]; simp [hSlen]
@@ -589,7 +589,7 @@ theorem finish0_tail
   set p2 : BlockPartition := { elements := E', blocks := v5, element_to_block := B', element_offset := O' } with hp2def
   have hVlen : p2.blocks.val.length = N + (K - firstNew u) := by
     show v5.val.length = _
-    rw [h3, blkSeq_length, if_neg (by omega)]
+    rw [h3, blkSeq_length, ite_eq_right (by omega)]
   have hVb : p2.blocks.val.getD b.index.val blk0 =
       (if u then unmRec bk.begin bk.marked_split else pieceRec ms szs 0) := by
     show v5.val.getD b.index.val blk0 = _
@@ -663,7 +663,7 @@ theorem finish0_tail
     rw [hp3blk]
     have : swapIdx b.index.val mx.index.val j = j := by
       unfold swapIdx
-      rw [if_neg (by rcases hmxcls with h | h <;> omega), if_neg hjb]
+      rw [ite_eq_right (by rcases hmxcls with h | h <;> omega), ite_eq_right hjb]
     rw [this]
     show p2.blocks.val.getD j blk0 = _
     exact hVold j hj hjb

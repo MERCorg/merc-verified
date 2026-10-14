@@ -78,11 +78,11 @@ theorem q_cmp_eq (a b : QElem') : qOrd.cmp a b = ok (qCmp a b) := by
 theorem qCmp_gt_iff (a b : QElem') : qCmp a b = Ordering.gt ↔ qLt b a := by
   unfold qCmp qLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have h' : a.1.index.val = b.1.index.val := compare_eq_iff_eq.mp h
     rw [compare_gt_iff_gt]
     omega
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     rw [compare_gt_iff_gt]
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
@@ -90,11 +90,11 @@ theorem qCmp_gt_iff (a b : QElem') : qCmp a b = Ordering.gt ↔ qLt b a := by
 theorem qCmp_lt_iff (a b : QElem') : qCmp a b = Ordering.lt ↔ qLt a b := by
   unfold qCmp qLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have h' : a.1.index.val = b.1.index.val := compare_eq_iff_eq.mp h
     rw [compare_lt_iff_lt]
     omega
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     rw [compare_lt_iff_lt]
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
@@ -102,13 +102,13 @@ theorem qCmp_lt_iff (a b : QElem') : qCmp a b = Ordering.lt ↔ qLt a b := by
 theorem qCmp_eq_iff (a b : QElem') : qCmp a b = Ordering.eq ↔ a = b := by
   unfold qCmp
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have h' : a.1.index.val = b.1.index.val := compare_eq_iff_eq.mp h
     rw [compare_eq_iff_eq]
     constructor
     · intro h2; exact qelem_ext h' h2
     · intro h2; rw [h2]
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     constructor
     · intro h2; exact absurd h2 h

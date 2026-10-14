@@ -144,8 +144,8 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
       by_cases hc : (p.element_to_block.val.getD (stOf s).index.val zBT =
           p.element_to_block.val.getD t.to.index.val zBT ∧
           decide (t.label.index.val = 0) = true ∧ decide (IsMarked p t.to.index.val) = true)
-      · exfalso; apply hx1; simp only [brEntry, if_pos hc]
-      · simp only [brEntry, if_neg hc] at hx1 hx2
+      · exfalso; apply hx1; simp only [brEntry, ite_eq_left hc]
+      · simp only [brEntry, ite_eq_right hc] at hx1 hx2
         refine ⟨t.label, tf t ht, (hTr _ _).2 ⟨t, ht, rfl, (hst t ht).symm⟩,
           fun h => hc ((hcond t ht).2 h), ?_⟩
         rw [hx2]; rfl
@@ -160,8 +160,8 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
         rw [← h1, ← hf]
         exact (hcond t ht).1 hc
       refine ⟨_, List.mem_map.2 ⟨t, ht, rfl⟩, ?_, ?_⟩
-      · simp only [brEntry, if_neg hc]; exact ne_of_lt (hlabt t ht)
-      · simp only [brEntry, if_neg hc]
+      · simp only [brEntry, ite_eq_right hc]; exact ne_of_lt (hlabt t ht)
+      · simp only [brEntry, ite_eq_right hc]
         rw [he, ← h1, ← hf]; rfl
   · ext k
     constructor
@@ -170,12 +170,12 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
       by_cases hc : (p.element_to_block.val.getD (stOf s).index.val zBT =
           p.element_to_block.val.getD t.to.index.val zBT ∧
           decide (t.label.index.val = 0) = true ∧ decide (IsMarked p t.to.index.val) = true)
-      · simp only [brEntry, if_pos hc] at hx2
+      · simp only [brEntry, ite_eq_left hc] at hx2
         have hc' := (hcond t ht).1 hc
         refine ⟨tf t ht, ?_, hc'.2.1, hc'.2.2, hx2⟩
         refine (hTr _ _).2 ⟨t, ht, ?_, (hst t ht).symm⟩
         exact hc'.1
-      · simp only [brEntry, if_neg hc] at hx1
+      · simp only [brEntry, ite_eq_right hc] at hx1
         exact absurd hx1 (ne_of_lt (hlabt t ht))
     · rintro ⟨t', hTr', hb, hd, hk⟩
       obtain ⟨t, ht, h1, h2⟩ := (hTr _ _).1 hTr'
@@ -187,8 +187,8 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
         rw [hf]
         exact ⟨by rw [h1], hb, hd⟩
       refine ⟨_, List.mem_map.2 ⟨t, ht, rfl⟩, ?_, ?_⟩
-      · simp only [brEntry, if_pos hc]
-      · simp only [brEntry, if_pos hc]
+      · simp only [brEntry, ite_eq_left hc]
+      · simp only [brEntry, ite_eq_left hc]
         rw [hk, ← hf]; rfl
 
 /-- The acceptance test of `renumber_branching` on the hat entry `e`. -/
@@ -216,8 +216,8 @@ theorem rnScan_char (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) 
     · by_cases htest : RnTest nl kts L e
       · have htest' : ∀ x ∈ L, x ≠ e → x ∈ kts.getD e.2.index.val [] := htest
         have hscan : rnScan nl kts L (e :: rest) = some e.2 := by
-          simp only [rnScan, if_pos hhat]
-          rw [if_pos htest']
+          simp only [rnScan, ite_eq_left hhat]
+          rw [ite_eq_left htest']
         refine ⟨fun c h => ?_, fun h => by rw [hscan] at h; simp at h⟩
         rw [hscan] at h
         obtain rfl := Option.some.inj h
@@ -229,8 +229,8 @@ theorem rnScan_char (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) 
           omega
       · have htest' : ¬ ∀ x ∈ L, x ≠ e → x ∈ kts.getD e.2.index.val [] := htest
         have hscan : rnScan nl kts L (e :: rest) = rnScan nl kts L rest := by
-          simp only [rnScan, if_pos hhat]
-          rw [if_neg htest']
+          simp only [rnScan, ite_eq_left hhat]
+          rw [ite_eq_right htest']
         rw [hscan]
         refine ⟨fun c h => ?_, fun h x hx hxh => ?_⟩
         · obtain ⟨⟨e1, he1, he2, he3, he4⟩, d⟩ := ih1 c h
@@ -307,7 +307,7 @@ theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEnt
   unfold Sigref.RP.renumber
   cases hscan : rnScan nl kts L L.reverse with
   | none =>
-    rw [dif_neg]
+    rw [dite_eq_right]
     · rfl
     · rintro ⟨k, hk, hkh, hsub⟩
       obtain ⟨x, hx, hx1, rfl⟩ := (hmem_hat k).1 hkh
@@ -325,7 +325,7 @@ theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEnt
       ⟨hk0, (hmem_hat _).2 ⟨e, heL, he1, rfl⟩, (rnTest_iff nl kts L e heL he1 hek).1 het⟩
     have hex : ∃ k, ∃ hk : k < (kts.map (decodeSig nl)).length, k ∈ (decodeSig nl L).hat ∧
         Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[k]) (decodeSig nl L) k := ⟨_, hPk0⟩
-    rw [dif_pos hex]
+    rw [dite_eq_left hex]
     simp only [Option.map_some]
     congr 1
     have hspec := Nat.findGreatest_spec (P := P) (m := e.2.index.val)
@@ -497,7 +497,7 @@ theorem intern_found {Label : Type} (tbl : List (Sigref.KSig Label)) (sg : Sigre
     Sigref.RP.intern tbl sg = (i, tbl) := by
   unfold Sigref.RP.intern
   have hex : ∃ k, ∃ hk : k < tbl.length, tbl[k] = sg := ⟨i, hi, hs⟩
-  rw [dif_pos hex]
+  rw [dite_eq_left hex]
   have hk := hex.choose_spec.choose_spec
   have hkl := hex.choose_spec.choose
   have : hex.choose = i := by
@@ -510,7 +510,7 @@ theorem intern_new {Label : Type} (tbl : List (Sigref.KSig Label)) (sg : Sigref.
     Sigref.RP.intern tbl sg = (tbl.length, tbl ++ [sg]) := by
   unfold Sigref.RP.intern
   have hex : ¬ ∃ k, ∃ hk : k < tbl.length, tbl[k] = sg := fun ⟨k, hk, h⟩ => hnew k hk h
-  rw [dif_neg hex]
+  rw [dite_eq_right hex]
 
 /-- In a strictly sorted list, an element smaller than `l[m]` occurs before position `m`. -/
 theorem before_of_lt {α : Type} (f : α → Nat) {l : List α} (hl : List.Pairwise (fun a c => f a < f c) l)
@@ -534,8 +534,8 @@ theorem stk_set_getD (stk : VecTy BT) (i : Std.Usize) (idx : BT) (hi : i.val < s
   rw [hval]
   by_cases ha : a = i.val
   · subst ha
-    rw [if_pos rfl, List.getD_eq_getElem?_getD, List.getElem?_set_self hi]; rfl
-  · rw [if_neg ha, List.getD_eq_getElem?_getD, List.getElem?_set_ne (Ne.symm ha),
+    rw [ite_eq_left rfl, List.getD_eq_getElem?_getD, List.getElem?_set_self hi]; rfl
+  · rw [ite_eq_right ha, List.getD_eq_getElem?_getD, List.getElem?_set_ne (Ne.symm ha),
       ← List.getD_eq_getElem?_getD]
 
 /-- Concrete topological order: inert τ-steps go to a state with a smaller index. -/
@@ -640,9 +640,9 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     by_cases hc : (p.element_to_block.val.getD state_index.index.val zBT =
         p.element_to_block.val.getD t.to.index.val zBT ∧
         decide (t.label.index.val = 0) = true ∧ decide (IsMarked p t.to.index.val) = true)
-    · simp only [brEntry, if_pos hc]
+    · simp only [brEntry, ite_eq_left hc]
       exact ⟨Or.inr (by simp), fun _ => ⟨t, ht, rfl, hc.1, hc.2.1, hc.2.2⟩⟩
-    · simp only [brEntry, if_neg hc]
+    · simp only [brEntry, ite_eq_right hc]
       refine ⟨Or.inl (hlabt t ht), fun h => absurd h (ne_of_lt (hlabt t ht))⟩
   have hle : ∀ e ∈ sigb1.val, e.1.index.val ≤ nl.val := fun e he => by
     rcases (hcls e he).1 with h | h <;> omega
@@ -741,7 +741,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         rw [stk_set_getD stk state_index.index key0 hstk_b]
         by_cases htm : t = m
         · subst htm
-          rw [List.getD_eq_getElem _ _ hm, ← holdsm, if_pos rfl]
+          rw [List.getD_eq_getElem _ _ hm, ← holdsm, ite_eq_left rfl]
           exact hidxlt
         · have htm' : t < m := by omega
           have htl : t < olds.val.length := by omega
@@ -749,21 +749,21 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
             rw [List.getD_eq_getElem _ _ htl, holdsm]
             have := (List.pairwise_iff_getElem.1 hsorted) t m htl hm htm'
             omega
-          rw [if_neg hne]
+          rw [ite_eq_right hne]
           exact hsem.keysLt t htm'
       · intro t ht
         rw [clsAt_set spb ei m hinv.ei_eq key0 hm_i2b' v _ rfl t,
           stk_set_getD stk state_index.index key0 hstk_b]
         by_cases htm : t = m
         · subst htm
-          rw [if_pos rfl, List.getD_eq_getElem _ _ hm, ← holdsm, if_pos rfl]
+          rw [ite_eq_left rfl, List.getD_eq_getElem _ _ hm, ← holdsm, ite_eq_left rfl]
         · have htm' : t < m := by omega
           have htl : t < olds.val.length := by omega
           have hne : (olds.val.getD t zST).index.val ≠ state_index.index.val := by
             rw [List.getD_eq_getElem _ _ htl, holdsm]
             have := (List.pairwise_iff_getElem.1 hsorted) t m htl hm htm'
             omega
-          rw [if_neg htm, if_neg hne]
+          rw [ite_eq_right htm, ite_eq_right hne]
           exact hsem.cls t htm'
   | none =>
     have hren' : Sigref.RP.renumber (absOf (n := nU.val) nl.val stk kts).tbl (decodeSig nl.val sigb1.val)
@@ -836,14 +836,14 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
           rw [stk_set_getD stk state_index.index idx0 hstk_b, hkts1]
           by_cases htm : t = m
           · subst htm
-            rw [List.getD_eq_getElem _ _ hm, ← holdsm, if_pos rfl, hidx]; omega
+            rw [List.getD_eq_getElem _ _ hm, ← holdsm, ite_eq_left rfl, hidx]; omega
           · have htm' : t < m := by omega
             have htl : t < olds.val.length := by omega
             have hne : (olds.val.getD t zST).index.val ≠ state_index.index.val := by
               rw [List.getD_eq_getElem _ _ htl, holdsm]
               have := (List.pairwise_iff_getElem.1 hsorted) t m htl hm htm'
               omega
-            rw [if_neg hne]
+            rw [ite_eq_right hne]
             have := hsem.keysLt t htm'
             omega
         · intro t ht
@@ -851,14 +851,14 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
             stk_set_getD stk state_index.index idx0 hstk_b]
           by_cases htm : t = m
           · subst htm
-            rw [if_pos rfl, List.getD_eq_getElem _ _ hm, ← holdsm, if_pos rfl]
+            rw [ite_eq_left rfl, List.getD_eq_getElem _ _ hm, ← holdsm, ite_eq_left rfl]
           · have htm' : t < m := by omega
             have htl : t < olds.val.length := by omega
             have hne : (olds.val.getD t zST).index.val ≠ state_index.index.val := by
               rw [List.getD_eq_getElem _ _ htl, holdsm]
               have := (List.pairwise_iff_getElem.1 hsorted) t m htl hm htm'
               omega
-            rw [if_neg htm, if_neg hne]
+            rw [ite_eq_right htm, ite_eq_right hne]
             exact hsem.cls t htm'
     · -- a known signature: it was interned before
       obtain ⟨hkk, hv, hkv⟩ := hsem.idinv.1 sigb1 k idx ho
@@ -898,7 +898,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
           rw [stk_set_getD stk state_index.index idx hstk_b]
           by_cases htm : t = m
           · subst htm
-            rw [List.getD_eq_getElem _ _ hm, ← holdsm, if_pos rfl]
+            rw [List.getD_eq_getElem _ _ hm, ← holdsm, ite_eq_left rfl]
             exact hidxlt
           · have htm' : t < m := by omega
             have htl : t < olds.val.length := by omega
@@ -906,21 +906,21 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
               rw [List.getD_eq_getElem _ _ htl, holdsm]
               have := (List.pairwise_iff_getElem.1 hsorted) t m htl hm htm'
               omega
-            rw [if_neg hne]
+            rw [ite_eq_right hne]
             exact hsem.keysLt t htm'
         · intro t ht
           rw [clsAt_set spb ei m hinv.ei_eq idx hm_i2b' v _ rfl t,
             stk_set_getD stk state_index.index idx hstk_b]
           by_cases htm : t = m
           · subst htm
-            rw [if_pos rfl, List.getD_eq_getElem _ _ hm, ← holdsm, if_pos rfl]
+            rw [ite_eq_left rfl, List.getD_eq_getElem _ _ hm, ← holdsm, ite_eq_left rfl]
           · have htm' : t < m := by omega
             have htl : t < olds.val.length := by omega
             have hne : (olds.val.getD t zST).index.val ≠ state_index.index.val := by
               rw [List.getD_eq_getElem _ _ htl, holdsm]
               have := (List.pairwise_iff_getElem.1 hsorted) t m htl hm htm'
               omega
-            rw [if_neg htm, if_neg hne]
+            rw [ite_eq_right htm, ite_eq_right hne]
             exact hsem.cls t htm'
 
 open verified.merc_reduction.signature_refinement in

@@ -39,8 +39,8 @@ theorem vec_set_getD {α : Type} (cur : alloc.vec.Vec α) (t : Std.Usize) (x d :
   rw [hcs]
   simp only [List.getD_eq_getElem?_getD, List.getElem?_set]
   by_cases hs : t.val = s
-  · rw [if_pos hs, if_pos hs, if_pos ht]; simp
-  · rw [if_neg hs, if_neg hs]
+  · rw [ite_eq_left hs, ite_eq_left hs, ite_eq_left ht]; simp
+  · rw [ite_eq_right hs, ite_eq_right hs]
 
 /-- One step of the "written so far" pointwise description used by the re-labelling loops. -/
 theorem pw_step {α : Type} (idx : Nat → Nat) (rs i s : Nat) (hrs : rs ≤ i) (lab : α)
@@ -49,14 +49,14 @@ theorem pw_step {α : Type} (idx : Nat → Nat) (rs i s : Nat) (hrs : rs ≤ i) 
     (if idx i = s then lab else cur s)
       = if (∃ q, rs ≤ q ∧ q < i + 1 ∧ idx q = s) then lab else base s := by
   by_cases hs : idx i = s
-  · rw [if_pos hs, if_pos]
+  · rw [ite_eq_left hs, ite_eq_left]
     exact ⟨i, hrs, by omega, hs⟩
-  · rw [if_neg hs, hpt s]
+  · rw [ite_eq_right hs, hpt s]
     by_cases hex : ∃ q, rs ≤ q ∧ q < i ∧ idx q = s
-    · rw [if_pos hex, if_pos]
+    · rw [ite_eq_left hex, ite_eq_left]
       obtain ⟨q, h1, h2, h3⟩ := hex
       exact ⟨q, h1, by omega, h3⟩
-    · rw [if_neg hex, if_neg]
+    · rw [ite_eq_right hex, ite_eq_right]
       rintro ⟨q, h1, h2, h3⟩
       by_cases hq : q = i
       · subst hq; exact hs h3
@@ -120,17 +120,17 @@ theorem relabel_loop_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
         have hpts := hpt s
         simp only [List.getD_eq_getElem?_getD] at hpts hget
         by_cases hs : (v.val[i.val]'hiv).index.val = s
-        · rw [if_pos hs, if_pos hbnd]
+        · rw [ite_eq_left hs, ite_eq_left hbnd]
           have hex : ∃ q, rs.val ≤ q ∧ q < i.val + 1 ∧
               ((v.val)[q]?.getD zST).index.val = s :=
             ⟨i.val, hrs, by omega, by rw [hget]; exact hs⟩
-          rw [if_pos hex]; simp
-        · rw [if_neg hs, hpts]
+          rw [ite_eq_left hex]; simp
+        · rw [ite_eq_right hs, hpts]
           by_cases hex : ∃ q, rs.val ≤ q ∧ q < i.val ∧ ((v.val)[q]?.getD zST).index.val = s
-          · rw [if_pos hex, if_pos]
+          · rw [ite_eq_left hex, ite_eq_left]
             obtain ⟨q, h1, h2, h3⟩ := hex
             exact ⟨q, h1, by omega, h3⟩
-          · rw [if_neg hex, if_neg]
+          · rw [ite_eq_right hex, ite_eq_right]
             rintro ⟨q, h1, h2, h3⟩
             by_cases hq : q = i.val
             · subst hq; rw [hget] at h3; exact hs h3
@@ -145,7 +145,7 @@ theorem relabel_loop_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     · intro s
       rw [hpt s, hi]
   · intro s
-    rw [if_neg]
+    rw [ite_eq_right]
     rintro ⟨q, h1, h2, _⟩
     omega
 
@@ -236,7 +236,7 @@ theorem swap_blocks_loop0_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     simp [hnext, vec_tagged_index_val v1 r hrbN, hrb', hv4,
       hA v4 hpost.1 hpost.2]
   · intro s
-    rw [if_neg]
+    rw [ite_eq_right]
     rintro ⟨q, h1, h2, _⟩
     omega
 
@@ -334,19 +334,19 @@ theorem swap_blocks_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     rw [hes, hoffeq]
     unfold swapF
     by_cases cL : bl.begin.val ≤ offAt p s ∧ offAt p s < bl.«end».val
-    · rw [if_pos (hLiff.mpr cL)]
+    · rw [ite_eq_left (hLiff.mpr cL)]
       have : blkAt p' r.index.val = bl := by
         rw [hbp, swapIdx]; simp; exact hbl.symm
       refine ⟨by rw [hN']; exact hr, ?_⟩
       rw [this]; exact cL
-    · rw [if_neg (fun h => cL (hLiff.mp h))]
+    · rw [ite_eq_right (fun h => cL (hLiff.mp h))]
       by_cases cR : br.begin.val ≤ offAt p s ∧ offAt p s < br.«end».val
-      · rw [if_pos (hRiff.mpr cR)]
+      · rw [ite_eq_left (hRiff.mpr cR)]
         have : blkAt p' l.index.val = br := by
           rw [hbp, swapIdx]; simp [hne]; exact hbr.symm
         refine ⟨by rw [hN']; exact hl, ?_⟩
         rw [this]; exact cR
-      · rw [if_neg (fun h => cR (hRiff.mp h))]
+      · rw [ite_eq_right (fun h => cR (hRiff.mp h))]
         have hk_ne_l : e2bAt p s ≠ l.index.val := by
           intro h; apply cL; rw [h] at hb1 hb2; exact ⟨hb1, hb2⟩
         have hk_ne_r : e2bAt p s ≠ r.index.val := by

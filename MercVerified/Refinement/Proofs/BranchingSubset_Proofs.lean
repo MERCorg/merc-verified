@@ -142,7 +142,7 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
       | false =>
         obtain ⟨e, he, hne, hnot⟩ := hF rfl
         unfold is_subset_excluding_loop.body
-        simp only [Bool.false_eq_true, if_false, spec_ok]
+        simp only [Bool.false_eq_true, ite_false, spec_ok]
         simp only [false_iff, not_forall]
         exact ⟨e, he, hne, hnot⟩
       | true =>
@@ -174,7 +174,7 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
               · rw [List.mem_singleton.1 h] at hne; exact absurd hoex hne
             · rw [hj'v]
               exact fun a ha b hb => hT2 a ha b (hmem_drop b hb)
-            · simp only [hj'v, if_true]; omega
+            · simp only [hj'v, ite_true]; omega
           · by_cases hil : i.val < sup.val.length
             · obtain ⟨hC1, hC2, hC3⟩ := hB2 hoex hil
               have hdropi : sup.val.drop i.val = sup.val[i.val]'hil :: sup.val.drop (i.val + 1) :=
@@ -199,7 +199,7 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
                   rcases List.mem_append.1 ha with h | h
                   · exact hT2 a h b (hmem_drop b hb)
                   · rw [List.mem_singleton.1 h, hpeq]; exact hsorto b hb
-                · simp only [hi'v, hj'v, if_true]; omega
+                · simp only [hi'v, hj'v, ite_true]; omega
               · by_cases hplt : entLt (sup.val[i.val]'hil) (sub.val[j.val]'hjl)
                 · obtain ⟨i', hi'v, hbe⟩ := hC2 hpeq hplt
                   rw [hbe]; simp only [spec_ok]
@@ -213,7 +213,7 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
                       rcases List.mem_cons.1 hb with h2 | h2
                       · rw [h2]; exact hplt
                       · exact _root_.trans hplt (hsorto b h2)
-                  · simp only [hi'v, if_true]; omega
+                  · simp only [hi'v, ite_true]; omega
                 · have hgt : entLt (sub.val[j.val]'hjl) (sup.val[i.val]'hil) := by
                     rcases entLt_trichotomy (sup.val[i.val]'hil) (sub.val[j.val]'hjl) with h | h | h
                     · exact absurd h hplt
@@ -233,7 +233,7 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
                       rcases List.mem_cons.1 h with h | h
                       · exact hpeq h.symm
                       · exact hplt (hsortp _ h)
-                  · simp only [if_true, if_false, Bool.false_eq_true]; omega
+                  · simp only [ite_true, ite_false, Bool.false_eq_true]; omega
             · have hbe := hB3 hoex hil
               rw [hbe]; simp only [spec_ok]
               refine ⟨⟨hi, hj, fun h => absurd h (by simp), fun _ => ?_⟩, ?_⟩
@@ -242,11 +242,11 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
                 have := hT2 _ (by rw [hall]; exact hmem) (sub.val[j.val]'hjl)
                   (by rw [hdrop]; exact List.mem_cons_self)
                 exact absurd this (by unfold entLt; omega)
-              · simp only [if_true, if_false, Bool.false_eq_true]; omega
+              · simp only [ite_true, ite_false, Bool.false_eq_true]; omega
         · have hjeq : j.val = sub.val.length := by omega
           have hnj : ¬ j < Slice.len sub := by simp [Slice.len, UScalar.lt_equiv]; omega
           unfold is_subset_excluding_loop.body
-          simp only [if_true, hnj, if_false, spec_ok]
+          simp only [ite_true, hnj, ite_false, spec_ok]
           simp only [true_iff]
           intro e he hne
           apply hT1 e _ hne

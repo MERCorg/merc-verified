@@ -192,7 +192,7 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
       unfold scc_next_child_loop.body
       simp only [Bool.false_eq_true, ↓reduceIte]
       have : ¬ index < alloc.vec.Vec.len ts := by simp [alloc.vec.Vec.len]; omega
-      rw [if_neg this]
+      rw [ite_eq_right this]
     all_goals simp [hdrop, Sigref.Tarjan.scan, hsr]
   | succ k ih =>
     intro index ctx c hk hsr
@@ -252,7 +252,7 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
           else ok (cont (ctx, none, index1, false))) := by
       unfold scc_next_child_loop.body
       simp only [Bool.false_eq_true, ↓reduceIte]
-      rw [if_pos hlt, vec_index_ok ts index hi]
+      rw [ite_eq_left hlt, vec_index_ok ts index hi]
       simp only [bind_ok]
       rw [hi1]
       simp only [bind_ok, tag_value_id]
@@ -301,7 +301,7 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
                 else ok (cont (ctx, none, index1, false))
               else ok (cont (ctx, none, index1, false))) := by
         rw [hbody0, hid t.label, show decide (t.label.index.val = 0) = true from decide_eq_true hh]
-        simp only [bind_ok, if_true]
+        simp only [bind_ok, ite_true]
       rw [show decide (t.label.index.val = 0) = true from decide_eq_true hh]
       have hunv' : (gOf LTSInst sys hn0 hnlt).unv = Usize.max := hunv
       by_cases hu1 : c.disc (toFin hn0 t.to) = Usize.max
@@ -311,7 +311,7 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
             ok (cont ({ ctx with disc := vset ctx.disc t.to.index 0#usize }, some t.to, index1, true)) := by
           rw [hbody1, vec_index_ok ctx.disc t.to.index hv]
           simp only [bind_ok]
-          rw [if_pos hcond, vec_index_mut_ok ctx.disc t.to.index hv]
+          rw [ite_eq_left hcond, vec_index_mut_ok ctx.disc t.to.index hv]
           simp only [bind_ok]
           rfl
         have hl : scc_next_child_loop LTSInst sys ctx su ts none index false =
@@ -349,11 +349,11 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
                   none, index1, false)) := by
               rw [hbody1, vec_index_ok ctx.disc t.to.index hv]
               simp only [bind_ok]
-              rw [if_neg hncond, vec_index_ok ctx.on_scc_stack t.to.index hvo, hb1]
-              simp only [bind_ok, if_true]
+              rw [ite_eq_right hncond, vec_index_ok ctx.on_scc_stack t.to.index hvo, hb1]
+              simp only [bind_ok, ite_true]
               rw [vec_index_ok ctx.low su hsl]
               simp only [bind_ok]
-              rw [if_pos hlt3, vec_index_mut_ok ctx.low su hsl]
+              rw [ite_eq_left hlt3, vec_index_mut_ok ctx.low su hsl]
               simp only [bind_ok]
               rfl
             obtain ⟨ctx', child, idx', hl, h1, h2, h3⟩ := hnext _
@@ -376,11 +376,11 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
                 ok (cont (ctx, none, index1, false)) := by
               rw [hbody1, vec_index_ok ctx.disc t.to.index hv]
               simp only [bind_ok]
-              rw [if_neg hncond, vec_index_ok ctx.on_scc_stack t.to.index hvo, hb1]
-              simp only [bind_ok, if_true]
+              rw [ite_eq_right hncond, vec_index_ok ctx.on_scc_stack t.to.index hvo, hb1]
+              simp only [bind_ok, ite_true]
               rw [vec_index_ok ctx.low su hsl]
               simp only [bind_ok]
-              rw [if_neg hlt3]
+              rw [ite_eq_right hlt3]
             obtain ⟨ctx', child, idx', hl, h1, h2, h3⟩ := hnext ctx c hsr hb'
             have hsc : Sigref.Tarjan.scan (gOf LTSInst sys hn0 hnlt) s
                 ((true, toFin hn0 t.to) :: List.map (fun t => (decide (t.label.index.val = 0), toFin hn0 t.to))
@@ -397,7 +397,7 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
               ok (cont (ctx, none, index1, false)) := by
             rw [hbody1, vec_index_ok ctx.disc t.to.index hv]
             simp only [bind_ok]
-            rw [if_neg hncond, vec_index_ok ctx.on_scc_stack t.to.index hvo, hb1]
+            rw [ite_eq_right hncond, vec_index_ok ctx.on_scc_stack t.to.index hvo, hb1]
             simp
           obtain ⟨ctx', child, idx', hl, h1, h2, h3⟩ := hnext ctx c hsr hb'
           have hsc : Sigref.Tarjan.scan (gOf LTSInst sys hn0 hnlt) s
@@ -417,7 +417,7 @@ theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
         simp
       obtain ⟨ctx', child, idx', hl, h1, h2, h3⟩ := hnext ctx c hsr hb
       refine ⟨ctx', child, idx', hl, ?_, ?_, ?_⟩
-      all_goals simp only [Sigref.Tarjan.scan, hh, decide_false, Bool.false_eq_true, if_false, ← hi1v]
+      all_goals simp only [Sigref.Tarjan.scan, hh, decide_false, Bool.false_eq_true, ite_false, ← hi1v]
       · exact h1
       · exact h2
       · exact h3
@@ -522,7 +522,7 @@ theorem pop_loop_spec {n : Nat} (s : Fin n) (su : Std.Usize) (hsu : su.val = s.v
       obtain ⟨hr, ho, hb⟩ := hpop'
       subst hr ho hb
       have hb' : scc_pop_component_loop.body su ctx false = ok (cont (ctx1, true)) := by
-        rw [hbodyfalse, if_pos hxs]
+        rw [hbodyfalse, ite_eq_left hxs]
       refine ⟨ctx1, ?_, hf1, hf2, hf3, hf4, hf5, hf6, rfl, rfl, rfl, rfl, rfl⟩
       unfold scc_pop_component_loop
       rw [loop_cont' _ _ _ hb']
@@ -532,7 +532,7 @@ theorem pop_loop_spec {n : Nat} (s : Fin n) (su : Std.Usize) (hsu : su.val = s.v
           (Function.update blk u e) = some (rest, onSt', blk') := by
         simpa [Sigref.Tarjan.popComp, hus] using hpop
       have hb' : scc_pop_component_loop.body su ctx false = ok (cont (ctx1, false)) := by
-        rw [hbodyfalse, if_neg hxs]
+        rw [hbodyfalse, ite_eq_right hxs]
       obtain ⟨ctx', hl, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11⟩ :=
         ih _ _ ctx1 rest onSt' blk' hpop' hf1 hf2 hf3 hf4 hf5 (by simpa [ctx1] using hee)
       refine ⟨ctx', ?_, g1, g2, g3, g4, g5, ?_, g7, g8, g9, g10, ?_⟩
@@ -576,7 +576,7 @@ theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : Sigref.Tarjan.Ctx
       show ¬ (0 < (alloc.vec.Vec.len ctxM.work).val)
       rw [vec_len_val, hnil]; simp
     refine ⟨ctxM, ?_, ?_⟩
-    · simp only [hlt, if_false]
+    · simp only [hlt, ite_false]
     · exact hsr
   · rw [hcw] at hwv
     rcases List.eq_nil_or_concat ctxM.work.val with hnil | ⟨rest', x, hrest⟩
@@ -605,7 +605,7 @@ theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : Sigref.Tarjan.Ctx
       rw [← hsr.low, view_get _ _ _ _ hpl]; simp [htp]
     have hlows : (ctxM.low.val[su.val]'hsl).val = cM.low s := by
       rw [← hsr.low, view_get _ _ _ _ (by rw [← hsu]; exact hsl)]; simp [hsu]
-    simp only [hgt, if_true, hi4, bind_ok]
+    simp only [hgt, ite_true, hi4, bind_ok]
     rw [vec_index_ok ctxM.work i4 hi4lt, hget]
     simp only [bind_ok, tag_value_id]
     simp
@@ -616,10 +616,10 @@ theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : Sigref.Tarjan.Ctx
         show (ctxM.low.val[su.val]'hsl).val < (ctxM.low.val[t.index.val]'(by rw [htp]; exact hpl)).val
         rw [hlows, hlowp]; exact hlt
       have hlt'' : (ctxM.low.val[su.val]'hsl).val < (ctxM.low.val[t.index.val]'(by rw [htp]; exact hpl)).val := hlt'
-      rw [if_pos hlt'', vec_index_mut_usize_ok ctxM.low t.index (by rw [htp]; exact hpl)]
+      rw [ite_eq_left hlt'', vec_index_mut_usize_ok ctxM.low t.index (by rw [htp]; exact hpl)]
       simp only [bind_ok]
       refine ⟨_, rfl, ?_⟩
-      rw [if_pos hlt]
+      rw [ite_eq_left hlt]
       have := hsr.set_low t.index p htp (ctxM.low.val[su.val]'hsl)
       rw [hlows, hcw] at this
       exact this
@@ -627,9 +627,9 @@ theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : Sigref.Tarjan.Ctx
         show ¬ ((ctxM.low.val[su.val]'hsl).val < (ctxM.low.val[t.index.val]'(by rw [htp]; exact hpl)).val)
         rw [hlows, hlowp]; exact hlt
       have hlt'' : ¬ ((ctxM.low.val[su.val]'hsl).val < (ctxM.low.val[t.index.val]'(by rw [htp]; exact hpl)).val) := hlt'
-      rw [if_neg hlt'']
+      rw [ite_eq_right hlt'']
       refine ⟨ctxM, rfl, ?_⟩
-      rw [if_neg hlt]
+      rw [ite_eq_right hlt]
       exact hsr
 
 open verified.merc_reduction.scc_decomposition in
@@ -649,7 +649,7 @@ theorem finish_spec {n : Nat} (hn0 : 0 < n) (ctx : SC) (c : Sigref.Tarjan.Ctx n)
   by_cases hd : c.disc s = c.low s
   · have hcond : ctx.disc.val[su.val]'hsd = ctx.low.val[su.val]'hsl :=
       UScalar.eq_of_val_eq (by rw [hdv, hlv, hd])
-    rw [if_pos hcond]
+    rw [ite_eq_left hcond]
     have hpop : ∃ r, Sigref.Tarjan.popComp s c.eq c.stk c.onSt c.blk = some r := by
       by_contra hno
       push Not at hno
@@ -687,7 +687,7 @@ theorem finish_spec {n : Nat} (hn0 : 0 < n) (ctx : SC) (c : Sigref.Tarjan.Ctx n)
         | [] => cM
         | (p, _) :: _ =>
           if cM.low s < cM.low p then { cM with low := Function.update cM.low p (cM.low s) } else cM) := by
-      simp only [Sigref.Tarjan.finish, hd, if_true, hpr, Option.map_some] at hfin
+      simp only [Sigref.Tarjan.finish, hd, ite_true, hpr, Option.map_some] at hfin
       exact (Option.some.inj hfin).symm
     rw [hc']
     exact hsr'
@@ -695,7 +695,7 @@ theorem finish_spec {n : Nat} (hn0 : 0 < n) (ctx : SC) (c : Sigref.Tarjan.Ctx n)
       intro h
       apply hd
       rw [← hdv, ← hlv, h]
-    rw [if_neg hcond]
+    rw [ite_eq_right hcond]
     simp only [bind_ok]
     obtain ⟨ctx', hct, hsr'⟩ := finish_tail hn0 ctx c hsr s su hsu
     refine ⟨ctx', hct, ?_⟩
@@ -703,7 +703,7 @@ theorem finish_spec {n : Nat} (hn0 : 0 < n) (ctx : SC) (c : Sigref.Tarjan.Ctx n)
         | [] => c
         | (p, _) :: _ =>
           if c.low s < c.low p then { c with low := Function.update c.low p (c.low s) } else c) := by
-      simp only [Sigref.Tarjan.finish, hd, if_false, Option.map_some] at hfin
+      simp only [Sigref.Tarjan.finish, hd, ite_false, Option.map_some] at hfin
       exact (Option.some.inj hfin).symm
     rw [hc']
     exact hsr'
@@ -868,7 +868,7 @@ theorem step_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usiz
   by_cases hu : c.low s = g.unv
   · have hcond : ctx.low.val[sv.index.val]'hsl = SCC_UNVISITED :=
       UScalar.eq_of_val_eq (by rw [hlv, hu, unvisited_val]; rfl)
-    rw [if_pos hcond]
+    rw [ite_eq_left hcond]
     have hcinit : Sigref.Tarjan.initNode g s { c with work := W } =
         { c with
           work := W
@@ -932,7 +932,7 @@ theorem step_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usiz
       intro h
       apply hu
       rw [← hlv, h, unvisited_val]; rfl
-    rw [if_neg hcond]
+    rw [ite_eq_right hcond]
     have hcinit : Sigref.Tarjan.initNode g s { c with work := W } = { c with work := W } := by
       unfold Sigref.Tarjan.initNode
       simp [hu]
@@ -1086,8 +1086,8 @@ theorem visit_roots_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n
           { c with work := [(⟨i.val, hi'⟩, 0)], ri := c.ri + 1 } := by
         unfold Sigref.Tarjan.Step Sigref.Tarjan.step
         rw [hw]
-        simp only [hril, dif_pos]
-        rw [hfin, if_pos hu]
+        simp only [hril, dite_eq_left]
+        rw [hfin, ite_eq_left hu]
       have hreach1 := Relation.ReflTransGen.tail hreach hc1
       have hI1 := Sigref.Tarjan.inv_run g _ hreach1
       have hnilw : ctx.work.val = [] := by
@@ -1108,7 +1108,7 @@ theorem visit_roots_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n
         simp
         rw [vec_index_usize_ok ctx.low i hsl]
         simp only [bind_ok]
-        rw [if_pos hcond]
+        rw [ite_eq_left hcond]
         simp [hpv, hl]
       · rw [hriE]; simp [hci]
     · have hcond : ¬ (ctx.low.val[i.val]'hsl = SCC_UNVISITED) := by
@@ -1118,8 +1118,8 @@ theorem visit_roots_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n
       have hc1 : Sigref.Tarjan.Step g c { c with ri := c.ri + 1 } := by
         unfold Sigref.Tarjan.Step Sigref.Tarjan.step
         rw [hw]
-        simp only [hril, dif_pos]
-        rw [hfin, if_neg hu]
+        simp only [hril, dite_eq_left]
+        rw [hfin, ite_eq_right hu]
       have hreach1 := Relation.ReflTransGen.tail hreach hc1
       refine ⟨st1, ctx, hs1, ?_, { c with ri := c.ri + 1 }, hreach1, hw, ?_,
         ⟨hsr.llen, hsr.dlen, hsr.olen, hsr.plen, hsr.low, hsr.disc, hsr.onSt, hsr.blk, hsr.nb,
@@ -1129,7 +1129,7 @@ theorem visit_roots_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n
         simp
         rw [vec_index_usize_ok ctx.low i hsl]
         simp only [bind_ok]
-        rw [if_neg hcond]
+        rw [ite_eq_right hcond]
       · simp [hci]
   obtain ⟨r, hr, c, hrc, hw, hri, hsr⟩ := hspec
   exact ⟨r, c, hr, hrc, hw, hri, hsr⟩

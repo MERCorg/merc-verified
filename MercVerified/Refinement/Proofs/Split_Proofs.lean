@@ -95,9 +95,9 @@ theorem cls_eq_iff_sig {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L L
 theorem labelIdx_inj {bi N K : Nat} {u : Bool} (hb : bi < N) {c c' : Nat} (_hc : c < K) (_hc' : c' < K)
     (h : labelIdx bi u N c = labelIdx bi u N c') : c = c' := by
   cases u
-  · simp only [labelIdx, firstNew, Bool.false_eq_true, if_false, and_true] at h
+  · simp only [labelIdx, firstNew, Bool.false_eq_true, ite_false, and_true] at h
     split_ifs at h <;> omega
-  · simp only [labelIdx, firstNew, if_true, Bool.true_eq_false, and_false, if_false] at h
+  · simp only [labelIdx, firstNew, ite_true, Bool.true_eq_false, and_false, ite_false] at h
     omega
 
 theorem labelIdx_range {bi N K : Nat} {u : Bool} {c : Nat} (hc : c < K) :
@@ -105,7 +105,7 @@ theorem labelIdx_range {bi N K : Nat} {u : Bool} {c : Nat} (hc : c < K) :
   unfold labelIdx firstNew
   by_cases h : c = 0 ∧ u = false
   · left; simp [h]
-  · right; simp only [h, if_false]; split_ifs <;> simp_all; omega
+  · right; simp only [h, ite_false]; split_ifs <;> simp_all; omega
 
 theorem labelIdx_ne {bi N : Nat} {u : Bool} (hb : bi < N) (hu : u = true) {c : Nat} :
     labelIdx bi u N c ≠ bi := by
@@ -220,8 +220,8 @@ theorem split_sem_nontrivialG {X : Type} (sg : ST → X)
     obtain ⟨h1, -, -⟩ := hp.own s.index.val hs
     unfold swapIdx
     rcases hmx with h | h
-    · rw [if_neg (by omega), if_neg hne]
-    · rw [if_neg (by omega), if_neg hne]
+    · rw [ite_eq_right (by omega), ite_eq_right hne]
+    · rw [ite_eq_right (by omega), ite_eq_right hne]
   · -- inside the block
     intro s hs hX
     by_cases hin : ∃ t, t < cls.length ∧ (old.getD t zST).index.val = s.index.val
@@ -354,7 +354,7 @@ theorem strong_partition_marked_spec {L Label : Type}
     refine ⟨v0, p0, id, kts, sigb, sb, stk, ?_, hstk, ?_⟩
     · unfold verified.merc_reduction.signature_refinement.strong_partition_marked
       rw [htb]
-      simp only [bind_ok, if_true]
+      simp only [bind_ok, ite_true]
       rw [heq]
       simp
     · have hbk := hp.blk b.index.val hb
@@ -368,11 +368,11 @@ theorem strong_partition_marked_spec {L Label : Type}
         rw [Slice.set_val_eq, List.length_set]; rfl
       · rw [hv]; simp
       · intro j hj hne
-        rw [blkAt_set b.index hb, if_neg (by omega)]
+        rw [blkAt_set b.index hb, ite_eq_right (by omega)]
       · intro j hj
         rw [blkAt_set b.index hb]
         have : j = b.index.val := by omega
-        rw [if_pos this.symm]
+        rw [ite_eq_left this.symm]
       · -- the semantics: nothing moves, the block has a single state
         have he2b : ∀ s : Nat, e2bAt ({ p with blocks := ({ slice := p.blocks.slice.set b.index { blkAt p b.index.val with marked_split := (blkAt p b.index.val).«end» } } : alloc.vec.Vec verified.merc_reduction.block_partition.Block) } : BlockPartition) s = e2bAt p s := fun s => rfl
         have hoff : ∀ s : Nat, offAt ({ p with blocks := ({ slice := p.blocks.slice.set b.index { blkAt p b.index.val with marked_split := (blkAt p b.index.val).«end» } } : alloc.vec.Vec verified.merc_reduction.block_partition.Block) } : BlockPartition) s = offAt p s := fun s => rfl

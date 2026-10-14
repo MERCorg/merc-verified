@@ -157,7 +157,7 @@ theorem branching_bisim_sigref_impl_correct
       (verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
         LTSInst).call_once (sys, incoming) () = ok partition' := by
     show verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once LTSInst (sys, incoming) () = _
-    rw [verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once]
+    unfold verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition.call_once
     simpa using hsr
   have hmeasure := merc_utilities.timing.Timing.measure_spec
     (verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition

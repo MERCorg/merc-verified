@@ -136,7 +136,7 @@ theorem sum_tick_range_le (t : Transition) (k : Nat) :
         intro x hx
         obtain ⟨j, hj, rfl⟩ := List.mem_map.mp hx
         have := List.mem_range.mp hj
-        simp only [tick]; rw [if_neg (by omega)]
+        simp only [tick]; rw [ite_eq_right (by omega)]
       have h1 : tick t k = 1 := by simp [tick, h]
       omega
     · have h1 : tick t k = 0 := by simp [tick, h]

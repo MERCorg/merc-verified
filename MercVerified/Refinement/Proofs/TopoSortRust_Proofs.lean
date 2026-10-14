@@ -125,11 +125,11 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
             rw [hD1v]; simp [hD, toFin_val hn0 t.to htn]) (by rw [hD1v]; simp; omega)
           obtain ⟨D', b, hl, hv, hb⟩ := this
           refine ⟨D', b, hl, ?_, ?_⟩
-          · rw [hv, hsucc_cons, if_pos ⟨hsc, hh⟩]
+          · rw [hv, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]
             have hm' : mkOf marks.val (toFin hn0 t.to) = none := by
               unfold mkOf mOf; rw [hmark, hmk]
             simp [pushSuccs, hm']
-          · rw [hb, hsucc_cons, if_pos ⟨hsc, hh⟩]
+          · rw [hb, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]
             have hm' : mkOf marks.val (toFin hn0 t.to) = none := by
               unfold mkOf mOf; rw [hmark, hmk]
             simp [pushSuccs, hm']
@@ -146,8 +146,8 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
             have hm' : mkOf marks.val (toFin hn0 t.to) = some Sigref.Topo.Mark.temp := by
               unfold mkOf mOf; rw [hmark, hmk]
             refine ⟨D', b, hl, ?_, ?_⟩
-            · rw [hv, hsucc_cons, if_pos ⟨hsc, hh⟩]; simp [pushSuccs, hm']
-            · rw [hb, hsucc_cons, if_pos ⟨hsc, hh⟩]; simp [pushSuccs, hm']
+            · rw [hv, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]; simp [pushSuccs, hm']
+            · rw [hb, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]; simp [pushSuccs, hm']
           | Permanent =>
             have hbody : push_unvisited_successors_loop.body LTSInst sys state marks iter D a =
                 ok (cont (it1, D, a)) := by
@@ -159,8 +159,8 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
             have hm' : mkOf marks.val (toFin hn0 t.to) = some Sigref.Topo.Mark.perm := by
               unfold mkOf mOf; rw [hmark, hmk]
             refine ⟨D', b, hl, ?_, ?_⟩
-            · rw [hv, hsucc_cons, if_pos ⟨hsc, hh⟩]; simp [pushSuccs, hm']
-            · rw [hb, hsucc_cons, if_pos ⟨hsc, hh⟩]; simp [pushSuccs, hm']
+            · rw [hv, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]; simp [pushSuccs, hm']
+            · rw [hb, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]; simp [pushSuccs, hm']
       · -- not hidden
         have hbody : push_unvisited_successors_loop.body LTSInst sys state marks iter D a =
             ok (cont (it1, D, a)) := by
@@ -170,8 +170,8 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
         rw [psl_unfold, hbody]; simp only [bind_ok]
         obtain ⟨D', b, hl, hv, hb⟩ := ih htg' it1 D a DL hit1 hD hroom'
         refine ⟨D', b, hl, ?_, ?_⟩
-        · rw [hv, hsucc_cons, if_neg (fun h => hh h.2)]
-        · rw [hb, hsucc_cons, if_neg (fun h => hh h.2)]
+        · rw [hv, hsucc_cons, ite_eq_right (fun h => hh h.2)]
+        · rw [hb, hsucc_cons, ite_eq_right (fun h => hh h.2)]
     · -- a self-loop
       have hbody : push_unvisited_successors_loop.body LTSInst sys state marks iter D a =
           ok (cont (it1, D, a)) := by
@@ -183,8 +183,8 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
       have hsc : ¬ (t.to.index.val ≠ state.index.val ∧ t.label.index.val = 0) := by
         intro h; exact hself (fun e => h.1 e.symm)
       refine ⟨D', b, hl, ?_, ?_⟩
-      · rw [hv, hsucc_cons, if_neg hsc]
-      · rw [hb, hsucc_cons, if_neg hsc]
+      · rw [hv, hsucc_cons, ite_eq_right hsc]
+      · rw [hb, hsucc_cons, ite_eq_right hsc]
 
 /-- The model graph of the LTS: the hidden non-self targets of a state. -/
 noncomputable def tsucc {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat} (hn0 : 0 < n)

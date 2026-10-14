@@ -338,7 +338,9 @@ theorem dirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L
           incoming num_blocks ⟨xs, xi⟩ x2 x3 = _
         unfold verified.merc_reduction.signature_refinement.mark_dirty_states_loop0.body
         rw [hnext]
-        simp [hres, alloc.vec.IntoIteratorVec.into_iter, hloop])
+        simp [hres, alloc.vec.IntoIteratorVec.into_iter]
+        erw [Aeneas.Std.bind_ok]
+        simp [hloop])
     (by
       intro x hx
       obtain ⟨h1, h2, -, h3, h4, h5⟩ := hx

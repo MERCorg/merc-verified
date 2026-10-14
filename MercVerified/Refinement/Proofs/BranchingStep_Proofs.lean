@@ -550,7 +550,7 @@ theorem branching_worklist_step_struct {L Label : Type}
         omega) hND hbase
   rw [hcon]
   simp only [hidm, massert, hbmark, decide_true, maybe_mark_backward_closure, hbpq,
-    if_true, bind_ok]
+    ite_true, bind_ok]
   rw [hspm]
   simp only [bind_ok, mark_dirty_new_blocks_contract]
   have hstv : ∀ y : Fin nU.val, (stOf y).index.val = y.val := fun y => stOf_index y hnmax

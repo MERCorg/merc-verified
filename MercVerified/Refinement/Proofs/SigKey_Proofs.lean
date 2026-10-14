@@ -126,11 +126,11 @@ theorem entry_cmp_eq (a b : SigEntry) : entryOrd.cmp a b = ok (entCmp a b) := by
 theorem entCmp_gt_iff (a b : SigEntry) : entCmp a b = Ordering.gt ↔ entLt b a := by
   unfold entCmp entLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have h' : a.1.index.val = b.1.index.val := compare_eq_iff_eq.mp h
     rw [compare_gt_iff_gt]
     omega
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     rw [compare_gt_iff_gt]
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
@@ -138,11 +138,11 @@ theorem entCmp_gt_iff (a b : SigEntry) : entCmp a b = Ordering.gt ↔ entLt b a 
 theorem entCmp_lt_iff (a b : SigEntry) : entCmp a b = Ordering.lt ↔ entLt a b := by
   unfold entCmp entLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have h' : a.1.index.val = b.1.index.val := compare_eq_iff_eq.mp h
     rw [compare_lt_iff_lt]
     omega
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     rw [compare_lt_iff_lt]
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
@@ -150,13 +150,13 @@ theorem entCmp_lt_iff (a b : SigEntry) : entCmp a b = Ordering.lt ↔ entLt a b 
 theorem entCmp_eq_iff (a b : SigEntry) : entCmp a b = Ordering.eq ↔ a = b := by
   unfold entCmp
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have h' : a.1.index.val = b.1.index.val := compare_eq_iff_eq.mp h
     rw [compare_eq_iff_eq]
     constructor
     · intro h2; exact entry_ext h' h2
     · intro h2; rw [h2]
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     constructor
     · intro h2; exact absurd h2 h

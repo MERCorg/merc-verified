@@ -306,7 +306,9 @@ theorem bc_chk_range_a {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : N
       refine ⟨it1, ?_, ?_⟩
       · unfold BlockPartition.mark_backward_closure_loop0_loop0.body
         rw [hnext, hsome]
-        simp [hel', hsil, alloc.vec.IntoIteratorVec.into_iter, hchk]
+        simp [hel', hsil, alloc.vec.IntoIteratorVec.into_iter]
+        erw [Aeneas.Std.bind_ok]
+        simp [hchk]
       · refine ⟨by omega, by rw [hend1, h2], by omega⟩)
     (by
       intro x hx
@@ -361,7 +363,9 @@ theorem bc_chk_range_b {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : N
       refine ⟨it1, ?_, ?_⟩
       · unfold BlockPartition.mark_backward_closure_loop0_loop2.body
         rw [hnext, hsome]
-        simp [hel', hsil, alloc.vec.IntoIteratorVec.into_iter, hchk2]
+        simp [hel', hsil, alloc.vec.IntoIteratorVec.into_iter]
+        erw [Aeneas.Std.bind_ok]
+        simp [hchk2]
       · refine ⟨by omega, by rw [hend1, h2], by omega⟩)
     (by
       intro x hx
@@ -641,7 +645,9 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
             refine Std.WP.exists_imp_spec ⟨cont (it1, q'), ?_, ?_⟩
             · unfold BlockPartition.mark_backward_closure_loop0.body
               rw [hnext, hsome]
-              simp [hi2, hit, hblkq, hitgeN, hhas', hel', hsil, alloc.vec.IntoIteratorVec.into_iter, hloop]
+              simp [hi2, hit, hblkq, hitgeN, hhas', hel', hsil, alloc.vec.IntoIteratorVec.into_iter]
+              erw [Aeneas.Std.bind_ok]
+              simp [hloop]
             · show _ ∧ _
               have h1 : it1.start.val ≤ span.val := by omega
               have h2 : span.val - it1.start.val < span.val - iter.start.val := by omega

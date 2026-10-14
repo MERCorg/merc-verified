@@ -770,7 +770,7 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
       block_sizes.val ++
         List.replicate (index.index.val + 1 - block_sizes.val.length) 0#usize := by
     unfold List.resize
-    rw [if_pos (Nat.zero_le (index.index.val + 1))]
+    rw [ite_eq_left (Nat.zero_le (index.index.val + 1))]
     rw [List.take_of_length_le]
     omega
   have hzz : (List.resize block_sizes.val (index.index.val + 1) 0#usize)[index.index.val] =
@@ -903,14 +903,14 @@ theorem sigKey_eq_lawful : core.cmp.PartialEq.IsLawfulEq internEqInst.partialEqI
   show ∃ r, alloc.vec.partial_eq.PartialEqVec.eq _ a b = ok r ∧ _
   unfold alloc.vec.partial_eq.PartialEqVec.eq
   by_cases hl : a.length = b.length
-  · rw [if_pos hl]
+  · rw [ite_eq_left hl]
     have := allM_zip_lawful _ hI a.val b.val hl
     refine ⟨decide (a.val = b.val), this, ?_⟩
     simp only [decide_eq_true_eq]
     constructor
     · intro h; exact alloc.vec.Vec.ext _ _ h
     · intro h; rw [h]
-  · rw [if_neg hl]
+  · rw [ite_eq_right hl]
     refine ⟨false, rfl, ?_⟩
     simp only [Bool.false_eq_true, false_iff]
     intro h; exact hl (by rw [h])

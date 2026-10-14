@@ -741,7 +741,7 @@ theorem mark_element_blocks_length
   have hblocks : self'.blocks = v1 := by rw [← h]
   rw [hblocks]
   by_cases hlt : offset < b.marked_split
-  · rw [if_pos hlt] at hv
+  · rw [ite_eq_left hlt] at hv
     obtain ⟨_, -, hv⟩ := ok_bind_elim hv
     obtain ⟨self1, hself1, hv⟩ := ok_bind_elim hv
     obtain ⟨⟨bm, back⟩, hbm, hv⟩ := ok_bind_elim hv
@@ -753,7 +753,7 @@ theorem mark_element_blocks_length
     have heqv1 : v1 = back { bm with marked_split := i1 } := hv4.symm
     rw [heqv1, hback]
     simp [alloc.vec.Vec.val, hself1b]
-  · rw [if_neg hlt] at hv
+  · rw [ite_eq_right hlt] at hv
     simp only [Result.ok.injEq, Prod.mk.injEq] at hv
     obtain ⟨-, hv2, -, -⟩ := hv
     rw [← hv2]
@@ -866,14 +866,14 @@ theorem mark_backward_closure_loop0_loop1_blocks_length
         obtain ⟨_, -, hr⟩ := ok_bind_elim hr
         obtain ⟨eqb, -, hr⟩ := ok_bind_elim hr
         by_cases hb : eqb = true
-        · rw [if_pos hb] at hr
+        · rw [ite_eq_left hb] at hr
           obtain ⟨self1, hself1, hr⟩ := ok_bind_elim hr
           simp at hr
           rw [← hr] at h
           have hstep := mark_element_blocks_length s tr.«from» self1 hself1
           have hrec := ih it1 self1 s' hlen1 h
           exact hrec.trans hstep
-        · rw [if_neg hb] at hr
+        · rw [ite_eq_right hb] at hr
           simp at hr
           rw [← hr] at h
           exact ih it1 s s' hlen1 h
@@ -944,10 +944,10 @@ theorem mark_backward_closure_loop0_blocks_length
         have : it1.«end».val = it.«end».val := by rw [hend']
         omega
       by_cases hge : itv ≥ b.marked_split
-      · rw [if_pos hge] at hr
+      · rw [ite_eq_left hge] at hr
         obtain ⟨b1, -, hr⟩ := ok_bind_elim hr
         by_cases hb1 : b1 = true
-        · rw [if_pos hb1] at hr
+        · rw [ite_eq_left hb1] at hr
           obtain ⟨ti, -, hr⟩ := ok_bind_elim hr
           obtain ⟨vtr, -, hr⟩ := ok_bind_elim hr
           obtain ⟨iter2, -, hr⟩ := ok_bind_elim hr
@@ -957,13 +957,13 @@ theorem mark_backward_closure_loop0_blocks_length
           have hstep := mark_backward_closure_loop0_loop1_blocks_length s block_index iter2 self1 hself1
           have hrec := ih it1 self1 s' hn1 h
           exact hrec.trans hstep
-        · rw [if_neg hb1] at hr
+        · rw [ite_eq_right hb1] at hr
           obtain ⟨_, -, hr⟩ := ok_bind_elim hr
           simp at hr
           rw [← hr] at h
           simp at h
           rw [← h]
-      · rw [if_neg hge] at hr
+      · rw [ite_eq_right hge] at hr
         obtain ⟨_, -, hr⟩ := ok_bind_elim hr
         simp at hr
         rw [← hr] at h
@@ -995,9 +995,9 @@ theorem maybe_mark_backward_closure_blocks_length
     self'.blocks.val.length = self.blocks.val.length := by
   unfold verified.merc_reduction.signature_refinement.maybe_mark_backward_closure at h
   by_cases hbr : BRANCHING = true
-  · rw [if_pos hbr] at h
+  · rw [ite_eq_left hbr] at h
     exact mark_backward_closure_blocks_length self block_index incoming_transitions self' h
-  · rw [if_neg hbr] at h
+  · rw [ite_eq_right hbr] at h
     simp at h
     rw [← h]
 

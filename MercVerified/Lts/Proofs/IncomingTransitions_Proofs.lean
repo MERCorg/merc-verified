@@ -471,7 +471,7 @@ theorem prefix_sum_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
       have hidx : st.1.start.val < st.2.1.val.length := by rw [hlen]; exact hltn.trans hc
       have hcount : st.2.1.val[st.1.start.val] = c.val.getD st.1.start.val 0#usize := by
         have h := hpt st.1.start.val hidx
-        rw [if_neg (by omega)] at h
+        rw [ite_eq_right (by omega)] at h
         exact (List.getD_eq_getElem st.2.1.val 0#usize hidx).symm.trans h
       have hmax : st.2.2.val + st.2.1.val[st.1.start.val].val ≤ Usize.max := by
         rw [hcount, hoff, uTotal_val_of_lt (lt_two_pow_of_le_max (hnoovf _ (by omega)))]
@@ -506,11 +506,11 @@ theorem prefix_sum_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
           rw [hvval, hset, hstart]
           by_cases hks : k = st.1.start.val
           · subst hks
-            rw [if_pos (by omega), if_pos (by omega), hoff]
+            rw [ite_eq_left (by omega), ite_eq_left (by omega), hoff]
           · have h := hpt k hk'
             by_cases hltk : k < st.1.start.val
-            · rw [if_neg (by omega), h, if_pos (by omega), if_pos (by omega)]
-            · rw [if_neg (by omega), h, if_neg (by omega), if_neg (by omega)]
+            · rw [ite_eq_right (by omega), h, ite_eq_left (by omega), ite_eq_left (by omega)]
+            · rw [ite_eq_right (by omega), h, ite_eq_right (by omega), ite_eq_right (by omega)]
         · change ∀ j, j + 1 ≤ it1.end.val →
             natSum c.val j + (c.val.getD j 0#usize).val ≤ Usize.max
           intro j hj
@@ -579,11 +579,11 @@ theorem prefix_sum_spec (c : alloc.vec.Vec Sz) (n : Sz)
     simp only [Aeneas.Std.alloc.vec.Vec.set_val_eq]
     rw [getD_set p.1.val n.val k p.2 0#usize (by rw [hlen]; omega)]
     by_cases hkn : k = n.val
-    · rw [hkn, if_pos rfl, hoff]
+    · rw [hkn, ite_eq_left rfl, hoff]
     · have hlt : k < n.val := by omega
       have h := hpt k (by omega)
-      rw [if_pos hlt] at h
-      rw [if_neg hkn]
+      rw [ite_eq_left hlt] at h
+      rw [ite_eq_right hkn]
       exact h
 
 /-! ## Stage 3: `count_all_incoming`
@@ -704,13 +704,14 @@ theorem count_incoming_step
     have hnew : alloc.vec.Vec.from tl (by grind) = it1 :=
       alloc.vec.Vec.ext _ _ ((alloc.vec.Vec.from_val _ _).trans hitl.symm)
     unfold verified.merc_lts.incoming_transitions.count_incoming_loop.body
-    rw [hnext, ← hnew]
+    rw [hnext]
     cases o with
     | none => simp at ho
     | some t' =>
       simp at ho
       subst t'
       simp [himutS, hzok]
+      rw [← hnew]
       congr 1
   · rw [hzval, hget]
     norm_num
@@ -731,6 +732,7 @@ private theorem vec_next_none {α : Type} (v : alloc.vec.Vec α) (h : v.val = []
       ⦃ p => p.1 = none ∧ p.2 = v ⦄ := by
   unfold alloc.vec.into_iter.IteratorIntoIter.next
   split <;> simp_all
+  rfl
 
 /-- State of the `count_incoming` scan: the transitions still to visit and the counters. -/
 abbrev CiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
@@ -877,11 +879,11 @@ theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.
               = trans.val.take k ++ [t] := by rw [hk1, htake]
           by_cases hji : j = t.to.index.val
           · subst hji
-            rw [if_pos rfl, hz, hval t.to.index.val hidx, htake', toCount_append, toCount_single]
+            rw [ite_eq_left rfl, hz, hval t.to.index.val hidx, htake', toCount_append, toCount_single]
             simp [tick]
             omega
           · have hne : t.to.index.val ≠ j := by omega
-            rw [if_neg hji, hval j hj', htake', toCount_append, toCount_single]
+            rw [ite_eq_right hji, hval j hj', htake', toCount_append, toCount_single]
             simp [tick, hne]
         · -- the visited and unvisited ticks still add up
           intro j hj
@@ -1122,8 +1124,8 @@ theorem count_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : 
   have hcount : verified.merc_lts.incoming_transitions.count_incoming
       LTSInst sys s counts = ok counts1 := by
     unfold verified.merc_lts.incoming_transitions.count_incoming
-    simp only [hout, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
-    exact hinner
+    simp only [hout, alloc.vec.IntoIteratorVec.into_iter]
+    exact (bind_ok _ _).trans ((bind_ok _ _).trans hinner)
   refine ⟨it1, counts1, ?_, hitl, hpost⟩
   unfold verified.merc_lts.incoming_transitions.count_all_incoming_loop.body
   rw [hnext]
@@ -1282,8 +1284,8 @@ theorem count_all_incoming_state_spec {L Label : Type} (LTSInst : LTS L Label) (
   rcases count_all_incoming_spec LTSInst sys sv c0 hout hin hovf with ⟨counts, hloop, hpost⟩
   refine ⟨counts, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.count_all_incoming
-  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
-  exact hloop
+  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter]
+  exact (bind_ok _ _).trans ((bind_ok _ _).trans hloop)
 
 /-! ## A generic "for `i` in `[0, n)`, gather `source[i]`" loop
 
@@ -1487,7 +1489,7 @@ private lemma gds_self {α : Type} (l : List α) (i : Nat) (x d : α) :
 private lemma gds_ne {α : Type} (l : List α) (i k : Nat) (x d : α) (hne : k ≠ i) :
     (l.set i x).getD k d = l.getD k d := by
   show (l.set i x)[k]?.getD d = l[k]?.getD d
-  rw [List.getElem?_set, if_neg (Ne.symm hne)]
+  rw [List.getElem?_set, ite_eq_right (Ne.symm hne)]
 
 /-- `List.range'` loses no element when one position is appended. -/
 theorem range'_append_succ (a m : Nat) : List.range' a (m + 1) = List.range' a m ++ [a + m] := by
@@ -1532,7 +1534,7 @@ theorem pairAt_set_self (labels : List (TagIndex Sz LabelTag))
     (y : TagIndex Sz StateTag) (hp : p < labels.length) (hp' : p < src.length) :
     pairAt (labels.set p x) (src.set p y) p = (x, y) := by
   unfold pairAt
-  rw [gds_self labels p x zeroLabel, gds_self src p y zeroState, if_pos hp, if_pos hp']
+  rw [gds_self labels p x zeroLabel, gds_self src p y zeroState, ite_eq_left hp, ite_eq_left hp']
 
 /-- A write outside a slot's range leaves the slot alone. -/
 theorem slotEntries_set_of_lt_or_ge (labels : List (TagIndex Sz LabelTag))
@@ -1677,7 +1679,7 @@ theorem place_incoming_step
     have hnew : alloc.vec.Vec.from tl (by grind) = it1 :=
       alloc.vec.Vec.ext _ _ ((alloc.vec.Vec.from_val _ _).trans hitl.symm)
     unfold verified.merc_lts.incoming_transitions.place_incoming_loop.body
-    rw [hnext, ← hnew]
+    rw [hnext]
     cases o with
     | none => simp at ho
     | some t' =>
@@ -1687,6 +1689,7 @@ theorem place_incoming_step
         hposok, himutL, himutF, himutC]
       rw [← hposval, hzok]
       simp
+      rw [← hnew]
       congr 1
   rw [hzval]
   grind
@@ -1714,7 +1717,7 @@ theorem towards1_succ_self (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transi
     (h : ts.val = ts.val.take k ++ t :: tl) (hjt : t.to.index.val = j) :
     towards1 s ts (k + 1) j = towards1 s ts k j ++ [(t.label, s)] := by
   unfold towards1
-  rw [take_head ts.val k t tl h, List.filter_append, filter_singleton t j, if_pos hjt,
+  rw [take_head ts.val k t tl h, List.filter_append, filter_singleton t j, ite_eq_left hjt,
     List.map_append]
   simp
 
@@ -1724,7 +1727,7 @@ theorem towards1_succ_ne (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transiti
     (h : ts.val = ts.val.take k ++ t :: tl) (hjt : t.to.index.val ≠ j) :
     towards1 s ts (k + 1) j = towards1 s ts k j := by
   unfold towards1
-  rw [take_head ts.val k t tl h, List.filter_append, filter_singleton t j, if_neg hjt,
+  rw [take_head ts.val k t tl h, List.filter_append, filter_singleton t j, ite_eq_right hjt,
     List.map_append]
   simp
 
@@ -1735,8 +1738,8 @@ theorem towards1_succ (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     towards1 s ts (k + 1) j
       = towards1 s ts k j ++ (if t.to.index.val = j then [(t.label, s)] else []) := by
   by_cases hjt : t.to.index.val = j
-  · rw [if_pos hjt, towards1_succ_self s ts k t tl j h hjt]
-  · rw [if_neg hjt, towards1_succ_ne s ts k t tl j h hjt]
+  · rw [ite_eq_left hjt, towards1_succ_self s ts k t tl j h hjt]
+  · rw [ite_eq_right hjt, towards1_succ_ne s ts k t tl j h hjt]
     simp
 
 /-- Once the whole vector has been placed, the slot holds the pairs of *all* of the
@@ -2058,11 +2061,11 @@ theorem place_incoming_loop_spec
           by_cases hji : j = t.to.index.val
           · subst hji
             have hidx1 : t.to.index.val < cursor0.val.length := hidx0
-            rw [if_pos rfl, hzgd, hval t.to.index.val hidx1, htake', toCount_append]
+            rw [ite_eq_left rfl, hzgd, hval t.to.index.val hidx1, htake', toCount_append]
             simp [toCount]
             omega
           · have hne : t.to.index.val ≠ j := by omega
-            rw [if_neg hji, hval j hj, htake', toCount_append]
+            rw [ite_eq_right hji, hval j hj, htake', toCount_append]
             simp [toCount, hne]
         · -- slot-wise: the range this state extends holds exactly the placed pairs
           intro j hj
@@ -2073,7 +2076,7 @@ theorem place_incoming_loop_spec
           · subst hji
             rw [hsetC, hsetL', hsetS']
             have hget := getD_set st.2.1.val t.to.index.val t.to.index.val z 0#usize hidx
-            rw [hget, if_pos rfl, hzgd]
+            rw [hget, ite_eq_left rfl, hzgd]
             have hcont' := hcont t.to.index.val hj
             rw [slotEntries_set_succ st.2.2.1.val st.2.2.2.val
               (st.2.1.val.getD t.to.index.val 0#usize).val
@@ -2087,7 +2090,7 @@ theorem place_incoming_loop_spec
           · have hne : t.to.index.val ≠ j := by omega
             have hsep' := hsep k t j hklt hkt hj hidx0
             have hget := getD_set st.2.1.val t.to.index.val j z 0#usize hj1
-            rw [hsetC, hget, if_neg hji]
+            rw [hsetC, hget, ite_eq_right hji]
             have hcont'' : slotEntries st.2.2.1.val st.2.2.2.val
                 (cursor0.val.getD j 0#usize).val
                 ((cursor0.val.getD j 0#usize).val + toCount (ts.val.take k) j)
@@ -2334,8 +2337,8 @@ theorem place_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       hfill hadd with ⟨cursor1, labels1, src1, hloop, hpost⟩
   refine ⟨cursor1, labels1, src1, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.place_incoming
-  simp only [hout, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
-  exact hloop
+  simp only [hout, alloc.vec.IntoIteratorVec.into_iter]
+  exact (bind_ok _ _).trans ((bind_ok _ _).trans hloop)
 
 /-- State of the outer placement loop: the states still to visit and the three arrays. -/
 abbrev PaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.Vec Sz
@@ -2671,8 +2674,8 @@ theorem place_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
       hinv0 hout hin hlens hrlen hmono hcsr hfill hlenmax with ⟨cursor1, labels1, src1, hloop, hpost⟩
   refine ⟨cursor1, labels1, src1, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.place_all_incoming
-  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter, bind_ok]
-  exact hloop
+  simp only [hiter, alloc.vec.IntoIteratorVec.into_iter]
+  exact (bind_ok _ _).trans ((bind_ok _ _).trans hloop)
 
 
 /-! ## Stage 7: `sort_all_incoming`
@@ -2857,7 +2860,7 @@ theorem insert_sorted_done_start (start : Sz) (label : TagIndex Sz LabelTag)
       = ok (done (labels, src, j)) := by
   have h' : ¬(j > start) := by simp [hle]
   unfold verified.merc_lts.incoming_transitions.insert_sorted_loop.body
-  rw [if_neg h']
+  rw [ite_eq_right h']
 
 /-- The pair left of `j` does not sort after the held pair, so the held pair is already in
     place. -/
@@ -2890,7 +2893,7 @@ theorem insert_sorted_done_cmp (start : Sz) (label : TagIndex Sz LabelTag)
   have hnD : ¬((labels.val.getD (j.val - 1) zeroLabel).index > label.index) := by
     simpa using hcmp
   unfold verified.merc_lts.incoming_transitions.insert_sorted_loop.body
-  rw [if_pos h', hi]
+  rw [ite_eq_left h', hi]
   simp only [bind_ok, alloc.vec.Vec.index_slice_index, hidxL, hget, tag_value_id]
   split
   · rename_i hbad
@@ -2980,7 +2983,7 @@ theorem insert_sorted_step
     alloc.vec.Vec.set_val_eq labels j _,
     alloc.vec.Vec.set_val_eq src j _, ?_⟩
   · unfold verified.merc_lts.incoming_transitions.insert_sorted_loop.body
-    rw [if_pos h', hj1]
+    rw [ite_eq_left h', hj1]
     simp only [bind_ok, alloc.vec.Vec.index_slice_index, hidxL, hget, tag_value_id,
       hidxF1, hgetF1]
     split
@@ -3203,7 +3206,7 @@ theorem insert_sorted_spec
       · intro p h1 h2
         by_cases hpj : p = j.val
         · subst hpj
-          simp only [alloc.vec.Vec.set_val_eq, pairAt, gds_self, if_pos hjlt, if_pos hjlt']
+          simp only [alloc.vec.Vec.set_val_eq, pairAt, gds_self, ite_eq_left hjlt, ite_eq_left hjlt']
           rw [insPos_eq]
         · simp only [alloc.vec.Vec.set_val_eq]
           rw [pairAt_set_ne labels1.val src1.val p j.val _ _ (by omega)]

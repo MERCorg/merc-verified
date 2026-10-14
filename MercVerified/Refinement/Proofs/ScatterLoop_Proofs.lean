@@ -48,12 +48,12 @@ theorem write_step {α : Type} (F F0 : List α) (d : α) (g : Nat → Nat) (v : 
     by_cases htm : t = m
     · subst htm; simp [hlen]
     · have hn : g m ≠ g t := (hinj t (by omega)).symm
-      rw [if_neg hn]
+      rw [ite_eq_right hn]
       have := h1 t (by omega)
       simpa [List.getD_eq_getElem?_getD] using this
   · intro i hi
     have hne : g m ≠ i := hi m (by omega)
-    simp only [List.getD_eq_getElem?_getD, List.getElem?_set, hne, if_false]
+    simp only [List.getD_eq_getElem?_getD, List.getElem?_set, hne, ite_false]
     have := h2 i (fun t ht => hi t (by omega))
     simpa [List.getD_eq_getElem?_getD] using this
 
@@ -163,7 +163,7 @@ theorem scatter_body_step
     by_cases h0 : (s.val[cnt.val]'hm).index.val = 0
     · by_cases hu : block.begin.val < block.marked_split.val
       · 
-        rw [if_neg (fun h => h.2 hu)]
+        rw [ite_eq_right (fun h => h.2 hu)]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = True := eq_true (hobi0.mpr h0)
         have hub : (block.begin.val < block.marked_split.val) = True := eq_true hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
@@ -171,7 +171,7 @@ theorem scatter_body_step
           block_has_unmarked_contract block hblock, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
       · 
-        rw [if_pos ⟨h0, hu⟩]
+        rw [ite_eq_left ⟨h0, hu⟩]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = True := eq_true (hobi0.mpr h0)
         have hub : (block.begin.val < block.marked_split.val) = False := eq_false hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
@@ -180,7 +180,7 @@ theorem scatter_body_step
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
     · by_cases hu : block.begin.val < block.marked_split.val
       · 
-        rw [if_neg (fun h => h0 h.1)]
+        rw [ite_eq_right (fun h => h0 h.1)]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = False := eq_false (fun h => h0 (hobi0.mp h))
         have hub : (block.begin.val < block.marked_split.val) = True := eq_true hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
@@ -188,7 +188,7 @@ theorem scatter_body_step
           block_has_unmarked_contract block hblock, heq0, hz, hb, hub,
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
       · 
-        rw [if_neg (fun h => h0 h.1)]
+        rw [ite_eq_right (fun h => h0 h.1)]
         have hb : ((s.val[cnt.val]'hm).index = 0#usize) = False := eq_false (fun h => h0 (hobi0.mp h))
         have hub : (block.begin.val < block.marked_split.val) = False := eq_false hu
         simp [hnext, hcadd, hold, vec_tagged_index_val bo _ hobi, hEm, vec_tagged_index_mut_ok O _ he1,
@@ -207,7 +207,7 @@ theorem scatterLabel_eq (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (
   unfold scatterLabel labelNat
   by_cases h : j.val = 0 ∧ u = false
   · simp [h]
-  · rw [if_neg h, if_neg h, tag_new_eq_uTag, hz]
+  · rw [ite_eq_right h, ite_eq_right h, tag_new_eq_uTag, hz]
 
 theorem count_take_succ_ne (l : List Nat) (m j : Nat) (hm : m < l.length) (h : l[m] ≠ j) :
     (l.take (m + 1)).count j = (l.take m).count j := by
@@ -356,11 +356,11 @@ theorem ScInv.step {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = 
       have hget : bo.getD cls[m] 0#usize = bo[cls[m]] := by
         simp [List.getD_eq_getElem?_getD, hlen]
       rw [hget] at hi1 h
-      rw [if_pos rfl, if_pos hlen]
+      rw [ite_eq_left rfl, ite_eq_left hlen]
       simp only [Option.getD_some]
       rw [hi1, h, count_take_succ cls m hm]
       omega
-    · rw [if_neg hjc]
+    · rw [ite_eq_right hjc]
       have := hI.hbo j hj
       rw [List.getD_eq_getElem?_getD] at this
       rw [this, count_take_succ_ne cls m j hm hjc]

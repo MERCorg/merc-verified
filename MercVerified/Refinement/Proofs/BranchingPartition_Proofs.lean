@@ -119,7 +119,7 @@ theorem branching_partition_marked_spec {L Label : Type}
     refine ⟨v0, p0, id, kts, sigb, sb, stk, ?_, hstk, ?_⟩
     · unfold branching_partition_marked
       rw [htb]
-      simp only [bind_ok, if_true]
+      simp only [bind_ok, ite_true]
       rw [heq]
       simp
     · have hbk := hp.blk b.index.val hb
@@ -133,11 +133,11 @@ theorem branching_partition_marked_spec {L Label : Type}
         rw [Slice.set_val_eq, List.length_set]; rfl
       · rw [hv]; simp
       · intro j hj hne
-        rw [blkAt_set b.index hb, if_neg (by omega)]
+        rw [blkAt_set b.index hb, ite_eq_right (by omega)]
       · intro j hj
         rw [blkAt_set b.index hb]
         have : j = b.index.val := by omega
-        rw [if_pos this.symm]
+        rw [ite_eq_left this.symm]
       · -- the semantics: nothing moves, the block has a single state
         have he2b : ∀ s : Nat, e2bAt ({ p with blocks := ({ slice := p.blocks.slice.set b.index { blkAt p b.index.val with marked_split := (blkAt p b.index.val).«end» } } : alloc.vec.Vec verified.merc_reduction.block_partition.Block) } : BlockPartition) s = e2bAt p s := fun s => rfl
         have hoff : ∀ s : Nat, offAt ({ p with blocks := ({ slice := p.blocks.slice.set b.index { blkAt p b.index.val with marked_split := (blkAt p b.index.val).«end» } } : alloc.vec.Vec verified.merc_reduction.block_partition.Block) } : BlockPartition) s = offAt p s := fun s => rfl

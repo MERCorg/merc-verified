@@ -259,7 +259,7 @@ theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     · rw [hr]
       by_cases hu' : u = true
       · have hbgms : bg < ms := by simpa [hu'] using hu.symm
-        simp only [hu', if_true, unmRec]
+        simp only [hu', ite_true, unmRec]
         exact ⟨bg, ms, ms, rfl, rfl, rfl, by omega, by omega, by omega, le_refl _, fun _ => ⟨le_refl _, by omega⟩⟩
       · have hu0 : u = false := by simpa using hu'
         simp only [hu0]
@@ -322,7 +322,7 @@ theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
         · have hnb : nbi.val + cls[t] < 2 ^ UScalarTy.Usize.numBits := by
             rw [hnbi]; split_ifs <;> omega
           have hlab : (labelNat b u nbi cls[t]).index.val = nbi.val + cls[t] := by
-            unfold labelNat; rw [if_neg h0]; exact uTotal_val_of_lt hnb
+            unfold labelNat; rw [ite_eq_right h0]; exact uTotal_val_of_lt hnb
           have hcf : firstNew u ≤ cls[t] := by
             unfold firstNew
             by_cases hu' : u = true
@@ -391,7 +391,7 @@ theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       · rw [hr]
         by_cases hu' : u = true
         · have hbgms : bg < ms := by simpa [hu'] using hu.symm
-          rw [if_pos hu']
+          rw [ite_eq_left hu']
           refine ⟨bg, ms, rfl, rfl, fun h => absurd hjb h.2, fun _ => ⟨le_refl _, by omega⟩,
             fun _ => Or.inl ⟨hu', rfl, rfl⟩, fun h => ?_⟩
           have : N ≤ b.index.val := by omega
@@ -399,7 +399,7 @@ theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
         · have hu0 : u = false := by simpa using hu'
           have hb := hpiece 0 hKpos
           have hnb : ¬ bg < ms := by have := hu.symm; simpa [hu0] using this
-          rw [if_neg hu']
+          rw [ite_eq_right hu']
           refine ⟨cumS ms szs 0, cumS ms szs 1, hpv 0 (by omega), hpe 0 hKpos, fun h => absurd hjb h.2,
             fun _ => ⟨by omega, hb.2.1⟩, fun _ => Or.inr ⟨hu0, rfl, rfl⟩, fun h => ?_⟩
           omega

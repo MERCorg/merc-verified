@@ -642,9 +642,83 @@ theorem build_body_step (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (
   refine ⟨st1, vset (vset out i b3) i v3, st2, lb2, tb2, Ls ++ [v3.val], hs1, ?_, ?_⟩
   · unfold quotient_build_loop.body
     simp [hnext, hsome, hlenl, hpst, hmut, Aeneas.Std.lift, alloc.vec.Vec.deref_mut]
-    trace_state
-    sorry
-  · sorry
+    simp only [hvdef] at hs1'
+    simp only [vset, hb3] at hmut2 hidx2
+    rw [hb3] at hdedup
+    simp [hs1', hmut2, hdedup, hidx2, hpt, vset, hb3]
+  · have hrowOf_vset_ne : ∀ {v : alloc.vec.Vec (alloc.vec.Vec QElem)}
+        (x : alloc.vec.Vec QElem) {b : Nat}, b ≠ i.val → rowOf (vset v i x) b = rowOf v b := by
+      intro v x b hb
+      unfold rowOf
+      rw [vset_val, List.getElem?_set]
+      by_cases h1 : i.val = b
+      · exfalso; omega
+      · simp [h1]
+    have hrowOf_vset_self : ∀ {v : alloc.vec.Vec (alloc.vec.Vec QElem)}
+        (x : alloc.vec.Vec QElem), i.val < (vset v i x).val.length → rowOf (vset v i x) i.val = x.val := by
+      intro v x h
+      unfold rowOf
+      rw [vset_val] at h ⊢
+      simp at h
+      simp [h]
+    have hoffs : offs (Ls ++ [v3.val]) (i.val + 1) = offs Ls i.val ++ [Ls.flatten.length] := by
+      unfold offs
+      rw [List.range_succ, List.map_append]
+      congr 1
+      · apply List.map_congr_left
+        intro j hj
+        have hj' : j < i.val := List.mem_range.mp hj
+        have : j ≤ Ls.length := by rw [hLs]; omega
+        rw [List.take_append_of_le_length this]
+      · simp only [List.map_cons, List.map_nil]
+        rw [List.take_append_of_le_length (by rw [hLs])]
+        rw [← hLs]
+        simp
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · rw [List.length_append]; simp [hLs]
+    · intro b hb
+      by_cases hbi : b < i.val
+      · rw [List.getElem_append_left (by rw [hLs]; exact hbi)]
+        exact hsorted b hbi
+      · have hbe : b = i.val := by omega
+        subst hbe
+        rw [List.getElem_append_right (by rw [hLs])]
+        simp [hLs]
+        exact hstrict
+    · intro b hb x
+      by_cases hbi : b < i.val
+      · rw [List.getElem_append_left (by rw [hLs]; exact hbi)]
+        exact hmem b hbi x
+      · have hbe : b = i.val := by omega
+        subst hbe
+        rw [List.getElem_append_right (by rw [hLs])]
+        simp [hLs]
+        exact hmemv3 x
+    · simp [vset_val, holen]
+    · intro b hb
+      by_cases hbi : b < i.val
+      · rw [hrowOf_vset_ne v3 (by omega), hrowOf_vset_ne b3 (by omega),
+          hrowlt b hbi, List.getElem_append_left (by rw [hLs]; exact hbi)]
+      · have hbe : b = i.val := by omega
+        subst hbe
+        rw [hrowOf_vset_self v3 hlen2, List.getElem_append_right (by rw [hLs])]
+        simp [hLs]
+    · intro b hb
+      rw [hrowOf_vset_ne v3 (by omega), hrowOf_vset_ne b3 (by omega)]
+      exact hrowge b (by omega)
+    · rw [hst2, List.map_append]
+      simp
+      rw [hstl, hoffs]
+      have hv2 : l.val = Ls.flatten.length := by rw [hlv, hlbl, List.length_map]
+      rw [hv2]
+    · rw [hlb2, hlbl, hv3sl]
+      simp
+    · rw [htb2, htbl, hv3sl]
+      simp
+    · have hfl : (Ls ++ [v3.val]).flatten.length = Ls.flatten.length + v3.val.length := by
+        rw [List.flatten_append, List.length_append]; simp
+      rw [hfl, htotS]
+      omega
 
 end Build
 

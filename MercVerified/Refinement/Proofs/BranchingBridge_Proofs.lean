@@ -42,13 +42,13 @@ theorem bb_embed {S T Label : Type} [HasTau Label] (l1 : LTS S Label) (l2 : LTS 
       obtain ⟨b, rfl⟩ := hcl a μ s1' ht
       rcases hL b ((hf a μ b).2 ht) with ⟨hμ, hrb⟩ | ⟨t2, t2', hs, htr, hr1, hr2⟩
       · exact Or.inl ⟨hμ, b, a', rfl, rfl, hrb⟩
-      · exact Or.inr ⟨f t2, f t2', (LTS.sTr_τSTr l2).mpr (hdown _ _ ((LTS.sTr_τSTr l1).mp hs)),
+      · exact Or.inr ⟨f t2, f t2', (LTS.sTr_τSTr_iff l2).mpr (hdown _ _ ((LTS.sTr_τSTr_iff l1).mp hs)),
           (hf t2 μ t2').1 htr, ⟨a, t2, rfl, rfl, hr1⟩, ⟨b, t2', rfl, rfl, hr2⟩⟩
     · intro s2' ht
       obtain ⟨b, rfl⟩ := hcl a' μ s2' ht
       rcases hR b ((hf a' μ b).2 ht) with ⟨hμ, hrb⟩ | ⟨t1, t1', hs, htr, hr1, hr2⟩
       · exact Or.inl ⟨hμ, a, b, rfl, rfl, hrb⟩
-      · exact Or.inr ⟨f t1, f t1', (LTS.sTr_τSTr l2).mpr (hdown _ _ ((LTS.sTr_τSTr l1).mp hs)),
+      · exact Or.inr ⟨f t1, f t1', (LTS.sTr_τSTr_iff l2).mpr (hdown _ _ ((LTS.sTr_τSTr_iff l1).mp hs)),
           (hf t1 μ t1').1 htr, ⟨t1, a', rfl, rfl, hr1⟩, ⟨t1', b, rfl, rfl, hr2⟩⟩
   · rintro ⟨r, hr, hbis⟩
     refine ⟨fun x y => r (f x) (f y), hr, ?_⟩
@@ -58,14 +58,14 @@ theorem bb_embed {S T Label : Type} [HasTau Label] (l1 : LTS S Label) (l2 : LTS 
     · intro x' ht
       rcases hL (f x') ((hf x μ x').1 ht) with ⟨hμ, hrb⟩ | ⟨t2, t2', hs, htr, hr1, hr2⟩
       · exact Or.inl ⟨hμ, hrb⟩
-      · obtain ⟨c, rfl, hc⟩ := hup y t2 ((LTS.sTr_τSTr l2).mp hs)
+      · obtain ⟨c, rfl, hc⟩ := hup y t2 ((LTS.sTr_τSTr_iff l2).mp hs)
         obtain ⟨d, rfl⟩ := hcl c μ t2' htr
-        exact Or.inr ⟨c, d, (LTS.sTr_τSTr l1).mpr hc, (hf c μ d).2 htr, hr1, hr2⟩
+        exact Or.inr ⟨c, d, (LTS.sTr_τSTr_iff l1).mpr hc, (hf c μ d).2 htr, hr1, hr2⟩
     · intro y' ht
       rcases hR (f y') ((hf y μ y').1 ht) with ⟨hμ, hrb⟩ | ⟨t1, t1', hs, htr, hr1, hr2⟩
       · exact Or.inl ⟨hμ, hrb⟩
-      · obtain ⟨c, rfl, hc⟩ := hup x t1 ((LTS.sTr_τSTr l2).mp hs)
+      · obtain ⟨c, rfl, hc⟩ := hup x t1 ((LTS.sTr_τSTr_iff l2).mp hs)
         obtain ⟨d, rfl⟩ := hcl c μ t1' htr
-        exact Or.inr ⟨c, d, (LTS.sTr_τSTr l1).mpr hc, (hf c μ d).2 htr, hr1, hr2⟩
+        exact Or.inr ⟨c, d, (LTS.sTr_τSTr_iff l1).mpr hc, (hf c μ d).2 htr, hr1, hr2⟩
 
 end MercVerified.Refinement.Proofs
