@@ -124,6 +124,8 @@ THEOREMS = [
     "ParityGame.Game.twoSidedCorrect",
     "ParityGame.Game.removalShrinks",
     "ParityGame.Game.removalBound",
+    "ParityGame.Game.certSound",
+    "ParityGame.Game.certComplete",
     "ParityGame.TwoSidedCost.navigationCost",
     "ParityGame.TwoSidedCost.regionInfoCost",
     "ParityGame.TwoSidedCost.evaluateCost",
@@ -145,6 +147,12 @@ THEOREMS = [
     "ParityGame.TwoSidedCost.liftingCorrect",
     "ParityGame.TwoSidedCost.solveCorrect",
     "ParityGame.TwoSidedCost.solveTerminates",
+    "Rewriting.Steps.eval_eq",
+    "Rewriting.terminating_of_measure",
+    "Rewriting.terminating_of_interpretation",
+    "Rewriting.confluent_of_value",
+    "Rewriting.confluent_of_model",
+    "Rewriting.existsUnique_normalForm",
 ]
 
 # Theorems allowed to depend on `sorryAx` without failing the check (open,
@@ -195,6 +203,9 @@ IMPORTS = [
     "ParityGame.Proofs.TwoSidedAlgorithm_Proofs",
     "ParityGame.Proofs.TwoSidedCost_Proofs",
     "ParityGame.Proofs.TwoSidedCostCorrect_Proofs",
+    "Rewriting.Proofs.Soundness_Proofs",
+    "Rewriting.Proofs.Termination_Proofs",
+    "Rewriting.Proofs.Confluence_Proofs",
 ]
 
 KERNEL_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}

@@ -11,6 +11,7 @@ description: Lean 4 coding and proof conventions used in this repository. Use wh
 - Import from `Cslib` (e.g. `Cslib.Foundations.Semantics.LTS.Basic`) rather than reimplementing standard LTS theory.
 - `Signatures/BranchingBisimilarity.lean` uses `public section ... end` and `public import` — follow this pattern.
 - Keep proofs self-contained within their modules; avoid circular imports between `MercVerified/` files.
+- Cite literature by adding an entry to `docs/references.bib` (key `AuthorYear`, e.g. `Friedmann2009`) and linking it from the doc comment as a Markdown reference link, e.g. `[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009]` (Mathlib/doc-gen4 convention).
 - Prefer automatic tactics (`grind`, `simp`, `omega`, `aesop`, `decide`) over manual term-mode proofs. Try `grind` first for arithmetic/logical goals; fall back to `simp [...]` with targeted lemmas when `grind` is too slow or fails.
 
 ## Spec / Proofs / pin split
