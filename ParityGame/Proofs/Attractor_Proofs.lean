@@ -1,7 +1,7 @@
 module
 
 public import ParityGame.Attractor
-public import ParityGame.Proofs.Defs_Proofs
+public import ParityGame.Proofs.Game_Proofs
 public import Mathlib.Data.Fintype.Order
 
 open Cslib (ωSequence)
@@ -22,7 +22,7 @@ theorem Game.attrStage_succ_mem {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (
     (hv : v ∉ G.attrStage X i U k) :
     v ∈ X ∧ ((G.owner v = i ∧ ∃ w ∈ G.attrStage X i U k, G.edge v w) ∨
       (G.owner v ≠ i ∧ ∀ w ∈ X, G.edge v w → w ∈ G.attrStage X i U k)) := by
-  simp only [Game.attrStage, Set.mem_union, Set.mem_setOf_eq] at h
+  simp only [Game.attrStage, Set.mem_union, Set.mem_ofPred_eq] at h
   rcases h with h | h
   · exact absurd h hv
   · exact h
@@ -40,7 +40,7 @@ theorem Game.attrStage_subset (hU : U ⊆ X) (k : ℕ) : G.attrStage X i U k ⊆
   | zero => exact hU
   | succ k ih =>
     intro v hv
-    simp only [Game.attrStage, Set.mem_union, Set.mem_setOf_eq] at hv
+    simp only [Game.attrStage, Set.mem_union, Set.mem_ofPred_eq] at hv
     rcases hv with hv | ⟨hvX, -⟩
     · exact ih hv
     · exact hvX
@@ -54,7 +54,7 @@ theorem Game.mem_attr_of_owner {v w : V} (hv : v ∈ X) (ho : G.owner v = i)
     (he : G.edge v w) (hw : w ∈ G.attr X i U) : v ∈ G.attr X i U := by
   obtain ⟨k, hk⟩ := hw
   refine ⟨k + 1, ?_⟩
-  simp only [Game.attrStage, Set.mem_union, Set.mem_setOf_eq]
+  simp only [Game.attrStage, Set.mem_union, Set.mem_ofPred_eq]
   exact Or.inr ⟨hv, Or.inl ⟨ho, w, hk, he⟩⟩
 
 /-- All the attractor lies in a single stage (finite games). -/
@@ -64,7 +64,7 @@ theorem Game.exists_attr_subset_stage [Finite V] : ∃ K, G.attr X i U ⊆ G.att
   obtain ⟨M, hM⟩ := Finite.exists_le f
   refine ⟨M, fun w hw => ?_⟩
   have := hM w
-  simp only [f, dif_pos hw] at this
+  simp only [f, dite_eq_left hw] at this
   exact G.attrStage_mono X i U this hw.choose_spec
 
 /-- A node of `1 - i` all of whose successors in `X` are in the attractor is in the attractor. -/
@@ -72,7 +72,7 @@ theorem Game.mem_attr_of_opp [Finite V] {v : V} (hv : v ∈ X) (ho : G.owner v �
     (h : ∀ w ∈ X, G.edge v w → w ∈ G.attr X i U) : v ∈ G.attr X i U := by
   obtain ⟨K, hK⟩ := G.exists_attr_subset_stage X i U
   refine ⟨K + 1, ?_⟩
-  simp only [Game.attrStage, Set.mem_union, Set.mem_setOf_eq]
+  simp only [Game.attrStage, Set.mem_union, Set.mem_ofPred_eq]
   exact Or.inr ⟨hv, Or.inr ⟨ho, fun w hw he => hK (h w hw he)⟩⟩
 
 theorem Game.attrRank_eq {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
@@ -80,7 +80,7 @@ theorem Game.attrRank_eq {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
   classical
   have hex : ∃ k, v ∈ G.attrStage X i U k := ⟨_, h⟩
   unfold Game.attrRank
-  rw [dif_pos hex, Nat.find_eq_iff]
+  rw [dite_eq_left hex, Nat.find_eq_iff]
   refine ⟨h, fun n hn hvn => hv ?_⟩
   exact G.attrStage_mono X i U (by omega) hvn
 
@@ -95,7 +95,7 @@ theorem Game.attrStrategy_spec {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k
         ∃ w ∈ G.attrStage X i U (G.attrRank X i U v - 1), G.edge v w := by
       rw [hr]; exact ⟨by omega, by simpa using h1.2⟩
     unfold Game.attrStrategy
-    rw [dif_pos hc]
+    rw [dite_eq_left hc]
     have h3 := hc.2.choose_spec
     exact ⟨(show G.attrRank X i U v - 1 = k by omega) ▸ h3.1, h3.2⟩
   · exact absurd ho h2

@@ -1,4 +1,4 @@
-import ParityGame.Defs
+import ParityGame.Game
 import ParityGame.ProgressMeasure
 import ParityGame.TwoSidedLifting
 import ParityGame.Lifting

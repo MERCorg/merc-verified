@@ -10,10 +10,8 @@ namespace ParityGame
 /-!
 # The lifting operator, its least fixpoint, and acceleration soundness
 
-Specifications for the fixpoint view of "two-sided lifting over instance-derived trees"
-(`experiments/FINDINGS.md` §3–§6; Rust `merc/crates/vpg/src/two_sided_lifting.rs`, Python
-`experiments/lifting/solver.py`). As in `ParityGame.TwoSidedLifting`, everything is for player `0`
-in the MAX-parity convention.
+Specifications for the fixpoint view of "two-sided lifting over instance-derived trees". As in
+`ParityGame.TwoSidedLifting`, everything is for player `0` in the MAX-parity convention.
 
 1. **Lifting operator** (`leastProg`, `Game.lift`): a node of the subgame `X` owned by player `0`
    gets the least value progressing (`Game.Prog`) towards *some* successor in `X`, a node owned by
@@ -217,10 +215,10 @@ end Conjecture
     any subgame of any finite game, whatever the lift order and the tie-breaking.
 
     Caveats for readers: this is the *one-sided* lifting of player `0` with an idealised
-    acceleration (inclusion-maximal admissible sets, not the SCC-with-peeling sets of the Rust and
-    Python solvers), and without the two-sided interleaving, early certification and rebuilds of
-    `experiments/FINDINGS.md` §5; it may be false even if the implemented algorithm is
-    polynomial. -/
+    acceleration (inclusion-maximal admissible sets, not the SCC-with-peeling sets of the
+    computable solver in `ParityGame.TwoSidedCost`), and without the two-sided interleaving, early
+    certification and rebuilds of `ParityGame.TwoSidedAlgorithm`; it may be false even if the
+    computable solver is polynomial. -/
 def Game.PolyLiftingConjecture : Prop :=
   ∃ c k : ℕ, ∀ (V : Type) [Finite V] (G : Game V) (X : Set V) (T : Type) [CompleteLinearOrder T]
     [WellFoundedLT T] (val : T → ℕ → ℕ) (C : Codomain (ℕ → ℕ)),

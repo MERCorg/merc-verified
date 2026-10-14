@@ -1,4 +1,4 @@
-import ParityGame.Defs
+import ParityGame.Game
 import ParityGame.Attractor
 import ParityGame.Zielonka
 import ParityGame.Scc
@@ -11,8 +11,9 @@ import ParityGame.Lifting
 import ParityGame.TwoSidedAlgorithm
 import ParityGame.TwoSidedCost
 import ParityGame.TwoSidedCostCorrect
+import ParityGame.Certificate
 
-import ParityGame.Proofs.Defs_Proofs
+import ParityGame.Proofs.Game_Proofs
 import ParityGame.Proofs.Region_Proofs
 import ParityGame.Proofs.Attractor_Proofs
 import ParityGame.Proofs.Zielonka_Proofs
@@ -32,8 +33,9 @@ import ParityGame.Proofs.TwoSidedCostCorrect_Lift_Proofs
 import ParityGame.Proofs.TwoSidedCostCorrect_Win_Proofs
 import ParityGame.Proofs.TwoSidedCostCorrect_Fuel_Proofs
 import ParityGame.Proofs.TwoSidedCostCorrect_Proofs
+import ParityGame.Proofs.Certificate_Proofs
 
-import ParityGame.Pins.Defs_Pins
+import ParityGame.Pins.Game_Pins
 import ParityGame.Pins.Attractor_Pins
 import ParityGame.Pins.Zielonka_Pins
 import ParityGame.Pins.Scc_Pins
@@ -46,3 +48,4 @@ import ParityGame.Pins.Lifting_Pins
 import ParityGame.Pins.TwoSidedAlgorithm_Pins
 import ParityGame.Pins.TwoSidedCost_Pins
 import ParityGame.Pins.TwoSidedCostCorrect_Pins
+import ParityGame.Pins.Certificate_Pins

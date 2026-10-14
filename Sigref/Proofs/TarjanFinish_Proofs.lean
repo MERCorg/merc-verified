@@ -489,9 +489,9 @@ theorem inv_finish_pop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init
     show onSt' v = true ↔ v ∈ rest
     rw [hon' v]
     by_cases hvT : v ∈ top ++ [s]
-    · rw [if_pos hvT]
+    · rw [ite_eq_left hvT]
       exact ⟨fun h => (Bool.false_ne_true h).elim, fun h => absurd hvT (hnotT v h)⟩
-    · rw [if_neg hvT, hV.onSt_iff v]
+    · rw [ite_eq_right hvT, hV.onSt_iff v]
       constructor
       · intro hh; exact hstk_rest v hh hvT
       · intro hh; exact hrestst v hh
@@ -653,11 +653,11 @@ theorem inv_finish (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V
       have h2 := hdiscW p0 o0 hp
       omega
     unfold finish
-    simp only [hpop, if_true, hpc, Option.map_some]
+    simp only [hpop, ite_true, hpc, Option.map_some]
     rcases hW : W with _ | ⟨⟨p0, o0⟩, W'⟩
     · rfl
     · simp only
-      rw [if_neg (hlowW p0 o0 (by rw [hW]; simp))]
+      rw [ite_eq_right (hlowW p0 o0 (by rw [hW]; simp))]
   · -- not the root of an SCC
     have hlt : V.low s < V.disc s := lt_of_le_of_ne (hV.low_le s hsI) (Ne.symm hpop)
     rcases hW : W with _ | ⟨⟨p0, o0⟩, W'⟩
@@ -671,9 +671,9 @@ theorem inv_finish (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V
     · by_cases hlow : V.low s < V.low p0
       · refine ⟨{ V with work := W, low := Function.update V.low p0 (V.low s) }, ?_, ?_⟩
         · unfold finish
-          simp only [hpop, if_false, Option.map_some]
+          simp only [hpop, ite_false, Option.map_some]
           simp only [hW]
-          rw [if_pos hlow]
+          rw [ite_eq_left hlow]
         · refine inv_finish_nopop hV hw hsI hoff hpop hW _ ?_ ?_ ?_ ?_
           · intro v hv; simp [Function.update_of_ne hv]
           · simp; exact hlow.le
@@ -681,9 +681,9 @@ theorem inv_finish (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V
           · right; simp; exact hlow
       · refine ⟨{ V with work := W }, ?_, ?_⟩
         · unfold finish
-          simp only [hpop, if_false, Option.map_some]
+          simp only [hpop, ite_false, Option.map_some]
           simp only [hW]
-          rw [if_neg hlow]
+          rw [ite_eq_right hlow]
         · exact inv_finish_nopop hV hw hsI hoff hpop hW V.low (fun v _ => rfl) le_rfl
             (by omega) (Or.inl rfl)
 

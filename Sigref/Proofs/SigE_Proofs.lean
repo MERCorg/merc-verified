@@ -71,10 +71,10 @@ theorem sig_cases (s : State) :
   unfold Sig at hfix
   by_cases hc : ∃ a, lts.Tr s HasTau.τ a ∧ Quotient.mk π s = Quotient.mk π a ∧
       PreSig lts (Quotient.mk π) d.sigHash s ⊆ d.sigFn a ∪ {(HasTau.τ, Sum.inr (d.sigHash a))}
-  · rw [dif_pos hc] at hfix
+  · rw [dite_eq_left hc] at hfix
     obtain ⟨h1, h2, h3⟩ := hc.choose_spec
     exact Or.inr ⟨hc.choose, ⟨h1, Quotient.exact h2, h3⟩, hfix⟩
-  · rw [dif_neg hc] at hfix
+  · rw [dite_eq_right hc] at hfix
     refine Or.inl ⟨fun a ⟨h1, h2, h3⟩ => hc ⟨a, h1, Quotient.sound h2, h3⟩, hfix⟩
 
 /-- The local signature's `inl` entries are always in the signature. -/

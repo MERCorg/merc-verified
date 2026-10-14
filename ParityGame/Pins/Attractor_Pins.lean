@@ -1,4 +1,4 @@
-import ParityGame.Defs
+import ParityGame.Game
 import ParityGame.Attractor
 import ParityGame.Proofs.Attractor_Proofs
 

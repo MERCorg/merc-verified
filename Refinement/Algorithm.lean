@@ -15,8 +15,8 @@ namespace Refinement
 /-!
 # The antichain-based exploration algorithm (Algorithms 4-6)
 
-Section 5 of M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
-Algorithms for Refinement Checking*, LMCS 17(1:8), 2021.
+Section 5 of [M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
+Algorithms for Refinement Checking*][Laveaux2021], LMCS 17(1:8), 2021.
 
 The algorithms explore `L1 ⋉ L2` (for `L1 := NormTr lts1` or `FdrNormTr lts1`), pruning via the
 antichain. We model the triple `(working, antichain, done)` as `AlgState` and one loop iteration

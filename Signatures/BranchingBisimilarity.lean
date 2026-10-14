@@ -13,8 +13,8 @@ open Cslib (LTS HasTau)
 of internal transitions, but it is a stronger equivalence in that it is able to distinguish
 when internal work constitutes a choice. There are several (equivalent) definitions used in
 literature. The original one can be found in [R.J. van Glabbeek and W.P. Weijland,
-"Branching Time and Abstraction in Bisimulation Semantics", 1990]. But we follow the slightly
-more popular definition of [de Nicola and Vaandrager, 1995, https://doi.org/10.1145/201019.201032].
+"Branching Time and Abstraction in Bisimulation Semantics"][vanGlabbeek1996]. But we follow the
+slightly more popular definition of [de Nicola and Vaandrager, 1995][DeNicola1995].
 -/
 def LTS.IsBranchingBisimulation [HasTau Label] (lts : LTS State Label)
   (r : State → State → Prop) :=

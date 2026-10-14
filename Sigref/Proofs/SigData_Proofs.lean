@@ -1,7 +1,7 @@
 import Sigref.SigData
 import Signatures.Proofs.InductiveSignatures_Proofs
 import Mathlib.SetTheory.Ordinal.Rank
-import Mathlib.Data.Prod.Lex
+import Mathlib.Order.Prod.Lex.Basic
 import Mathlib.Logic.Encodable.Basic
 
 /-!
@@ -33,7 +33,7 @@ theorem Sig_congr (s : State) {h₁ h₂ : State → Tag} {f₁ f₂ : State →
     Sig lts part h₁ f₁ s = Sig lts part h₂ f₂ s := by
   have hpre : PreSig lts part h₁ s = PreSig lts part h₂ s := by
     ext ⟨a, x⟩
-    simp only [PreSig, Set.mem_setOf_eq]
+    simp only [PreSig, Set.mem_ofPred_eq]
     constructor
     · rintro (h | ⟨u, hu, hp, he⟩)
       · exact Or.inl h
@@ -61,13 +61,13 @@ theorem Sig_congr (s : State) {h₁ h₂ : State → Tag} {f₁ f₂ : State →
         PreSig lts part h₂ s ⊆ f₂ s' ∪ {(HasTau.τ, Sum.inr (h₂ s'))} := by
       obtain ⟨s', h⟩ := hc
       exact ⟨s', Eq.mp (congrFun hP s') h⟩
-    rw [dif_pos hc, dif_pos hc2, ← choose_congr hP hc hc2]
+    rw [dite_eq_left hc, dite_eq_left hc2, ← choose_congr hP hc hc2]
     exact hf _ hc.choose_spec.1
   · have hc2 : ¬ ∃ s', lts.Tr s HasTau.τ s' ∧ part s = part s' ∧
         PreSig lts part h₂ s ⊆ f₂ s' ∪ {(HasTau.τ, Sum.inr (h₂ s'))} := by
       rintro ⟨s', h⟩
       exact hc ⟨s', Eq.mpr (congrFun hP s') h⟩
-    rw [dif_neg hc, dif_neg hc2, hpre]
+    rw [dite_eq_right hc, dite_eq_right hc2, hpre]
 
 end Existence
 
@@ -78,9 +78,9 @@ theorem exists_tau_order (lts : LTS State Label) (hWF : TauLoopFree lts) :
     ∃ lt : State → State → Prop, WellFounded lt ∧ (∀ a b, a ≠ b → lt a b ∨ lt b a) ∧
       (∀ s u, lts.Tr s HasTau.τ u → lt u s) ∧ (∀ a b c, lt a b → lt b c → lt a c) := by
   obtain ⟨e, he⟩ := exists_injective_nat State
-  haveI : IsWellFounded State (fun s' s => lts.Tr s HasTau.τ s') := ⟨hWF⟩
+  have : WellFounded (fun s' s => lts.Tr s HasTau.τ s') := hWF
   let key : State → Lex (Ordinal.{0} × ℕ) := fun s =>
-    toLex (IsWellFounded.rank (fun s' s => lts.Tr s HasTau.τ s') s, e s)
+    toLex (WellFounded.rank (fun s' s => lts.Tr s HasTau.τ s') s, e s)
   refine ⟨fun a b => key a < key b, InvImage.wf key wellFounded_lt, ?_, ?_, fun a b c => lt_trans⟩
   · intro a b hab
     rcases lt_trichotomy (key a) (key b) with h | h | h
@@ -90,7 +90,7 @@ theorem exists_tau_order (lts : LTS State Label) (hWF : TauLoopFree lts) :
       exact hab (he (Prod.ext_iff.1 h2).2)
     · exact Or.inr h
   · intro s u hu
-    exact Prod.Lex.left _ _ (IsWellFounded.rank_lt_of_rel (r := fun s' s => lts.Tr s HasTau.τ s') hu)
+    exact Prod.Lex.left _ _ (WellFounded.rank_lt_of_rel (r := fun s' s => lts.Tr s HasTau.τ s') hu)
 
 theorem sigData_exists (lts : LTS State Label) (hWF : TauLoopFree lts) (π : Setoid State) :
     Nonempty (SigData lts π) := by

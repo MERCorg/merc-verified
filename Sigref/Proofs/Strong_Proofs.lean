@@ -3,7 +3,7 @@ import Sigref.Proofs.Basic_Proofs
 import Signatures.Proofs.Signature_Proofs
 import Mathlib.Data.Set.Card
 import Mathlib.Order.WellFounded
-import Mathlib.Data.Prod.Lex
+import Mathlib.Order.Prod.Lex.Basic
 
 /-!
 # Proofs: Strong

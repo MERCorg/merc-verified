@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 public import ParityGame.Attractor
 public import ParityGame.Zielonka
 public import ParityGame.Scc
@@ -17,7 +17,8 @@ namespace ParityGame
 /-!
 # The generic solver
 
-Section 3.5 of O. Friedmann and M. Lange, *Solving Parity Games in Practice*, ATVA 2009. The
+Section 3.5 of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009. The
 generic solver takes a *backend* solver `S` and applies it only where the cheaper methods fail:
 
 1. `solveSCC` solves a final SCC `C`: directly if it is a one-player or one-parity game, and

@@ -65,7 +65,7 @@ theorem Game.finalSCC_spec (G : Game V) [Finite V] {X : Set V} (hne : X.Nonempty
     G.IsFinalSCC X (G.finalSCC X) := by
   classical
   unfold Game.finalSCC
-  rw [dif_pos (G.exists_isFinalSCC hne)]
+  rw [dite_eq_left (G.exists_isFinalSCC hne)]
   exact (G.exists_isFinalSCC hne).choose_spec
 
 end ParityGame

@@ -1,7 +1,7 @@
 module
 
 public import ParityGame.Special
-public import ParityGame.Proofs.Defs_Proofs
+public import ParityGame.Proofs.Game_Proofs
 public import ParityGame.Proofs.Region_Proofs
 public import ParityGame.Proofs.Attractor_Proofs
 public import ParityGame.Proofs.Zielonka_Proofs
@@ -237,7 +237,7 @@ theorem Game.onePlayerSolve_strong (G : Game V) [Finite V] {C : Set V} {i : Play
   · -- `i` wins everything
     have hwin : (G.onePlayerSolve C i).win i = C ∧ (G.onePlayerSolve C i).win i.opp = ∅ := by
       unfold Game.onePlayerSolve
-      rw [dif_pos h]
+      rw [dite_eq_left h]
       simp [Player.opp_ne]
     have hstrat : ∀ v, (G.onePlayerSolve C i).strat i v =
         if v ∈ h.choose then
@@ -246,7 +246,7 @@ theorem Game.onePlayerSolve_strong (G : Game V) [Finite V] {C : Set V} {i : Play
         else G.attrStrategy C i h.choose v := by
       intro v
       unfold Game.onePlayerSolve
-      rw [dif_pos h]
+      rw [dite_eq_left h]
       simp
     obtain ⟨hY₀C, hY₀ne, hY₀conn, hY₀edge, hY₀i⟩ := h.choose_spec.sound hconn
     set Y₀ := h.choose with hY₀
@@ -272,21 +272,21 @@ theorem Game.onePlayerSolve_strong (G : Game V) [Finite V] {C : Set V} {i : Play
       exact hc
     have hσY₀ : ∀ v ∈ Y₀, G.owner v = i → σ v ∈ Y₀ := by
       intro v hv ho
-      rw [hstrat, if_pos hv]
+      rw [hstrat, ite_eq_left hv]
       by_cases hvP : v ∈ P₀
-      · rw [if_pos hvP]; exact (G.anyMove_spec hY₀sub hv).1
-      · rw [if_neg hvP]
+      · rw [ite_eq_left hvP]; exact (G.anyMove_spec hY₀sub hv).1
+      · rw [ite_eq_right hvP]
         exact G.attr_subset Y₀ i P₀ hP₀Y (G.attrStrategy_mem Y₀ i P₀ (hattrY hv) hvP ho).1
     have hσmine : ∀ v ∈ C, G.owner v = i → σ v ∈ C ∧ G.edge v (σ v) := by
       intro v hv ho
       by_cases hvY : v ∈ Y₀
       · refine ⟨hY₀C (hσY₀ v hvY ho), ?_⟩
-        rw [hstrat, if_pos hvY]
+        rw [hstrat, ite_eq_left hvY]
         by_cases hvP : v ∈ P₀
-        · rw [if_pos hvP]; exact (G.anyMove_spec hY₀sub hvY).2
-        · rw [if_neg hvP]; exact (G.attrStrategy_mem Y₀ i P₀ (hattrY hvY) hvP ho).2
+        · rw [ite_eq_left hvP]; exact (G.anyMove_spec hY₀sub hvY).2
+        · rw [ite_eq_right hvP]; exact (G.attrStrategy_mem Y₀ i P₀ (hattrY hvY) hvP ho).2
       · have := G.attrStrategy_mem C i Y₀ (hattrC hv) hvY ho
-        rw [hstrat, if_neg hvY]
+        rw [hstrat, ite_eq_right hvY]
         exact ⟨G.attr_subset C i Y₀ hY₀C this.1, this.2⟩
     refine Game.Strong.of_opp i (by rw [hwin.1, hwin.2, Set.union_empty])
       (by rw [hwin.1, hwin.2]; simp) ?_ ?_
@@ -299,7 +299,7 @@ theorem Game.onePlayerSolve_strong (G : Game V) [Finite V] {C : Set V} {i : Play
     have hσ1 : ∀ v ∈ G.attr C i Y₀, v ∉ Y₀ → G.owner v = i →
         σ v = G.attrStrategy C i Y₀ v := by
       intro v _ hvY _
-      rw [hstrat, if_neg hvY]
+      rw [hstrat, ite_eq_right hvY]
     obtain ⟨k, hk⟩ := hattrC (hp 0).1
     obtain ⟨n, -, hn⟩ := G.reach_of_mem_stage C i Y₀ σ hσ1 p hconf k 0 hk
     have hstay : ∀ t, p (n + t) ∈ Y₀ := by
@@ -324,7 +324,7 @@ theorem Game.onePlayerSolve_strong (G : Game V) [Finite V] {C : Set V} {i : Play
     have hσ2 : ∀ v ∈ G.attr Y₀ i P₀, v ∉ P₀ → G.owner v = i →
         σ v = G.attrStrategy Y₀ i P₀ v := by
       intro v hv hvP _
-      rw [hstrat, if_pos (G.attr_subset Y₀ i P₀ hP₀Y hv), if_neg hvP]
+      rw [hstrat, ite_eq_left (G.attr_subset Y₀ i P₀ hP₀Y hv), ite_eq_right hvP]
     have hfreq : ∃ᶠ t in Filter.atTop, q t ∈ P₀ := by
       rw [Filter.frequently_atTop]
       intro a
@@ -342,12 +342,12 @@ theorem Game.onePlayerSolve_strong (G : Game V) [Finite V] {C : Set V} {i : Play
   · -- the opponent of `i` wins everything
     have hwin : (G.onePlayerSolve C i).win i = ∅ ∧ (G.onePlayerSolve C i).win i.opp = C := by
       unfold Game.onePlayerSolve
-      rw [dif_neg h]
+      rw [dite_eq_right h]
       simp [(Player.opp_ne i).symm]
     have hstrat : ∀ v, (G.onePlayerSolve C i).strat i.opp v = G.anyMove C v := by
       intro v
       unfold Game.onePlayerSolve
-      rw [dif_neg h]
+      rw [dite_eq_right h]
       simp
     refine Game.Strong.of_opp i (by rw [hwin.1, hwin.2, Set.empty_union])
       (by rw [hwin.1]; simp) ?_ ?_

@@ -24,7 +24,7 @@ theorem quotientCrossBisimulation (lts : LTS State Label) (blk : State → ℕ) 
     · refine Or.inr ⟨blk s, blk s', LTS.STr.refl, ⟨s, s', rfl, rfl, hstep, ?_⟩, rfl, rfl⟩
       exact fun h => helm ⟨h.1, h.2⟩
   · rintro c ⟨s0, t0, h0, h1, hstep, hne⟩
-    refine Or.inr ⟨s0, t0, (LTS.sTr_τSTr lts).mpr (hs s s0 h0.symm), hstep, h0, h1⟩
+    refine Or.inr ⟨s0, t0, (LTS.sTr_τSTr_iff lts).mpr (hs s s0 h0.symm), hstep, h0, h1⟩
 
 theorem quotientTauAcyclic (lts : LTS State Label) (blk : State → ℕ) (k : ℕ) :
     QuotientTauAcyclic lts blk k := by

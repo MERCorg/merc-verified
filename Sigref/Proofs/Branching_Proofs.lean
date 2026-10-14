@@ -122,7 +122,7 @@ theorem M_base (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     · exfalso
       have htU := f.U_sat (f.R' hWF inv hb1) huU
       exact hμ hμτ (f.U_sat (c'.π.symm hst) htU)
-    · have hp : lts.τSTr t t' := (LTS.sTr_τSTr lts).mp hSTr
+    · have hp : lts.τSTr t t' := (LTS.sTr_τSTr_iff lts).mp hSTr
       have hIR : InertReach lts c'.π t t' :=
         inertReach_of_bb lts c'.π hWF (fun a b h => f.R' hWF inv h) hp
           (Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm hb) hb2)
@@ -144,7 +144,7 @@ theorem M' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     have hc := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := lts) hb
     rcases (hc HasTau.τ).1 b hab.1 with ⟨_, hb1⟩ | ⟨t', t'', hSTr, hTr', hb2, hb3⟩
     · exact ih hb1
-    · have hp : lts.τSTr t t' := (LTS.sTr_τSTr lts).mp hSTr
+    · have hp : lts.τSTr t t' := (LTS.sTr_τSTr_iff lts).mp hSTr
       have hIR : InertReach lts c'.π t t' :=
         inertReach_of_bb lts c'.π hWF (fun a b h => f.R' hWF inv h) hp
           (Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm hb) hb2)
@@ -434,7 +434,7 @@ theorem branchingInv_step (lts : LTS State Label) (hWF : TauLoopFree lts) {c c' 
 /-- An inert path is a τ-path. -/
 theorem inertReach_tauPath {lts : LTS State Label} {π : Setoid State} {s t : State}
     (h : InertReach lts π s t) : lts.τSTr s t :=
-  Relation.ReflTransGen.mono (fun _ _ h => h.1) h
+  Relation.ReflTransGen.mono (fun _ _ h => h.1) _ _ h
 
 /-- **Final.** With no dirty state left, the partition is exactly branching bisimilarity. -/
 theorem branchingInv_final (lts : LTS State Label) {c : Config State}
@@ -449,7 +449,7 @@ theorem branchingInv_final (lts : LTS State Label) {c : Config State}
     intro s t h μ s1 hTr
     rcases E_step lts c.π (hE s t h) hTr with ⟨ha, _, hE1⟩ | ⟨t', t1, hIR, hEt', hTr', hcase⟩
     · exact Or.inl ⟨ha, hE1.1⟩
-    · refine Or.inr ⟨t', t1, (LTS.sTr_τSTr lts).mpr (inertReach_tauPath hIR), hTr', hEt'.1, ?_⟩
+    · refine Or.inr ⟨t', t1, (LTS.sTr_τSTr_iff lts).mpr (inertReach_tauPath hIR), hTr', hEt'.1, ?_⟩
       rcases hcase with ⟨_, _, hE1⟩ | ⟨_, hπ1⟩
       · exact hE1.1
       · exact hπ1

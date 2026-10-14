@@ -29,7 +29,7 @@ theorem mark_eq (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1
     rp.mark s = { rp with
       loc := (Equiv.swap s (lastClean s hc)).trans rp.loc
       bm := Function.update rp.bm (rp.blk s) (rp.bm (rp.blk s) - 1) } := by
-  unfold mark lastClean; rw [dif_pos hc]
+  unfold mark lastClean; rw [dite_eq_left hc]
 
 theorem loc_lastClean (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) :
     (rp.loc (lastClean s hc)).val = rp.bm (rp.blk s) - 1 := by
@@ -44,7 +44,7 @@ include hwf
 theorem mark_wf : (rp.mark s).WF := by
   by_cases hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n
   swap
-  · unfold mark; rw [dif_neg hc]; exact hwf
+  · unfold mark; rw [dite_eq_right hc]; exact hwf
   set s' := lastClean s hc with hs'
   have hb : rp.blk s < rp.nb := (hwf.state s).1
   have hbs := (hwf.state s).2.1
@@ -88,7 +88,7 @@ theorem mark_dirty (x : Fin n) : (rp.mark s).Dirty x ↔ rp.Dirty x ∨ x = s :=
     have hbound : rp.bm (rp.blk s) - 1 < n := by have := s.pos; omega
     have hs : rp.bm (rp.blk s) ≤ (rp.loc s).val := by
       by_contra h; exact hc ⟨by omega, hbound⟩
-    unfold mark; rw [dif_neg hc]
+    unfold mark; rw [dite_eq_right hc]
     exact ⟨Or.inl, fun h => h.elim id (fun hx => hx ▸ hs)⟩
   set s' := lastClean s hc with hs'
   have hb : rp.blk s < rp.nb := (hwf.state s).1
@@ -162,7 +162,7 @@ theorem mark_loc_of_ge (rp : RP n) (s x : Fin n) (hx : rp.bm (rp.blk s) ≤ (rp.
       have := loc_lastClean s hc
       rw [h] at hx; omega
     rw [Equiv.swap_apply_of_ne_of_ne hxs hxs']
-  · unfold mark; rw [dif_neg hc]
+  · unfold mark; rw [dite_eq_right hc]
 
 end MarkMore
 
@@ -215,11 +215,11 @@ theorem markList_loc_of_ge (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n)
   | cons y ys ih =>
     simp only [markList]
     by_cases hy : rp.blk y = b
-    · rw [if_pos hy]
+    · rw [ite_eq_left hy]
       have h1 : (rp.mark y).loc x = rp.loc x := mark_loc_of_ge rp y x (by rw [hy]; exact hx)
       have h2 : (rp.mark y).bm b ≤ rp.bm b := mark_bm_le rp y b
       rw [ih (rp.mark y) (by rw [h1]; omega), h1]
-    · rw [if_neg hy]; exact ih rp hx
+    · rw [ite_eq_right hy]; exact ih rp hx
 
 /-- Effect of `markList` on the dirty set. -/
 theorem markList_dirty (hwf : rp.WF) (b : ℕ) (l : List (Fin n)) (x : Fin n) :
@@ -229,7 +229,7 @@ theorem markList_dirty (hwf : rp.WF) (b : ℕ) (l : List (Fin n)) (x : Fin n) :
   | cons y ys ih =>
     simp only [markList]
     by_cases hy : rp.blk y = b
-    · rw [if_pos hy, ih (mark_wf hwf y), mark_dirty hwf y x, mark_blk]
+    · rw [ite_eq_left hy, ih (mark_wf hwf y), mark_dirty hwf y x, mark_blk]
       constructor
       · rintro ((h | h) | ⟨h1, h2⟩)
         · exact Or.inl h
@@ -240,7 +240,7 @@ theorem markList_dirty (hwf : rp.WF) (b : ℕ) (l : List (Fin n)) (x : Fin n) :
         · rcases List.mem_cons.1 h1 with h | h
           · exact Or.inl (Or.inr h)
           · exact Or.inr ⟨h, h2⟩
-    · rw [if_neg hy, ih hwf]
+    · rw [ite_eq_right hy, ih hwf]
       constructor
       · rintro (h | ⟨h1, h2⟩)
         · exact Or.inl h
@@ -261,7 +261,7 @@ theorem mark_loc_lt (rp : RP n) (s x : Fin n) (M : ℕ) (hM : rp.bm (rp.blk s) �
     · omega
     · omega
     · exact hx
-  · unfold mark; rw [dif_neg hc]; exact hx
+  · unfold mark; rw [dite_eq_right hc]; exact hx
 
 theorem markList_loc_lt (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n) (M : ℕ)
     (hM : rp.bm b ≤ M) (hx : (rp.loc x).val < M) : ((markList b l rp).loc x).val < M := by
@@ -270,10 +270,10 @@ theorem markList_loc_lt (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n) (M 
   | cons y ys ih =>
     simp only [markList]
     by_cases hy : rp.blk y = b
-    · rw [if_pos hy]
+    · rw [ite_eq_left hy]
       have h2 := mark_bm_le rp y b
       refine ih _ (le_trans h2 hM) (mark_loc_lt rp y x M (by rw [hy]; exact hM) hx)
-    · rw [if_neg hy]; exact ih rp hM hx
+    · rw [ite_eq_right hy]; exact ih rp hM hx
 
 /-! ### The backwards closure (first phase of `SortedClosure`) -/
 
@@ -383,7 +383,7 @@ theorem closureLoop_spec (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) (hb : b <
       · simpa [closureLoop, h] using hinv
       · simpa [closureLoop, h] using hcl
     · refine ⟨it, k + 1, by simpa [closureLoop, h] using inv, ?_⟩
-      simp only [closureLoop, dif_neg h]
+      simp only [closureLoop, dite_eq_right h]
       intro x hx hxd y hty hyb
       have hbnb : b < rp.nb := inv.nb ▸ hb
       have hbl := inv.wf.block b hbnb

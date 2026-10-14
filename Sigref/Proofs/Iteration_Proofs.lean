@@ -33,14 +33,14 @@ theorem mem_markTargets {lts : LTS (Fin n) Label} {inc : Fin n → List (Fin n �
   constructor
   · rintro ⟨u, _, hu⟩
     by_cases h : nbOld ≤ rp2.blk u
-    · rw [if_pos h, List.mem_map] at hu
+    · rw [ite_eq_left h, List.mem_map] at hu
       obtain ⟨⟨y', a⟩, hp, rfl⟩ := hu
       rw [List.mem_filter, decide_eq_true_eq] at hp
       exact ⟨a, u, h, (hinc u y' a).1 hp.1, hp.2⟩
-    · rw [if_neg h] at hu; exact absurd hu (List.not_mem_nil)
+    · rw [ite_eq_right h] at hu; exact absurd hu (List.not_mem_nil)
   · rintro ⟨a, u, h, hTr, hc⟩
     refine ⟨u, List.mem_finRange u, ?_⟩
-    rw [if_pos h, List.mem_map]
+    rw [ite_eq_left h, List.mem_map]
     exact ⟨(y, a), by rw [List.mem_filter, decide_eq_true_eq]; exact ⟨(hinc u y a).2 hTr, hc⟩, rfl⟩
 
 section Sim
@@ -90,7 +90,7 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
   have hD3 := markAllW_dirty hwl2 (markTargets inc rp2 (closure b preds c.rp).nb)
   have hset : cls c.rp.setoid x0 ∩ {z | c.rp.Dirty z} = {z | c.rp.blk z = b ∧ c.rp.Dirty z} := by
     ext z
-    simp only [cls, Set.mem_inter_iff, Set.mem_setOf_eq]
+    simp only [cls, Set.mem_inter_iff, Set.mem_ofPred_eq]
     exact and_congr_left' (by show c.rp.blk x0 = c.rp.blk z ↔ _; rw [hx0b]; exact eq_comm)
   have hDmem : ∀ x, x ∈ inertClosure lts c.rp.setoid (cls c.rp.setoid x0 ∩ {z | c.rp.Dirty z}) ↔
       c.rp.blk x = b ∧ (closure b preds c.rp).Dirty x := by
@@ -108,7 +108,7 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
   have hU : ∀ u, u ∈ cls c.rp.setoid x0 \ cls (markAllW (markTargets inc rp2 (closure b preds c.rp).nb)
       (⟨rp2, wl'⟩ : Ctx n)).rp.setoid x1 ↔ (closure b preds c.rp).nb ≤ rp2.blk u := by
     intro u
-    simp only [Set.mem_sdiff, cls, Set.mem_setOf_eq]
+    simp only [Set.mem_sdiff, cls, Set.mem_ofPred_eq]
     show (c.rp.blk x0 = c.rp.blk u ∧ ¬ ((markAllW (markTargets inc rp2 (closure b preds c.rp).nb) (⟨rp2, wl'⟩ : Ctx n)).rp.blk x1 =
       (markAllW (markTargets inc rp2 (closure b preds c.rp).nb) (⟨rp2, wl'⟩ : Ctx n)).rp.blk u)) ↔ _
     rw [hblk3]
@@ -190,7 +190,7 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
         exact ⟨fun h => ⟨hzb, h⟩, fun h => h.2⟩
     have hXD : (z ∈ {w | c.rp.Dirty w} \ inertClosure lts c.rp.setoid
         (cls c.rp.setoid x0 ∩ {w | c.rp.Dirty w})) ↔ (c.rp.blk z ≠ b ∧ c.rp.Dirty z) := by
-      simp only [Set.mem_sdiff, Set.mem_setOf_eq, hDmem]
+      simp only [Set.mem_sdiff, Set.mem_ofPred_eq, hDmem]
       by_cases hzb : c.rp.blk z = b
       · constructor
         · rintro ⟨hd, hn⟩
@@ -200,7 +200,7 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     have hpred : z ∈ predB lts (cls c.rp.setoid x0 \ cls (markAllW (markTargets inc rp2 (closure b preds c.rp).nb) (⟨rp2, wl'⟩ : Ctx n)).rp.setoid x1) ↔
         ∃ a u, (closure b preds c.rp).nb ≤ rp2.blk u ∧ lts.Tr z a u ∧
           (a ≠ HasTau.τ ∨ rp2.blk z < (closure b preds c.rp).nb) := by
-      simp only [predB, Set.mem_setOf_eq, hU]
+      simp only [predB, Set.mem_ofPred_eq, hU]
       constructor
       · rintro ⟨μ, u, h1, h2, h3⟩
         refine ⟨μ, u, h1, h2, ?_⟩

@@ -17,7 +17,8 @@ namespace Refinement
 /-!
 # The optimised impossible futures algorithms (Algorithms 5 and 6)
 
-Section 4.2 of M. Laveaux and T. A. C. Willemse, *Deciding Impossible Futures*, LNCS 16365, 2026.
+Section 4.2 of [M. Laveaux and T. A. C. Willemse, *Deciding Impossible Futures*][Laveaux2026],
+LNCS 16365, 2026.
 
 **Algorithm 5** (`WeakTraceOpt`) is the inner weak trace inclusion check `t ⊑wt impl` between a
 specification state `t : State1` and an implementation state `impl : State2`. It is the

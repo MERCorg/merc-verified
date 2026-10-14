@@ -122,7 +122,7 @@ theorem traceRefines_iff_not_reachable_trWitness [HasTau Label]
     have hρ1' : ρ ∉ weaktraces lts1 s1 := by
       have := normTr_image lts1 s1 hρ1
       rw [hwit] at this
-      simp only [weaktraces, Set.mem_setOf_eq]
+      simp only [weaktraces, Set.mem_ofPred_eq]
       rw [eq_comm, Set.eq_empty_iff_forall_notMem] at this
       exact fun ⟨t, ht⟩ => this t ht
     exact hρ1' (href hρ2')

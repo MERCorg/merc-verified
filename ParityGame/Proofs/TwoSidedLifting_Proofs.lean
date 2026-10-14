@@ -63,8 +63,9 @@ theorem LexLE.mono {n n' : ℕ} {a b : ℕ → ℕ} (h : n' ≤ n) (hab : LexLE 
 /-- The strict part of `LexLE n` is well-founded: it is a subrelation of the lexicographic order
     on `Fin n → ℕ`. -/
 theorem LexLE.wf (n : ℕ) : WellFounded (fun a b : ℕ → ℕ => LexLE n a b ∧ ¬ LexLE n b a) := by
+  have : ∀ _ : Fin n, WellFounded ((· < ·) : ℕ → ℕ → Prop) := fun _ => wellFounded_lt
   have hwf := Pi.Lex.wellFounded (ι := Fin n) (α := fun _ => ℕ) (· < ·)
-    (s := fun _ => (· < ·)) (fun _ => wellFounded_lt)
+    (s := fun _ => (· < ·))
   refine Subrelation.wf ?_ (InvImage.wf (fun a : ℕ → ℕ => fun i : Fin n => a i) hwf)
   intro a b ⟨hab, hba⟩
   rcases hab with hab | ⟨i, hi, hab, hlt⟩
@@ -152,7 +153,7 @@ theorem Game.strategyExit (G : Game V) (X : Set V) (C : Codomain M) (D : Set V) 
   cases ho : G.owner s with
   | zero => simpa [ho] using (hμ.2.1 s (hSD hs) ho).2.2
   | one =>
-    simp only [reduceCtorEq, if_false]
+    simp only [reduceCtorEq, ite_false]
     exact (hμ.2.2 s (hSD hs) ho (τ s) (hτ s hs ho).1 (hτ s hs ho).2).2
 
 /-! ### 3. The chain tree: levels -/
@@ -169,7 +170,7 @@ theorem Game.level_of_lt [Finite V] (G : Game V) (X : Set V) {l : ℕ} (hl : l <
     G.level X l = (G.oddPrios X).orderEmbOfFin rfl ⟨(G.oddPrios X).card - 1 - l,
       by unfold Game.height at hl; omega⟩ := by
   unfold Game.level
-  rw [dif_pos (by unfold Game.height at hl; exact hl)]
+  rw [dite_eq_left (by unfold Game.height at hl; exact hl)]
 
 theorem Game.level_mem [Finite V] (G : Game V) (X : Set V) {l : ℕ}
     (hl : l < G.height X) : G.level X l ∈ G.oddPrios X := by
@@ -332,14 +333,14 @@ theorem Game.compAt_compIdx [Finite V] (G : Game V) {R : Set V} {q : ℕ} {K : S
     (hK : K ∈ G.lowComps R q) :
     G.compAt R q (G.compIdx R q K) = K := by
   unfold Game.compAt Game.compIdx
-  rw [dif_pos hK, dif_pos (Fin.isLt _)]
-  simp
+  rw [dite_eq_left hK, dite_eq_left (Fin.isLt _), Fin.eta]
+  exact congrArg Subtype.val (Equiv.symm_apply_apply _ _)
 
 theorem Game.compIdx_lt [Finite V] (G : Game V) {R : Set V} {q : ℕ} {K : Set V}
     (hK : K ∈ G.lowComps R q) :
     G.compIdx R q K < Nat.card (G.lowComps R q) := by
   unfold Game.compIdx
-  rw [dif_pos hK]
+  rw [dite_eq_left hK]
   exact Fin.isLt _
 
 /-! ### Lassos: a repeated maximal odd node on a conforming path refutes a winning strategy -/
@@ -358,7 +359,7 @@ theorem lassoPos_lt {i j : ℕ} (hij : i < j) : ∀ n, lassoPos i j n < j
 
 theorem lassoPos_self {i j : ℕ} (hij : i < j) : ∀ n ≤ i, lassoPos i j n = n
   | 0, _ => rfl
-  | n + 1, hn => by rw [lassoPos_succ, lassoPos_self hij n (by omega), if_pos (by omega)]
+  | n + 1, hn => by rw [lassoPos_succ, lassoPos_self hij n (by omega), ite_eq_left (by omega)]
 
 theorem lassoPos_ge {i j : ℕ} (hij : i < j) : ∀ n, i ≤ n → i ≤ lassoPos i j n := by
   intro n hn
@@ -373,10 +374,10 @@ theorem lassoPos_hits {i j : ℕ} :
   | _ k ih =>
     intro n hk hi
     by_cases hlt : lassoPos i j n + 1 < j
-    · have h1 : lassoPos i j (n + 1) = lassoPos i j n + 1 := by rw [lassoPos_succ, if_pos hlt]
+    · have h1 : lassoPos i j (n + 1) = lassoPos i j n + 1 := by rw [lassoPos_succ, ite_eq_left hlt]
       obtain ⟨d, hd⟩ := ih (j - lassoPos i j (n + 1)) (by omega) (n + 1) rfl (by omega)
       exact ⟨d + 1, by rw [show n + (d + 1) = n + 1 + d by omega]; exact hd⟩
-    · exact ⟨1, by rw [lassoPos_succ, if_neg hlt]⟩
+    · exact ⟨1, by rw [lassoPos_succ, ite_eq_right hlt]⟩
 
 /-- No conforming path from a node won by `σ` repeats a node whose (odd) priority is maximal on
     the path. -/
@@ -400,11 +401,11 @@ theorem Game.no_odd_repeat [Finite V] (G : Game V) (X : Set V) {σ : Strategy V}
   have hM : G.MaxInfPrio p (G.prio (a i)) := by
     rw [G.maxInfPrio_iff]
     refine ⟨⟨a i, ?_, rfl⟩, fun x hx => ?_⟩
-    · rw [nodeInf, Set.mem_setOf_eq, Filter.frequently_atTop]
+    · rw [nodeInf, Set.mem_ofPred_eq, Filter.frequently_atTop]
       intro N
       obtain ⟨d, hd⟩ := lassoPos_hits _ (max N i) rfl (lassoPos_ge hij _ (by omega))
       exact ⟨max N i + d, by omega, by rw [hpn, hd]⟩
-    · rw [nodeInf, Set.mem_setOf_eq, Filter.frequently_atTop] at hx
+    · rw [nodeInf, Set.mem_ofPred_eq, Filter.frequently_atTop] at hx
       obtain ⟨n, -, hn⟩ := hx 0
       rw [← hn, hpn]
       exact hmax (lassoPos i j n) (by have := lassoPos_lt hij n; omega)
@@ -458,11 +459,11 @@ theorem Game.chainPath_le [Finite V] (G : Game V) {R : Set V} {q n : ℕ} (h : G
     n ≤ Nat.card V := by
   classical
   obtain ⟨m, a, -, -, hinj, rfl⟩ := h
-  haveI := Fintype.ofFinite V
+  have := Fintype.ofFinite V
   rw [Nat.card_eq_fintype_card, ← Finset.card_image_of_injOn (f := a)]
   · exact Finset.card_le_univ _
   · intro x hx y hy hxy
-    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hx hy
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hx hy
     exact hinj x (by omega) y (by omega) hx.2 hxy
 
 theorem Game.chainPath_bdd [Finite V] (G : Game V) (R : Set V) (q : ℕ) :
@@ -503,7 +504,7 @@ theorem Game.cnt_eq_zero (G : Game V) (X : Set V) (σ : Strategy V) {q : ℕ} {v
     (hv : q < G.prio v) : G.cnt X σ q v = 0 := by
   have : {n | G.CntPath X σ q v n} = ∅ := by
     ext n
-    simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+    simp only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false]
     rintro ⟨m, a, rfl, -, hle, -⟩
     have := hle 0 (by omega)
     omega
@@ -564,13 +565,13 @@ noncomputable def Game.chainMeasure [Finite V] (G : Game V) (X : Set V) (σ : St
 theorem Game.chainMeasure_even [Finite V] (G : Game V) (X : Set V) (σ : Strategy V) (v : V)
     {l : ℕ} (hl : l < G.height X) : G.chainMeasure X σ v (2 * l) = G.kIdx X l v := by
   unfold Game.chainMeasure
-  rw [if_pos (by omega), if_pos (by omega), show 2 * l / 2 = l by omega]
+  rw [ite_eq_left (by omega), ite_eq_left (by omega), show 2 * l / 2 = l by omega]
 
 theorem Game.chainMeasure_odd [Finite V] (G : Game V) (X : Set V) (σ : Strategy V) (v : V)
     {l : ℕ} (hl : l < G.height X) :
     G.chainMeasure X σ v (2 * l + 1) = G.cnt X σ (G.level X l) v := by
   unfold Game.chainMeasure
-  rw [if_pos (by omega), if_neg (by omega), show (2 * l + 1) / 2 = l by omega]
+  rw [ite_eq_left (by omega), ite_eq_right (by omega), show (2 * l + 1) / 2 = l by omega]
 
 theorem Game.leafRegion_chainMeasure [Finite V] (G : Game V) (X : Set V) (σ : Strategy V) {v : V}
     (hv : v ∈ X) : ∀ l, l < G.height X → G.Belongs X l v →
@@ -580,7 +581,7 @@ theorem Game.leafRegion_chainMeasure [Finite V] (G : Game V) (X : Set V) (σ : S
     show G.compAt (G.leafRegion X (G.chainMeasure X σ v) l) (G.level X l)
       (G.chainMeasure X σ v (2 * (l + 1))) = G.region X (l + 1) v
     rw [G.leafRegion_chainMeasure X σ hv l (by omega) (hb.mono (by omega)),
-      G.chainMeasure_even X σ v hl, Game.kIdx, if_pos hb,
+      G.chainMeasure_even X σ v hl, Game.kIdx, ite_eq_left hb,
       G.compAt_compIdx (G.region_mem_lowComps X hv hb)]
 
 /-- The measure of a won node is a chain-tree leaf. -/
@@ -602,7 +603,7 @@ theorem Game.chainMeasure_isChainLeaf [Finite V] (G : Game V) (X : Set V) {σ : 
     · rw [G.cnt_eq_zero X σ (by omega)]
       exact Nat.zero_le _
   · unfold Game.chainMeasure
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
 
 /-- The measure satisfies the progress condition along every conforming move between won
     nodes: it is componentwise non-increasing on the compared coordinates (component indices are
@@ -625,10 +626,10 @@ theorem Game.chainMeasure_prog [Finite V] (G : Game V) (X : Set V) (C : Codomain
       | succ l =>
         have hbv : G.Belongs X (l + 1) v := G.belongs_of_le X hlh hpl
         by_cases hbw : G.Belongs X (l + 1) w
-        · rw [Game.kIdx, Game.kIdx, if_pos hbv, if_pos hbw,
+        · rw [Game.kIdx, Game.kIdx, ite_eq_left hbv, ite_eq_left hbw,
             G.region_eq X hvX hwX hedge (l + 1) hbv hbw,
             G.region_eq X hvX hwX hedge l (hbv.mono (by omega)) (hbw.mono (by omega))]
-        · rw [Game.kIdx, if_neg hbw]
+        · rw [Game.kIdx, ite_eq_right hbw]
           exact Nat.zero_le _
     · obtain ⟨hlh, hpl⟩ := (G.lt_levelDepth_iff X).mp (show l < G.levelDepth X (G.prio v) by omega)
       rw [G.chainMeasure_odd X σ w hlh, G.chainMeasure_odd X σ v hlh]
@@ -640,7 +641,7 @@ theorem Game.chainMeasure_prog [Finite V] (G : Game V) (X : Set V) (C : Codomain
   apply LexLE.not_of_lt hle (i := 2 * m + 1) (by unfold Game.chainDepth; omega)
   rw [G.chainMeasure_odd X σ w hm, G.chainMeasure_odd X σ v hm]
   have := G.cnt_step X hwv hww hs hm hqm.ge
-  rw [if_pos hqm.symm] at this
+  rw [ite_eq_left hqm.symm] at this
   omega
 
 /-- Completeness of the chain tree (headline). -/
@@ -705,9 +706,9 @@ theorem listIdx_spec {α : Type*} {L : List α} {K : α} (h : K ∈ L) (d : α) 
   classical
   have hex : ∃ i, ∃ hi : i < L.length, L[i] = K := List.mem_iff_getElem.mp h
   unfold listIdx
-  rw [dif_pos hex]
+  rw [dite_eq_left hex]
   obtain ⟨hi, hK⟩ := hex.choose_spec
-  exact ⟨hi, by rw [List.getD_eq_getElem _ _ hi, hK]⟩
+  exact ⟨hi, by rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi, Option.getD_some, hK]⟩
 
 open scoped Classical in
 /-- The component index of `v` at level `l` for the numbering `nb` (`0` where `v` does not
@@ -729,14 +730,14 @@ theorem Game.chainMeasureBy_even [Finite V] (G : Game V) (X : Set V)
     (nb : Set V → ℕ → List (Set V)) (σ : Strategy V) (v : V)
     {l : ℕ} (hl : l < G.height X) : G.chainMeasureBy X nb σ v (2 * l) = G.kIdxBy X nb l v := by
   unfold Game.chainMeasureBy
-  rw [if_pos (by omega), if_pos (by omega), show 2 * l / 2 = l by omega]
+  rw [ite_eq_left (by omega), ite_eq_left (by omega), show 2 * l / 2 = l by omega]
 
 theorem Game.chainMeasureBy_odd [Finite V] (G : Game V) (X : Set V)
     (nb : Set V → ℕ → List (Set V)) (σ : Strategy V) (v : V)
     {l : ℕ} (hl : l < G.height X) :
     G.chainMeasureBy X nb σ v (2 * l + 1) = G.cnt X σ (G.level X l) v := by
   unfold Game.chainMeasureBy
-  rw [if_pos (by omega), if_neg (by omega), show (2 * l + 1) / 2 = l by omega]
+  rw [ite_eq_left (by omega), ite_eq_right (by omega), show (2 * l + 1) / 2 = l by omega]
 
 theorem Game.leafRegionBy_chainMeasureBy [Finite V] (G : Game V) (X : Set V)
     {nb : Set V → ℕ → List (Set V)} (hnb : G.CompNumbering X nb) (σ : Strategy V) {v : V}
@@ -747,7 +748,7 @@ theorem Game.leafRegionBy_chainMeasureBy [Finite V] (G : Game V) (X : Set V)
     show (nb (G.leafRegionBy X nb (G.chainMeasureBy X nb σ v) l) (G.level X l)).getD
       (G.chainMeasureBy X nb σ v (2 * (l + 1))) ∅ = G.region X (l + 1) v
     rw [G.leafRegionBy_chainMeasureBy X hnb σ hv l (by omega) (hb.mono (by omega)),
-      G.chainMeasureBy_even X nb σ v hl, Game.kIdxBy, if_pos hb]
+      G.chainMeasureBy_even X nb σ v hl, Game.kIdxBy, ite_eq_left hb]
     exact (listIdx_spec (hnb _ (G.region_subset X hv l) _ _
       (G.region_mem_lowComps X hv hb)) ∅).2
 
@@ -773,7 +774,7 @@ theorem Game.chainMeasureBy_isChainLeafBy [Finite V] (G : Game V) (X : Set V)
     · rw [G.cnt_eq_zero X σ (by omega)]
       exact Nat.zero_le _
   · unfold Game.chainMeasureBy
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
 
 theorem Game.chainMeasureBy_prog [Finite V] (G : Game V) (X : Set V) (C : Codomain (ℕ → ℕ))
     (nb : Set V → ℕ → List (Set V))
@@ -793,10 +794,10 @@ theorem Game.chainMeasureBy_prog [Finite V] (G : Game V) (X : Set V) (C : Codoma
       | succ l =>
         have hbv : G.Belongs X (l + 1) v := G.belongs_of_le X hlh hpl
         by_cases hbw : G.Belongs X (l + 1) w
-        · rw [Game.kIdxBy, Game.kIdxBy, if_pos hbv, if_pos hbw,
+        · rw [Game.kIdxBy, Game.kIdxBy, ite_eq_left hbv, ite_eq_left hbw,
             G.region_eq X hvX hwX hedge (l + 1) hbv hbw,
             G.region_eq X hvX hwX hedge l (hbv.mono (by omega)) (hbw.mono (by omega))]
-        · rw [Game.kIdxBy, if_neg hbw]
+        · rw [Game.kIdxBy, ite_eq_right hbw]
           exact Nat.zero_le _
     · obtain ⟨hlh, hpl⟩ := (G.lt_levelDepth_iff X).mp (show l < G.levelDepth X (G.prio v) by omega)
       rw [G.chainMeasureBy_odd X nb σ w hlh, G.chainMeasureBy_odd X nb σ v hlh]
@@ -808,7 +809,7 @@ theorem Game.chainMeasureBy_prog [Finite V] (G : Game V) (X : Set V) (C : Codoma
   apply LexLE.not_of_lt hle (i := 2 * m + 1) (by unfold Game.chainDepth; omega)
   rw [G.chainMeasureBy_odd X nb σ w hm, G.chainMeasureBy_odd X nb σ v hm]
   have := G.cnt_step X hwv hww hs hm hqm.ge
-  rw [if_pos hqm.symm] at this
+  rw [ite_eq_left hqm.symm] at this
   omega
 
 /-- Completeness of the chain tree for any numbering listing every component (headline). -/

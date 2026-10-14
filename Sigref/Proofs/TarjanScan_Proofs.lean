@@ -52,7 +52,7 @@ theorem scan_spec (g : Graph n) (s : Fin n) :
     cases h with
     | false =>
       have hih := ih (idx + 1) c hon
-      simp only [scan, Bool.false_eq_true, if_false]
+      simp only [scan, Bool.false_eq_true, ite_false]
       obtain ⟨tc, tr, h1, h2, h3, h4, h5, h6⟩ := hih.consumed
       refine ⟨⟨(false, v) :: tc, tr, by simp [h1], by simp [h2]; omega, h3, ?_, ?_, ?_⟩,
         hih.work, hih.stk, hih.onSt, hih.time, hih.eq, hih.blk, hih.ri, hih.low_ne, hih.low_le,
@@ -69,7 +69,7 @@ theorem scan_spec (g : Graph n) (s : Fin n) :
     | true =>
       have hunv0 : (0 : ℕ) ≠ g.unv := by have := g.unv_gt; omega
       by_cases hd : c.disc v = g.unv
-      · simp only [scan, if_true, hd]
+      · simp only [scan, ite_true, hd]
         refine ⟨⟨[(true, v)], ts, by simp, by simp, by simp, ?_, ?_, ?_⟩, rfl, rfl, rfl, rfl, rfl, rfl, rfl,
           fun _ _ => rfl, le_rfl, ?_, ?_⟩
         · intro w hw
@@ -90,7 +90,7 @@ theorem scan_spec (g : Graph n) (s : Fin n) :
           exact ⟨hd, by simp⟩
       · by_cases hc : c.onSt v = true ∧ c.disc v < c.low s
         · have hcond : (c.onSt v && decide (c.disc v < c.low s)) = true := by simp [hc.1, hc.2]
-          simp only [scan, if_true, hd, if_false, hcond]
+          simp only [scan, ite_true, hd, ite_false, hcond]
           set c1 : Ctx n := { c with low := Function.update c.low s (c.disc v) } with hc1
           have hih := ih (idx + 1) c1 (fun w hw => hon w hw)
           obtain ⟨tc, tr, h1, h2, h3, h4, h5, h6⟩ := hih.consumed
@@ -132,7 +132,7 @@ theorem scan_spec (g : Graph n) (s : Fin n) :
             exact hih.child w hw
         · have hcond : ¬ ((c.onSt v && decide (c.disc v < c.low s)) = true) := by
             intro h; apply hc; simpa using h
-          simp only [scan, if_true, hd, if_false, hcond, Bool.false_eq_true]
+          simp only [scan, ite_true, hd, ite_false, hcond, Bool.false_eq_true]
           have hih := ih (idx + 1) c hon
           obtain ⟨tc, tr, h1, h2, h3, h4, h5, h6⟩ := hih.consumed
           have hvnc : ∀ w, (scan g s ts (idx + 1) c).1 = some w → w ≠ v := by
@@ -189,7 +189,7 @@ theorem popComp_spec (s : Fin n) (e : ℕ) :
         ih (Function.update onSt u false) (Function.update blk u e) hs'
       refine ⟨u :: top, rest', by simp [h1], ?_, onSt', blk', ?_, ?_, ?_⟩
       · simp [h2, Ne.symm hu]
-      · simp only [popComp, hu, if_false]; exact h3
+      · simp only [popComp, hu, ite_false]; exact h3
       · intro w
         rw [h4 w]
         by_cases hw : w = u
@@ -210,7 +210,7 @@ theorem popComp_none (s : Fin n) (e : ℕ) :
   | cons u rest ih =>
     intro onSt blk hs
     have hu : u ≠ s := fun h => hs (by simp [h])
-    simp only [popComp, hu, if_false]
+    simp only [popComp, hu, ite_false]
     exact ih _ _ (fun h => hs (List.mem_cons_of_mem _ h))
 
 end Sigref.Tarjan

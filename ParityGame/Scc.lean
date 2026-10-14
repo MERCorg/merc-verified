@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 
 @[expose] public section Scc
 
@@ -9,7 +9,8 @@ namespace ParityGame
 /-!
 # Strongly connected components
 
-Section 3.1 of O. Friedmann and M. Lange, *Solving Parity Games in Practice*, ATVA 2009.
+Section 3.1 of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009.
 
 SCCs are taken inside the subgame `X`: reachability only uses edges between nodes of `X`. They are
 specified mathematically (not by Tarjan's algorithm): `IsSCC X C` says `C` is a maximal

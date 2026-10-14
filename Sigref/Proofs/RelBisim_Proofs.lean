@@ -72,7 +72,7 @@ theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : 
       exact ⟨hTr, hin.2⟩
     rcases (hc HasTau.τ).1 _ edge with ⟨_, hbs1⟩ | ⟨t2', t2'', hSTr, hTr', hb1, hb2⟩
     · exact Or.inl ⟨hin.1, hin.2, π.trans (π.symm hin.2) hπ, hbs1⟩
-    · obtain ⟨t', rfl, hIR⟩ := tauSTr_inl lts π ((LTS.sTr_τSTr (relLTS lts π)).mp hSTr)
+    · obtain ⟨t', rfl, hIR⟩ := tauSTr_inl lts π ((LTS.sTr_τSTr_iff (relLTS lts π)).mp hSTr)
       obtain ⟨x, rfl, hx⟩ := (relLTS_tau_inl lts π).1 hTr'
       have hst' : π.r s t' := π.trans hπ (InertReach.rel lts π hIR)
       exact Or.inr ⟨t', x, hIR, ⟨hst', hb1⟩, by rw [hin.1]; exact hx.1,
@@ -81,7 +81,7 @@ theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : 
       ⟨a, s1, rfl, hTr, hin⟩
     rcases (hc (a, some (Quotient.mk π s1))).1 _ edge with ⟨hμ, _⟩ | ⟨t2', t2'', hSTr, hTr', hb1, hb2⟩
     · exact absurd (congrArg Prod.snd hμ) (by simp [HasTau.τ])
-    · obtain ⟨t', rfl, hIR⟩ := tauSTr_inl lts π ((LTS.sTr_τSTr (relLTS lts π)).mp hSTr)
+    · obtain ⟨t', rfl, hIR⟩ := tauSTr_inl lts π ((LTS.sTr_τSTr_iff (relLTS lts π)).mp hSTr)
       rcases t2'' with x0 | u
       · exact absurd (congrArg Prod.snd hTr'.1) (by simp)
       · obtain ⟨a', x, hl, hTrx, _⟩ := hTr'
@@ -128,7 +128,7 @@ theorem E_coind (R : State → State → Prop) (hsymm : ∀ s t, R s t → R t s
           · rcases hcase with ⟨_, _, hR1⟩ | ⟨hne, _⟩
             · have hst' : π.r s t' := (hR s t' hRt').1
               have hs1t1 : π.r s1 t1 := (hR s1 t1 hR1).1
-              refine Or.inr ⟨.inl t', .inl t1, (LTS.sTr_τSTr _).mpr (inertReach_tauSTr lts π hIR),
+              refine Or.inr ⟨.inl t', .inl t1, (LTS.sTr_τSTr_iff _).mpr (inertReach_tauSTr lts π hIR),
                 ⟨rfl, hTr', π.trans (π.symm hst') (π.trans hin.2 hs1t1)⟩, hRt', hR1⟩
             · rcases hne with h | h
               · exact absurd rfl h
@@ -139,7 +139,7 @@ theorem E_coind (R : State → State → Prop) (hsymm : ∀ s t, R s t → R t s
           · rcases hcase with ⟨ha, hsx, _⟩ | ⟨_, hxt1⟩
             · exact absurd ⟨ha, hsx⟩ hni
             · have hst' : π.r s t' := (hR s t' hRt').1
-              refine Or.inr ⟨.inl t', .inr (), (LTS.sTr_τSTr _).mpr (inertReach_tauSTr lts π hIR),
+              refine Or.inr ⟨.inl t', .inr (), (LTS.sTr_τSTr_iff _).mpr (inertReach_tauSTr lts π hIR),
                 ⟨a, t1, ?_, hTr', ?_⟩, hRt', trivial⟩
               · rw [hμ, Quotient.sound hxt1]
               · rintro ⟨ha, hpt⟩
@@ -230,7 +230,7 @@ theorem E_of_bisim (hWF : TauLoopFree lts)
   have hc := Signatures.BranchingBisimilarity.isBranchingBisimulation (lts := lts) h
   rcases (hc a).1 s1 hTr with ⟨ha, hb1⟩ | ⟨t', t'', hSTr, hTr', hb1, hb2⟩
   · exact Or.inl ⟨ha, hπ s s1 (Signatures.BranchingBisimilarity.trans h (Signatures.BranchingBisimilarity.symm hb1)), hb1⟩
-  · have hp : lts.τSTr t t' := (LTS.sTr_τSTr lts).mp hSTr
+  · have hp : lts.τSTr t t' := (LTS.sTr_τSTr_iff lts).mp hSTr
     have hIR := inertReach_of_bb lts π hWF hπ hp
       (Signatures.BranchingBisimilarity.trans (Signatures.BranchingBisimilarity.symm h) hb1)
     refine Or.inr ⟨t', t'', hIR, hb1, hTr', ?_⟩

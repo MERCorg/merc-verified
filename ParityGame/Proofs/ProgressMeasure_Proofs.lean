@@ -1,7 +1,7 @@
 module
 
 public import ParityGame.ProgressMeasure
-public import ParityGame.Proofs.Defs_Proofs
+public import ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 

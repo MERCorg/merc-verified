@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 
 open Cslib (ωSequence)
 
@@ -11,7 +11,8 @@ namespace ParityGame
 /-!
 # Attractors and attractor strategies
 
-Section 2 of O. Friedmann and M. Lange, *Solving Parity Games in Practice*, ATVA 2009.
+Section 2 of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009.
 
 The `i`-attractor of `U` inside the subgame `X` is the limit of the stages
 `Attr⁰ = U`, `Attrᵏ⁺¹ = Attrᵏ ∪ {v ∈ Vᵢ | ∃ w ∈ Attrᵏ, vEw} ∪ {v ∈ V₁₋ᵢ | ∀ w, vEw → w ∈ Attrᵏ}`,

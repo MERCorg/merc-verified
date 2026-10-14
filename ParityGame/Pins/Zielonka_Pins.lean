@@ -1,4 +1,4 @@
-import ParityGame.Defs
+import ParityGame.Game
 import ParityGame.Attractor
 import ParityGame.Zielonka
 import ParityGame.Proofs.Zielonka_Proofs

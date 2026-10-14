@@ -12,13 +12,11 @@ open Cslib.Algorithms.Lean
 /-!
 # A time-complexity model of two-sided lifting over instance-derived trees
 
-A concrete, computable solver for finite parity games in cslib's `TimeM ℕ` monad, mirroring the
-Rust prototype `merc/crates/vpg/src/two_sided_lifting.rs` (`solve_game`, `Lifter::{run, evaluate,
-certified, accelerate, even_cycle_maxima}`, `ChainTree::{info, chain_bound, weak_components,
-leftmost, next_node}`, `attractor`; write-up `experiments/FINDINGS.md` §5). Correctness of the
-returned winners is *not* stated here (see `ParityGame.TwoSidedAlgorithm` for the abstract
-algorithm); this file only states cost bounds. The program counts `steps` = successful lifts plus
-vertices raised by acceleration (the Rust `Stats.steps`), and the headline `SolveTimeBound` says
+A concrete, computable solver for finite parity games in cslib's `TimeM ℕ` monad. Correctness of
+the returned winners is *not* stated here (see `ParityGame.TwoSidedCostCorrect`, and
+`ParityGame.TwoSidedAlgorithm` for the abstract algorithm); this file only states cost bounds. The
+program counts `steps` = successful lifts plus vertices raised by acceleration, and the headline
+`SolveTimeBound` says
 that the running time is at most `(steps + n + 1) · P(n, m, d)` for an explicit polynomial `P`
 (`costPoly`): the solver is polynomial whenever the number of lift steps is. Whether `steps` is
 polynomial is open (`Game.PolyLiftingConjecture` in `ParityGame.Lifting`).
@@ -31,13 +29,13 @@ polynomial is open (`Game.PolyLiftingConjecture` in `ParityGame.Lifting`).
   `PGame.size` = `N = n + m + d + 2` is the single size parameter of all bounds.
 * Vertex sets are bit vectors `VSet n = Fin n → Bool` (`Function.update` for single changes,
   `materialize` after a set comprehension so that `#eval` stays fast).
-* `Ctx n` is one player's view of the remaining subgame (Rust `View`): `p = true` is the dual
+* `Ctx n` is one player's view of the remaining subgame: `p = true` is the dual
   game for Odd (priority `+ 1`, owner swapped, i.e. "mine" = owned by `p`); successors and
   predecessors are restricted to the alive vertices; `levels` are the odd view priorities of the
   alive vertices in decreasing order (`height = levels.length ≤ d + 1`).
 * Tree values `Val = Option (List (ℕ × ℕ))`, `none` = ⊤. A leaf is a list of `h` pairs
-  (component index, counter), one per odd level. The Rust element also carries the region id;
-  that is determined by the preceding elements, so it is not stored here but recomputed on demand
+  (component index, counter), one per odd level. An element does not store its region; the region
+  is determined by the preceding elements and recomputed on demand
   (`regionsOf`; root region = alive vertices, the region of element `l + 1` is the `k_{l+1}`-th
   child of the region of element `l`).
 
@@ -53,19 +51,18 @@ charged. The unit is one elementary RAM operation on the representation above.
   the successor list of `v` costs `|succ v| + 1`; computing the alive predecessors of `v` (a scan
   of all edges) costs `n + m`; pushing or testing the elements of a list costs its length;
   `leftmost` costs one tick per appended element; `prog` pays `h + 1` for looking up the depth of
-  the vertex (a precomputed array in Rust, `Lifter::depth`; recomputed here from `levels`) and
+  the vertex (recomputed from `levels` on every call) and
   copying the target's prefix; the bookkeeping of one `next_node` iteration costs `h + 1`.
 * **Free**: reading or writing one entry of a bit vector / array (`VSet`, `measure`, `choice`,
-  modelled by functions and `Function.update`), creating a fresh empty set or map (Rust's
-  `StampSet::clear` / `FxHashMap::default`), indexing into a children list (a `Vec` in Rust),
+  modelled by functions and `Function.update`), creating a fresh empty set or map,
+  indexing into a children list,
   pattern matching, arithmetic on counters, pushing or popping one element of a queue or stack,
   and returning. `materialize`, closures and `Function.update` chains are artefacts of the
   functional encoding.
 * **Recursion**: a call itself is free; every recursive loop is driven by explicit fuel, and its
   body pays one tick per iteration as above.
 * Values are compared lexicographically on their first `h` elements only (`lexCmp h`, one tick per
-  compared element). All values built by the program have length `≤ h`, so this agrees with the
-  Rust `Vec` comparison.
+  compared element). All values built by the program have length `≤ h`.
 
 ## Headlines (proved in `ParityGame.Proofs.TwoSidedCost_Proofs`)
 With `N = n + m + d + 2`: `NavigationCost` (`leftmost`, comparison `≤ N`, `nextNode ≤ 30 N⁴`,
@@ -76,26 +73,26 @@ theorem `SolveTimeBound`: `time ≤ (steps + n + 1) · 340 N⁷` and `restarts �
 corollary `SolvePolyOfSteps`. `RestartProgress` and `OuterFuelSuffices` show that the outer fuel
 `n + 1` never runs out: every non-final restart removes a vertex.
 
-## Deviations from the Rust code (behaviour-preserving unless stated)
+## Modelling choices
 * Termination: every loop has explicit fuel. Lifting (`runLoop`) and the round loop of a restart
   (`roundLoop`) share the fuel parameter `fuel` of `solve`; running out yields `winner = none`
   ("out of fuel"). The outer loop has fuel `n + 1`, which suffices because each non-final restart
   removes at least one vertex (`RestartProgress`, `OuterFuelSuffices`). Inner loops whose
-  iteration count is bounded by the Rust logic get that bound as fuel (`n + 1` for graph
+  iteration count is bounded by the algorithm's logic get that bound as fuel (`n + 1` for graph
   searches, the acceleration restriction loop and attractor passes, `n² + n + 1` for
   certification); exhausting it is treated conservatively (no acceleration, nothing certified).
 * Region information is recomputed on demand instead of interned and memoised.
 * SCCs are computed via pairwise reachability, the chain bound by a longest-path DP over the
   reachability order (`n + 1` Jacobi rounds), weak components by repeated DFS from the roots in
-  index order (so they come out sorted by least vertex, as Rust sorts them).
-* `evenCycleMaxima` returns the same set as Rust's peeling recursion, computed directly: an
+  index order (so they come out sorted by least vertex).
+* `evenCycleMaxima` is computed directly rather than by repeated SCC peeling: an
   even-priority member `u` is a maximum of an even-maximum cycle iff `u` reaches itself through
   kept edges inside `{w ∈ members | prio w ≤ prio u}`.
-* `attractor` is the same set as Rust's, computed by `n + 1` passes over all vertices instead of
+* `attractor` is computed by `n + 1` passes over all vertices instead of
   the backward worklist with successor counters.
-* Acceleration iterates over the members in vertex-index order (Rust: discovery order of the
-  backward search). Final values are the same, but the order of re-queued vertices, and hence
-  the subsequent schedule and `steps`, may differ.
+* Acceleration iterates over the members in vertex-index order. The final values do not depend on
+  the order, but the order of re-queued vertices, and hence the subsequent schedule and `steps`,
+  does.
 * Successors are scanned in list order; pushing successors onto a DFS stack uses `pushNew`
   (all unvisited at once), which changes the visiting order but not the visited set.
 -/
@@ -143,7 +140,7 @@ def VSet.count {n : ℕ} (S : VSet n) : ℕ := ((List.finRange n).filter S).leng
 /-- A measure value: a leaf of the chain tree, `none` = ⊤. -/
 abbrev Val := Option (List (ℕ × ℕ))
 
-/-- One player's view of the remaining subgame (Rust `View` + the levels of its `ChainTree`). -/
+/-- One player's view of the remaining subgame. -/
 structure Ctx (n : ℕ) where
   G : PGame n
   /-- The lifting player (`true`: Odd, lifting in the dual game). -/
@@ -226,7 +223,7 @@ def reachSet (nbrs : Fin n → TimeM ℕ (List (Fin n))) (ok : VSet n) (v : Fin 
     (VSet.single v) [v]
   return r.2
 
-/-! ## The chain tree (Rust `ChainTree`) -/
+/-! ## The chain tree -/
 
 /-- Neighbours of `x` in the undirected graph restricted to `S`. -/
 def undirected (c : Ctx n) (S : VSet n) (x : Fin n) : TimeM ℕ (List (Fin n)) := do
@@ -242,14 +239,13 @@ def wcStep (c : Ctx n) (S : VSet n) (acc : VSet n × List (VSet n)) (root : Fin 
       ✓[n] return (materialize fun v => acc.1 v || comp v, acc.2 ++ [comp])
     else return acc
 
-/-- Weakly connected components of `S`, ordered by least vertex (Rust `weak_components`). -/
+/-- Weakly connected components of `S`, ordered by least vertex. -/
 def weakComponents (c : Ctx n) (S : VSet n) : TimeM ℕ (List (VSet n)) := do
   let r ← (List.finRange n).foldlM (wcStep c S) (VSet.empty, [])
   return r.2
 
 /-- The child regions of a region `R` at level `l`: the weak components of `R` restricted to
-    priorities below the level's odd priority; a single empty child if there is none
-    (Rust `info(..).components`). -/
+    priorities below the level's odd priority; a single empty child if there is none. -/
 def children (c : Ctx n) (l : ℕ) (R : VSet n) : TimeM ℕ (List (VSet n)) := do
   ✓[n] let S : VSet n := materialize fun v => R v && decide (c.prio v < c.level l)
   let comps ← weakComponents c S
@@ -284,7 +280,7 @@ def weightStep (c : Ctx n) (S : VSet n) (q : ℕ) (reach : Fin n → VSet n) (w 
   ✓[n] return Function.update w u k.length
 
 /-- Longest path through the SCC condensation of `R ∩ {prio ≤ q}`, each SCC weighted by its
-    number of priority-`q` vertices (Rust `chain_bound`). -/
+    number of priority-`q` vertices. -/
 def chainBound (c : Ctx n) (R : VSet n) (q : ℕ) : TimeM ℕ ℕ := do
   ✓[n] let S : VSet n := materialize fun v => R v && decide (c.prio v ≤ q)
   let reach ← (List.finRange n).foldlM (reachStep c S) (fun _ => VSet.empty)
@@ -304,7 +300,7 @@ def regionsOf (c : Ctx n) : ℕ → VSet n → List (ℕ × ℕ) → TimeM ℕ (
       let rs ← regionsOf c (l + 1) R' rest
       return R :: rs
 
-/-- The loop of Rust `next_node`, from the last element backwards (fuel = path length). -/
+/-- The loop of `nextNode`, from the last element backwards (fuel = path length). -/
 def nextAux (c : Ctx n) (regs : List (VSet n)) : ℕ → List (ℕ × ℕ) →
     TimeM ℕ (Option (List (ℕ × ℕ)))
   | 0, _ => pure none
@@ -321,12 +317,12 @@ def nextAux (c : Ctx n) (regs : List (VSet n)) : ℕ → List (ℕ × ℕ) →
         else nextAux c regs f path.dropLast
       else nextAux c regs f path.dropLast
 
-/-- The next node at the same depth in lexicographic order, if any (Rust `next_node`). -/
+/-- The next node at the same depth in lexicographic order, if any. -/
 def nextNode (c : Ctx n) (pre : List (ℕ × ℕ)) : TimeM ℕ (Option (List (ℕ × ℕ))) := do
   let regs ← regionsOf c 0 c.alive pre
   nextAux c regs pre.length pre
 
-/-- Extend a prefix with the first child at every remaining level (Rust `leftmost`). -/
+/-- Extend a prefix with the first child at every remaining level. -/
 def leftmost (c : Ctx n) (pre : List (ℕ × ℕ)) : TimeM ℕ (List (ℕ × ℕ)) := do
   ✓[c.height - pre.length] return pre ++ List.replicate (c.height - pre.length) (0, 0)
 
@@ -341,19 +337,19 @@ def lexCmp : ℕ → List (ℕ × ℕ) → List (ℕ × ℕ) → TimeM ℕ Order
     | .eq => lexCmp k xs ys
     | o => return o
 
-/-- Comparison of values, `none` = ⊤ (Rust `cmp_value`). -/
+/-- Comparison of values, `none` = ⊤. -/
 def cmpVal (c : Ctx n) : Val → Val → TimeM ℕ Ordering
   | none, none => pure .eq
   | none, some _ => pure .gt
   | some _, none => pure .lt
   | some a, some b => lexCmp c.height a b
 
-/-- Number of tree levels compared by the progress condition of `v` (Rust `Lifter::depth`). -/
+/-- Number of tree levels compared by the progress condition of `v`. -/
 def depthOf (c : Ctx n) (v : Fin n) : ℕ :=
   (c.levels.filter fun q => if c.prio v % 2 == 0 then decide (c.prio v < q)
     else decide (c.prio v ≤ q)).length
 
-/-- The least value for `v` progressing towards a successor with value `target` (Rust `prog`). -/
+/-- The least value for `v` progressing towards a successor with value `target`. -/
 def prog (c : Ctx n) (v : Fin n) (target : Val) : TimeM ℕ Val := do
   ✓[c.height + 1] match target with
   | none => return none
@@ -369,7 +365,7 @@ def prog (c : Ctx n) (v : Fin n) (target : Val) : TimeM ℕ Val := do
         let l ← leftmost c nx
         return some l
 
-/-! ## Lifting (Rust `Lifter`) -/
+/-! ## Lifting -/
 
 /-- The state of one player's lifting. -/
 structure LState (n : ℕ) where
@@ -394,7 +390,7 @@ def evalStep (c : Ctx n) (μ : Fin n → Val) (v : Fin n) (allowed : Option (VSe
 
 /-- The value `v` must have given its successors' values `μ` (optionally restricted to
     `allowed`), and the successor attaining it; ties towards the first successor for the lifting
-    player and the last otherwise (Rust `evaluate`). -/
+    player and the last otherwise. -/
 def evaluate (c : Ctx n) (μ : Fin n → Val) (v : Fin n) (allowed : Option (VSet n)) :
     TimeM ℕ (Val × Option (Fin n)) := do
   let ws ← succT c v
@@ -403,7 +399,7 @@ def evaluate (c : Ctx n) (μ : Fin n → Val) (v : Fin n) (allowed : Option (VSe
     | some (val, w) => (val, some w)
     | none => (none, none)
 
-/-- The recorded choice of `x`, evaluated if there is none yet (Rust `current_choice`). -/
+/-- The recorded choice of `x`, evaluated if there is none yet. -/
 def currentChoice (c : Ctx n) (μ : Fin n → Val) (ch : Fin n → Option (Fin n)) (x : Fin n) :
     TimeM ℕ ((Fin n → Option (Fin n)) × Option (Fin n)) := do
   ✓ match ch x with
@@ -412,22 +408,22 @@ def currentChoice (c : Ctx n) (μ : Fin n → Val) (ch : Fin n → Option (Fin n
     let r ← evaluate c μ x none
     return (Function.update ch x r.2, r.2)
 
-/-- Put `v` at the back of the queue unless it is queued (Rust `requeue`). -/
+/-- Put `v` at the back of the queue unless it is queued. -/
 def requeue (st : LState n) (v : Fin n) : LState n :=
   if st.inq v then st
   else { st with inq := Function.update st.inq v true, queue := st.queue ++ [v] }
 
-/-- Re-queue the predecessors of `v` (Rust `requeue_predecessors`). -/
+/-- Re-queue the predecessors of `v`. -/
 def requeuePreds (c : Ctx n) (st : LState n) (v : Fin n) : TimeM ℕ (LState n) := do
   let ps ← predT c v
   ✓[ps.length] return ps.foldl requeue st
 
 /-- The kept edges of `u` for acceleration: all of the lifting player's edges, the recorded
-    choice of the opponent (Rust `kept`). -/
+    choice of the opponent. -/
 def keptT (c : Ctx n) (ch : Fin n → Option (Fin n)) (u : Fin n) : TimeM ℕ (List (Fin n)) :=
   if c.mine u then succT c u else do ✓ return (ch u).toList
 
-/-- Rust `accelerate`, pump test: do the current choices return to `v` within `n` steps? -/
+/-- Acceleration, pump test: do the current choices return to `v` within `n` steps? -/
 def pumpTest (c : Ctx n) (μ : Fin n → Val) (v : Fin n) : ℕ → (Fin n → Option (Fin n)) → Fin n →
     TimeM ℕ ((Fin n → Option (Fin n)) × Bool)
   | 0, ch, _ => pure (ch, false)
@@ -478,12 +474,11 @@ def ecmStep (c : Ctx n) (ch : Fin n → Option (Fin n)) (M : VSet n) (bad : VSet
       return if r.2 u then Function.update bad u true else bad
     else return bad
 
-/-- The maxima of all cycles with an even maximum among the kept edges inside `M`
-    (Rust `even_cycle_maxima`, computed per vertex; see the module doc). -/
+/-- The maxima of all cycles with an even maximum among the kept edges inside `M`. -/
 def evenCycleMaxima (c : Ctx n) (ch : Fin n → Option (Fin n)) (M : VSet n) : TimeM ℕ (VSet n) :=
   (List.finRange n).foldlM (ecmStep c ch M) VSet.empty
 
-/-- The restriction loop of Rust `accelerate`: the strongly connected set of `v` in the kept
+/-- The restriction loop of `accelerate`: the strongly connected set of `v` in the kept
     graph (within `allowed`), with the maxima of even-maximum cycles peeled off. `none`: no
     acceleration. -/
 def sccLoop (c : Ctx n) (μ : Fin n → Val) (v : Fin n) : ℕ → (Fin n → Option (Fin n)) →
@@ -577,7 +572,7 @@ def accelRaise (c : Ctx n) (st : LState n) (M : VSet n) : TimeM ℕ (LState n ×
   let b ← bfLoop c st.choice M cnt b0
   raise c M b st
 
-/-- Pump acceleration after a successful lift of `v` (Rust `accelerate`); returns the new state
+/-- Pump acceleration after a successful lift of `v`; returns the new state
     and the number of raised vertices. -/
 def accelerate (c : Ctx n) (st : LState n) (v : Fin n) : TimeM ℕ (LState n × ℕ) := do
   let pt ← pumpTest c st.measure v n st.choice v
@@ -588,7 +583,7 @@ def accelerate (c : Ctx n) (st : LState n) (v : Fin n) : TimeM ℕ (LState n × 
   | some M => accelRaise c { st with choice := sc.1 } M
 
 /-- At most `fuel` iterations of the lifting loop, until the lifter's steps reach `budgetEnd` or
-    the queue is empty (Rust `run`). Returns the state, whether the queue is empty, and whether
+    the queue is empty. Returns the state, whether the queue is empty, and whether
     the fuel ran out. -/
 def runLoop (c : Ctx n) (budgetEnd : ℕ) : ℕ → LState n → TimeM ℕ (LState n × Bool × Bool)
   | 0, st => pure (st, false, true)
@@ -609,7 +604,7 @@ def runLoop (c : Ctx n) (budgetEnd : ℕ) : ℕ → LState n → TimeM ℕ (LSta
         runLoop c budgetEnd k { a.1 with steps := s1 + a.2 }
       else runLoop c budgetEnd k st
 
-/-- Perform lifts until `budget` more steps are done or the queue is empty (Rust `run`). -/
+/-- Perform lifts until `budget` more steps are done or the queue is empty. -/
 def run (c : Ctx n) (budget fuel : ℕ) (st : LState n) : TimeM ℕ (LState n × Bool × Bool) :=
   runLoop c (st.steps + budget) fuel st
 
@@ -637,7 +632,7 @@ def certLoop (c : Ctx n) (μ : Fin n → Val) :
     ✓[ps.length] let nq := ps.foldl (certPush dom) (queued, q)
     certLoop c μ k dom nq.1 nq.2
 
-/-- The largest set on which the current values form a progress measure (Rust `certified`). -/
+/-- The largest set on which the current values form a progress measure. -/
 def certified (c : Ctx n) (st : LState n) : TimeM ℕ (VSet n) := do
   ✓[n] let dom : VSet n := materialize fun v => c.alive v && (st.measure v).isSome
   let r ← certLoop c st.measure (n * n + n + 1) dom dom ((List.finRange n).filter dom)
@@ -645,7 +640,7 @@ def certified (c : Ctx n) (st : LState n) : TimeM ℕ (VSet n) := do
     | some D => materialize fun v => c.alive v && D v
     | none => VSet.empty
 
-/-! ## The outer loop (Rust `attractor`, `solve_game`) -/
+/-! ## The outer loop -/
 
 /-- Try to attract `u`. -/
 def attrStep (G : PGame n) (alive : VSet n) (player : Bool) (A : VSet n) (u : Fin n) :
@@ -660,13 +655,13 @@ def attrStep (G : PGame n) (alive : VSet n) (player : Bool) (A : VSet n) (u : Fi
 def attrPass (G : PGame n) (alive : VSet n) (player : Bool) (A : VSet n) : TimeM ℕ (VSet n) :=
   (List.finRange n).foldlM (attrStep G alive player) A
 
-/-- The `player`-attractor of `target` within `alive` (Rust `attractor`). -/
+/-- The `player`-attractor of `target` within `alive`. -/
 def attractor (G : PGame n) (alive : VSet n) (player : Bool) (target : VSet n) :
     TimeM ℕ (VSet n) := do
   ✓[n] let A0 : VSet n := materialize fun v => alive v && target v
   iterT (attrPass G alive player) (n + 1) A0
 
-/-- The odd view priorities of the alive vertices, decreasing (Rust `ChainTree::new`). -/
+/-- The odd view priorities of the alive vertices, decreasing. -/
 def mkLevels (G : PGame n) (p : Bool) (alive : VSet n) :
     TimeM ℕ {l : List ℕ // l.length ≤ G.d + 1} := do
   ✓[(G.d + 1) * (n + 1)] return ⟨(List.range (G.d + 1)).reverse.filter fun q =>
@@ -675,7 +670,7 @@ def mkLevels (G : PGame n) (p : Bool) (alive : VSet n) :
       refine Nat.le_trans (List.length_filter_le _ _) ?_
       simp⟩
 
-/-- A fresh lifter for `p` on the alive vertices (Rust `Lifter::new`). -/
+/-- A fresh lifter for `p` on the alive vertices. -/
 def mkLifter (G : PGame n) (alive : VSet n) (p : Bool) : TimeM ℕ (Ctx n × LState n) := do
   let lv ← mkLevels G p alive
   let c : Ctx n := ⟨G, p, alive, lv.1, lv.2⟩
@@ -719,7 +714,7 @@ def removal (G : PGame n) (alive winner cert0 cert1 : VSet n) : TimeM ℕ (VSet 
   ✓[n] return (materialize fun v => alive1 v && !A1 v,
     materialize fun v => if A0 v then false else if A1 v then true else winner v)
 
-/-- The rounds of one restart (Rust `loop` in `solve_game`), with round fuel `f` and lifting fuel
+/-- The rounds of one restart, with round fuel `f` and lifting fuel
     `fuel`; `rem` is the number of alive vertices (the per-round budget). -/
 def roundLoop (G : PGame n) (rem fuel : ℕ) (c0 c1 : Ctx n) :
     ℕ → SState n → LState n → LState n → TimeM ℕ (Outcome n)
@@ -748,7 +743,7 @@ def roundLoop (G : PGame n) (rem fuel : ℕ) (c0 c1 : Ctx n) :
       return .next { s with
         alive := rm.1, winner := rm.2, steps := s.steps + l0.steps + l1.steps }
 
-/-- The outer loop: restart on the remaining vertices until none remain (Rust `solve_game`). -/
+/-- The outer loop: restart on the remaining vertices until none remain. -/
 def outer (G : PGame n) (fuel : ℕ) : ℕ → SState n → TimeM ℕ (SState n × Bool)
   | 0, s => pure (s, false)
   | k + 1, s => do
@@ -767,7 +762,7 @@ def outer (G : PGame n) (fuel : ℕ) : ℕ → SState n → TimeM ℕ (SState n 
 structure Result (n : ℕ) where
   /-- `some w`: `w v = true` iff Odd wins `v`; `none`: out of fuel. -/
   winner : Option (VSet n)
-  /-- Successful lifts plus vertices raised by acceleration (Rust `Stats.steps`). -/
+  /-- Successful lifts plus vertices raised by acceleration. -/
   steps : ℕ
   rounds : ℕ
   restarts : ℕ
@@ -793,7 +788,7 @@ def NavigationCost (c : Ctx n) : Prop :=
   (∀ pre, pre.length ≤ c.height → (nextNode c pre).time ≤ 30 * c.N ^ 4) ∧
   (∀ v t, (prog c v t).time ≤ 32 * c.N ^ 4)
 
-/-- Contract (region information, Rust `ChainTree::info`): weak components `≤ 9 · N³`, the child
+/-- Contract (region information): weak components `≤ 9 · N³`, the child
     regions `≤ 10 · N³`, the chain bound `≤ 8 · N³`. -/
 def RegionInfoCost (c : Ctx n) : Prop :=
   (∀ S, (weakComponents c S).time ≤ 9 * c.N ^ 3) ∧

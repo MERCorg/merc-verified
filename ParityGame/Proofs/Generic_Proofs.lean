@@ -72,13 +72,13 @@ theorem Game.solveSCC_strong (G : Game V) [Finite V] {S : Backend V} (hS : S.Sou
   classical
   unfold Game.solveSCC
   by_cases h1 : ∃ i, G.OnePlayer C i
-  · rw [dif_pos h1]
+  · rw [dite_eq_left h1]
     exact G.onePlayerSolve_strong hC hconn h1.choose_spec
-  · rw [dif_neg h1]
+  · rw [dite_eq_right h1]
     by_cases h2 : ∃ i, G.OneParity C i
-    · rw [dif_pos h2]
+    · rw [dite_eq_left h2]
       exact G.oneParitySolve_strong hC h2.choose_spec
-    · rw [dif_neg h2]
+    · rw [dite_eq_right h2]
       have hsol := hS (G.withPrio (compress (G.prio '' C) ∘ G.prio)) C hC
       exact (G.solves_of_withPrio C _ (G.compressionSound C) _ hsol).strong
 
@@ -90,7 +90,7 @@ theorem Game.step_partial (G : Game V) [Finite V] {S : Backend V} (hS : S.Sound)
   classical
   unfold Game.step
   by_cases h : ∃ v, G.IsSelfCycle X v
-  · rw [dif_pos h]
+  · rw [dite_eq_left h]
     refine ⟨Game.Region.selfCycle G h.choose_spec, ⟨h.choose, ?_⟩⟩
     have hv : h.choose ∈ (G.selfCycleSolve h.choose).win (Player.ofPrio (G.prio h.choose)) := by
       simp [Game.selfCycleSolve]
@@ -98,7 +98,7 @@ theorem Game.step_partial (G : Game V) [Finite V] {S : Backend V} (hS : S.Sound)
     cases j
     · exact Or.inl hv
     · exact Or.inr hv
-  · rw [dif_neg h]
+  · rw [dite_eq_right h]
     have hC := G.finalSCC_spec hne
     have hsub := hC.isSubgame hX
     have hconn : ∀ u ∈ G.finalSCC X, ∀ v ∈ G.finalSCC X, G.Reach (G.finalSCC X) u v :=
@@ -159,15 +159,15 @@ theorem Game.merge_region (G : Game V) [Finite V] {X : Set V} {r r' : Solution V
   · intro v hv ho
     rw [hstrat]
     by_cases h1 : v ∈ r.win j
-    · rw [if_pos h1]
+    · rw [ite_eq_left h1]
       have := hRj.mine v h1 ho
       exact ⟨Or.inl (hrAj this.1), this.2⟩
-    · rw [if_neg h1]
+    · rw [ite_eq_right h1]
       by_cases h2 : v ∈ G.attr X j (r.win j)
-      · rw [if_pos h2]
+      · rw [ite_eq_left h2]
         have := G.attrStrategy_mem X j (r.win j) h2 h1 ho
         exact ⟨Or.inl this.1, this.2⟩
-      · rw [if_neg h2]
+      · rw [ite_eq_right h2]
         have hv' : v ∈ r'.win j := hv.resolve_left h2
         have := hr'j.mine v hv' ho
         exact ⟨Or.inr this.1, this.2⟩
@@ -192,7 +192,7 @@ theorem Game.merge_region (G : Game V) [Finite V] {X : Set V} {r r' : Solution V
       have hσ : ∀ v ∈ G.attr X j (r.win j), v ∉ r.win j → G.owner v = j →
           (G.merge X r r').strat j v = G.attrStrategy X j (r.win j) v := by
         intro v hv h1 _
-        rw [hstrat, if_neg h1, if_pos hv]
+        rw [hstrat, ite_eq_right h1, ite_eq_left hv]
       obtain ⟨m, -, hm⟩ := G.reach_of_mem_stage X j (r.win j) _ hσ p hconf k n₀ hk
       have hstay : ∀ t, p (m + t) ∈ r.win j := by
         intro t
@@ -201,7 +201,7 @@ theorem Game.merge_region (G : Game V) [Finite V] {X : Set V} {r r' : Solution V
         | succ t ih' =>
           obtain ⟨-, h2, h3⟩ := hp' (m + t)
           by_cases ho : G.owner (p (m + t)) = j
-          · rw [show m + (t + 1) = m + t + 1 from rfl, h3 ho, hstrat, if_pos ih']
+          · rw [show m + (t + 1) = m + t + 1 from rfl, h3 ho, hstrat, ite_eq_left ih']
             exact (hRj.mine _ ih' ho).1
           · exact hRj.theirs _ ih' ho _ (hunionX (hp' (m + t + 1)).1) h2
       rw [← G.playWonBy_drop j p m]
@@ -209,14 +209,14 @@ theorem Game.merge_region (G : Game V) [Finite V] {X : Set V} {r r' : Solution V
       simp only [ωSequence.get_drop]
       refine ⟨hstay t, (hp' _).2.1, fun ho => ?_⟩
       have := (hp' (m + t)).2.2 ho
-      rw [hstrat, if_pos (hstay t)] at this
+      rw [hstrat, ite_eq_left (hstay t)] at this
       exact this
     · push Not at hex
       refine hr'j.won p fun n => ?_
       obtain ⟨h1, h2, h3⟩ := hp' n
       have hv' : p n ∈ r'.win j := h1.resolve_left (hex n)
       refine ⟨hv', h2, fun ho => ?_⟩
-      rw [h3 ho, hstrat, if_neg fun h => hex n (hrAj h), if_neg (hex n)]
+      rw [h3 ho, hstrat, ite_eq_right fun h => hex n (hrAj h), ite_eq_right (hex n)]
 
 theorem Game.merge_strong (G : Game V) [Finite V] {X : Set V} {r r' : Solution V}
     (hp : G.Partial X r) (hr' : G.Strong (G.remainder X r) r') : G.Strong X (G.merge X r r') := by
@@ -247,7 +247,7 @@ theorem Game.genericAux_strong (G : Game V) [Finite V] {S : Backend V} (hS : S.S
   intro X hn hX
   rw [Game.genericAux]
   by_cases hne : X.Nonempty
-  · rw [dif_pos hne]
+  · rw [dite_eq_left hne]
     have hp := G.step_partial hS hne hX
     dsimp only
     set r := G.step S X with hr
@@ -262,11 +262,11 @@ theorem Game.genericAux_strong (G : Game V) [Finite V] {S : Backend V} (hS : S.S
       rcases hv with hv | hv
       · exact this.2.1 (G.subset_attr X Player.zero _ hv)
       · exact this.2.2 (G.subset_attr X Player.one _ hv)
-    rw [dif_pos hss]
+    rw [dite_eq_left hss]
     have hlt : (G.remainder X r).ncard < n := by
       rw [← hn]; exact Set.ncard_lt_ncard hss (Set.toFinite X)
     exact G.merge_strong hp (ih _ hlt _ rfl (G.remainder_isSubgame hX hp))
-  · rw [dif_neg hne]
+  · rw [dite_eq_right hne]
     have hX0 : X = ∅ := Set.not_nonempty_iff_eq_empty.mp hne
     subst hX0
     refine Game.Strong.of_opp .zero (by simp [Solution.empty]) (by simp [Solution.empty]) ?_ ?_

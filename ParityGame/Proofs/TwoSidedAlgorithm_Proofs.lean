@@ -125,10 +125,10 @@ theorem Game.Region.attr {G : Game V} {X : Set V} {i : Player} {D : Set V} {σ :
   refine ⟨hAX, ?_, ?_, ?_⟩
   · intro v hv ho
     by_cases hvD : v ∈ D
-    · rw [hτv, if_pos hvD]
+    · rw [hτv, ite_eq_left hvD]
       obtain ⟨m1, m2⟩ := h.mine v hvD ho
       exact ⟨hDA m1, m2⟩
-    · rw [hτv, if_neg hvD]
+    · rw [hτv, ite_eq_right hvD]
       exact G.attrStrategy_mem X i D hv hvD ho
   · intro v hv ho w hw he
     by_cases hvD : v ∈ D
@@ -139,7 +139,7 @@ theorem Game.Region.attr {G : Game V} {X : Set V} {i : Player} {D : Set V} {σ :
       ⟨hAX (hp n).1, hAX (hp (n + 1)).1, (hp n).2.1, (hp n).2.2⟩
     obtain ⟨k, hk⟩ := (hp 0).1
     obtain ⟨m, -, hmD⟩ := G.reach_of_mem_stage X i D τ
-      (fun v _ hvD _ => by rw [hτv, if_neg hvD]) p hconf k 0 hk
+      (fun v _ hvD _ => by rw [hτv, ite_eq_right hvD]) p hconf k 0 hk
     have hstay : ∀ t, p (m + t) ∈ D := by
       intro t
       induction t with
@@ -149,7 +149,7 @@ theorem Game.Region.attr {G : Game V} {X : Set V} {i : Player} {D : Set V} {σ :
         have hX' : p (m + t + 1) ∈ X := hAX (hp (m + t + 1)).1
         by_cases ho : G.owner (p (m + t)) = i
         · rw [show m + (t + 1) = m + t + 1 from rfl, h3 ho]
-          rw [hτv, if_pos ih]
+          rw [hτv, ite_eq_left ih]
           exact (h.mine _ ih ho).1
         · exact h.theirs _ ih ho _ hX' h2
     rw [← G.playWonBy_drop i p m]
@@ -157,7 +157,7 @@ theorem Game.Region.attr {G : Game V} {X : Set V} {i : Player} {D : Set V} {σ :
     simp only [ωSequence.get_drop]
     refine ⟨hstay t, (hp (m + t)).2.1, fun ho => ?_⟩
     have := (hp (m + t)).2.2 ho
-    rw [hτv, if_pos (hstay t)] at this
+    rw [hτv, ite_eq_left (hstay t)] at this
     exact this
 
 open scoped Classical in
@@ -173,10 +173,10 @@ theorem Game.Region.extend {G : Game V} {X A R : Set V} {i : Player} {τ ρ : St
   refine ⟨hsub, ?_, ?_, ?_⟩
   · intro v hv ho
     by_cases hvA : v ∈ A
-    · rw [hκv, if_pos hvA]
+    · rw [hκv, ite_eq_left hvA]
       obtain ⟨m1, m2⟩ := hA.mine v hvA ho
       exact ⟨Or.inl m1, m2⟩
-    · rw [hκv, if_neg hvA]
+    · rw [hκv, ite_eq_right hvA]
       obtain ⟨m1, m2⟩ := hR.mine v (hv.resolve_left hvA) ho
       exact ⟨Or.inr m1, m2⟩
   · intro v hv ho w hw he
@@ -197,7 +197,7 @@ theorem Game.Region.extend {G : Game V} {X A R : Set V} {i : Player} {τ ρ : St
           have hX' : p (n₀ + t + 1) ∈ X := hsub (hp (n₀ + t + 1)).1
           by_cases ho : G.owner (p (n₀ + t)) = i
           · rw [show n₀ + (t + 1) = n₀ + t + 1 from rfl, h3 ho]
-            rw [hκv, if_pos ih]
+            rw [hκv, ite_eq_left ih]
             exact (hA.mine _ ih ho).1
           · exact hA.theirs _ ih ho _ hX' h2
       rw [← G.playWonBy_drop i p n₀]
@@ -205,12 +205,12 @@ theorem Game.Region.extend {G : Game V} {X A R : Set V} {i : Player} {τ ρ : St
       simp only [ωSequence.get_drop]
       refine ⟨hstay t, (hp (n₀ + t)).2.1, fun ho => ?_⟩
       have := (hp (n₀ + t)).2.2 ho
-      rw [hκv, if_pos (hstay t)] at this
+      rw [hκv, ite_eq_left (hstay t)] at this
       exact this
     · push Not at hex
       refine hR.won p fun n => ⟨(hp n).1.resolve_left (hex n), (hp n).2.1, fun ho => ?_⟩
       have := (hp n).2.2 ho
-      rw [hκv, if_neg (hex n)] at this
+      rw [hκv, ite_eq_right (hex n)] at this
       exact this
 
 /-- A region of the opponent `1 - i` in a trap `X \ A` for `i` is a region in `X`. -/
@@ -367,7 +367,7 @@ theorem Game.algInvStep [Finite V] (G : Game V) (s s' : AlgState V) : G.AlgInvSt
   show v ∈ (if j = i then s.won j ∪ A else s.won j) ↔ v ∉ X \ A ∧ G.Wins Set.univ j v
   by_cases hj : j = i
   · subst hj
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     constructor
     · rintro (h | h)
       · obtain ⟨h1, h2⟩ := (hwon j v).1 h
@@ -377,7 +377,7 @@ theorem Game.algInvStep [Finite V] (G : Game V) (s s' : AlgState V) : G.AlgInvSt
       by_cases hvX : v ∈ X
       · exact Or.inr (by by_contra hvA; exact h1 ⟨hvX, hvA⟩)
       · exact Or.inl ((hwon j v).2 ⟨hvX, h2⟩)
-  · rw [if_neg hj]
+  · rw [ite_eq_right hj]
     have hj' : j = i.opp := Player.ne_iff.mp hj
     constructor
     · intro h
@@ -412,11 +412,11 @@ theorem Game.completionCorrect [Finite V] (G : Game V) (s : AlgState V) (r : Pla
   by_cases hvX : v ∈ s.rest
   · have hnw : v ∉ s.won j := fun h => ((hwon j v).1 h).1 hvX
     by_cases hj : j = i
-    · rw [if_pos hj, Set.mem_union, Set.mem_setOf_eq, or_iff_right hnw, and_iff_right hvX,
+    · rw [ite_eq_left hj, Set.mem_union, Set.mem_ofPred_eq, or_iff_right hnw, and_iff_right hvX,
         key v, hj]
       exact hrest v hvX i
     · have hj' : j = i.opp := Player.ne_iff.mp hj
-      rw [if_neg hj, Set.mem_union, Set.mem_setOf_eq, or_iff_right hnw, and_iff_right hvX,
+      rw [ite_eq_right hj, Set.mem_union, Set.mem_ofPred_eq, or_iff_right hnw, and_iff_right hvX,
         ← hrest v hvX j, hj', G.wins_opp_iff hX hvX i, ← key v, not_not]
   · refine ⟨fun h => hout hvX ?_, fun h => ?_⟩
     · split_ifs at h

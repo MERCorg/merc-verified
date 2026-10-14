@@ -49,14 +49,14 @@ theorem Sig.exists_witness_of_inl [Cslib.HasTau Label] {lts : Cslib.LTS State La
                   sigFn s' ∪ {(Cslib.HasTau.τ, Sum.inr (sigHash s'))}
     · -- Delegation case: sigFn s = sigFn hDeleg.choose
       have hEq : sigFn s = sigFn hDeleg.choose := by
-        rw [hFix s, Sig, dif_pos hDeleg]
+        rw [hFix s, Sig, dite_eq_left hDeleg]
       rw [hEq] at hmem
       obtain ⟨hτ, hπ, _⟩ := hDeleg.choose_spec
       obtain ⟨s', t, hτPath, hπs', hStep, hπt⟩ := ih hDeleg.choose hτ μ α hmem
       exact ⟨s', t, Relation.ReflTransGen.head hτ hτPath, hπs'.trans hπ.symm, hStep, hπt⟩
     · -- No-delegation case: sigFn s = PreSig s
       have hEq : sigFn s = PreSig lts partition sigHash s := by
-        rw [hFix s, Sig, dif_neg hDeleg]
+        rw [hFix s, Sig, dite_eq_right hDeleg]
       rw [hEq] at hmem
       rcases hmem with ⟨a, s', hStep, _, hPair⟩ | ⟨s', _, _, hPair⟩
       · -- Visible/non-inert PreSig branch — direct witness.
@@ -82,13 +82,13 @@ private theorem sigFn_mem_of_nonInert_tr [Cslib.HasTau Label] {lts : Cslib.LTS S
   by_cases hDeleg : ∃ s', lts.Tr s Cslib.HasTau.τ s' ∧ partition s = partition s' ∧
               PreSig lts partition sigHash s ⊆
                 sigFn s' ∪ {(Cslib.HasTau.τ, Sum.inr (sigHash s'))}
-  · have hEq : sigFn s = sigFn hDeleg.choose := by rw [hFix s, Sig, dif_pos hDeleg]
+  · have hEq : sigFn s = sigFn hDeleg.choose := by rw [hFix s, Sig, dite_eq_left hDeleg]
     rw [hEq]
     obtain ⟨_, _, hSub⟩ := hDeleg.choose_spec
     rcases hSub hMem with h | h
     · exact h
     · exact nomatch (Prod.mk.inj (Set.mem_singleton_iff.mp h)).2
-  · rw [hFix s, Sig, dif_neg hDeleg]; exact hMem
+  · rw [hFix s, Sig, dite_eq_right hDeleg]; exact hMem
 
 /-- If a partition is stable w.r.t. a fixed point `sigFn` of the inductive `Sig` operator
 (in a τ-loop-free LTS), then same-block states form a branching bisimulation.
@@ -119,7 +119,7 @@ theorem IsStable.isHomBranchingBisimulation_inductive [Cslib.HasTau Label]
         rw [← hStable s₁ s₂ hRel]; exact hMem1
       obtain ⟨s₂', t₂, hτPath, hπs₂', hStep, hπt₂⟩ :=
         Sig.exists_witness_of_inl hWF partition sigHash sigFn hFix s₂ μ (partition t₁) hMem2
-      refine Or.inr ⟨s₂', t₂, (Cslib.LTS.sTr_τSTr lts).mpr hτPath, hStep, ?_, hπt₂.symm⟩
+      refine Or.inr ⟨s₂', t₂, (Cslib.LTS.sTr_τSTr_iff lts).mpr hτPath, hStep, ?_, hπt₂.symm⟩
       exact hRel.trans hπs₂'.symm
   · intro t₂ hTr₂
     by_cases hInert : μ = Cslib.HasTau.τ ∧ partition t₂ = partition s₂
@@ -134,7 +134,7 @@ theorem IsStable.isHomBranchingBisimulation_inductive [Cslib.HasTau Label]
         rw [hStable s₁ s₂ hRel]; exact hMem2
       obtain ⟨s₁', t₁, hτPath, hπs₁', hStep, hπt₁⟩ :=
         Sig.exists_witness_of_inl hWF partition sigHash sigFn hFix s₁ μ (partition t₂) hMem1
-      refine Or.inr ⟨s₁', t₁, (Cslib.LTS.sTr_τSTr lts).mpr hτPath, hStep, hπs₁'.trans hRel, hπt₁⟩
+      refine Or.inr ⟨s₁', t₁, (Cslib.LTS.sTr_τSTr_iff lts).mpr hτPath, hStep, hπs₁'.trans hRel, hπt₁⟩
 
 /-- Same-block states under a Sig-fixed-point stable partition (in a τ-loop-free LTS) are
 branching bisimilar. -/
@@ -226,7 +226,7 @@ private theorem buildSig_eq_Sig [Cslib.HasTau Label] {lts : Cslib.LTS State Labe
                 PreSig lts π π s ⊆ sigFn p.val ∪ {(Cslib.HasTau.τ, Sum.inr (π p.val))} := by
       obtain ⟨s', hTr, hπ, hSub⟩ := hQ
       exact ⟨⟨s', hTr⟩, hπ, hSub⟩
-    rw [dif_pos hP, dif_pos hQ]
+    rw [dite_eq_left hP, dite_eq_left hQ]
     -- Both `.choose` witnesses are inert τ-successors of s; by stability their buildSigs agree.
     apply hStable
     exact hP.choose_spec.1.symm.trans hQ.choose_spec.2.1
@@ -236,7 +236,7 @@ private theorem buildSig_eq_Sig [Cslib.HasTau Label] {lts : Cslib.LTS State Labe
                 PreSig lts π π s ⊆ sigFn p.val ∪ {(Cslib.HasTau.τ, Sum.inr (π p.val))} := by
       intro ⟨⟨s', hTr⟩, hπ, hSub⟩
       exact hQ ⟨s', hTr, hπ, hSub⟩
-    rw [dif_neg hP, dif_neg hQ]
+    rw [dite_eq_right hP, dite_eq_right hQ]
 
 end BranchingBisimilarity
 
@@ -282,7 +282,7 @@ private theorem block_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
           LTS.IsBranchingBisimulation.stutter hBis hr_z'_c' hZ'Y
         have hPathYC : Relation.ReflTransGen
             (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) y c :=
-          (Cslib.LTS.sTr_τSTr lts).mp hSTr
+          (Cslib.LTS.sTr_τSTr_iff lts).mp hSTr
         -- TransGen-WF descent `c'' < y`: the chain `y →τ*→ c →τ→ c' →τ*→ c''` contains at
         -- least the non-empty step `c →τ→ c'`, so it is a `TransGen` chain.
         have hYC'' : Relation.TransGen
@@ -324,9 +324,9 @@ private theorem block_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
 branching-bisimilarity quotient as the partition, any τ*-path between same-block states admits
 an inert τ*-path (every intermediate state has the same block as the endpoints).
 
-This is the classical **Computation Lemma** (van Glabbeek–Weijland 1996); in TauLoopFree LTSs
-it admits a direct proof by well-founded induction on the τ-relation. (The general LTS case
-requires Basten's saturation construction.)
+This is the classical **Computation Lemma** ([van Glabbeek–Weijland 1996][vanGlabbeek1996]); in
+TauLoopFree LTSs it admits a direct proof by well-founded induction on the τ-relation. (The
+general LTS case requires Basten's saturation construction.)
 
 Proof outline:
 1. *Suffices step*: prove the stronger **block-stability** lemma — for any τ-decomposition
@@ -415,7 +415,7 @@ private theorem direct_match_via_no_inert [Cslib.HasTau Label] {lts : Cslib.LTS 
     · exact hMu hμτ
     · exact hPi (hπtb.trans hab.symm).symm
   · -- Or.inr: τ-prefix on `b`'s side is forced to be trivial.
-    have hPath := (Cslib.LTS.sTr_τSTr lts).mp hSTr
+    have hPath := (Cslib.LTS.sTr_τSTr_iff lts).mp hSTr
     have hπBBpre : Quotient.mk (brSetoid lts) b = Quotient.mk (brSetoid lts) bPre :=
       hab.symm.trans (Quotient.sound (s := brSetoid lts) ⟨r, hrAbpre, hrBis⟩)
     have hBEq : b = bPre := noInertSucc_path_trivial hWF hPath hπBBpre hb_no_inert
@@ -512,7 +512,7 @@ private theorem buildSig_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Labe
         have ha_eq :
             buildSig hWF (Quotient.mk (brSetoid lts)) a =
               buildSig hWF (Quotient.mk (brSetoid lts)) hAbsA.choose.val := by
-          rw [ha_unfold]; unfold sigStep; exact dif_pos hAbsA
+          rw [ha_unfold]; unfold sigStep; exact dite_eq_left hAbsA
         have ha'_tr : lts.Tr a Cslib.HasTau.τ hAbsA.choose.val := hAbsA.choose.property
         have hπa'b : Quotient.mk (brSetoid lts) hAbsA.choose.val =
                      Quotient.mk (brSetoid lts) b :=
@@ -523,7 +523,7 @@ private theorem buildSig_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Labe
         have ha_eq :
             buildSig hWF (Quotient.mk (brSetoid lts)) a =
               PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) a := by
-          rw [ha_unfold]; unfold sigStep; exact dif_neg hAbsA
+          rw [ha_unfold]; unfold sigStep; exact dite_eq_right hAbsA
         by_cases hAbsB :
             ∃ p : Subtype (fun s' => lts.Tr b Cslib.HasTau.τ s'),
               Quotient.mk (brSetoid lts) b = Quotient.mk (brSetoid lts) p.val ∧
@@ -534,7 +534,7 @@ private theorem buildSig_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Labe
           have hb_eq :
               buildSig hWF (Quotient.mk (brSetoid lts)) b =
                 buildSig hWF (Quotient.mk (brSetoid lts)) hAbsB.choose.val := by
-            rw [hb_unfold]; unfold sigStep; exact dif_pos hAbsB
+            rw [hb_unfold]; unfold sigStep; exact dite_eq_left hAbsB
           have hb'_tr : lts.Tr b Cslib.HasTau.τ hAbsB.choose.val := hAbsB.choose.property
           have hπab' : Quotient.mk (brSetoid lts) a =
                        Quotient.mk (brSetoid lts) hAbsB.choose.val :=
@@ -546,7 +546,7 @@ private theorem buildSig_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Labe
           have hb_eq :
               buildSig hWF (Quotient.mk (brSetoid lts)) b =
                 PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) b := by
-            rw [hb_unfold]; unfold sigStep; exact dif_neg hAbsB
+            rw [hb_unfold]; unfold sigStep; exact dite_eq_right hAbsB
           rw [hb_eq]
           -- Step 1: a has no inert τ-successor.
           -- If a had inert τ-successor a', IH_a would give sigFn a' = sigFn a = PreSig a, so

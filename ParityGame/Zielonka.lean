@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 public import ParityGame.Attractor
 public import Mathlib.Data.Set.Card
 public import Mathlib.Order.Lattice.Nat
@@ -14,10 +14,11 @@ namespace ParityGame
 /-!
 # Zielonka's recursive algorithm, with winning strategies
 
-Zielonka's recursive algorithm [18 in O. Friedmann and M. Lange, *Solving Parity Games in
-Practice*, ATVA 2009], the constructive proof of positional determinacy that the paper uses as one
-of its backend solvers. On a (sub)game `X` with greatest priority `m`, owned by player
-`i = Player.ofPrio m`:
+Zielonka's recursive algorithm ([W. Zielonka, *Infinite games on finitely coloured graphs with
+applications to automata on infinite trees*][Zielonka1998], TCS 1998; reference [18] of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009), the
+constructive proof of positional determinacy that the paper uses as one of its backend solvers. On
+a (sub)game `X` with greatest priority `m`, owned by player `i = Player.ofPrio m`:
 
 1. `A := Attrᵢ(U)` for the nodes `U` of priority `m`; solve `X \ A` recursively.
 2. If player `1 - i` wins nowhere in `X \ A`, player `i` wins all of `X`: use the attractor

@@ -117,7 +117,7 @@ theorem loc_mem (hwf : rp.WF) (_hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) 
 
 theorem rAt_loc {x : Fin n} : rAt rp b grp (rp.loc x).val = rr rp b grp x := by
   unfold rAt
-  rw [dif_pos (rp.loc x).isLt]
+  rw [dite_eq_left (rp.loc x).isLt]
   simp
 
 theorem clsL_length : (clsL rp b grp).length = blockSize rp b := by simp [clsL]
@@ -133,7 +133,7 @@ theorem clsL_lt (hwf : rp.WF) (hb : b < rp.nb) : ∀ c ∈ clsL rp b grp, c < nu
   have h2 := be_le_n hwf hb
   have hpn : rp.bs b + t < n := by omega
   unfold rAt
-  rw [dif_pos hpn]
+  rw [dite_eq_left hpn]
   exact rr_lt (blk_at hwf hb (by omega) (by omega) hpn)
 
 theorem keepPiece_lt (hwf : rp.WF) (hb : b < rp.nb) : keepPiece rp b grp < numPieces rp b grp := by
@@ -143,7 +143,7 @@ theorem keepPiece_lt (hwf : rp.WF) (hb : b < rp.nb) : keepPiece rp b grp < numPi
   unfold keepPiece
   have hpn : rp.bs b < n := by omega
   unfold rAt
-  rw [dif_pos hpn]
+  rw [dite_eq_left hpn]
   exact rr_lt (blk_at hwf hb le_rfl (by omega) hpn)
 
 theorem numPieces_pos (hwf : rp.WF) (hb : b < rp.nb) : 0 < numPieces rp b grp :=
@@ -247,19 +247,19 @@ theorem locFun_inj (hwf : rp.WF) (hb : b < rp.nb) : Function.Injective (locFun h
   intro x y hxy
   unfold locFun at hxy
   by_cases hx : rp.blk x = b <;> by_cases hy : rp.blk y = b
-  · rw [dif_pos hx, dif_pos hy] at hxy
+  · rw [dite_eq_left hx, dite_eq_left hy] at hxy
     exact Pfun_inj hwf hb hx hy (congrArg Fin.val hxy)
-  · rw [dif_pos hx, dif_neg hy] at hxy
+  · rw [dite_eq_left hx, dite_eq_right hy] at hxy
     exfalso
     have hP := Pfun_lt_n hwf hb hx (grp := grp)
     have := hwf.unique y b hb (by rw [← hxy]; exact hP.2) (by rw [← hxy]; exact hP.1)
     exact hy this
-  · rw [dif_neg hx, dif_pos hy] at hxy
+  · rw [dite_eq_right hx, dite_eq_left hy] at hxy
     exfalso
     have hP := Pfun_lt_n hwf hb hy (grp := grp)
     have := hwf.unique x b hb (by rw [hxy]; exact hP.2) (by rw [hxy]; exact hP.1)
     exact hx this
-  · rw [dif_neg hx, dif_neg hy] at hxy
+  · rw [dite_eq_right hx, dite_eq_right hy] at hxy
     exact rp.loc.injective hxy
 
 /-- The new location permutation. -/
@@ -271,11 +271,11 @@ theorem newLoc_apply (hwf : rp.WF) (hb : b < rp.nb) (x : Fin n) :
 
 theorem locFun_val_in (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
     (locFun hwf hb grp x).val = Pfun rp b grp x := by
-  unfold locFun; rw [dif_pos hx]
+  unfold locFun; rw [dite_eq_left hx]
 
 theorem locFun_val_out (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : ¬ rp.blk x = b) :
     locFun hwf hb grp x = rp.loc x := by
-  unfold locFun; rw [dif_neg hx]
+  unfold locFun; rw [dite_eq_right hx]
 
 end Positions
 
@@ -480,7 +480,7 @@ theorem newRP_isSplit : IsSplit rp (newRP hwf hb grp) b grp := by
     refine ⟨rp.loc.symm ⟨rp.bs b, hpn⟩, blk_at hwf hb le_rfl (by omega) hpn, ?_⟩
     rw [newRP_blk_in hwf hb grp (blk_at hwf hb le_rfl (by omega) hpn)]
     have : rr rp b grp (rp.loc.symm ⟨rp.bs b, hpn⟩) = keepPiece rp b grp := by
-      unfold keepPiece rAt; rw [dif_pos hpn]
+      unfold keepPiece rAt; rw [dite_eq_left hpn]
     rw [this]
     unfold pid; simp
 

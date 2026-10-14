@@ -83,32 +83,32 @@ theorem evalInv_fold (c : Ctx n) (μ : Fin n → Val) (v : Fin n) (allowed : Opt
         dsimp only
         by_cases hb : (if c.mine v = true then (cmpVal c (prog c v (μ w)).ret cur).ret == .lt
             else (cmpVal c (prog c v (μ w)).ret cur).ret != .lt) = true
-        · rw [if_pos hb]
+        · rw [ite_eq_left hb]
           refine ⟨by simp [hw], fun val w' he => ?_⟩
           simp only [Option.some.injEq, Prod.mk.injEq] at he
           obtain ⟨rfl, rfl⟩ := he
           refine ⟨by simp, hw, rfl, fun hm w'' hw'' ha => ?_, fun hm w'' hw'' ha => ?_⟩
-          · rw [if_pos hm, beq_iff_eq, cmpVal_lt_iff] at hb
+          · rw [ite_eq_left hm, beq_iff_eq, cmpVal_lt_iff] at hb
             rcases List.mem_append.1 hw'' with hw'' | hw''
             · have := hmin hm w'' hw'' ha
               rcases VLe.total c (prog c v (μ w)).ret cur with h' | h'
               · exact h'.trans this
               · exact absurd h' hb
             · simp at hw''; subst hw''; exact VLe.refl _ _
-          · rw [if_neg (by simp [hm]), bne_iff_ne, ne_eq, cmpVal_lt_iff, not_not] at hb
+          · rw [ite_eq_right (by simp [hm]), bne_iff_ne, ne_eq, cmpVal_lt_iff, not_not] at hb
             rcases List.mem_append.1 hw'' with hw'' | hw''
             · exact (hmax hm w'' hw'' ha).trans hb
             · simp at hw''; subst hw''; exact VLe.refl _ _
-        · rw [if_neg hb]
+        · rw [ite_eq_right hb]
           refine ⟨by simp [hw], fun val w' he => ?_⟩
           simp only [Option.some.injEq, Prod.mk.injEq] at he
           obtain ⟨rfl, rfl⟩ := he
           refine ⟨by simp [hcw], hacw, hcur, fun hm w'' hw'' ha => ?_, fun hm w'' hw'' ha => ?_⟩
-          · rw [if_pos hm, beq_iff_eq, cmpVal_lt_iff, not_not] at hb
+          · rw [ite_eq_left hm, beq_iff_eq, cmpVal_lt_iff, not_not] at hb
             rcases List.mem_append.1 hw'' with hw'' | hw''
             · exact hmin hm w'' hw'' ha
             · simp at hw''; subst hw''; exact hb
-          · rw [if_neg (by simp [hm]), bne_iff_ne, ne_eq, not_not, cmpVal_lt_iff] at hb
+          · rw [ite_eq_right (by simp [hm]), bne_iff_ne, ne_eq, not_not, cmpVal_lt_iff] at hb
             rcases List.mem_append.1 hw'' with hw'' | hw''
             · exact hmax hm w'' hw'' ha
             · simp at hw''; subst hw''
@@ -391,7 +391,7 @@ theorem mem_keptT (c : Ctx n) (ch : Fin n → Option (Fin n)) (u w : Fin n) :
 theorem fwdNbrs_state (c : Ctx n) (μ : Fin n → Val) (ch : Fin n → Option (Fin n)) (x : Fin n)
     (hch : ChInv c ch) :
     ChInv c (fwdNbrs c μ ch x).ret.1 ∧ ChExt ch (fwdNbrs c μ ch x).ret.1 := by
-  simp only [fwdNbrs, ret_bind, ret_pure]
+  simp only [fwdNbrs]
   split
   · exact ⟨hch, ChExt.refl _⟩
   · simp only [ret_bind, ret_pure]
@@ -452,7 +452,7 @@ theorem ecmStep_marks (c : Ctx n) (ch : Fin n → Option (Fin n)) (M bad : VSet 
     (ecmStep c ch M bad u).ret u = true := by
   unfold ecmStep
   simp only [ret_bind]
-  rw [if_pos (by simp [hu, hev])]
+  rw [ite_eq_left (by simp [hu, hev])]
   simp only [ret_bind, ret_pure]
   set S : VSet n := materialize fun w => M w && decide (c.prio w ≤ c.prio u) with hS
   obtain ⟨new, e1, e2, e3, e4⟩ := pushNew_spec S (keptT c ch u).ret VSet.empty []
@@ -495,7 +495,7 @@ theorem ecmStep_marks (c : Ctx n) (ch : Fin n → Option (Fin n)) (M bad : VSet 
 theorem ecm_fold_mono (c : Ctx n) (ch : Fin n → Option (Fin n)) (M : VSet n) :
     ∀ (L : List (Fin n)) (bad : VSet n) (x : Fin n), bad x = true →
       (L.foldl (fun b a => (ecmStep c ch M b a).ret) bad) x = true
-  | [], bad, x, h => h
+  | [], _, _, h => h
   | u :: L, bad, x, h => ecm_fold_mono c ch M L _ x (ecmStep_mono c ch M bad u x h)
 
 theorem ecm_fold_marks (c : Ctx n) (ch : Fin n → Option (Fin n)) (M : VSet n) (u : Fin n)
@@ -669,7 +669,7 @@ theorem exitBound_spec (c : Ctx n) (μ : Fin n → Val) (ch : Fin n → Option (
               exact ((VLe.total c _ _).resolve_left hlt).trans (h2 w' hw' hM)
             · exact h2 w' hw' hM
         · simp at hw'; subst hw'
-          rw [if_neg (by simp [hM])]
+          rw [ite_eq_right (by simp [hM])]
           split
           · exact VLe.refl _ _
           · rename_i hlt
@@ -696,13 +696,13 @@ theorem foldl_cond_update {β : Type} (M : VSet n) (F : Fin n → β) :
     rw [List.foldl_cons, foldl_cond_update M F L]
     by_cases hu : u ∈ L ∧ M u = true
     · simp [hu]
-    · rw [if_neg hu]
+    · rw [ite_eq_right hu]
       by_cases hux : u = x
       · subst hux
         by_cases hM : M u = true
         · simp [hM]
         · simp [hM]
-      · split <;> simp_all [Function.update_of_ne hux]
+      · split <;> simp_all
 
 theorem init_ret (c : Ctx n) (μ : Fin n → Val) (ch : Fin n → Option (Fin n)) (M : VSet n)
     (s : Fin n) :
@@ -742,9 +742,9 @@ theorem bfEdge_inv (c : Ctx n) (M : VSet n) (b : Fin n → Val) (D : Fin n → F
   obtain ⟨h1, h2, h3, h4⟩ := h
   rw [bfEdge_ret]
   by_cases hM : M w = true
-  · rw [if_pos hM]
+  · rw [ite_eq_left hM]
     by_cases hlt : ((cmpVal c (prog c s (acc.1 w)).ret (acc.1 s)).ret == .lt) = true
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       rw [beq_iff_eq, cmpVal_lt_iff] at hlt
       have hlt' : VLe c (prog c s (acc.1 w)).ret (acc.1 s) := (VLe.total c _ _).resolve_left hlt
       refine ⟨fun u => ?_, fun u x hx => ?_, fun h => by simp at h, fun s' w' hD => ?_⟩
@@ -762,13 +762,13 @@ theorem bfEdge_inv (c : Ctx n) (M : VSet n) (b : Fin n → Val) (D : Fin n → F
           · simp only [Function.update_of_ne hus]; exact ht4
         · refine ⟨acc.1 w', h1 w', h2 w', fun h => by simp at h, ?_⟩
           simp only [Function.update_self]; exact VLe.refl _ _
-    · rw [if_neg hlt]
+    · rw [ite_eq_right hlt]
       rw [beq_iff_eq, cmpVal_lt_iff, not_not] at hlt
       refine ⟨h1, h2, h3, fun s' w' hD => ?_⟩
       rcases hD with hD | ⟨rfl, rfl, -⟩
       · exact h4 s' w' hD
       · exact ⟨acc.1 w', h1 w', h2 w', fun hf => by rw [h3 hf], hlt⟩
-  · rw [if_neg hM]
+  · rw [ite_eq_right hM]
     refine ⟨h1, h2, h3, fun s' w' hD => ?_⟩
     rcases hD with hD | ⟨-, -, hM'⟩
     · exact h4 s' w' hD
@@ -780,7 +780,7 @@ theorem bfStep_inv (c : Ctx n) (ch : Fin n → Option (Fin n)) (M : VSet n) (b :
       (s' = s ∧ M s = true ∧ w' ∈ (keptT c ch s).ret ∧ M w' = true)) (bfStep c ch M acc s).ret := by
   rw [bfStep_ret]
   by_cases hMs : M s = true
-  · rw [if_pos hMs]
+  · rw [ite_eq_left hMs]
     have key : ∀ (L : List (Fin n)) (D' : Fin n → Fin n → Prop) (acc : (Fin n → Val) × Bool),
         BFInv c b D' acc →
         BFInv c b (fun s' w' => D' s' w' ∨ (s' = s ∧ w' ∈ L ∧ M w' = true))
@@ -808,7 +808,7 @@ theorem bfStep_inv (c : Ctx n) (ch : Fin n → Option (Fin n)) (M : VSet n) (b :
     rcases hD with hD | ⟨rfl, -, hw, hM⟩
     · exact Or.inl hD
     · exact Or.inr ⟨rfl, hw, hM⟩
-  · rw [if_neg hMs]
+  · rw [ite_eq_right hMs]
     refine ⟨h.1, h.2.1, h.2.2.1, fun s' w' hD => ?_⟩
     rcases hD with hD | ⟨-, hM, -⟩
     · exact h.2.2.2 s' w' hD
@@ -905,7 +905,7 @@ theorem exists_AReach (hB : Bound c ν E) (hch : ChInv c ch) (hodd : KeptOdd c c
       exact hr 0 ⟨hM, hν, w, hE, hk, by simpa using hMw⟩
   choose g hg using hU
   let g' : Fin n → Fin n := fun s => if h : U s then g s h else s
-  have hg'U : ∀ s, U s → U (g' s) := fun s h => by simp only [g', dif_pos h]; exact (hg s h).2.2
+  have hg'U : ∀ s, U s → U (g' s) := fun s h => by simp only [g', dite_eq_left h]; exact (hg s h).2.2
   have hiter : ∀ i, U (g'^[i] s0) := by
     intro i
     induction i with
@@ -921,7 +921,7 @@ theorem exists_AReach (hB : Bound c ν E) (hch : ChInv c ch) (hodd : KeptOdd c c
     intro t
     have hU' := hiter (x.1 + t)
     simp only [f, show x.1 + (t + 1) = (x.1 + t) + 1 by omega, Function.iterate_succ_apply']
-    simp only [g', dif_pos hU']
+    simp only [g', dite_eq_left hU']
     exact ⟨(hg _ hU').1, (hg _ hU').2.1⟩
   set k := y.1 - x.1 with hk
   have hk0 : 0 < k := by omega
@@ -1117,13 +1117,13 @@ theorem raiseStep_ret (c : Ctx n) (M : VSet n) (b : Fin n → Val) (acc : LState
     split
     · rename_i hgt
       simp only [ret_bind, ret_pure]
-      rw [if_pos ⟨hM, by simpa using hgt⟩]
+      rw [ite_eq_left ⟨hM, by simpa using hgt⟩]
     · rename_i hgt
       simp only [ret_pure]
-      rw [if_neg (fun h' => hgt (by simpa using h'.2))]
+      rw [ite_eq_right (fun h' => hgt (by simpa using h'.2))]
   · rename_i hM
     simp only [ret_pure]
-    rw [if_neg (by simp [hM])]
+    rw [ite_eq_right (by simp [hM])]
 
 theorem raiseStep_inv {c : Ctx n} {ν : Fin n → Val} (M : VSet n) (b : Fin n → Val)
     (hb : ∀ s, M s = true → VLe c (b s) (ν s)) (hbl : LenOK c b) (acc : LState n × ℕ) (s : Fin n)
@@ -1185,7 +1185,7 @@ theorem accelRaise_inv {c : Ctx n} {ν : Fin n → Val} {E : Fin n → Fin n →
     · cases hx
   have hg0 : BGood c ν E st.choice M 0 b0 := by
     rintro s ⟨hM, -, w, hE, hk, hMw⟩
-    rw [hb0s, if_pos hM]
+    rw [hb0s, ite_eq_left hM]
     exact ((exitBound_spec c st.measure st.choice M s).2 w hk hMw).trans
       (hB.good s w hE _ (h.len w) (h.le w))
   obtain ⟨hl, hg⟩ := bfLoop_good (ch := st.choice) (M := M) hB M.count b0 0 hl0 hg0

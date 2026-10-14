@@ -110,7 +110,7 @@ theorem attrPass_sup (G : PGame n) (alive : VSet n) (player : Bool) (A : VSet n)
         · split
           · split <;> simp_all
           · exact hBu
-        · rw [if_pos (by simp [hu, hBu]), if_pos (attracts_mono G alive player hB u ha)]
+        · rw [ite_eq_left (by simp [hu, hBu]), ite_eq_left (attracts_mono G alive player hB u ha)]
           simp
       · apply ih _ _ hmem
         intro x hx
@@ -210,7 +210,7 @@ theorem attractorComputesAttr (G : PGame n) (h : G.Total) : AttractorComputesAtt
     · intro hu; simp at hu; rw [hu]
     · intro hu; simpa using toPlayer_inj hu
   ext v
-  simp only [VSet.toSet, Set.mem_setOf_eq]
+  simp only [VSet.toSet, Set.mem_ofPred_eq]
   rw [hret]
   constructor
   · -- everything attracted is in the attractor
@@ -256,16 +256,16 @@ theorem attractorComputesAttr (G : PGame n) (h : G.Total) : AttractorComputesAtt
       | zero => exact h0
       | succ k ih =>
         intro v hv
-        simp only [Game.attrStage, Set.mem_union, Set.mem_setOf_eq] at hv
+        simp only [Game.attrStage, Set.mem_union, Set.mem_ofPred_eq] at hv
         rcases hv with hv | ⟨hvX, hv⟩
         · exact ih v hv
         · apply hclosed v hvX
           unfold attracts
           rcases hv with ⟨ho, w, hw, he⟩ | ⟨ho, hall⟩
-          · rw [if_pos ((howner v).2 ho)]
+          · rw [ite_eq_left ((howner v).2 ho)]
             simp only [List.any_eq_true, List.mem_filter]
             exact ⟨w, ⟨he, (G.toGame h).attrStage_subset X i U hUX k hw⟩, ih w hw⟩
-          · rw [if_neg (fun h' => ho ((howner v).1 h'))]
+          · rw [ite_eq_right (fun h' => ho ((howner v).1 h'))]
             obtain ⟨w, hwX, he⟩ := hX v hvX
             simp only [Bool.and_eq_true, List.any_eq_true, List.all_eq_true, List.mem_filter]
             exact ⟨⟨w, ⟨he, hwX⟩, ih w (hall w hwX he)⟩,
@@ -300,7 +300,7 @@ theorem attr_empty {V : Type*} (G : Game V) {X : Set V} (hX : G.IsSubgame X) (i 
   induction k generalizing v with
   | zero => exact hk
   | succ k ih =>
-    simp only [Game.attrStage, Set.mem_union, Set.mem_setOf_eq] at hk
+    simp only [Game.attrStage, Set.mem_union, Set.mem_ofPred_eq] at hk
     rcases hk with hk | ⟨hvX, ⟨-, w, hw, -⟩ | ⟨-, hall⟩⟩
     · exact ih v hk
     · exact ih w hw
@@ -370,7 +370,7 @@ theorem removal_inv (G : PGame n) (h : G.Total) (alive winner cert0 cert1 : VSet
   have halive1set : (rmAlive1 G alive cert0).toSet =
       alive.toSet \ (G.toGame h).attr alive.toSet .zero cert0.toSet := by
     ext v
-    rw [Set.mem_diff, mA]
+    rw [Set.mem_sdiff, mA]
     simp [rmAlive1, VSet.toSet]
   have hX1 : (G.toGame h).IsSubgame (rmAlive1 G alive cert0).toSet := by
     rw [halive1set]; exact hs1.1
@@ -426,7 +426,7 @@ theorem removal_inv (G : PGame n) (h : G.Total) (alive winner cert0 cert1 : VSet
       v ∈ (alive.toSet \ (G.toGame h).attr alive.toSet .zero cert0.toSet) \
         (G.toGame h).attr (alive.toSet \ (G.toGame h).attr alive.toSet .zero cert0.toSet) .one
           cert1.toSet
-    rw [Set.mem_diff, Set.mem_diff, mA, mB]
+    rw [Set.mem_sdiff, Set.mem_sdiff, mA, mB]
     simp [rmAlive1, VSet.toSet]
 
 /-! ### Completion -/
@@ -439,7 +439,7 @@ theorem complete_ret (c : Ctx n) (st : LState n) (w : VSet n) :
 /-- A lifter whose queue is empty decides the whole subgame. -/
 theorem complete_correct (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total) (W : VSet n)
     (hinv : (c.G.toGame h).AlgInv (algOf c.alive W)) {ν : Fin n → Val}
-    {E : Fin n → Fin n → Prop} (hB : Bound c ν E)
+    {E : Fin n → Fin n → Prop} (_hB : Bound c ν E)
     (hW : ∀ v, (c.G.toGame h).Wins c.X (toPlayer c.p) v → ν v ≠ none) (st : LState n)
     (hL : LInv c ν st) (hq : st.queue = []) : Done c.G h (complete c st W).ret := by
   set Gt := c.G.toGame h
@@ -450,11 +450,11 @@ theorem complete_correct (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total) (W : VSet
   rw [complete_ret]
   dsimp only
   by_cases hv : c.alive v = true
-  · rw [if_pos hv]
+  · rw [ite_eq_left hv]
     have hrest : ∀ j, Gt.Wins c.X j v ↔ Gt.Wins Set.univ j v := hinv.2.2 v hv
     have hdet := Gt.wins_or_wins hX hv (toPlayer c.p)
     by_cases hm : (st.measure v).isSome = true
-    · rw [if_pos hm]
+    · rw [ite_eq_left hm]
       have hwin : Gt.Wins c.X (toPlayer c.p) v := hsound v hv (by simpa [Option.isSome_iff_ne_none] using hm)
       constructor
       · rintro rfl; exact (hrest _).1 hwin
@@ -463,7 +463,7 @@ theorem complete_correct (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total) (W : VSet
         · exact h'
         · subst h'
           exact (Gt.not_wins_both hwin ((hrest _).2 hi)).elim
-    · rw [if_neg hm, toPlayer_not]
+    · rw [ite_eq_right hm, toPlayer_not]
       have hnone : st.measure v = none := by simpa using hm
       have hnwin : ¬ Gt.Wins c.X (toPlayer c.p) v := by
         intro hw
@@ -477,9 +477,9 @@ theorem complete_correct (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total) (W : VSet
         rcases toPlayer_eq_or c.p i with h' | h'
         · subst h'; exact (hnwin ((hrest _).2 hi)).elim
         · exact h'
-  · rw [if_neg hv]
+  · rw [ite_eq_right hv]
     have := hinv.2.1 i v
-    simp only [algOf, Set.mem_setOf_eq, VSet.toSet] at this
+    simp only [algOf, Set.mem_ofPred_eq, VSet.toSet] at this
     rw [show c.alive v = false by simpa using hv] at this
     simpa using this
 
@@ -566,7 +566,7 @@ theorem outer_ok (G : PGame n) (h : G.Total) (fuel : ℕ) :
       have hdead : ∀ v, s.alive v = false := fun v => count_eq_zero _ hrem v
       intro v i
       have := hinv.2.1 i v
-      simp only [algOf, Set.mem_setOf_eq, VSet.toSet, hdead v, true_and] at this
+      simp only [algOf, Set.mem_ofPred_eq, VSet.toSet, hdead v, true_and] at this
       simpa using this
     · have hrem' : (s.alive.count == 0) = false := by simpa using hrem
       simp only [hrem', Bool.false_eq_true, ↓reduceIte, ret_bind] at h2 ⊢

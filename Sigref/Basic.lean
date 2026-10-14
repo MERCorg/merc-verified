@@ -5,7 +5,8 @@ import Cslib.Foundations.Semantics.LTS.Bisimulation
 # Abstract signature refinement: shared definitions
 
 The `Sigref` package formalises the *pseudocode* of the dirty-set signature-refinement algorithms
-(Martens & Laveaux, TACAS 2026, Algorithms 1 and 2) in a deliberately non-isomorphic way:
+([Martens & Laveaux][Martens2026], TACAS 2026, Algorithms 1 and 2) in a deliberately
+non-isomorphic way:
 
 * a partition is a `Setoid` (an equivalence relation), not an array of block ids;
 * the algorithm is a **non-deterministic step relation**: pick *any* class containing a dirty

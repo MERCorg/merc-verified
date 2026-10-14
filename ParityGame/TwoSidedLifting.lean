@@ -14,19 +14,18 @@ namespace ParityGame
 /-!
 # Two-sided lifting over instance-derived trees: codomain, acceleration, chain tree
 
-Specifications for the algorithm "two-sided lifting over instance-derived trees" of
-`experiments/FINDINGS.md` (§3–§6; Rust prototype `merc/crates/vpg/src/two_sided_lifting.rs`,
-Python reference `experiments/lifting/{solver,trees}.py`). Everything is stated for player `0` in
-the MAX-parity convention of `ParityGame.Defs`; player `1` is handled by the algorithm through the
-dual game (priorities `+ 1`, owners swapped), which is not modelled here.
+Specifications for the algorithm "two-sided lifting over instance-derived trees". Everything is
+stated for player `0` in the MAX-parity convention of `ParityGame.Game`; player `1` is handled by
+the algorithm through the dual game (priorities `+ 1`, owners swapped), which is not modelled
+here.
 
 1. **Truncated lexicographic codomain** (`LexLE`, `TruncLexCodomainAxioms`): tuples `ℕ → ℕ`
    compared lexicographically on their first `depth p` coordinates, `depth` antitone. With
    `depth p` = the number of odd levels `≥ p` this is Jurdziński's codomain (one counter per odd
    priority); with `2 * depth p` and coordinates interleaved as
    `(k₀, c₀, k₁, c₁, …)` (component index, counter) it is the chain tree's codomain
-   (`Game.chainDepth`), compared like the Python `ImplicitTree` (lexicographic on `(k, c)` pairs,
-   truncated to the first `depth` pairs).
+   (`Game.chainDepth`), compared lexicographically on `(k, c)` pairs truncated to the first
+   `depth` pairs.
 2. **Acceleration** (`Game.FunCycleEven`, `Game.FunExit`, `Game.StrategyExit`): the set version
    of `Game.progCycleEven` behind pump acceleration.
 3. **Chain tree** (`Game.chainBound`, `Game.IsChainLeaf`) and its **completeness**
@@ -38,16 +37,17 @@ dual game (priorities `+ 1`, owners swapped), which is not modelled here.
 * Regions: `X` at level `0`; below a region `R` at level `l` sit the weakly connected components
   (`Game.lowComp`: `Relation.EqvGen` of the edges between nodes of `R` of priority `< q_l`) of
   `R ∩ {prio < q_l}`. Sibling components are numbered `0, 1, …` by an *arbitrary* (classical)
-  bijection `Game.compIdx` / `Game.compAt` (Python sorts them by least vertex; completeness does
-  not depend on the order). As in Python, a region without components still has the single child
-  index `0` (whose region is `∅`).
+  bijection `Game.compIdx` / `Game.compAt` (an implementation may sort them, e.g. by least
+  vertex; completeness does not depend on the order). A region without components still has the
+  single child index `0` (whose region is `∅`).
 * Chain bound (`Game.chainBound`): the supremum, over finite paths inside `R ∩ {prio ≤ q}` on
   which no priority-`q` node repeats, of the number of priority-`q` positions. A path through the
   SCC condensation visits SCCs in topological order and its priority-`q` nodes are distinct, so
-  this is `≤` the Rust/Python bound (longest path through the condensation of `R ∩ {prio ≤ q}`,
-  each SCC weighted by its number of priority-`q` nodes): the chain tree defined here has the same
-  shape with smaller or equal counter ranges, so completeness for it implies completeness for the
-  Rust tree. (It is `≥` the bound over simple paths only.)
+  this is `≤` the polynomial-time bound (longest path through the condensation of
+  `R ∩ {prio ≤ q}`, each SCC weighted by its number of priority-`q` nodes, as computed by
+  `ParityGame.TwoSidedCost`): the chain tree defined here has the same shape with smaller or equal
+  counter ranges, so completeness for it implies completeness for the tree with the polynomial
+  bound. (It is `≥` the bound over simple paths only.)
 * Leaves (`Game.IsChainLeaf`) are `ℕ → ℕ` tuples, interleaved `a (2l) = k_l`, `a (2l+1) = c_l`,
   zero from coordinate `2h` on; `k₀ = 0` (the root region `X`), each `k_{l+1}` a valid child index
   of the region selected so far, each `c_l ≤` the chain bound of that region at `q_l`.
@@ -196,8 +196,7 @@ def Game.ChainTreeComplete [Finite V] (G : Game V) (X : Set V) (C : Codomain (�
 /-! ### The chain tree for an arbitrary numbering of sibling components
 
 The definitions above number sibling components by an arbitrary classical bijection. An
-implementation numbers them in its own way (the Rust code and `ParityGame.TwoSidedCost` by least
-vertex). `nb R q` lists the child regions of `R` at odd level `q` in the implementation's order
+implementation numbers them in its own way (`ParityGame.TwoSidedCost` by least vertex). `nb R q` lists the child regions of `R` at odd level `q` in the implementation's order
 (entries may repeat, and extra entries are allowed); `Game.CompNumbering` requires every
 component of every region inside `X` to occur in the list. Leaves and completeness are then
 stated for the numbering `nb`; `Game.IsChainLeaf` is the special case of the classical

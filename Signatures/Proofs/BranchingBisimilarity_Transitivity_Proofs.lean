@@ -26,7 +26,7 @@ theorem LTS.IsBranchingBisimulation.stutter [HasTau Label] {lts : LTS State Labe
     rcases (hr hrPrev HasTau.τ).1 _ hLast with hCase | hCase
     · exact ⟨tPrev, hPath, hCase.2⟩
     · obtain ⟨v, v', hsv, hsv', _, hrv⟩ := hCase
-      have hPath' : lts.τSTr t v := hPath.trans ((LTS.sTr_τSTr lts).mp hsv)
+      have hPath' : lts.τSTr t v := hPath.trans ((LTS.sTr_τSTr_iff lts).mp hsv)
       exact ⟨v', hPath'.tail hsv', hrv⟩
 
 /-- An iterated form of the stuttering lemma: a two-stage τ*-path can be mimicked while preserving
@@ -47,9 +47,9 @@ theorem BranchingBisimilarity.refl [HasTau Label] {lts : LTS State Label} (s : S
   subst hEq
   refine ⟨?_, ?_⟩
   · intro s' hTr
-    exact Or.inr ⟨a, s', (LTS.sTr_τSTr lts).mpr Relation.ReflTransGen.refl, hTr, rfl, rfl⟩
+    exact Or.inr ⟨a, s', (LTS.sTr_τSTr_iff lts).mpr Relation.ReflTransGen.refl, hTr, rfl, rfl⟩
   · intro s' hTr
-    exact Or.inr ⟨a, s', (LTS.sTr_τSTr lts).mpr Relation.ReflTransGen.refl, hTr, rfl, rfl⟩
+    exact Or.inr ⟨a, s', (LTS.sTr_τSTr_iff lts).mpr Relation.ReflTransGen.refl, hTr, rfl, rfl⟩
 
 /-- The inverse of a branching bisimulation is a branching bisimulation. -/
 theorem LTS.IsBranchingBisimulation.flip [HasTau Label] {lts : LTS State Label}
@@ -76,7 +76,7 @@ theorem BranchingBisimilarity.symm [HasTau Label] {lts : LTS State Label}
 
 A semi-branching bisimulation uses the unified condition `t →τ*→ t' (→μ→ t'' | t' = t'')`,
 merging the two disjuncts of branching bisimulation. This formulation is closed under relational
-composition, making transitivity tractable. (van Glabbeek–Weijland 1996.) -/
+composition, making transitivity tractable. ([van Glabbeek–Weijland 1996][vanGlabbeek1996].) -/
 
 /-- A semi-branching bisimulation: every transition is matched by an optional τ*-prefix followed
 by an optional matching transition (or no step, when the label is τ). -/
@@ -107,11 +107,11 @@ theorem LTS.IsBranchingBisimulation.toSemi [HasTau Label] {lts : LTS State Label
   · intro s1' hTr
     rcases (hr hr12 μ).1 _ hTr with ⟨hμτ, hr12'⟩ | ⟨s2', s2'', hSTr, hTr', hr1, hr2⟩
     · exact ⟨s2, s2, Relation.ReflTransGen.refl, Or.inl ⟨hμτ, rfl⟩, hr12, hr12'⟩
-    · exact ⟨s2', s2'', (LTS.sTr_τSTr lts).mp hSTr, Or.inr hTr', hr1, hr2⟩
+    · exact ⟨s2', s2'', (LTS.sTr_τSTr_iff lts).mp hSTr, Or.inr hTr', hr1, hr2⟩
   · intro s2' hTr
     rcases (hr hr12 μ).2 _ hTr with ⟨hμτ, hr12'⟩ | ⟨s1', s1'', hSTr, hTr', hr1, hr2⟩
     · exact ⟨s1, s1, Relation.ReflTransGen.refl, Or.inl ⟨hμτ, rfl⟩, hr12, hr12'⟩
-    · exact ⟨s1', s1'', (LTS.sTr_τSTr lts).mp hSTr, Or.inr hTr', hr1, hr2⟩
+    · exact ⟨s1', s1'', (LTS.sTr_τSTr_iff lts).mp hSTr, Or.inr hTr', hr1, hr2⟩
 
 /-- Stuttering lemma for semi-branching bisimulations. Same statement as the branching version. -/
 theorem LTS.IsSemiBranchingBisimulation.stutter [HasTau Label] {lts : LTS State Label}
@@ -223,10 +223,10 @@ theorem BranchingBisimilarity.toSemi [HasTau Label] {lts : LTS State Label}
 
 /-! ## Basten's approach to transitivity
 
-Following T. Basten, "Branching bisimilarity is an equivalence indeed!" (1996), transitivity
-factors through semi-branching bisimilarity, which is closed under composition (proved above
-as `LTS.IsSemiBranchingBisimulation.comp`). The remaining ingredient is the inclusion
-`≈sbr ⊆ ≈br`. Once proved, transitivity of `≈br` follows immediately:
+Following [T. Basten, "Branching bisimilarity is an equivalence indeed!"][Basten1996] (1996),
+transitivity factors through semi-branching bisimilarity, which is closed under composition
+(proved above as `LTS.IsSemiBranchingBisimulation.comp`). The remaining ingredient is the
+inclusion `≈sbr ⊆ ≈br`. Once proved, transitivity of `≈br` follows immediately:
 
 ```
 s ≈br u ≈br t  →  s ≈sbr u ≈sbr t  →  s ≈sbr t  →  s ≈br t
@@ -296,7 +296,7 @@ theorem SemiBranchingBisimilarity.isBranchingBisimulation
       exact SemiBranchingBisimilarity.trans hsbr_s't''
         (SemiBranchingBisimilarity.symm h_t_t')
     · -- Real μ-step: direct BB Or.inr.
-      exact Or.inr ⟨t', t'', (LTS.sTr_τSTr lts).mpr hPath, hStep, hsbr_st', hsbr_s't''⟩
+      exact Or.inr ⟨t', t'', (LTS.sTr_τSTr_iff lts).mpr hPath, hStep, hsbr_st', hsbr_s't''⟩
   · intro t' hTr
     obtain ⟨s', s'', hPath, hFinal, hsbr_s't, hsbr_s''t'⟩ := (hsbrSBB hst μ).2 _ hTr
     rcases hFinal with ⟨hμτ, hs'Eq⟩ | hStep
@@ -306,7 +306,7 @@ theorem SemiBranchingBisimilarity.isBranchingBisimulation
       have h_s_s' : s ≈sbr[lts] s' :=
         SemiBranchingBisimilarity.trans hst (SemiBranchingBisimilarity.symm hsbr_s't)
       exact SemiBranchingBisimilarity.trans h_s_s' hsbr_s''t'
-    · exact Or.inr ⟨s', s'', (LTS.sTr_τSTr lts).mpr hPath, hStep, hsbr_s't, hsbr_s''t'⟩
+    · exact Or.inr ⟨s', s'', (LTS.sTr_τSTr_iff lts).mpr hPath, hStep, hsbr_s't, hsbr_s''t'⟩
 
 /-- **`≈sbr` is contained in `≈br`.** Since `≈sbr` is itself a BB and `≈br` is the largest BB,
 `≈sbr` witnesses any of its pairs as `≈br`-related. -/
@@ -314,7 +314,7 @@ theorem SemiBranchingBisimilarity.toBranching [HasTau Label] {lts : LTS State La
     {s s' : State} (h : s ≈sbr[lts] s') : s ≈br[lts] s' :=
   ⟨SemiBranchingBisimilarity lts, h, SemiBranchingBisimilarity.isBranchingBisimulation⟩
 
-/-- **Branching bisimilarity is transitive** (Basten 1996).
+/-- **Branching bisimilarity is transitive** ([Basten 1996][Basten1996]).
 
 Routed through semi-branching bisimilarity: the SBB framework gives clean composition closure
 (`SemiBranchingBisimilarity.trans`), and `BranchingBisimilarity.toSemi` / `toBranching` bridge the

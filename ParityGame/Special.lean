@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 public import ParityGame.Attractor
 public import ParityGame.Zielonka
 public import ParityGame.Scc
@@ -12,8 +12,9 @@ namespace ParityGame
 /-!
 # Detection of special cases
 
-Section 3.2 of O. Friedmann and M. Lange, *Solving Parity Games in Practice*, ATVA 2009: self-cycle
-games, one-parity games and one-player games, each solved directly (without a backend).
+Section 3.2 of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009:
+self-cycle games, one-parity games and one-player games, each solved directly (without a backend).
 
 **Modeling choices**
 * Self-cycles: a node `v` with `vEv` is solved directly when taking the loop is *good* for its

@@ -1,7 +1,7 @@
 module
 
 public import ParityGame.Zielonka
-public import ParityGame.Proofs.Defs_Proofs
+public import ParityGame.Proofs.Game_Proofs
 public import ParityGame.Proofs.Attractor_Proofs
 public import ParityGame.Proofs.Region_Proofs
 
@@ -25,7 +25,7 @@ theorem Game.anyMove_spec (G : Game V) {X : Set V} (hX : G.IsSubgame X) {v : V} 
   classical
   have h := hX v hv
   unfold Game.anyMove
-  rw [dif_pos h]
+  rw [dite_eq_left h]
   exact h.choose_spec
 
 theorem Game.frequently_mem_of_frequently_attr (G : Game V) (X : Set V) (i : Player) (U : Set V)
@@ -64,12 +64,12 @@ theorem Game.wonAll_strong (G : Game V) [Finite V] {X : Set V} {i : Player} {m :
     rw [hstrat]
     by_cases hA : v ∈ G.attr X i U
     · by_cases hU : v ∈ U
-      · rw [if_pos hA, if_pos hU]
+      · rw [ite_eq_left hA, ite_eq_left hU]
         exact G.anyMove_spec hX hv
-      · rw [if_pos hA, if_neg hU]
+      · rw [ite_eq_left hA, ite_eq_right hU]
         have := G.attrStrategy_mem X i U hA hU ho
         exact ⟨G.attr_subset X i U hUX this.1, this.2⟩
-    · rw [if_neg hA]
+    · rw [ite_eq_right hA]
       have hv' : v ∈ r₁.win i := by rw [hwin]; exact ⟨hv, hA⟩
       have := (hr₁.region i).mine v hv' ho
       rw [hwin] at this
@@ -80,7 +80,7 @@ theorem Game.wonAll_strong (G : Game V) [Finite V] {X : Set V} {i : Player} {m :
     have hσ : ∀ v ∈ G.attr X i U, v ∉ U → G.owner v = i →
         (G.wonAll X i U r₁).strat i v = G.attrStrategy X i U v := by
       intro v hv hvU _
-      rw [hstrat, if_pos hv, if_neg hvU]
+      rw [hstrat, ite_eq_left hv, ite_eq_right hvU]
     by_cases hinf : ∃ᶠ n in Filter.atTop, p n ∈ G.attr X i U
     · have hU := G.frequently_mem_of_frequently_attr X i U _ hσ p hconf hinf
       refine ⟨m, ⟨?_, ?_⟩, hi⟩
@@ -100,7 +100,7 @@ theorem Game.wonAll_strong (G : Game V) [Finite V] {X : Set V} {i : Player} {m :
         rw [hwin]; exact ⟨(hp _).1, hN _ (by omega)⟩
       refine ⟨hpn, (hp _).2.1, fun ho => ?_⟩
       have := (hp (N + n)).2.2 ho
-      rw [hstrat, if_neg (hN _ (by omega))] at this
+      rw [hstrat, ite_eq_right (hN _ (by omega))] at this
       exact this
 
 /-- Step 3 of the algorithm is correct. -/
@@ -168,15 +168,15 @@ theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
     · intro v hv ho
       rw [hstrat_j]
       by_cases hvW : v ∈ W
-      · rw [if_pos hvW]
+      · rw [ite_eq_left hvW]
         have := hr₁j.mine v hvW ho
         exact ⟨Or.inr (hWB this.1), this.2⟩
-      · rw [if_neg hvW]
+      · rw [ite_eq_right hvW]
         by_cases hvB : v ∈ B
-        · rw [if_pos hvB]
+        · rw [ite_eq_left hvB]
           have := G.attrStrategy_mem X i.opp W hvB hvW ho
           exact ⟨Or.inr this.1, this.2⟩
-        · rw [if_neg hvB]
+        · rw [ite_eq_right hvB]
           have hv2 : v ∈ r₂.win i.opp := hv.resolve_right hvB
           have := hr₂j.mine v hv2 ho
           exact ⟨Or.inl this.1, this.2⟩
@@ -203,7 +203,7 @@ theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
         have hσ : ∀ v ∈ B, v ∉ W → G.owner v = i.opp →
             (G.wonSplit X i r₁ r₂).strat i.opp v = G.attrStrategy X i.opp W v := by
           intro v hv hvW _
-          rw [hstrat_j, if_neg hvW, if_pos hv]
+          rw [hstrat_j, ite_eq_right hvW, ite_eq_left hv]
         obtain ⟨k, hk⟩ := hn₀
         obtain ⟨m, hm, hmW⟩ := G.reach_of_mem_stage X i.opp W _ hσ p hconf k n₀ hk
         have hstay : ∀ t, p (m + t) ∈ W := by
@@ -216,7 +216,7 @@ theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
             have hX' : p (m + t + 1) ∈ X :=
               (show _ ⊆ X from Set.union_subset (fun v hv => (hr₂j.sub hv).1) hBX) h1'
             by_cases ho : G.owner (p (m + t)) = i.opp
-            · rw [show m + (t + 1) = m + t + 1 from rfl, h3 ho, hstrat_j, if_pos ih]
+            · rw [show m + (t + 1) = m + t + 1 from rfl, h3 ho, hstrat_j, ite_eq_left ih]
               exact (hr₁j.mine _ ih ho).1
             · exact hWclosed _ ih ho _ hX' h2
         rw [← G.playWonBy_drop i.opp p m]
@@ -224,14 +224,14 @@ theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
         simp only [ωSequence.get_drop]
         refine ⟨hstay t, (hp (m + t)).2.1, fun ho => ?_⟩
         have := (hp (m + t)).2.2 ho
-        rw [hstrat_j, if_pos (hstay t)] at this
+        rw [hstrat_j, ite_eq_left (hstay t)] at this
         exact this
       · push Not at hex
         refine hr₂j.won p fun n => ?_
         obtain ⟨h1, h2, h3⟩ := hp n
         have hv2 : p n ∈ r₂.win i.opp := h1.resolve_right (hex n)
         refine ⟨hv2, h2, fun ho => ?_⟩
-        rw [h3 ho, hstrat_j, if_neg fun hW' => hex n (hWB hW'), if_neg (hex n)]
+        rw [h3 ho, hstrat_j, ite_eq_right fun hW' => hex n (hWB hW'), ite_eq_right (hex n)]
 
 /-- The invariant holds for the algorithm's result on every subgame. -/
 theorem Game.zielonkaAux_strong (G : Game V) [Finite V] :
@@ -243,7 +243,7 @@ theorem Game.zielonkaAux_strong (G : Game V) [Finite V] :
   intro X hn hX
   rw [Game.zielonkaAux]
   by_cases hne : X.Nonempty
-  · rw [dif_pos hne]
+  · rw [dite_eq_left hne]
     have hmax : ∀ v ∈ X, G.prio v ≤ G.maxPrio X := fun v hv =>
       le_csSup (Set.toFinite _).bddAbove ⟨v, hv, rfl⟩
     have hex : ∃ v ∈ X, G.prio v = G.maxPrio X :=
@@ -266,9 +266,9 @@ theorem Game.zielonkaAux_strong (G : Game V) [Finite V] :
     have hr₁ := ih _ hlt1 _ rfl hsub1
     generalize G.zielonkaAux (X \ G.attr X i U) = r₁ at hr₁ ⊢
     by_cases he : r₁.win i.opp = ∅
-    · rw [if_pos he]
+    · rw [ite_eq_left he]
       exact G.wonAll_strong hX hUX hUm hmax hi hr₁ he
-    · rw [if_neg he]
+    · rw [ite_eq_right he]
       have hr₁j := hr₁.region i.opp
       have hWX : r₁.win i.opp ⊆ X := fun v hv => (hr₁j.sub hv).1
       obtain ⟨⟨hWB, hBX⟩, hsub2, -, -⟩ := G.attractorCorrect X i.opp (r₁.win i.opp) hX hWX
@@ -276,12 +276,12 @@ theorem Game.zielonkaAux_strong (G : Game V) [Finite V] :
         obtain ⟨w, hw⟩ := Set.nonempty_iff_ne_empty.mpr he
         refine ⟨Set.sdiff_subset, fun hsub => ?_⟩
         exact (hsub (hWX hw)).2 (hWB hw)
-      rw [dif_pos hBss]
+      rw [dite_eq_left hBss]
       have hlt2 : (X \ G.attr X i.opp (r₁.win i.opp)).ncard < n := by
         rw [← hn]; exact Set.ncard_lt_ncard hBss (Set.toFinite X)
       have hr₂ := ih _ hlt2 _ rfl hsub2
       exact G.wonSplit_strong htrap1 hr₁ hr₂
-  · rw [dif_neg hne]
+  · rw [dite_eq_right hne]
     have hX0 : X = ∅ := Set.not_nonempty_iff_eq_empty.mp hne
     subst hX0
     refine Game.Strong.of_opp .zero (by simp [Solution.empty]) (by simp [Solution.empty]) ?_ ?_

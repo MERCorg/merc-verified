@@ -31,14 +31,14 @@ theorem scan_comm (g : Graph n) (s : Fin n) :
     obtain ⟨h, v⟩ := e
     intro idx c W
     cases h with
-    | false => simp only [scan, Bool.false_eq_true, if_false]; exact ih _ _ _
+    | false => simp only [scan, Bool.false_eq_true, ite_false]; exact ih _ _ _
     | true =>
       by_cases hd : c.disc v = g.unv
       · simp [scan, hd]
       · by_cases hc : (c.onSt v && decide (c.disc v < c.low s)) = true
-        · simp only [scan, if_true, hd, if_false, hc]
+        · simp only [scan, ite_true, hd, ite_false, hc]
           exact ih _ { c with low := Function.update c.low s (c.disc v) } W
-        · simp only [scan, if_true, hd, if_false, hc, Bool.false_eq_true]
+        · simp only [scan, ite_true, hd, ite_false, hc, Bool.false_eq_true]
           exact ih _ c W
 
 /-- The number of unvisited states. -/
@@ -66,7 +66,7 @@ theorem finish_fields {s : Fin n} {c c3 : Ctx n} (h : finish s c = some c3) :
     c3.work = c.work ∧ c3.disc = c.disc ∧ c3.ri = c.ri := by
   unfold finish at h
   by_cases hd : c.disc s = c.low s
-  · rw [if_pos hd] at h
+  · rw [ite_eq_left hd] at h
     cases hpc : popComp s c.eq c.stk c.onSt c.blk with
     | none => simp [hpc] at h
     | some r =>
@@ -76,7 +76,7 @@ theorem finish_fields {s : Fin n} {c c3 : Ctx n} (h : finish s c = some c3) :
       · simp
       · simp only
         split_ifs <;> simp
-  · rw [if_neg hd] at h
+  · rw [ite_eq_right hd] at h
     simp only [Option.map_some, Option.some.injEq] at h
     rcases hW : c.work with _ | ⟨⟨p, o⟩, W'⟩
     · simp [hW] at h; subst h; simp [hW]

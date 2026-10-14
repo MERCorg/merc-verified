@@ -1,6 +1,7 @@
 module
 
 public import ParityGame.Proofs.TwoSidedCostCorrect_Lift_Proofs
+public import Mathlib.Data.List.GetD
 
 @[expose] public section TwoSidedCostCorrectWinProofs
 
@@ -275,7 +276,7 @@ theorem certLoop_spec (c : Ctx n) (μ : Fin n → Val) (dom0 : VSet n)
         · rename_i hb
           simp only [ret_bind] at hD
           refine hcons false ⟨(fun h => by cases h), fun hc => ?_⟩ (by simpa using hD)
-          simp only [ret_pure, bne_iff_ne, ne_eq, not_not, Bool.not_eq_true] at hb
+          simp only [ret_pure, bne_iff_ne, ne_eq, not_not] at hb
           have hb' : (cmpVal c (μ v) (evaluate c μ v (some dom)).ret.1).ret = .lt := by
             simpa using hb
           rw [cmpVal_lt_iff] at hb'
@@ -413,7 +414,7 @@ theorem exists_bound (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total)
   · rintro v w ⟨hv, hw, hs', ha, -⟩
     exact ⟨hs', ha, (hνW v).2 hv, (hνW w).2 hw⟩
   · rintro v w ⟨hv, hw, -, -, hprog⟩ t ht hle
-    simp only [ν, if_pos hw] at hle
+    simp only [ν, ite_eq_left hw] at hle
     cases t with
     | none => exact absurd hle (by simp [VLe, cmpVal])
     | some x =>
@@ -422,7 +423,7 @@ theorem exists_bound (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total)
       rw [Ctx.cod_le, hdep] at hp1 hp2
       obtain ⟨r, hr, hrle⟩ := prog_least c hc h v (μc w) (μc v) (hleaf v hv) hp1
         (fun hodd => hp2 (by rw [Ctx.game_prio]; exact hodd)) x (ht x rfl) hle
-      simp only [ν, if_pos hv, hr]
+      simp only [ν, ite_eq_left hv, hr]
       rw [vle_some_iff c (prog_len c v _ r hr) (toL_length _ _), htup v hv]
       exact hrle _
   · intro v hv

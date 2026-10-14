@@ -15,8 +15,9 @@ namespace Refinement
 /-!
 # Weak impossible futures
 
-Sections 2-3 of M. Laveaux and T. A. C. Willemse, *Deciding Impossible Futures*, LNCS 16365,
-2026 (the preorder is due to Voorhoeve and Mauw, *Impossible futures and determinism*, 2001).
+Sections 2-3 of [M. Laveaux and T. A. C. Willemse, *Deciding Impossible Futures*][Laveaux2026],
+LNCS 16365, 2026 (the preorder is due to
+[Voorhoeve and Mauw, *Impossible futures and determinism*][Voorhoeve2001], 2001).
 
 **Orientation.** As everywhere in this package, `lts1`/`State1` is the *specification* and
 `lts2`/`State2` the *implementation*. The paper writes `L1 ⊑if L2` with `L1` the implementation,

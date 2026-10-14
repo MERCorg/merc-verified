@@ -1,11 +1,11 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 public import Cslib.Foundations.Data.OmegaSequence.Init
 
 open Cslib (ωSequence)
 
-@[expose] public section DefsProofs
+@[expose] public section GameProofs
 
 namespace ParityGame
 
@@ -16,7 +16,7 @@ variable {V : Type*}
 
 theorem infOcc_drop (s : ωSequence ℕ) (N : ℕ) : (s.drop N).infOcc = s.infOcc := by
   ext x
-  simp only [ωSequence.infOcc, Set.mem_setOf_eq, ωSequence.get_drop, Filter.frequently_atTop]
+  simp only [ωSequence.infOcc, Set.mem_ofPred_eq, ωSequence.get_drop, Filter.frequently_atTop]
   constructor
   · intro h a
     obtain ⟨b, hb, e⟩ := h a
@@ -105,7 +105,7 @@ theorem exists_succ_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
   obtain ⟨u, hu⟩ := exists_frequently_of_frequently (fun k => p k = v) (fun k => p (k + 1)) hv
   obtain ⟨k, hk1, hk2⟩ := hu.exists
   refine ⟨u, ?_, hk1 ▸ hk2 ▸ hp k⟩
-  rw [nodeInf, Set.mem_setOf_eq, Filter.frequently_atTop] at *
+  rw [nodeInf, Set.mem_ofPred_eq, Filter.frequently_atTop] at *
   intro a
   obtain ⟨b, hb, h1, h2⟩ := hu a
   exact ⟨b + 1, by omega, h2⟩
@@ -115,7 +115,7 @@ theorem exists_pred_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
     (hp : ∀ n, G.edge (p n) (p (n + 1))) {v : V} (hv : v ∈ nodeInf p) :
     ∃ u ∈ nodeInf p, G.edge u v := by
   have hv' : ∃ᶠ k in Filter.atTop, p (k + 1) = v := by
-    rw [nodeInf, Set.mem_setOf_eq, Filter.frequently_atTop] at hv
+    rw [nodeInf, Set.mem_ofPred_eq, Filter.frequently_atTop] at hv
     rw [Filter.frequently_atTop]
     intro a
     obtain ⟨b, hb, h⟩ := hv (a + 1)
@@ -123,11 +123,11 @@ theorem exists_pred_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
   obtain ⟨u, hu⟩ := exists_frequently_of_frequently (fun k => p (k + 1) = v) (fun k => p k) hv'
   obtain ⟨k, hk1, hk2⟩ := hu.exists
   refine ⟨u, ?_, hk1 ▸ hk2 ▸ hp k⟩
-  rw [nodeInf, Set.mem_setOf_eq, Filter.frequently_atTop] at *
+  rw [nodeInf, Set.mem_ofPred_eq, Filter.frequently_atTop] at *
   intro a
   obtain ⟨b, hb, h1, h2⟩ := hu a
   exact ⟨b, hb, h2⟩
 
 end ParityGame
 
-end DefsProofs
+end GameProofs

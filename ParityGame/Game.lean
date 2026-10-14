@@ -12,7 +12,8 @@ namespace ParityGame
 /-!
 # Parity games, plays, positional strategies and winning
 
-Section 2 of O. Friedmann and M. Lange, *Solving Parity Games in Practice*, ATVA 2009.
+Section 2 of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009.
 
 A parity game is a total directed graph whose nodes are owned by player `0` or `1` and carry
 natural-number priorities. Plays are infinite paths (`Cslib.ωSequence`); the winner of a play is

@@ -984,7 +984,7 @@ theorem time_certLoop (c : Ctx n) (μ : Fin n → Val) :
             ((predT c v).ret.foldl (certPush (Function.update dom v false))
               (Function.update queued v false, q)).2
           omega
-        · simp only [time_bind, time_pure, ret_pure]
+        · simp only [time_bind, time_pure]
           have hc := time_cmpVal c (μ v) (evaluate c μ v (some dom)).ret.1
           split
           · have := ih dom (Function.update queued v false) q; omega

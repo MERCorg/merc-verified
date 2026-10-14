@@ -54,7 +54,7 @@ theorem IsStable.isHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LT
         ⟨s₁, t₁, Relation.ReflTransGen.refl, hTr₁, rfl, rfl, hNonInert⟩
       rw [show BranchingSignature lts s₁ partition = BranchingSignature lts s₂ partition from h s₁ s₂ hRel] at hmem
       obtain ⟨u, u', hτ, hTr, hβ, hα, _⟩ := hmem
-      exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr lts).mpr hτ, hTr, hβ.symm, hα.symm⟩
+      exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr_iff lts).mpr hτ, hTr, hβ.symm, hα.symm⟩
   · intro t₂ hTr₂
     by_cases hInert : μ = Cslib.HasTau.τ ∧ partition t₂ = partition s₂
     · exact Or.inl ⟨hInert.1, hRel.trans hInert.2.symm⟩
@@ -68,7 +68,7 @@ theorem IsStable.isHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LT
         ⟨s₂, t₂, Relation.ReflTransGen.refl, hTr₂, hRel.symm, rfl, hNonInert⟩
       rw [← show BranchingSignature lts s₁ partition = BranchingSignature lts s₂ partition from h s₁ s₂ hRel] at hmem
       obtain ⟨u, u', hτ, hTr, hβ, hα, _⟩ := hmem
-      exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr lts).mpr hτ, hTr, hβ.trans hRel, hα⟩
+      exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr_iff lts).mpr hτ, hTr, hβ.trans hRel, hα⟩
 
 -- If a partition is stable w.r.t. SplitSignature, then same-block states form a bisimulation.
 -- Proof mirrors IsStable.isHomBisimulation but uses congr_fun to apply the per-label equality.
@@ -273,7 +273,7 @@ theorem BranchingBisimilarity.branchingFixPoint [Cslib.HasTau Label] (lts : Csli
           exact (Quotient.sound hUU').symm
       · -- Or.inr: real τ*-prefix + μ-step in y-side, matching the triple.
         refine ⟨w, w', ?_, hTrW, ?_, ?_, hSide⟩
-        · exact hPathYV.trans ((Cslib.LTS.sTr_τSTr lts).mp hSTrVw)
+        · exact hPathYV.trans ((Cslib.LTS.sTr_τSTr_iff lts).mp hSTrVw)
         · rw [← hβEq]
           exact (Quotient.sound (s := brSetoid) ⟨r, hrUW, hrBis⟩).symm
         · rw [← hαEq]

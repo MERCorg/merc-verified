@@ -1,7 +1,7 @@
 module
 
-public import ParityGame.Defs
-public import ParityGame.Proofs.Defs_Proofs
+public import ParityGame.Game
+public import ParityGame.Proofs.Game_Proofs
 public import Cslib.Foundations.Data.OmegaSequence.Init
 
 open Cslib (ωSequence)

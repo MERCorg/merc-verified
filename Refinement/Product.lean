@@ -14,8 +14,8 @@ namespace Refinement
 /-!
 # Product, normal form and witnesses
 
-Section 3 of M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
-Algorithms for Refinement Checking*, LMCS 17(1:8), 2021.
+Section 3 of [M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
+Algorithms for Refinement Checking*][Laveaux2021], LMCS 17(1:8), 2021.
 
 Throughout, `State1`/`lts1` plays the role of the specification, `State2`/`lts2` the
 implementation.

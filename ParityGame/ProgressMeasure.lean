@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 
 open Cslib (ωSequence)
 
@@ -11,27 +11,28 @@ namespace ParityGame
 /-!
 # Progress measures over an arbitrary priority-indexed ordered codomain
 
-M. Jurdziński, *Small Progress Measures for Solving Parity Games*, STACS 2000, labels every node
+[M. Jurdziński, *Small Progress Measures for Solving Parity Games*][Jurdzinski2000], STACS 2000,
+labels every node
 with a tuple of natural numbers (one component per odd priority) such that along every edge
 consistent with a strategy of player `0` the label does not increase when compared on the
 components for priorities `≥ Ω(v)`, and strictly decreases there when `Ω(v)` is odd. Since the
 labels come from a well-founded order, an odd priority cannot be the greatest one occurring
 infinitely often, so player `0` wins.
 
-Later work (Jurdziński–Lazić 2017; Czerwiński, Daviaud, Fijalkow, Jurdziński, Lazić, Parys,
-*Universal trees grow inside separating automata: Quasi-polynomial lower bounds for parity games*,
-SODA 2019) replaces the tuples by the leaves of an ordered *universal tree*, compared after
-truncation to a given level. The soundness argument only uses the order structure, which is what
-this file abstracts: a `Codomain` is a family of preorders `le p` indexed by priorities, getting
-coarser as `p` grows (comparing only the components / tree levels for priorities `≥ p`), whose
-strict part is well-founded at every odd level. Tuples, universal trees and arbitrary
-instance-specific ordered trees with truncation all fit this interface, and the headline claim
-`Game.ProgressMeasureSound` says that *any* progress measure over *any* such codomain certifies
-that player `0` wins from every node of its domain — so lifting over a candidate codomain can only
-under-approximate player `0`'s winning region, never be wrong.
+Later work ([Jurdziński–Lazić 2017][Jurdzinski2017]; [Czerwiński, Daviaud, Fijalkow, Jurdziński,
+Lazić, Parys, *Universal trees grow inside separating automata: Quasi-polynomial lower bounds for
+parity games*][Czerwinski2019], SODA 2019) replaces the tuples by the leaves of an ordered
+*universal tree*, compared after truncation to a given level. The soundness argument only uses the
+order structure, which is what this file abstracts: a `Codomain` is a family of preorders `le p`
+indexed by priorities, getting coarser as `p` grows (comparing only the components / tree levels for
+priorities `≥ p`), whose strict part is well-founded at every odd level. Tuples, universal trees and
+arbitrary instance-specific ordered trees with truncation all fit this interface, and the headline
+claim `Game.ProgressMeasureSound` says that *any* progress measure over *any* such codomain
+certifies that player `0` wins from every node of its domain — so lifting over a candidate codomain
+can only under-approximate player `0`'s winning region, never be wrong.
 
 **Modeling choices**
-* MAX-parity convention (as in `ParityGame.Defs`): coarser comparison at higher priorities.
+* MAX-parity convention (as in `ParityGame.Game`): coarser comparison at higher priorities.
 * The "⊤" value of Jurdziński's measures is not modelled; instead the measure comes with an
   explicit domain `D` (the nodes not mapped to ⊤), and the closure conditions on `D` express that
   the measure never progresses into ⊤.

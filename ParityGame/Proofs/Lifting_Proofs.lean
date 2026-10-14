@@ -136,7 +136,7 @@ theorem Game.fix_measure [Finite V] [WellFoundedLT T] (G : Game V) {X : Set V}
     have hvX := hDX v hne
     have hle : leastProg C val (G.prio v) (ν w) ≤ ν v := by
       rw [← hν v]
-      simp only [Game.lift, hvX, if_true, ho, reduceCtorEq, if_false]
+      simp only [Game.lift, hvX, ite_true, ho, reduceCtorEq, ite_false]
       exact le_sSup ⟨w, ⟨hwX, he⟩, rfl⟩
     have hp := (leastProg_spec (ne_top_of_le_ne_top hne hle)).mono_left hv hle hne
     exact ⟨hp.2.1, hp.2.2⟩
@@ -200,22 +200,22 @@ theorem Game.liftingLfpCorrect [Finite V] [WellFoundedLT T] (G : Game V) (X : Se
       intro u
       by_cases hu : u ∈ r.win .zero
       · have huX := reg.sub hu
-        simp only [ν', hu, if_true]
+        simp only [ν', hu, ite_true]
         unfold Game.lift
         cases ho : G.owner u with
         | zero =>
           obtain ⟨hσW, he, hp⟩ := hμ.2.1 u hu ho
-          simp only [huX, if_true]
+          simp only [huX, ite_true]
           refine (sInf_le (s := G.succProg X C val ν' u)
             ⟨r.strat .zero u, ⟨reg.sub hσW, he⟩, rfl⟩).trans ?_
-          simp only [ν', hσW, if_true]
+          simp only [ν', hσW, ite_true]
           exact leastProg_le ⟨hμtop u hu, hμtop _ hσW, hp⟩
         | one =>
-          simp only [huX, if_true, reduceCtorEq, if_false]
+          simp only [huX, ite_true, reduceCtorEq, ite_false]
           apply sSup_le
           rintro _ ⟨w, ⟨hwX, he⟩, rfl⟩
           obtain ⟨hwW, hp⟩ := hμ.2.2 u hu ho w hwX he
-          simp only [hwW, if_true]
+          simp only [hwW, ite_true]
           exact leastProg_le ⟨hμtop u hu, hμtop _ hwW, hp⟩
       · simp [ν', hu]
     have h1 : ν ≤ OrderHom.lfp (G.liftHom X C val hv) := hν.2 (OrderHom.map_lfp (G.liftHom X C val hv))
@@ -353,12 +353,12 @@ theorem Game.chainReprExists [Finite V] (G : Game V) (X : Set V) : G.ChainReprEx
   refine ⟨Fin (k + 1), inferInstance, inferInstance, val, ?_, ?_, ?_⟩
   · intro a b ha hb
     rw [htop] at ha hb
-    simp only [val, ha, hb, dif_pos]
+    simp only [val, ha, hb, dite_eq_left]
     rw [← toLex_le_iff_lexLE (hleaf _).2.2.2 (hleaf _).2.2.2]
     simp only [toLex_ofLex, Subtype.coe_le_coe, OrderIso.le_iff_le, Fin.le_iff_val_le_val]
   · intro a ha
     rw [htop] at ha
-    simp only [val, ha, dif_pos]
+    simp only [val, ha, dite_eq_left]
     exact hleaf _
   · intro l hl
     have hmem : toLex l ∈ s := by simpa [s] using hl
@@ -397,7 +397,7 @@ theorem Game.accelSound [Finite V] [WellFoundedLT T] (G : Game V) (X : Set V) (C
       have hfu : f u = σ u := by simp [hf, ho]
       rw [hfu]
       refine ⟨?_, hD', huD, hD', hp⟩
-      simp only [Game.AccelMove, ho, if_true]
+      simp only [Game.AccelMove, ho, ite_true]
       exact ⟨he, (hσ u (hSX hu) ho).1⟩
     | one =>
       have hfu : f u = τ u := by simp [hf, ho]

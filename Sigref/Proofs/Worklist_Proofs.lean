@@ -20,7 +20,7 @@ variable {n : ℕ}
 
 theorem mark_of_dirty (rp : RP n) (x : Fin n) (h : rp.Dirty x) : rp.mark x = rp := by
   unfold mark
-  rw [dif_neg]
+  rw [dite_eq_right]
   intro hc
   unfold Dirty at h
   omega
@@ -89,8 +89,8 @@ theorem markAllW_inv (l : List (Fin n)) {c : Ctx n} (h : WLInv c) : WLInv (markA
 theorem markW_rp (c : Ctx n) (x : Fin n) : (markW c x).rp = c.rp.mark x := by
   unfold markW
   by_cases hd : c.rp.Dirty x
-  · rw [if_pos hd]; exact (mark_of_dirty _ _ hd).symm
-  · rw [if_neg hd]
+  · rw [ite_eq_left hd]; exact (mark_of_dirty _ _ hd).symm
+  · rw [ite_eq_right hd]
 
 theorem markAllW_dirty {c : Ctx n} (h : WLInv c) (l : List (Fin n)) (z : Fin n) :
     (markAllW l c).rp.Dirty z ↔ c.rp.Dirty z ∨ z ∈ l := by

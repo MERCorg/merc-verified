@@ -1,4 +1,4 @@
-import ParityGame.Defs
+import ParityGame.Game
 import ParityGame.Attractor
 import ParityGame.ProgressMeasure
 import ParityGame.TwoSidedAlgorithm
@@ -13,7 +13,7 @@ example {V : Type*} (G : Game V) (X : Set V) (i : Player) (σ : Strategy V) (v :
     G.dual.WinsFrom X i σ v ↔ G.WinsFrom X i.opp σ v :=
   Game.dualWinsFrom G X i σ v
 
--- Contract pin: the dual game is the one of the Rust `View` for the odd player.
+-- Contract pin: the dual game has swapped owners, unchanged edges and priorities `+ 1`.
 example {V : Type*} (G : Game V) (v w : V) :
     G.dual.owner v = (G.owner v).opp ∧ (G.dual.edge v w ↔ G.edge v w) ∧
       G.dual.prio v = G.prio v + 1 :=

@@ -14,8 +14,8 @@ namespace Refinement
 /-!
 # The antichain order
 
-Section 4-5 of M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
-Algorithms for Refinement Checking*, LMCS 17(1:8), 2021.
+Section 4-5 of [M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
+Algorithms for Refinement Checking*][Laveaux2021], LMCS 17(1:8), 2021.
 
 `NormTr`/`FdrNormTr` states are sets `U : Set State1`; both share the key property that their
 transition relation is a *monotone functional image operator* (`IsMonotoneNormalForm`, capturing

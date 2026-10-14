@@ -1,7 +1,7 @@
 module
 
 public import ParityGame.Transform
-public import ParityGame.Proofs.Defs_Proofs
+public import ParityGame.Proofs.Game_Proofs
 public import ParityGame.Proofs.Region_Proofs
 
 open Cslib (ωSequence)
@@ -43,10 +43,10 @@ theorem compress_of_exists {x : ℕ} (h : ∃ y ∈ S, y < x) :
     compress S x = if sSup {y | y ∈ S ∧ y < x} % 2 = x % 2
       then compress S (sSup {y | y ∈ S ∧ y < x})
       else compress S (sSup {y | y ∈ S ∧ y < x}) + 1 := by
-  rw [compress, dif_pos h]
+  rw [compress, dite_eq_left h]
 
 theorem compress_of_not {x : ℕ} (h : ¬ ∃ y ∈ S, y < x) : compress S x = x % 2 := by
-  rw [compress, dif_neg h]
+  rw [compress, dite_eq_right h]
 
 theorem compress_parity (x : ℕ) : compress S x % 2 = x % 2 := by
   induction x using Nat.strong_induction_on with

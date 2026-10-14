@@ -43,7 +43,7 @@ theorem weakComponents_length (c : Ctx n) (S : VSet n) : (weakComponents c S).re
       rw [List.foldl_cons]
       refine (ih _).trans ?_
       rw [wcStep_ret]
-      split <;> simp <;> omega
+      split <;> simp; omega
   simp only [weakComponents, ret_bind, ret_pure, ret_foldlM]
   have := key (List.finRange n) (VSet.empty, [])
   simpa using this
@@ -286,7 +286,7 @@ theorem requeue_nodup (st : LState n) (u : Fin n) (h1 : st.queue.Nodup)
     · simp at hb; subst hb; subst hab; exact hu' ha
     · by_cases hvu : v = u
       · subst hvu; simp
-      · simp [Function.update_of_ne hvu, h2 v, hvu]
+      · simp [h2 v, hvu]
 
 theorem foldl_requeue_nodup : ∀ (L : List (Fin n)) (st : LState n), st.queue.Nodup →
     (∀ v, st.inq v = true ↔ v ∈ st.queue) →

@@ -83,7 +83,7 @@ theorem iterK_iter (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (h
         (if (closure b preds c.rp).Dirty y then some (d.sigHash y) else none))) := by
     intro x y hx hy
     by_cases hdx : (closure b preds c.rp).Dirty x <;> by_cases hdy : (closure b preds c.rp).Dirty y
-    · simp only [hdx, hdy, if_true, Option.some.injEq]
+    · simp only [hdx, hdy, ite_true, Option.some.injEq]
       rw [hkey x y hx hy hdx hdy]
       rw [show (closure b preds c.rp).toBD.setoid = c.rp.setoid from hset, d.hCoh,
         d.sig_iff_E hWF (show c.rp.blk x = c.rp.blk y by rw [← hblk1, ← hblk1 y, hx, hy])]

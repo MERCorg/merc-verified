@@ -3,6 +3,7 @@ module
 public import ParityGame.TwoSidedCostCorrect
 public import ParityGame.Proofs.TwoSidedCost_Proofs
 public import ParityGame.Proofs.TwoSidedLifting_Proofs
+public import Mathlib.Data.List.GetD
 
 @[expose] public section TwoSidedCostCorrectOrderProofs
 
@@ -90,17 +91,17 @@ theorem lexCmp_trans : ∀ (k : ℕ) (a b c : List (ℕ × ℕ)), (lexCmp k a b)
     rw [lexCmp_ret_cons] at h1 h2 ⊢
     by_cases hxy : pcmp x y = .eq
     · obtain rfl := (pcmp_eq_eq x y).1 hxy
-      rw [if_pos hxy] at h1
+      rw [ite_eq_left hxy] at h1
       by_cases hyz : pcmp x z = .eq
-      · rw [if_pos hyz] at h2 ⊢
+      · rw [ite_eq_left hyz] at h2 ⊢
         exact lexCmp_trans k xs ys zs h1 h2
-      · rw [if_neg hyz] at h2 ⊢
+      · rw [ite_eq_right hyz] at h2 ⊢
         exact h2
-    · rw [if_neg hxy] at h1
+    · rw [ite_eq_right hxy] at h1
       by_cases hyz : pcmp y z = .eq
-      · rw [← (pcmp_eq_eq y z).1 hyz, if_neg hxy]
+      · rw [← (pcmp_eq_eq y z).1 hyz, ite_eq_right hxy]
         exact h1
-      · rw [if_neg hyz] at h2
+      · rw [ite_eq_right hyz] at h2
         have h1' : pcmp x y = .lt := by cases h : pcmp x y <;> simp_all
         have h2' : pcmp y z = .lt := by cases h : pcmp y z <;> simp_all
         rw [pcmp_lt] at h1' h2'
@@ -222,11 +223,11 @@ theorem lexLE_zero_left (m : ℕ) (g : ℕ → ℕ) : LexLE m (fun _ => 0) g :=
 
 theorem tup_even (x : List (ℕ × ℕ)) (l : ℕ) : tup x (2 * l) = (x.getD l (0, 0)).1 := by
   unfold tup
-  rw [if_pos (by omega), show 2 * l / 2 = l by omega]
+  rw [ite_eq_left (by omega), show 2 * l / 2 = l by omega]
 
 theorem tup_odd (x : List (ℕ × ℕ)) (l : ℕ) : tup x (2 * l + 1) = (x.getD l (0, 0)).2 := by
   unfold tup
-  rw [if_neg (by omega), show (2 * l + 1) / 2 = l by omega]
+  rw [ite_eq_right (by omega), show (2 * l + 1) / 2 = l by omega]
 
 theorem tup_eq_of_getD {x y : List (ℕ × ℕ)} {m : ℕ}
     (h : ∀ l < m, x.getD l (0, 0) = y.getD l (0, 0)) : ∀ i < 2 * m, tup x i = tup y i := by
@@ -301,10 +302,10 @@ theorem lexCmp_le_iff : ∀ (k : ℕ) (a b : List (ℕ × ℕ)), k ≤ a.length 
     have ih' : (lexCmp k xs ys).ret ≠ .gt ↔ LexLE (2 * k) (fun i => tup xs i)
         (fun i => tup ys i) := ih
     by_cases hxy : pcmp x y = .eq
-    · rw [if_pos hxy, ih']
+    · rw [ite_eq_left hxy, ih']
       obtain rfl := (pcmp_eq_eq x y).1 hxy
       simp
-    · rw [if_neg hxy]
+    · rw [ite_eq_right hxy]
       have hne : x ≠ y := fun h => hxy ((pcmp_eq_eq x y).2 h)
       constructor
       · intro hg

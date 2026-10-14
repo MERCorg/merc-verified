@@ -1,6 +1,6 @@
 module
 
-public import ParityGame.Defs
+public import ParityGame.Game
 public import Mathlib.Order.Lattice.Nat
 public import Mathlib.Data.Nat.Find
 
@@ -13,7 +13,8 @@ namespace ParityGame
 /-!
 # Priority compression and propagation
 
-Sections 3.3 and 3.4 of O. Friedmann and M. Lange, *Solving Parity Games in Practice*, ATVA 2009.
+Sections 3.3 and 3.4 of
+[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009.
 
 Both transformations only change the priority function, so a transformed game has exactly the same
 nodes, edges, owners, plays and strategies. They are *sound* when every play (inside the subgame

@@ -13,8 +13,8 @@ namespace Refinement
 /-!
 # Weak traces, refusals, failures and divergences
 
-Section 2 of M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
-Algorithms for Refinement Checking*, LMCS 17(1:8), 2021.
+Section 2 of [M. Laveaux, J. F. Groote, T. A. C. Willemse, *Correct and Efficient Antichain
+Algorithms for Refinement Checking*][Laveaux2021], LMCS 17(1:8), 2021.
 
 `Label` plays the role of the paper's `Actτ = Act ∪ {τ}`: visible actions are exactly the
 `μ : Label` with `μ ≠ HasTau.τ`. Weak transitions and weak traces are built on top of

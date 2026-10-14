@@ -2,6 +2,7 @@ module
 
 public import ParityGame.Proofs.TwoSidedCostCorrect_Graph_Proofs
 public import ParityGame.Proofs.TwoSidedAlgorithm_Proofs
+public import Mathlib.Data.List.GetD
 
 @[expose] public section TwoSidedCostCorrectTreeProofs
 
@@ -66,7 +67,7 @@ theorem foldl_update {α β : Type} [DecidableEq α] (F : α → β) :
 theorem foldl_update_eq {α β : Type} [DecidableEq α] (F : α → β) (l : List α) (b : α → β)
     (hl : ∀ u, u ∈ l) : l.foldl (fun b x => Function.update b x (F x)) b = F := by
   funext u
-  rw [foldl_update, if_pos (hl u)]
+  rw [foldl_update, ite_eq_left (hl u)]
 
 theorem le_foldr_max {α : Type} (f : α → ℕ) :
     ∀ (l : List α) (x : α), x ∈ l → f x ≤ l.foldr (fun w a => max (f w) a) 0
@@ -183,12 +184,9 @@ theorem depthOf_eq (v : Fin n) :
     rw [List.mem_range] at hl
     have := hodd l hl
     simp only [Function.comp, level_eq c hc h] at this ⊢
-    split_ifs with he <;> simp only [decide_eq_decide] <;> simp at he <;> omega
-  rw [this]
-  rw [show (Finset.range c.height).filter (fun l => c.prio v ≤ (c.game h).level c.X l) =
-    ⟨((List.range c.height).filter fun l => decide (c.prio v ≤ (c.game h).level c.X l) : List ℕ),
-      (List.nodup_range).filter _⟩ by ext; simp]
-  rfl
+    split_ifs with he <;> simp only [decide_eq_decide]; simp at he; omega
+  rw [this, Finset.card_def, Finset.filter_val, Finset.range_val, Multiset.range, Multiset.filter_coe,
+    Multiset.coe_card]
 
 end Levels
 
@@ -224,7 +222,7 @@ theorem mem_undirected (c : Ctx n) (S : VSet n) (x y : Fin n) :
     y ∈ (undirected c S x).ret ↔
       ((y ∈ c.G.succ x ∧ c.alive y = true) ∨ (c.alive y = true ∧ x ∈ c.G.succ y)) ∧
         S y = true := by
-  simp only [undirected, ret_bind, ret_tick, ret_pure, List.mem_filter, List.mem_append]
+  simp only [undirected, ret_bind, ret_pure, List.mem_filter, List.mem_append]
   rw [mem_succT, mem_predT]
 
 /-- The search of `weakComponents` from a root of `S` finds exactly its component. -/
@@ -253,7 +251,7 @@ theorem reach_undirected (c : Ctx n) (S : VSet n) (hS : ∀ v, S v = true → c.
       | refl => exact Relation.ReflTransGen.refl
       | symm a b _ ih => exact rtg_symm (fun a b h => h.symm) ih
       | trans a b c _ _ ih1 ih2 => exact ih1.trans ih2
-    refine Relation.ReflTransGen.mono (fun a b hab => ?_) h1
+    refine Relation.ReflTransGen.mono (fun a b hab => ?_) _ _ h1
     refine ⟨?_, ?_⟩
     · rw [mem_undirected]
       rcases hab with ⟨ha, hb, he⟩ | ⟨hb, ha, he⟩
@@ -266,7 +264,7 @@ theorem wcStep_ret (c : Ctx n) (S : VSet n) (acc : VSet n × List (VSet n)) (roo
       (materialize fun v => acc.1 v || (reachSet (undirected c S) S root).ret v,
         acc.2 ++ [(reachSet (undirected c S) S root).ret]) else acc := by
   unfold wcStep
-  simp only [ret_bind, ret_tick]
+  simp only [ret_bind]
   split <;> simp
 
 /-- The fold invariant of `weakComponents`. -/
@@ -380,7 +378,7 @@ open scoped Classical in
 theorem toSet_decide (R : VSet n) :
     (fun v => decide (v ∈ R.toSet)) = R := by
   funext v
-  simp [VSet.toSet]
+  cases h : R v <;> simp [VSet.toSet, h]
 
 theorem Ctx.nb_toSet (c : Ctx n) (l : ℕ) (R : VSet n) :
     c.nb R.toSet (c.level l) = ((children c l R).ret).map VSet.toSet := by
@@ -422,7 +420,7 @@ theorem Ctx.compNumbering (c : Ctx n) (h : c.G.Total) :
     = S from rfl, hne, Bool.false_eq_true, ↓reduceIte, List.mem_map]
   refine ⟨K', hK', ?_⟩
   ext z
-  simp only [VSet.toSet, Set.mem_setOf_eq, hK'z, hrel]
+  simp only [VSet.toSet, Set.mem_ofPred_eq, hK'z, hrel]
   rfl
 
 /-! ### The chain bound -/
@@ -532,13 +530,13 @@ theorem dp_ge (wt : Fin n → ℕ)
       rw [hwt, length_filter_finRange]
       apply Finset.card_le_card_of_injOn a
       · intro i hi
-        simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hi
-        simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq,
+        simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hi
+        simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_ofPred_eq,
           Bool.and_eq_true, beq_iff_eq]
         refine ⟨⟨⟨haS i (by omega), ?_⟩, hall i hi.1⟩, hi.2⟩
         rw [← ha0]; exact hreach 0 (by omega) i (by omega) (by omega)
       · intro x hx y hy hxy
-        simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hx hy
+        simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hx hy
         exact hinj x (by omega) y (by omega) hx.2 hxy
     by_cases hall : ∀ i ≤ len, rc (a i) u = true
     · have := hpre (len + 1) le_rfl (fun i hi => hall i (by omega))
@@ -606,7 +604,7 @@ theorem chainBound_ge (c : Ctx n) (h : c.G.Total) (R : VSet n)
   have haS : ∀ i ≤ len, S (a i) = true := fun i hi => by
     obtain ⟨h1, h2⟩ := ha i hi
     rw [Ctx.game_prio] at h2
-    simp [hSdef, h1, VSet.toSet] at h1 ⊢
+    simp [hSdef, VSet.toSet] at h1 ⊢
     exact ⟨h1, h2⟩
   have hk := dp_ge c S q hS rc hrc _ (fun u => rfl) (n + 1) (a 0) (haS 0 (by omega))
     (by have := Finset.card_le_univ (Finset.univ.filter fun x => rc (a 0) x = true)
@@ -703,7 +701,7 @@ theorem progRegion_toSet (c : Ctx n) (hc : c.LevelsOK) (h : c.G.Total) (a : ℕ 
 
 theorem tup_concat_lt (P : List (ℕ × ℕ)) (x : ℕ × ℕ) :
     ∀ i < 2 * P.length, tup (P ++ [x]) i = tup P i :=
-  tup_eq_of_getD fun l hl => List.getD_append _ _ _ _ hl
+  tup_eq_of_getD fun _ hl => List.getD_append _ _ _ _ hl
 
 theorem tup_concat_fst (P : List (ℕ × ℕ)) (x : ℕ × ℕ) : tup (P ++ [x]) (2 * P.length) = x.1 := by
   rw [tup_even, List.getD_append_right _ _ _ _ le_rfl]; simp
@@ -766,7 +764,7 @@ theorem nextAux_ret_concat (c : Ctx n) (regs : List (VSet n)) (f : ℕ) (P : Lis
   rw [nextAux]
   simp only [List.getLast?_append, List.getLast?_singleton, Option.some_or, List.length_append,
     List.length_singleton, Nat.add_sub_cancel, ret_bind, List.dropLast_concat]
-  split_ifs <;> simp_all [List.set_append_right] <;> (split_ifs <;> first | rfl | omega)
+  split_ifs <;> simp_all [List.set_append_right]; (split_ifs <;> first | rfl | omega)
 
 theorem nextAux_ret_nil (c : Ctx n) (regs : List (VSet n)) (f : ℕ) :
     (nextAux c regs f []).ret = none := by

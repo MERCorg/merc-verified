@@ -120,9 +120,9 @@ theorem cands {succ : Fin n → List (Fin n)} (_hA : Acyclic succ) (v : Fin n) (
     · exact hp2 x hx
 
 theorem acyclic_wf {succ : Fin n → List (Fin n)} (hA : Acyclic succ) : WellFounded (fun b a : Fin n => TransGen (E succ) a b) := by
-  haveI : IsTrans (Fin n) (fun b a : Fin n => TransGen (E succ) a b) :=
+  have : IsTrans (Fin n) (fun b a : Fin n => TransGen (E succ) a b) :=
     ⟨fun a b c hab hbc => TransGen.trans hbc hab⟩
-  haveI : Std.Irrefl (fun b a : Fin n => TransGen (E succ) a b) := ⟨fun a h => hA a h⟩
+  have : Std.Irrefl (fun b a : Fin n => TransGen (E succ) a b) := ⟨fun a h => hA a h⟩
   exact Finite.wellFounded_of_trans_of_irrefl _
 
 theorem step_none (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
@@ -369,19 +369,19 @@ theorem topoSortTerminates (succ : Fin n → List (Fin n)) : TopoSortTerminates 
   · rw [hd] at h
     simp only at h
     by_cases hi : c.idx < n
-    · rw [dif_pos hi] at h
+    · rw [dite_eq_left hi] at h
       by_cases hm : c.marks ⟨c.idx, hi⟩ = none
-      · rw [if_pos hm] at h
+      · rw [ite_eq_left hm] at h
         cases h
         unfold measure
         simp [hd]
         omega
-      · rw [if_neg hm] at h
+      · rw [ite_eq_right hm] at h
         cases h
         unfold measure
         simp [hd]
         omega
-    · rw [dif_neg hi] at h; cases h
+    · rw [dite_eq_right hi] at h; cases h
   · rw [hd] at h
     simp only at h
     cases hm : c.marks x with
@@ -426,11 +426,11 @@ theorem step_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : step s
   · rw [hd] at h
     simp only at h
     by_cases hi : c.idx < n
-    · rw [dif_pos hi] at h
+    · rw [dite_eq_left hi] at h
       by_cases hm : c.marks ⟨c.idx, hi⟩ = none
-      · rw [if_pos hm] at h; cases h; simp
-      · rw [if_neg hm] at h; cases h; simp
-    · rw [dif_neg hi] at h; cases h
+      · rw [ite_eq_left hm] at h; cases h; simp
+      · rw [ite_eq_right hm] at h; cases h; simp
+    · rw [dite_eq_right hi] at h; cases h
   · rw [hd] at h
     simp only at h
     cases hm : c.marks x with
@@ -444,11 +444,11 @@ theorem step_nil_idx {succ : Fin n → List (Fin n)} {c c' : Cfg n} (hd : c.dept
   rw [hd] at h
   simp only at h
   by_cases hi : c.idx < n
-  · rw [dif_pos hi] at h
+  · rw [dite_eq_left hi] at h
     by_cases hm : c.marks ⟨c.idx, hi⟩ = none
-    · rw [if_pos hm] at h; cases h; rfl
-    · rw [if_neg hm] at h; cases h; rfl
-  · rw [dif_neg hi] at h; cases h
+    · rw [ite_eq_left hm] at h; cases h; rfl
+    · rw [ite_eq_right hm] at h; cases h; rfl
+  · rw [dite_eq_right hi] at h; cases h
 
 theorem runs_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : Runs succ c c') :
     c.idx ≤ c'.idx := by

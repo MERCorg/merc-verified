@@ -1,5 +1,5 @@
-import ParityGame.Defs
-import ParityGame.Proofs.Defs_Proofs
+import ParityGame.Game
+import ParityGame.Proofs.Game_Proofs
 
 open ParityGame Cslib
 

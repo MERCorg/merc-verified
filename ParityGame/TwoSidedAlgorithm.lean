@@ -11,10 +11,8 @@ namespace ParityGame
 /-!
 # Two-sided lifting: duality, dominion removal, certification and end-to-end correctness
 
-The outer loop of "two-sided lifting over instance-derived trees" (`experiments/FINDINGS.md` §5;
-Rust `merc/crates/vpg/src/two_sided_lifting.rs`, function `solve_game`; Python
-`experiments/lifting/solver.py`, function `solve`). The lifting itself is specified in
-`ParityGame.Lifting`; this file specifies how its results are used.
+The outer loop of "two-sided lifting over instance-derived trees". The lifting itself is specified
+in `ParityGame.Lifting`; this file specifies how its results are used.
 
 1. **Duality** (`Game.dual`, `Game.DualWinsFrom`): player `1`'s lifting runs on the dual game
    (priorities `+ 1`, owners swapped, edges unchanged), in which player `0` wins exactly where
@@ -33,25 +31,25 @@ Rust `merc/crates/vpg/src/two_sided_lifting.rs`, function `solve_game`; Python
 
 **Modeling choices**
 * *Dual game.* `Game.dual` adds `1` to every priority and swaps owners; edges are unchanged.
-  This matches the Rust `View` for `Player::Odd` (`prio + 1`, "mine" = owned by the lifting
-  player). `Game.forPlayer i` is the game in which `i` plays the role of player `0`.
-* *Certification.* The Rust `Lifter::certified` computes the greatest set `D` of non-`⊤` nodes
-  on which the current values form a progress measure for an argmin choice of the lifting player
-  (restricted to `D`). Here a removal step may use *any* non-empty `D` that is the domain of a
-  progress measure of player `i` (in `Game.forPlayer i`), for *any* labelling into *any* codomain
-  and *any* witnessing strategy; the Rust set is one such `D` (its argmin choices are the
-  strategy), so the model over-approximates the Rust behaviour. Empty certified sets remove
-  nothing; the model requires `D` to be non-empty so that every step makes progress.
+  In the dual game "mine" is "owned by the lifting player". `Game.forPlayer i` is the game in
+  which `i` plays the role of player `0`.
+* *Certification.* The solver certifies the greatest set `D` of non-`⊤` nodes on which the
+  current values form a progress measure for an argmin choice of the lifting player (restricted
+  to `D`). Here a removal step may use *any* non-empty `D` that is the domain of a progress
+  measure of player `i` (in `Game.forPlayer i`), for *any* labelling into *any* codomain and
+  *any* witnessing strategy; the solver's set is one such `D` (its argmin choices are the
+  strategy), so the model over-approximates the solver. Empty certified sets remove nothing; the
+  model requires `D` to be non-empty so that every step makes progress.
 * *Attractor.* Removal uses the stage-wise attractor `Game.attr` of the *original* game for the
-  certifying player inside the current subgame, as the Rust `attractor`. The Rust code removes
-  both players' sets in one round, computing player `1`'s attractor after player `0`'s removal
-  but certifying it before; `Game.SimultaneousRemoval` shows such a set is still a certified set
-  of the smaller subgame, so one Rust round is two `Game.RemovalStep`s.
-* *Completion.* The Rust loop ends when one player's lifting queue is empty, at which point its
+  certifying player inside the current subgame. The solver removes both players' sets in one
+  round, computing player `1`'s attractor after player `0`'s removal but certifying it before;
+  `Game.SimultaneousRemoval` shows such a set is still a certified set of the smaller subgame, so
+  one round is two `Game.RemovalStep`s.
+* *Completion.* The loop ends when one player's lifting queue is empty, at which point its
   values are taken to be the least fixpoint of lifting over that player's chain tree. The model
   takes that least fixpoint as given (`IsLeast` of the fixpoints of `Game.lift` over a
   `Game.ChainRepr` of the chain tree of `Game.forPlayer i` on the current subgame); that the
-  Rust lifting, with its acceleration, actually reaches it is *not* claimed here
+  lifting, with its acceleration, actually reaches it is *not* claimed here
   (`Game.AccelSound` in `ParityGame.Lifting` is the relevant ingredient). Nodes of the subgame
   with a proper value go to `i`, the others to the opponent.
 * *Winning.* "`i` wins `v` in `X`" is `Game.Wins`: some positional strategy wins from `v`
@@ -122,7 +120,7 @@ def Game.CertifiedSetGreatest (G : Game V) (X : Set V) (C : Codomain M) (μ : V 
   (∃ σ, G.IsProgressMeasure X C (G.certifiedSet X C μ) μ σ) ∧
   ∀ D σ, G.IsProgressMeasure X C D μ σ → D ⊆ G.certifiedSet X C μ
 
-/-- Contract (simultaneous removal, as in one Rust round): if `D₀` is certified for player `0`
+/-- Contract (simultaneous removal, as in one round of the solver): if `D₀` is certified for player `0`
     and `D₁` for player `1` (in the dual) on the same subgame `X`, then `D₁` is still certified
     for player `1` on what remains after removing the `0`-attractor of `D₀`. -/
 def Game.SimultaneousRemoval [Finite V] (G : Game V) (X : Set V) (C₀ : Codomain M)
