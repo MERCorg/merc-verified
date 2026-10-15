@@ -1,0 +1,619 @@
+module
+
+public import Cslib.Foundations.Semantics.LTS.Basic
+public import Cslib.Foundations.Semantics.LTS.Bisimulation
+public import MercLib.LTS.BranchingBisimilarity
+public import MercLib.Signatures.Signature
+public import MercLib.Signatures.InductiveSignatures
+public import MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+
+@[expose] public section InductiveSignaturesProofs
+
+namespace MercLib.Signatures
+
+open MercLib.LTS
+
+/-! Machine-generated; may be freely edited or regenerated (see AGENTS.md). The "headline"
+theorems below are stated in `Challenges/Signatures.lean` (human-vetted). -/
+
+/-! ## Inductive signatures and branching bisimilarity for τ-loop-free LTSs
+
+The `Sig` operator is a one-step recurrence. Its full fixed point exists when the
+inert τ-relation is well-founded (no infinite τ-chains, hence no τ-loops). For such LTSs,
+a partition stable under the fixed point induces a branching bisimulation.
+-/
+
+/-- Witness extraction for a fixed point of `Sig` under τ-loop-freedom.
+
+If `sigFn` is a fixed point of `Sig` and the LTS is τ-loop-free, then every non-inert element
+`(μ, Sum.inl α) ∈ sigFn s` is *realized* by an actual transition: there is an inert τ*-path
+`s →τ*→ s'` (staying in `partition s`'s block) followed by a transition `s' →μ→ t` with
+`partition t = α`.
+
+Proof: well-founded induction on `s` via the τ-relation. If `Sig` delegates at `s` (to some
+inert τ-successor `s_chosen`), the element lies in `sigFn s_chosen`; apply the IH and prepend
+the τ-step. Otherwise `sigFn s = PreSig s`, and the first PreSig branch supplies the witness
+directly (the inert-τ branch is excluded because it is tagged `Sum.inr`). -/
+theorem Sig.exists_witness_of_inl [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) (partition : State → Block)
+    {Tag : Type _} (sigHash : State → Tag)
+    (sigFn : State → Set (Label × (Block ⊕ Tag)))
+    (hFix : ∀ s, sigFn s = Sig lts partition sigHash sigFn s) :
+    ∀ s μ α, (μ, Sum.inl α) ∈ sigFn s →
+      ∃ s' t, lts.τSTr s s' ∧ partition s' = partition s ∧
+              lts.Tr s' μ t ∧ partition t = α := by
+  intro s
+  induction s using WellFounded.induction hWF with
+  | _ s ih =>
+    intro μ α hmem
+    by_cases hDeleg : ∃ s', lts.Tr s Cslib.HasTau.τ s' ∧ partition s = partition s' ∧
+                PreSig lts partition sigHash s ⊆
+                  sigFn s' ∪ {(Cslib.HasTau.τ, Sum.inr (sigHash s'))}
+    · -- Delegation case: sigFn s = sigFn hDeleg.choose
+      have hEq : sigFn s = sigFn hDeleg.choose := by
+        rw [hFix s, Sig, dite_eq_left hDeleg]
+      rw [hEq] at hmem
+      obtain ⟨hτ, hπ, _⟩ := hDeleg.choose_spec
+      obtain ⟨s', t, hτPath, hπs', hStep, hπt⟩ := ih hDeleg.choose hτ μ α hmem
+      exact ⟨s', t, Relation.ReflTransGen.head hτ hτPath, hπs'.trans hπ.symm, hStep, hπt⟩
+    · -- No-delegation case: sigFn s = PreSig s
+      have hEq : sigFn s = PreSig lts partition sigHash s := by
+        rw [hFix s, Sig, dite_eq_right hDeleg]
+      rw [hEq] at hmem
+      rcases hmem with ⟨a, s', hStep, _, hPair⟩ | ⟨s', _, _, hPair⟩
+      · -- Visible/non-inert PreSig branch — direct witness.
+        obtain ⟨rfl, hSum⟩ := Prod.mk.inj hPair
+        cases Sum.inl.inj hSum
+        exact ⟨s, s', Relation.ReflTransGen.refl, rfl, hStep, rfl⟩
+      · -- Inert-τ PreSig branch is tagged Sum.inr, contradicting Sum.inl.
+        exact nomatch (Prod.mk.inj hPair).2
+
+/-- A non-inert transition `s →μ→ t` witnesses `(μ, Sum.inl (partition t)) ∈ sigFn s` for
+any fixed point of `Sig`. In the delegation case `Sum.inl`-tagged elements pass through the
+subset condition (the singleton only contains `Sum.inr`); in the non-delegation case
+`sigFn s = PreSig s` and membership is direct. -/
+private theorem sigFn_mem_of_nonInert_tr [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (partition : State → Block) {Tag : Type _} (sigHash : State → Tag)
+    (sigFn : State → Set (Label × (Block ⊕ Tag)))
+    (hFix : ∀ s, sigFn s = Sig lts partition sigHash sigFn s)
+    {s t : State} {μ : Label}
+    (hTr : lts.Tr s μ t) (hSide : μ ≠ Cslib.HasTau.τ ∨ partition s ≠ partition t) :
+    (μ, Sum.inl (partition t)) ∈ sigFn s := by
+  have hMem : (μ, Sum.inl (partition t)) ∈ PreSig lts partition sigHash s :=
+    Or.inl ⟨μ, t, hTr, hSide, rfl⟩
+  by_cases hDeleg : ∃ s', lts.Tr s Cslib.HasTau.τ s' ∧ partition s = partition s' ∧
+              PreSig lts partition sigHash s ⊆
+                sigFn s' ∪ {(Cslib.HasTau.τ, Sum.inr (sigHash s'))}
+  · have hEq : sigFn s = sigFn hDeleg.choose := by rw [hFix s, Sig, dite_eq_left hDeleg]
+    rw [hEq]
+    obtain ⟨_, _, hSub⟩ := hDeleg.choose_spec
+    rcases hSub hMem with h | h
+    · exact h
+    · exact nomatch (Prod.mk.inj (Set.mem_singleton_iff.mp h)).2
+  · rw [hFix s, Sig, dite_eq_right hDeleg]; exact hMem
+
+/-- If a partition is stable w.r.t. a fixed point `sigFn` of the inductive `Sig` operator
+(in a τ-loop-free LTS), then same-block states form a branching bisimulation.
+
+The argument: for inert τ-moves the matching state does nothing (Or.inl). For non-inert moves
+on the left, the witness `(μ, Sum.inl (partition t)) ∈ sigFn s₁` lifts via stability to
+`sigFn s₂`; the previous lemma realizes it as an inert τ*-path on the right followed by a
+matching transition, giving Or.inr. The symmetric direction is identical. -/
+theorem IsStable.isHomBranchingBisimulation_inductive [Cslib.HasTau Label]
+    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
+    (partition : State → Block) {Tag : Type _} (sigHash : State → Tag)
+    (sigFn : State → Set (Label × (Block ⊕ Tag)))
+    (hFix : ∀ s, sigFn s = Sig lts partition sigHash sigFn s)
+    (hStable : IsStable sigFn partition) :
+    IsHomBranchingBisimulation lts (fun s s' => partition s = partition s') := by
+  intro s₁ s₂ hRel μ
+  refine ⟨?_, ?_⟩
+  · intro t₁ hTr₁
+    by_cases hInert : μ = Cslib.HasTau.τ ∧ partition t₁ = partition s₁
+    · exact Or.inl ⟨hInert.1, hInert.2.trans hRel⟩
+    · have hSide : μ ≠ Cslib.HasTau.τ ∨ partition s₁ ≠ partition t₁ := by
+        rcases Classical.em (μ = Cslib.HasTau.τ) with hμ | hμ
+        · exact Or.inr fun h => hInert ⟨hμ, h.symm⟩
+        · exact Or.inl hμ
+      have hMem1 : (μ, Sum.inl (partition t₁)) ∈ sigFn s₁ :=
+        sigFn_mem_of_nonInert_tr partition sigHash sigFn hFix hTr₁ hSide
+      have hMem2 : (μ, Sum.inl (partition t₁)) ∈ sigFn s₂ := by
+        rw [← hStable s₁ s₂ hRel]; exact hMem1
+      obtain ⟨s₂', t₂, hτPath, hπs₂', hStep, hπt₂⟩ :=
+        Sig.exists_witness_of_inl hWF partition sigHash sigFn hFix s₂ μ (partition t₁) hMem2
+      refine Or.inr ⟨s₂', t₂, (Cslib.LTS.sTr_τSTr_iff lts).mpr hτPath, hStep, ?_, hπt₂.symm⟩
+      exact hRel.trans hπs₂'.symm
+  · intro t₂ hTr₂
+    by_cases hInert : μ = Cslib.HasTau.τ ∧ partition t₂ = partition s₂
+    · exact Or.inl ⟨hInert.1, hRel.trans hInert.2.symm⟩
+    · have hSide : μ ≠ Cslib.HasTau.τ ∨ partition s₂ ≠ partition t₂ := by
+        rcases Classical.em (μ = Cslib.HasTau.τ) with hμ | hμ
+        · exact Or.inr fun h => hInert ⟨hμ, h.symm⟩
+        · exact Or.inl hμ
+      have hMem2 : (μ, Sum.inl (partition t₂)) ∈ sigFn s₂ :=
+        sigFn_mem_of_nonInert_tr partition sigHash sigFn hFix hTr₂ hSide
+      have hMem1 : (μ, Sum.inl (partition t₂)) ∈ sigFn s₁ := by
+        rw [hStable s₁ s₂ hRel]; exact hMem2
+      obtain ⟨s₁', t₁, hτPath, hπs₁', hStep, hπt₁⟩ :=
+        Sig.exists_witness_of_inl hWF partition sigHash sigFn hFix s₁ μ (partition t₂) hMem1
+      refine Or.inr ⟨s₁', t₁, (Cslib.LTS.sTr_τSTr_iff lts).mpr hτPath, hStep, hπs₁'.trans hRel, hπt₁⟩
+
+/-- Same-block states under a Sig-fixed-point stable partition (in a τ-loop-free LTS) are
+branching bisimilar. -/
+theorem IsStable.branchingBisimilarity_inductive [Cslib.HasTau Label]
+    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
+    (partition : State → Block) {Tag : Type _} (sigHash : State → Tag)
+    (sigFn : State → Set (Label × (Block ⊕ Tag)))
+    (hFix : ∀ s, sigFn s = Sig lts partition sigHash sigFn s)
+    (hStable : IsStable sigFn partition)
+    {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
+    BranchingBisimilarity lts s₁ s₂ :=
+  ⟨fun a b => partition a = partition b, hRel,
+    IsStable.isHomBranchingBisimulation_inductive hWF partition sigHash sigFn hFix hStable⟩
+
+/-! ## Converse direction: branching bisimilarity yields a Sig fixed point
+
+The companion to `IsStable.branchingBisimilarity_inductive`: every pair of branching bisimilar
+states in a τ-loop-free LTS is witnessed by some `Sig`-stable, fixed-point partition. The
+construction uses the branching-bisimilarity quotient as both the partition and (via `Tag = Block`)
+the inert-τ hash, and defines `sigFn` by well-founded recursion on the τ-relation.
+
+Mirrors `BranchingBisimilarity.branchingFixPoint` from `Signature_Proofs.lean`. -/
+
+namespace BranchingBisimilarity
+
+/-- Setoid on `State` given by branching bisimilarity (uses `refl`, `symm`, `trans` from
+`BranchingBisimilarity_Transitivity`). -/
+private def brSetoid [Cslib.HasTau Label] (lts : Cslib.LTS State Label) : Setoid State :=
+  ⟨fun a b => BranchingBisimilarity lts a b,
+   ⟨BranchingBisimilarity.refl,
+    fun {_ _} => BranchingBisimilarity.symm,
+    fun {_ _ _} => BranchingBisimilarity.trans⟩⟩
+
+/-- One step of the `Sig` recurrence, expressed parametrically in `sigFn`. Compared with `Sig`,
+the existential is rephrased as `∃ p : Subtype …` so that the recursive call to `sigFn` (with
+its required `lts.Tr` proof) is well-typed inside the predicate. The two existentials are
+propositionally equivalent — see `buildSig_eq_Sig` below. -/
+private def sigStep [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+    {Block : Type _} (partition : State → Block)
+    (s : State) (ih : ∀ s', lts.Tr s Cslib.HasTau.τ s' → Set (Label × (Block ⊕ Block))) :
+    Set (Label × (Block ⊕ Block)) :=
+  open Classical in
+  if h : ∃ p : Subtype (fun s' => lts.Tr s Cslib.HasTau.τ s'),
+              partition s = partition p.val ∧
+              PreSig lts partition partition s ⊆
+                ih p.val p.property ∪ {(Cslib.HasTau.τ, Sum.inr (partition p.val))} then
+    ih h.choose.val h.choose.property
+  else
+    PreSig lts partition partition s
+
+/-- The `sigFn` witness used in the converse: well-founded recursion on the τ-relation with the
+one-step operator `sigStep`. The well-foundedness from `TauLoopFree` ensures termination. -/
+private noncomputable def buildSig [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {Block : Type _} (partition : State → Block) :
+    State → Set (Label × (Block ⊕ Block)) :=
+  hWF.fix (fun s ih => sigStep lts partition s ih)
+
+private theorem buildSig_unfold [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {Block : Type _} (partition : State → Block) (s : State) :
+    buildSig hWF partition s =
+      sigStep lts partition s (fun s' _ => buildSig hWF partition s') := by
+  unfold buildSig
+  exact WellFounded.fix_eq hWF _ s
+
+/-- **`buildSig` satisfies the `Sig` fixed-point equation.** Both sides use a (propositionally
+equivalent) existential for the delegation check. With `buildSig` bisim-stable, the choices made
+by the two `.choose` operations yield the same `buildSig` value (both witnesses are inert
+τ-successors of `s`, hence in the same bisim class). -/
+private theorem buildSig_eq_Sig [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts)
+    (hStable : ∀ a b : State,
+      Quotient.mk (brSetoid lts) a = Quotient.mk (brSetoid lts) b →
+      buildSig hWF (Quotient.mk (brSetoid lts)) a =
+        buildSig hWF (Quotient.mk (brSetoid lts)) b)
+    (s : State) :
+    buildSig hWF (Quotient.mk (brSetoid lts)) s =
+      Sig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts))
+        (buildSig hWF (Quotient.mk (brSetoid lts))) s := by
+  set π : State → Quotient (brSetoid lts) := Quotient.mk (brSetoid lts)
+  set sigFn := buildSig hWF π
+  rw [show sigFn s = sigStep lts π s (fun s' _ => sigFn s') from buildSig_unfold hWF π s]
+  unfold sigStep Sig
+  -- Both `if` conditions are propositionally equivalent existentials.
+  by_cases hQ : ∃ s', lts.Tr s Cslib.HasTau.τ s' ∧ π s = π s' ∧
+                PreSig lts π π s ⊆ sigFn s' ∪ {(Cslib.HasTau.τ, Sum.inr (π s'))}
+  · -- Both delegate.
+    have hP : ∃ p : Subtype (fun s' => lts.Tr s Cslib.HasTau.τ s'),
+                π s = π p.val ∧
+                PreSig lts π π s ⊆ sigFn p.val ∪ {(Cslib.HasTau.τ, Sum.inr (π p.val))} := by
+      obtain ⟨s', hTr, hπ, hSub⟩ := hQ
+      exact ⟨⟨s', hTr⟩, hπ, hSub⟩
+    rw [dite_eq_left hP, dite_eq_left hQ]
+    -- Both `.choose` witnesses are inert τ-successors of s; by stability their buildSigs agree.
+    apply hStable
+    exact hP.choose_spec.1.symm.trans hQ.choose_spec.2.1
+  · -- Neither delegates.
+    have hP : ¬ ∃ p : Subtype (fun s' => lts.Tr s Cslib.HasTau.τ s'),
+                π s = π p.val ∧
+                PreSig lts π π s ⊆ sigFn p.val ∪ {(Cslib.HasTau.τ, Sum.inr (π p.val))} := by
+      intro ⟨⟨s', hTr⟩, hπ, hSub⟩
+      exact hQ ⟨s', hTr, hπ, hSub⟩
+    rw [dite_eq_right hP, dite_eq_right hQ]
+
+end BranchingBisimilarity
+
+namespace BranchingBisimilarity
+
+/-- **Block-stability.** Every state on a τ-path between two bisimilar states is bisimilar to them
+(the strong form of the stuttering lemma), in a τ-loop-free LTS. -/
+private theorem block_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) :
+    ∀ (y : State), ∀ {x z : State}, lts.τSTr x z → lts.τSTr z y →
+      Quotient.mk (brSetoid lts) x = Quotient.mk (brSetoid lts) y →
+      Quotient.mk (brSetoid lts) z = Quotient.mk (brSetoid lts) x := by
+  -- TauLoopFree gives WF on τ-steps; extend to `TransGen` for multi-step descent.
+  have wfTr : WellFounded (Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s')) :=
+    WellFounded.transGen hWF
+  -- **Proof of block-stability** by outer WF on `y`, inner structural induction on `x →τ*→ z`.
+  intro y
+  induction y using WellFounded.induction wfTr with
+  | _ y ih_outer =>
+    intro x z hXZ
+    induction hXZ with
+    | refl => intros; rfl
+    | @tail w z' hXW hWZ ih_inner =>
+      intro hZ'Y hπXY
+      -- Inner IH gives `⟦w⟧ = ⟦x⟧` (block-stability for the immediate predecessor of `z'`).
+      have hWY : lts.τSTr w y := Relation.ReflTransGen.head hWZ hZ'Y
+      have hπW : Quotient.mk (brSetoid lts) w = Quotient.mk (brSetoid lts) x :=
+        ih_inner hWY hπXY
+      -- BB-match the last step `w →τ→ z'` on the `y`-side.
+      have hπWY : Quotient.mk (brSetoid lts) w = Quotient.mk (brSetoid lts) y :=
+        hπW.trans hπXY
+      obtain ⟨r, hrwy, hBis⟩ := Quotient.exact hπWY
+      rcases (hBis hrwy Cslib.HasTau.τ).1 _ hWZ with
+        ⟨_, hr_z'_y⟩ | ⟨c, c', hSTr, hStep_cc', hr_wc, hr_z'_c'⟩
+      · -- Or.inl: `r z' y` ⟹ `⟦z'⟧ = ⟦y⟧ = ⟦x⟧`.
+        have hπZ'Y : Quotient.mk (brSetoid lts) z' = Quotient.mk (brSetoid lts) y :=
+          Quotient.sound (s := brSetoid lts) ⟨r, hr_z'_y, hBis⟩
+        exact hπZ'Y.trans hπXY.symm
+      · -- Or.inr: matched τ*-prefix `y →τ*→ c →τ→ c'` with `r w c`, `r z' c'`.
+        -- Apply `stutter` on `r z' c'` along `z' →τ*→ y` to push the response to some
+        -- `c''` with `r y c''`. The composed `y →τ⁺→ c''` is strictly WF-below `y`.
+        obtain ⟨c'', hPathC'C'', hrYC''⟩ :=
+          IsBranchingBisimulation.stutter hBis hr_z'_c' hZ'Y
+        have hPathYC : Relation.ReflTransGen
+            (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) y c :=
+          (Cslib.LTS.sTr_τSTr_iff lts).mp hSTr
+        -- TransGen-WF descent `c'' < y`: the chain `y →τ*→ c →τ→ c' →τ*→ c''` contains at
+        -- least the non-empty step `c →τ→ c'`, so it is a `TransGen` chain.
+        have hYC'' : Relation.TransGen
+            (fun s' s => lts.Tr s Cslib.HasTau.τ s') c'' y := by
+          rcases hPathYC.cases_head with hEqYC | ⟨y_first, hYStep, hY_first_C⟩
+          · subst hEqYC
+            have aux : ∀ {z}, Relation.ReflTransGen
+                (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) c' z →
+                Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s') z y := by
+              intro z h
+              induction h with
+              | refl => exact Relation.TransGen.single hStep_cc'
+              | tail _ hLast IHaux => exact Relation.TransGen.head hLast IHaux
+            exact aux hPathC'C''
+          · have aux : ∀ {z}, Relation.ReflTransGen
+                (Cslib.LTS.Tr.toRelation lts Cslib.HasTau.τ) y_first z →
+                Relation.TransGen (fun s' s => lts.Tr s Cslib.HasTau.τ s') z y := by
+              intro z h
+              induction h with
+              | refl => exact Relation.TransGen.single hYStep
+              | tail _ hLast IHaux => exact Relation.TransGen.head hLast IHaux
+            exact aux (hY_first_C.trans (Relation.ReflTransGen.head hStep_cc' hPathC'C''))
+        -- Apply outer IH at `c''` to the decomposition `w →τ*→ c' →τ*→ c''`.
+        have hπC'' : Quotient.mk (brSetoid lts) c'' = Quotient.mk (brSetoid lts) y :=
+          (Quotient.sound (s := brSetoid lts) ⟨r, hrYC'', hBis⟩).symm
+        have hπWC'' : Quotient.mk (brSetoid lts) w = Quotient.mk (brSetoid lts) c'' :=
+          hπWY.trans hπC''.symm
+        have hWC' : lts.τSTr w c' :=
+          Relation.ReflTransGen.head hWZ (hZ'Y.trans (hPathYC.tail hStep_cc'))
+        have hπC' : Quotient.mk (brSetoid lts) c' = Quotient.mk (brSetoid lts) w :=
+          ih_outer c'' hYC'' hWC' hPathC'C'' hπWC''
+        -- Conclude `⟦z'⟧ = ⟦c'⟧ = ⟦w⟧ = ⟦x⟧`.
+        have hπZ'C' : Quotient.mk (brSetoid lts) z' = Quotient.mk (brSetoid lts) c' :=
+          Quotient.sound (s := brSetoid lts) ⟨r, hr_z'_c', hBis⟩
+        exact hπZ'C'.trans (hπC'.trans hπW)
+
+
+/-- **Path inertness (helper lemma) — the Computation Lemma.** In a τ-loop-free LTS with the
+branching-bisimilarity quotient as the partition, any τ*-path between same-block states admits
+an inert τ*-path (every intermediate state has the same block as the endpoints).
+
+This is the classical **Computation Lemma** ([van Glabbeek–Weijland 1996][vanGlabbeek1996]); in
+TauLoopFree LTSs it admits a direct proof by well-founded induction on the τ-relation. (The
+general LTS case requires Basten's saturation construction.)
+
+Proof outline:
+1. *Suffices step*: prove the stronger **block-stability** lemma — for any τ-decomposition
+   `x →τ*→ z →τ*→ y` with `⟦x⟧ = ⟦y⟧`, we have `⟦z⟧ = ⟦x⟧`. The inert path is then built by
+   labelling each step of the given path with the block-equality from block-stability.
+2. *Proof of block-stability*: nested induction.
+   * **Outer**: well-founded induction on `y` via `TauLoopFree` (extended to `TransGen`).
+   * **Inner**: structural induction on `x →τ*→ z` (where the inner IH proves block-stability
+     for the immediate predecessor of `z` on the sub-path).
+   In the inner inductive step, BB-matching the last step `w →τ→ z` on the `y`-side yields:
+   * `Or.inl`: matched-by-no-step, giving `⟦z⟧ = ⟦y⟧ = ⟦x⟧` immediately.
+   * `Or.inr`: matched τ*-prefix `y →τ*→ c →τ→ c'`. Applying `stutter` on `r z c'` along
+     `z →τ*→ y` produces a state `c''` with `r y c''`, strictly WF-below `y` (since the
+     prefix contains at least the non-empty step `c →τ→ c'`). The **outer IH** at `c''`,
+     applied to the τ-decomposition `w →τ*→ c' →τ*→ c''` (with `⟦w⟧ = ⟦c''⟧ = ⟦y⟧`), yields
+     `⟦c'⟧ = ⟦w⟧`. Combined with `⟦z⟧ = ⟦c'⟧` (from `r z c'`), this gives `⟦z⟧ = ⟦w⟧ = ⟦x⟧`.
+
+The TauLoopFree assumption is essential: the outer WF descent on the matched-state side is
+exactly what rules out the otherwise-problematic non-inert matched-step case. -/
+private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) :
+    ∀ {x y : State}, lts.τSTr x y →
+      Quotient.mk (brSetoid lts) x = Quotient.mk (brSetoid lts) y →
+      Relation.ReflTransGen
+        (fun u v => lts.Tr u Cslib.HasTau.τ v ∧
+          Quotient.mk (brSetoid lts) u = Quotient.mk (brSetoid lts) x ∧
+          Quotient.mk (brSetoid lts) v = Quotient.mk (brSetoid lts) x)
+        x y := by
+  have comp := block_stable hWF
+  -- Reconstruct the inert path from the given path by labelling each step with the
+  -- block-equality from `comp`.
+  intro x y hPath hπ
+  induction hPath with
+  | refl => exact Relation.ReflTransGen.refl
+  | @tail w y' h_rest h_last ih =>
+    have hπw : Quotient.mk (brSetoid lts) w = Quotient.mk (brSetoid lts) x :=
+      comp y' h_rest (Relation.ReflTransGen.single h_last) hπ
+    exact Relation.ReflTransGen.tail (ih hπw.symm) ⟨h_last, hπw, hπ.symm⟩
+
+/-- Public form of block-stability: if `x ≈br y` and `z` lies on a τ-path from `x` to `y`, then
+`z ≈br x`. -/
+theorem tauPath_mid [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {x z y : State} (h1 : lts.τSTr x z) (h2 : lts.τSTr z y)
+    (hxy : BranchingBisimilarity lts x y) : BranchingBisimilarity lts z x :=
+  Quotient.exact (s := brSetoid lts) (block_stable hWF y h1 h2 (Quotient.sound hxy))
+
+/-- **Corollary.** If a state has no inert τ-successor and a τ*-path returns to the same block,
+the path must be trivial (length 0). Direct consequence of `path_inertness`. -/
+private theorem noInertSucc_path_trivial [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {x y : State} (hPath : lts.τSTr x y)
+    (hπ : Quotient.mk (brSetoid lts) x = Quotient.mk (brSetoid lts) y)
+    (hNoInert : ∀ x', lts.Tr x Cslib.HasTau.τ x' →
+       Quotient.mk (brSetoid lts) x ≠ Quotient.mk (brSetoid lts) x') :
+    x = y := by
+  have hInert := path_inertness hWF hPath hπ
+  rcases hInert.cases_head with hEq | ⟨xFirst, ⟨hTr, _, hπFirst⟩, _⟩
+  · exact hEq
+  · exact absurd hπFirst.symm (hNoInert xFirst hTr)
+
+/-- **BB direct match (helper for stability).** If `a ≈br b` (in bisim quotient) and `b` has no
+inert τ-successor, then any non-inert direct transition out of `a` is matched directly (without
+τ-prefix) by `b`.
+
+This is the key lemma that lets us reason about `PreSig a = PreSig b` without going through the
+full path-inertness machinery at every use site: the BB matching's τ-prefix on `b`'s side is
+forced to be trivial by `noInertSucc_path_trivial`. -/
+private theorem direct_match_via_no_inert [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {a b : State}
+    (hab : Quotient.mk (brSetoid lts) a = Quotient.mk (brSetoid lts) b)
+    (hb_no_inert : ∀ b' (_ : lts.Tr b Cslib.HasTau.τ b'),
+      Quotient.mk (brSetoid lts) b ≠ Quotient.mk (brSetoid lts) b')
+    {μ : Label} {t : State}
+    (hStep : lts.Tr a μ t)
+    (hSide : μ ≠ Cslib.HasTau.τ ∨
+      Quotient.mk (brSetoid lts) a ≠ Quotient.mk (brSetoid lts) t) :
+    ∃ t', lts.Tr b μ t' ∧
+      Quotient.mk (brSetoid lts) t = Quotient.mk (brSetoid lts) t' := by
+  obtain ⟨r, hrab, hrBis⟩ := Quotient.exact hab
+  rcases (hrBis hrab μ).1 _ hStep with
+    ⟨hμτ, hrTB⟩ | ⟨bPre, bPre', hSTr, hStep', hrAbpre, hrTBpre⟩
+  · -- Or.inl: contradicts `hSide`.
+    exfalso
+    have hπtb : Quotient.mk (brSetoid lts) t = Quotient.mk (brSetoid lts) b :=
+      Quotient.sound (s := brSetoid lts) ⟨r, hrTB, hrBis⟩
+    rcases hSide with hMu | hPi
+    · exact hMu hμτ
+    · exact hPi (hπtb.trans hab.symm).symm
+  · -- Or.inr: τ-prefix on `b`'s side is forced to be trivial.
+    have hPath := (Cslib.LTS.sTr_τSTr_iff lts).mp hSTr
+    have hπBBpre : Quotient.mk (brSetoid lts) b = Quotient.mk (brSetoid lts) bPre :=
+      hab.symm.trans (Quotient.sound (s := brSetoid lts) ⟨r, hrAbpre, hrBis⟩)
+    have hBEq : b = bPre := noInertSucc_path_trivial hWF hPath hπBBpre hb_no_inert
+    subst hBEq
+    exact ⟨bPre', hStep',
+      Quotient.sound (s := brSetoid lts) ⟨r, hrTBpre, hrBis⟩⟩
+
+/-- If `⟦a⟧ = ⟦b⟧` and `a` has no inert τ-successor, then `PreSig b ⊆ PreSig a ∪ {inert-tag}`.
+This absorption condition is used in `buildSig_stable` to derive a contradiction when `b` has
+an inert τ-successor in the "neither delegates" case. -/
+private theorem preSig_subset_via_bisim [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {a b b' : State}
+    (hab : Quotient.mk (brSetoid lts) a = Quotient.mk (brSetoid lts) b)
+    (hπbb' : Quotient.mk (brSetoid lts) b = Quotient.mk (brSetoid lts) b')
+    (ha_no_inert : ∀ a' (_ : lts.Tr a Cslib.HasTau.τ a'),
+        Quotient.mk (brSetoid lts) a ≠ Quotient.mk (brSetoid lts) a') :
+    PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) b ⊆
+      PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) a ∪
+        {(Cslib.HasTau.τ, Sum.inr (Quotient.mk (brSetoid lts) b'))} := by
+  rintro x (⟨μ, t, hTrBt, hSide, hPair⟩ | ⟨t, hTrBt, hπbt, hPair⟩)
+  · obtain ⟨t', hTrAt', hπtt'⟩ := direct_match_via_no_inert hWF hab.symm ha_no_inert hTrBt hSide
+    exact Or.inl (Or.inl ⟨μ, t', hTrAt',
+        hSide.imp_right (fun hPi heq => hPi (hab.symm.trans (heq.trans hπtt'.symm))),
+        by cases hPair; simp [hπtt']⟩)
+  · exact Or.inr (Set.mem_singleton_iff.mpr (by cases hPair; simp [hπbt.symm.trans hπbb']))
+
+/-- If `⟦a⟧ = ⟦b⟧` and neither `a` nor `b` has an inert τ-successor, then `PreSig a = PreSig b`.
+Bidirectional subset via `direct_match_via_no_inert`; inert-τ elements from each side are
+excluded by the respective no-inert hypothesis. -/
+private theorem preSig_eq_of_bisim_noInert [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) {a b : State}
+    (hab : Quotient.mk (brSetoid lts) a = Quotient.mk (brSetoid lts) b)
+    (ha_no_inert : ∀ a' (_ : lts.Tr a Cslib.HasTau.τ a'),
+        Quotient.mk (brSetoid lts) a ≠ Quotient.mk (brSetoid lts) a')
+    (hb_no_inert : ∀ b' (_ : lts.Tr b Cslib.HasTau.τ b'),
+        Quotient.mk (brSetoid lts) b ≠ Quotient.mk (brSetoid lts) b') :
+    PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) a =
+    PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) b := by
+  ext ⟨μ, x⟩
+  constructor
+  · rintro (⟨μ', t, hTrAt, hSide, hPair⟩ | ⟨t, hTrAt, hπat, _⟩)
+    · obtain ⟨t', hTrBt', hπtt'⟩ := direct_match_via_no_inert hWF hab hb_no_inert hTrAt hSide
+      exact Or.inl ⟨μ', t', hTrBt',
+          hSide.imp_right (fun hPi heq => hPi (hab.trans (heq.trans hπtt'.symm))),
+          by cases hPair; simp [hπtt']⟩
+    · exact absurd hπat (ha_no_inert t hTrAt)
+  · rintro (⟨μ', t, hTrBt, hSide, hPair⟩ | ⟨t, hTrBt, hπbt, _⟩)
+    · obtain ⟨t', hTrAt', hπtt'⟩ := direct_match_via_no_inert hWF hab.symm ha_no_inert hTrBt hSide
+      exact Or.inl ⟨μ', t', hTrAt',
+          hSide.imp_right (fun hPi heq => hPi (hab.symm.trans (heq.trans hπtt'.symm))),
+          by cases hPair; simp [hπtt']⟩
+    · exact absurd hπbt (hb_no_inert t hTrBt)
+
+/-- **Bisim stability of `buildSig`.** With the branching-bisimilarity quotient as the partition,
+states in the same block have equal `buildSig` value.
+
+Proof: nested well-founded induction on the τ-relation (outer on `a`, inner on `b`). The
+load-bearing observation in the "neither delegates" case is: if `a` were to have an inert
+τ-successor `a'`, the outer IH would give `buildSig a' = buildSig a = PreSig a` and absorption
+at `a'` would trivially hold (`PreSig a ⊆ PreSig a ∪ {…}`), forcing `a` to delegate —
+contradicting the case. The symmetric argument rules out inert τ-successors of `b` via the
+inner IH. With no inert τ-successors on either side, branching bisimulation matches direct
+transitions with trivial τ-prefix (by `noInertSucc_path_trivial`), so `PreSig a = PreSig b`. -/
+private theorem buildSig_stable [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+    (hWF : TauLoopFree lts) :
+    ∀ a b : State, Quotient.mk (brSetoid lts) a = Quotient.mk (brSetoid lts) b →
+      buildSig hWF (Quotient.mk (brSetoid lts)) a =
+        buildSig hWF (Quotient.mk (brSetoid lts)) b := by
+  intro a
+  induction a using WellFounded.induction hWF with
+  | _ a IH_a =>
+    intro b
+    induction b using WellFounded.induction hWF with
+    | _ b IH_b =>
+      intro hab
+      have ha_unfold :
+          buildSig hWF (Quotient.mk (brSetoid lts)) a =
+            sigStep lts (Quotient.mk (brSetoid lts)) a
+              (fun s' _ => buildSig hWF (Quotient.mk (brSetoid lts)) s') :=
+        buildSig_unfold hWF _ a
+      have hb_unfold :
+          buildSig hWF (Quotient.mk (brSetoid lts)) b =
+            sigStep lts (Quotient.mk (brSetoid lts)) b
+              (fun s' _ => buildSig hWF (Quotient.mk (brSetoid lts)) s') :=
+        buildSig_unfold hWF _ b
+      -- Case analysis on whether a delegates.
+      by_cases hAbsA :
+          ∃ p : Subtype (fun s' => lts.Tr a Cslib.HasTau.τ s'),
+            Quotient.mk (brSetoid lts) a = Quotient.mk (brSetoid lts) p.val ∧
+            PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) a ⊆
+              buildSig hWF (Quotient.mk (brSetoid lts)) p.val ∪
+                {(Cslib.HasTau.τ, Sum.inr (Quotient.mk (brSetoid lts) p.val))}
+      · -- Case 1: a delegates to a' = hAbsA.choose.val. Use outer IH on (a', b).
+        have ha_eq :
+            buildSig hWF (Quotient.mk (brSetoid lts)) a =
+              buildSig hWF (Quotient.mk (brSetoid lts)) hAbsA.choose.val := by
+          rw [ha_unfold]; unfold sigStep; exact dite_eq_left hAbsA
+        have ha'_tr : lts.Tr a Cslib.HasTau.τ hAbsA.choose.val := hAbsA.choose.property
+        have hπa'b : Quotient.mk (brSetoid lts) hAbsA.choose.val =
+                     Quotient.mk (brSetoid lts) b :=
+          hAbsA.choose_spec.1.symm.trans hab
+        rw [ha_eq]
+        exact IH_a _ ha'_tr _ hπa'b
+      · -- Case 2: a does not delegate, so sigFn a = PreSig a.
+        have ha_eq :
+            buildSig hWF (Quotient.mk (brSetoid lts)) a =
+              PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) a := by
+          rw [ha_unfold]; unfold sigStep; exact dite_eq_right hAbsA
+        by_cases hAbsB :
+            ∃ p : Subtype (fun s' => lts.Tr b Cslib.HasTau.τ s'),
+              Quotient.mk (brSetoid lts) b = Quotient.mk (brSetoid lts) p.val ∧
+              PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) b ⊆
+                buildSig hWF (Quotient.mk (brSetoid lts)) p.val ∪
+                  {(Cslib.HasTau.τ, Sum.inr (Quotient.mk (brSetoid lts) p.val))}
+        · -- Sub-case 2a: b delegates. Use inner IH on (a, b').
+          have hb_eq :
+              buildSig hWF (Quotient.mk (brSetoid lts)) b =
+                buildSig hWF (Quotient.mk (brSetoid lts)) hAbsB.choose.val := by
+            rw [hb_unfold]; unfold sigStep; exact dite_eq_left hAbsB
+          have hb'_tr : lts.Tr b Cslib.HasTau.τ hAbsB.choose.val := hAbsB.choose.property
+          have hπab' : Quotient.mk (brSetoid lts) a =
+                       Quotient.mk (brSetoid lts) hAbsB.choose.val :=
+            hab.trans hAbsB.choose_spec.1
+          rw [hb_eq]
+          exact IH_b _ hb'_tr hπab'
+        · -- Sub-case 2b: neither delegates. Both sides reduce to PreSig.
+          rw [ha_eq]
+          have hb_eq :
+              buildSig hWF (Quotient.mk (brSetoid lts)) b =
+                PreSig lts (Quotient.mk (brSetoid lts)) (Quotient.mk (brSetoid lts)) b := by
+            rw [hb_unfold]; unfold sigStep; exact dite_eq_right hAbsB
+          rw [hb_eq]
+          -- Step 1: a has no inert τ-successor.
+          -- If a had inert τ-successor a', IH_a would give sigFn a' = sigFn a = PreSig a, so
+          -- absorption PreSig a ⊆ PreSig a ∪ {tag} would hold and a would delegate.
+          have ha_no_inert :
+              ∀ a' (_ : lts.Tr a Cslib.HasTau.τ a'),
+                Quotient.mk (brSetoid lts) a ≠ Quotient.mk (brSetoid lts) a' := by
+            intro a' hTra' hπaa'
+            apply hAbsA
+            refine ⟨⟨a', hTra'⟩, hπaa', ?_⟩
+            intro x hx
+            left
+            rw [IH_a a' hTra' a hπaa'.symm, ha_eq]
+            exact hx
+          -- Step 2: b has no inert τ-successor (uses preSig_subset_via_bisim).
+          have hb_no_inert :
+              ∀ b' (_ : lts.Tr b Cslib.HasTau.τ b'),
+                Quotient.mk (brSetoid lts) b ≠ Quotient.mk (brSetoid lts) b' := by
+            intro b' hTrb' hπbb'
+            apply hAbsB
+            refine ⟨⟨b', hTrb'⟩, hπbb', ?_⟩
+            rw [← IH_b b' hTrb' (hab.trans hπbb'), ha_eq]
+            exact preSig_subset_via_bisim hWF hab hπbb' ha_no_inert
+          -- Step 3: BB matches direct transitions directly; PreSig a = PreSig b.
+          exact preSig_eq_of_bisim_noInert hWF hab ha_no_inert hb_no_inert
+
+end BranchingBisimilarity
+
+/-! ### Equivalence of `InductiveBranchingFixPoint` and `BranchingBisimilarity` -/
+
+/-- **Forward direction.** Any pair of states in a Sig-stable, fixed-point partition (over a
+τ-loop-free LTS) is branching bisimilar. -/
+theorem InductiveBranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label]
+    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
+    {s s' : State} (h : InductiveBranchingFixPoint lts s s') :
+    BranchingBisimilarity lts s s' := by
+  obtain ⟨_, partition, _, sigHash, sigFn, hFix, hStable, hEq⟩ := h
+  exact IsStable.branchingBisimilarity_inductive hWF partition sigHash sigFn hFix hStable hEq
+
+/-- **Reverse direction.** Every pair of branching bisimilar states in a τ-loop-free LTS lies in
+some `Sig`-stable fixed-point partition.
+
+The witnesses: `Block = Tag` is the branching-bisimilarity quotient `Quotient brSetoid`,
+`partition = sigHash = Quotient.mk brSetoid`, and `sigFn = buildSig` (well-founded recursion
+on the τ-relation, see `BranchingBisimilarity.buildSig`). -/
+theorem BranchingBisimilarity.inductiveBranchingFixPoint.{u, v}
+    {State : Type u} {Label : Type v} [Cslib.HasTau Label]
+    {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
+    {s₁ s₂ : State} (h : BranchingBisimilarity lts s₁ s₂) :
+    InductiveBranchingFixPoint lts s₁ s₂ := by
+  let π : State → Quotient (BranchingBisimilarity.brSetoid lts) :=
+    Quotient.mk (BranchingBisimilarity.brSetoid lts)
+  have hπEq : π s₁ = π s₂ := Quotient.sound (s := BranchingBisimilarity.brSetoid lts) h
+  refine ⟨Quotient (BranchingBisimilarity.brSetoid lts), π,
+          Quotient (BranchingBisimilarity.brSetoid lts), π,
+          BranchingBisimilarity.buildSig hWF π,
+          ?_, ?_, hπEq⟩
+  · -- Fixed-point equation
+    intro s
+    exact BranchingBisimilarity.buildSig_eq_Sig hWF
+      (BranchingBisimilarity.buildSig_stable hWF) s
+  · -- Stability
+    intro a b hab
+    exact BranchingBisimilarity.buildSig_stable hWF a b hab
+
+end MercLib.Signatures
+
+end InductiveSignaturesProofs
