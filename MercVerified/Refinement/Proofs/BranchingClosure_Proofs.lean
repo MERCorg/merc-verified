@@ -8,7 +8,7 @@ import Aeneas.Std.WP
 The backwards inert closure of the marked states of a block: the marked states of the block after
 the call are exactly the states that reach a marked state of the block along inert τ-steps.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -561,8 +561,11 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
   obtain ⟨span, hspan, hspanv⟩ : ∃ span : Std.Usize,
       (blkAt p b).«end» - (blkAt p b).begin = ok span ∧
       span.val = (blkAt p b).«end».val - (blkAt p b).begin.val := by
-    obtain ⟨y, hy, hv, -⟩ := spec_imp_exists
-      (Usize.sub_spec (x := (blkAt p b).«end») (y := (blkAt p b).begin) (by omega))
+    obtain ⟨y, hy, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := (blkAt p b).«end») (y := (blkAt p b).begin) (by omega)⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i y
+    obtain ⟨hv, -⟩ := hres
     exact ⟨y, hy, hv⟩
   rw [hspan]
   simp only [bind_ok]
@@ -619,13 +622,19 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
         have hm : iter.start.val < E := by omega
         obtain ⟨i2, hi2, hi2v⟩ : ∃ i2 : Std.Usize, (blkAt p b).«end» - 1#usize = ok i2 ∧
             i2.val = E - 1 := by
-          obtain ⟨y, hy, hv, -⟩ := spec_imp_exists
-            (Usize.sub_spec (x := (blkAt p b).«end») (y := 1#usize) (by simp; omega))
+          obtain ⟨y, hy, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+            ⟨_, rfl, Usize.sub_spec (x := (blkAt p b).«end») (y := 1#usize) (by simp; omega)⟩
+          cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+          rename_i y
+          obtain ⟨hv, -⟩ := hres
           exact ⟨y, hy, by simpa using hv⟩
         obtain ⟨it, hit, hitv⟩ : ∃ it : Std.Usize, i2 - iter.start = ok it ∧
             it.val = E - 1 - iter.start.val := by
-          obtain ⟨y, hy, hv, -⟩ := spec_imp_exists
-            (Usize.sub_spec (x := i2) (y := iter.start) (by omega))
+          obtain ⟨y, hy, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+            ⟨_, rfl, Usize.sub_spec (x := i2) (y := iter.start) (by omega)⟩
+          cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+          rename_i y
+          obtain ⟨hv, -⟩ := hres
           exact ⟨y, hy, by rw [hv, hi2v]⟩
         by_cases hge : (blkAt q b).marked_split.val ≤ E - 1 - iter.start.val
         · by_cases hun : (blkAt q b).begin.val < (blkAt q b).marked_split.val
@@ -642,7 +651,8 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
             have hitgeN : (blkAt q b).marked_split.val ≤ it.val := by omega
             have hel' : q.elements.index_usize it = ok (eAt q (E - 1 - iter.start.val)) := by
               rw [← alloc.vec.Vec.index_slice_index]; exact hel
-            refine Std.WP.exists_imp_spec ⟨cont (it1, q'), ?_, ?_⟩
+            refine (congrArg (Std.WP.spec · _) (show _ = ok (cont (it1, q')) from ?_)).mpr
+              ((Std.WP.spec_ok _).2 ?_)
             · unfold BlockPartition.mark_backward_closure_loop0.body
               rw [hnext, hsome]
               simp [hi2, hit, hblkq, hitgeN, hhas', hel', hsil, alloc.vec.IntoIteratorVec.into_iter]
@@ -662,7 +672,8 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
             have hhas := block_has_unmarked_contract (blkAt q b) (partInv_blockWF hqinv hbq)
             have hhas' : (blkAt q b).has_unmarked = ok false := by rw [hhas]; simp [hun]
             have hitgeN : (blkAt q b).marked_split.val ≤ it.val := by omega
-            refine Std.WP.exists_imp_spec ⟨done q, ?_, ⟨hmono, hsound, hmarks, hcl⟩⟩
+            refine (congrArg (Std.WP.spec · _) (show _ = ok (done q) from ?_)).mpr
+              ((Std.WP.spec_ok _).2 ⟨hmono, hsound, hmarks, hcl⟩)
             unfold BlockPartition.mark_backward_closure_loop0.body
             rw [hnext, hsome]
             simp [hi2, hit, hblkq, hitgeN, hhas', hchk]
@@ -675,7 +686,8 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
               (⟨(blkAt p b).marked_split, (blkAt p b).«end»⟩ : core.ops.range.Range Std.Usize)
               q.elements q.blocks q.element_to_block q.element_offset bT incoming = ok () := hchk
           have hitltN : ¬ (blkAt q b).marked_split.val ≤ it.val := by omega
-          refine Std.WP.exists_imp_spec ⟨done q, ?_, ⟨hmono, hsound, hmarks, hcl⟩⟩
+          refine (congrArg (Std.WP.spec · _) (show _ = ok (done q) from ?_)).mpr
+            ((Std.WP.spec_ok _).2 ⟨hmono, hsound, hmarks, hcl⟩)
           unfold BlockPartition.mark_backward_closure_loop0.body
           rw [hnext, hsome]
           simp [hi2, hit, hblkq, hitltN, hchk3]
@@ -691,7 +703,8 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
           exact cclosed_of_all hqinv hbq (fun s => by rw [hmono.e2bAt_eq]) (by omega)
         have hchk := bc_chk_range_a hs hqinv bT ⟨(blkAt p b).marked_split, (blkAt p b).«end»⟩
           (fun pos h1 h2 => hrange q hmono hcl pos h1 h2)
-        refine Std.WP.exists_imp_spec ⟨done q, ?_, ⟨hmono, hsound, hmarks, hcl⟩⟩
+        refine (congrArg (Std.WP.spec · _) (show _ = ok (done q) from ?_)).mpr
+          ((Std.WP.spec_ok _).2 ⟨hmono, hsound, hmarks, hcl⟩)
         unfold BlockPartition.mark_backward_closure_loop0.body
         rw [hnext, hnone]
         simp [hchk]
@@ -702,7 +715,9 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
         change E - (0#usize).val ≤ pos at h1
         rw [show (0#usize).val = 0 from rfl] at h1
         omega
-  obtain ⟨y, hy, hpost⟩ := spec_imp_exists hspec
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   exact ⟨y, hy, hpost⟩
 
 theorem tr_tau_iff {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (_hn : n ≤ Usize.max)
@@ -718,7 +733,7 @@ theorem breach_iff_inert {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n :
     (hn : n ≤ Usize.max) (p : BlockPartition) (b : Nat) (x d : Fin n)
     (hxb : e2bAt p x.val = b) :
     BReach LTSInst sys n p b (stOf x) (stOf d) ↔
-      Sigref.InertReach (aLTS LTSInst sys n) (bdOf p n).setoid x d := by
+      MercLib.Sigref.InertReach (aLTS LTSInst sys n) (bdOf p n).setoid x d := by
   have hfin : ∀ y : ST, ∀ hy : y.index.val < n, stOf (⟨y.index.val, hy⟩ : Fin n) = y := by
     intro y hy
     apply merc_utilities.tagged_index.TagIndex.ext
@@ -787,7 +802,7 @@ theorem mark_backward_closure_spec {L Label : Type} {LTSInst : LTS L Label} {sys
       Mono n p q bT.index.val ∧
       (∀ x : Fin n, e2bAt p x.val ≠ bT.index.val → (IsMarked q x.val ↔ IsMarked p x.val)) ∧
       (∀ x : Fin n, e2bAt p x.val = bT.index.val →
-        (IsMarked q x.val ↔ x ∈ Sigref.inertClosure (aLTS LTSInst sys n) (bdOf p n).setoid
+        (IsMarked q x.val ↔ x ∈ MercLib.Sigref.inertClosure (aLTS LTSInst sys n) (bdOf p n).setoid
           {d : Fin n | e2bAt p d.val = bT.index.val ∧ IsMarked p d.val})) := by
   obtain ⟨q, hq, hmono, hsound, hmarks, hcl⟩ := bc_outer hs hp bT hb
   have hstv : ∀ y : Fin n, (stOf y).index.val = y.val := fun y => stOf_index y hn

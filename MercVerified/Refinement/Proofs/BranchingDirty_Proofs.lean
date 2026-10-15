@@ -9,7 +9,7 @@ The branching marking rule: the source of a transition into a new block is marke
 τ-transitions (hidden labels) whose source lies in a block created in this iteration (block number
 at least `num_blocks`).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow

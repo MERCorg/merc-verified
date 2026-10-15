@@ -1,16 +1,16 @@
 import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
 import MercVerified.Refinement.Proofs.BranchingPartition_Proofs
 import MercVerified.Refinement.Proofs.WorklistStep_Proofs
-import Sigref.Proofs.Branching_Proofs
+import MercLib.Sigref.Proofs.Branching_Proofs
 import Aeneas.Std.WP
 
 /-!
 # One iteration of `branching_run_worklist_loop`
 
 One call of `branching_process_worklist_block` is a step of the abstract algorithm
-(`Sigref.BranchingStep`) on the configuration `(partition, marked states)` of the partition.
+(`MercLib.Sigref.BranchingStep`) on the configuration `(partition, marked states)` of the partition.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -65,7 +65,7 @@ theorem branching_process_worklist_block_contract {L : Type} {Label : Type}
   simp [block_has_marked_contract b0 hb0wf, num_of_blocks_contract, hMark, bind_ok]
 
 /-- The abstract configuration of a concrete partition: block equivalence and marked states. -/
-def cfgOf (p : BlockPartition) (n : Nat) : Sigref.Config (Fin n) :=
+def cfgOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.Config (Fin n) :=
   ⟨(bdOf p n).setoid, {x | IsMarked p x.val}⟩
 
 theorem bdOf_setoid_eq {n : Nat} {p q : BlockPartition} (h : ∀ s, e2bAt q s = e2bAt p s) :
@@ -85,27 +85,27 @@ structure BrLoopInv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
   stk : ctx.state_to_key.val.length = n
   queued : ∀ t : ST, t.index.val < n → IsMarked ctx.partition t.index.val →
     ∃ x ∈ ctx.worklist.val, x.index.val = e2bAt ctx.partition t.index.val
-  sem : Sigref.BranchingInv (aLTS LTSInst sys n) (cfgOf ctx.partition n)
+  sem : MercLib.Sigref.BranchingInv (aLTS LTSInst sys n) (cfgOf ctx.partition n)
 
 /-- The block data after the backward closure satisfies the hypotheses of the key computation. -/
 theorem blockInv_of_closure {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     (_hn : n ≤ Usize.max) {p q : BlockPartition} {b : Nat}
     (he2b : ∀ s, e2bAt q s = e2bAt p s)
     (_hout : ∀ x : Fin n, e2bAt p x.val ≠ b → (IsMarked q x.val ↔ IsMarked p x.val))
-    (hin : ∀ x : Fin n, e2bAt p x.val = b → (IsMarked q x.val ↔ x ∈ Sigref.inertClosure
+    (hin : ∀ x : Fin n, e2bAt p x.val = b → (IsMarked q x.val ↔ x ∈ MercLib.Sigref.inertClosure
       (aLTS LTSInst sys n) (bdOf p n).setoid {d : Fin n | e2bAt p d.val = b ∧ IsMarked p d.val}))
-    (hinv : Sigref.BranchingInv (aLTS LTSInst sys n) (cfgOf p n)) :
-    Sigref.RP.BlockInv (aLTS LTSInst sys n) (bdOf q n) b := by
+    (hinv : MercLib.Sigref.BranchingInv (aLTS LTSInst sys n) (cfgOf p n)) :
+    MercLib.Sigref.RP.BlockInv (aLTS LTSInst sys n) (bdOf q n) b := by
   have hset : (bdOf q n).setoid = (bdOf p n).setoid := bdOf_setoid_eq he2b
   -- membership in the inert closure of the whole marked set, for states of block `b`
-  have hIC : ∀ x : Fin n, e2bAt p x.val = b → (x ∈ Sigref.inertClosure (aLTS LTSInst sys n)
-      (bdOf p n).setoid {d : Fin n | IsMarked p d.val} ↔ x ∈ Sigref.inertClosure (aLTS LTSInst sys n)
+  have hIC : ∀ x : Fin n, e2bAt p x.val = b → (x ∈ MercLib.Sigref.inertClosure (aLTS LTSInst sys n)
+      (bdOf p n).setoid {d : Fin n | IsMarked p d.val} ↔ x ∈ MercLib.Sigref.inertClosure (aLTS LTSInst sys n)
       (bdOf p n).setoid {d : Fin n | e2bAt p d.val = b ∧ IsMarked p d.val}) := by
     intro x hx
     constructor
     · rintro ⟨d, hd, hreach⟩
       have hdb : e2bAt p d.val = b := by
-        have := Sigref.InertReach.rel (aLTS LTSInst sys n) (bdOf p n).setoid hreach
+        have := MercLib.Sigref.InertReach.rel (aLTS LTSInst sys n) (bdOf p n).setoid hreach
         have h2 : e2bAt p x.val = e2bAt p d.val := this
         rw [← h2]; exact hx
       exact ⟨d, ⟨hdb, hd⟩, hreach⟩
@@ -117,14 +117,14 @@ theorem blockInv_of_closure {L Label : Type} {LTSInst : LTS L Label} {sys : L} {
     have hsb' : e2bAt p s.val = b := by rw [← he2b]; exact hsb
     have htb' : e2bAt p t.val = b := by rw [← he2b]; exact htb
     have hdt' := (hin t htb').1 hdt
-    have hstep : Sigref.InertTr (aLTS LTSInst sys n) (bdOf p n).setoid s t :=
+    have hstep : MercLib.Sigref.InertTr (aLTS LTSInst sys n) (bdOf p n).setoid s t :=
       ⟨hTr, by show e2bAt p s.val = e2bAt p t.val; rw [hsb', htb']⟩
     obtain ⟨d, hd, hreach⟩ := hdt'
     exact (hin s hsb').2 ⟨d, hd, Relation.ReflTransGen.head hstep hreach⟩
   · intro s t hsb htb hds hdt
     have hsb' : e2bAt p s.val = b := by rw [← he2b]; exact hsb
     have htb' : e2bAt p t.val = b := by rw [← he2b]; exact htb
-    show Sigref.E (aLTS LTSInst sys n) (bdOf q n).setoid s t
+    show MercLib.Sigref.E (aLTS LTSInst sys n) (bdOf q n).setoid s t
     rw [hset]
     exact hinv.U s t (show e2bAt p s.val = e2bAt p t.val by rw [hsb', htb'])
       (fun h => hds ((hin s hsb').2 ((hIC s hsb').1 h)))
@@ -132,7 +132,7 @@ theorem blockInv_of_closure {L Label : Type} {LTSInst : LTS L Label} {sys : L} {
   · intro s t hsb htb hds hdt
     have hsb' : e2bAt p s.val = b := by rw [← he2b]; exact hsb
     have htb' : e2bAt p t.val = b := by rw [← he2b]; exact htb
-    show ¬ Sigref.E (aLTS LTSInst sys n) (bdOf q n).setoid s t
+    show ¬ MercLib.Sigref.E (aLTS LTSInst sys n) (bdOf q n).setoid s t
     rw [hset]
     exact hinv.S s t (show e2bAt p s.val = e2bAt p t.val by rw [hsb', htb'])
       (fun h => hds ((hin s hsb').2 ((hIC s hsb').1 h)))
@@ -150,7 +150,7 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
     {p bp p1 p2 : BlockPartition} {b : Nat} (_hp : PartInv n p) (hbp : PartInv n bp)
     (hp1 : PartInv n p1) (hbpe : ∀ s, e2bAt bp s = e2bAt p s)
     (hout : ∀ x : Fin n, e2bAt p x.val ≠ b → (IsMarked bp x.val ↔ IsMarked p x.val))
-    (hin : ∀ x : Fin n, e2bAt p x.val = b → (IsMarked bp x.val ↔ x ∈ Sigref.inertClosure
+    (hin : ∀ x : Fin n, e2bAt p x.val = b → (IsMarked bp x.val ↔ x ∈ MercLib.Sigref.inertClosure
       (aLTS LTSInst sys n) (bdOf p n).setoid {d : Fin n | e2bAt p d.val = b ∧ IsMarked p d.val}))
     {k : Nat} (hb : b < bp.blocks.val.length)
     (hother : ∀ j, j < bp.blocks.val.length → j ≠ b → blkAt p1 j = blkAt bp j)
@@ -168,7 +168,7 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
           (IsMarked bp s.index.val ∧ IsMarked bp s'.index.val ∧ sg s = sg s'))))
     (hsg : ∀ s t : Fin n, e2bAt p s.val = b → e2bAt p t.val = b → IsMarked bp s.val →
       IsMarked bp t.val → (sg (stOf s) = sg (stOf t) ↔
-        Sigref.E (aLTS LTSInst sys n) (bdOf p n).setoid s t))
+        MercLib.Sigref.E (aLTS LTSInst sys n) (bdOf p n).setoid s t))
     (hmarkp0 : ∃ x : Fin n, e2bAt p x.val = b ∧ IsMarked p x.val)
     (hkeep : ∃ x : Fin n, e2bAt p1 x.val = b)
     (hlen : p1.blocks.val.length = bp.blocks.val.length + k)
@@ -177,7 +177,7 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
     (hD : ∀ t : ST, t.index.val < n → (IsMarked p2 t.index.val ↔ IsMarked p1 t.index.val ∨
       ∃ f, bp.blocks.val.length ≤ f ∧ f < bp.blocks.val.length + k ∧
         PredBlkG p1 numB incoming n f t)) :
-    Sigref.BranchingStep (aLTS LTSInst sys n) (cfgOf p n) (cfgOf p2 n) := by
+    MercLib.Sigref.BranchingStep (aLTS LTSInst sys n) (cfgOf p n) (cfgOf p2 n) := by
   classical
   have hstv : ∀ y : Fin n, (stOf y).index.val = y.val := fun y => stOf_index y hn
   have hfin : ∀ y : ST, ∀ hy : y.index.val < n, stOf (⟨y.index.val, hy⟩ : Fin n) = y := by
@@ -230,14 +230,14 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
         rw [he, hbl, ho, hbpe]
       rw [this]
       exact ⟨fun hm => ⟨h, (hout x h).1 hm⟩, fun hm => (hout x h).2 hm.2⟩
-  have hIC : ∀ x : Fin n, x ∈ Sigref.inertClosure (aLTS LTSInst sys n) (bdOf p n).setoid
+  have hIC : ∀ x : Fin n, x ∈ MercLib.Sigref.inertClosure (aLTS LTSInst sys n) (bdOf p n).setoid
       {d : Fin n | e2bAt p d.val = b ∧ IsMarked p d.val} ↔ (e2bAt p x.val = b ∧ IsMarked bp x.val) := by
     intro x
     by_cases h : e2bAt p x.val = b
     · rw [← hin x h]; simp [h]
     · constructor
       · rintro ⟨d, hd, hr⟩
-        have := Sigref.InertReach.rel (aLTS LTSInst sys n) (bdOf p n).setoid hr
+        have := MercLib.Sigref.InertReach.rel (aLTS LTSInst sys n) (bdOf p n).setoid hr
         exact absurd (this.trans hd.1) h
       · intro h'; exact absurd h'.1 h
   obtain ⟨x0, hx0b, hx0m⟩ := hmarkp0
@@ -254,11 +254,11 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
     rw [(hs1' t ht).1] at heq
     have := hlenp t
     rcases hs2' s hs with h | h <;> omega
-  have hcls : ∀ t : Fin n, t ∈ Sigref.cls (bdOf p n).setoid x0 ↔ e2bAt p t.val = b := by
+  have hcls : ∀ t : Fin n, t ∈ MercLib.Sigref.cls (bdOf p n).setoid x0 ↔ e2bAt p t.val = b := by
     intro t
     show e2bAt p x0.val = e2bAt p t.val ↔ _
     rw [hx0b]; exact eq_comm
-  have hcls' : ∀ t : Fin n, t ∈ Sigref.cls (bdOf p2 n).setoid x1 ↔ e2bAt p1 t.val = b := by
+  have hcls' : ∀ t : Fin n, t ∈ MercLib.Sigref.cls (bdOf p2 n).setoid x1 ↔ e2bAt p1 t.val = b := by
     intro t
     show e2bAt p2 x1.val = e2bAt p2 t.val ↔ _
     rw [hp2e, hp2e, hx1]; exact eq_comm
@@ -278,14 +278,14 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
   · exact ⟨x0, (hcls x0).2 hx0b, hx0m⟩
   · exact (hcls x1).2 hx1p
   · intro s t
-    show e2bAt p2 s.val = e2bAt p2 t.val ↔ Sigref.branchRel (aLTS LTSInst sys n)
+    show e2bAt p2 s.val = e2bAt p2 t.val ↔ MercLib.Sigref.branchRel (aLTS LTSInst sys n)
       (bdOf p n).setoid {x : Fin n | IsMarked p x.val} x0 s t
-    unfold Sigref.branchRel
+    unfold MercLib.Sigref.branchRel
     rw [hp2e, hp2e]
     have hIs := hIC s
     have hIt := hIC t
     have hset : {d : Fin n | e2bAt p d.val = b ∧ IsMarked p d.val} =
-        Sigref.cls (bdOf p n).setoid x0 ∩ {x : Fin n | IsMarked p x.val} := by
+        MercLib.Sigref.cls (bdOf p n).setoid x0 ∩ {x : Fin n | IsMarked p x.val} := by
       ext d; exact and_congr (hcls d).symm Iff.rfl
     rw [hset] at hIs hIt
     by_cases hs : e2bAt p s.val = b
@@ -318,7 +318,7 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
         · intro h; exact absurd h hne
         · rintro ⟨h, _⟩
           exact absurd (show e2bAt p s.val = e2bAt p t.val from h) (by rw [hs]; exact fun h' => ht h'.symm)
-    · have hsc : s ∉ Sigref.cls (bdOf p n).setoid x0 := fun h => hs ((hcls s).1 h)
+    · have hsc : s ∉ MercLib.Sigref.cls (bdOf p n).setoid x0 := fun h => hs ((hcls s).1 h)
       obtain ⟨hse, _⟩ := hs1' s hs
       by_cases ht : e2bAt p t.val = b
       · have hne := hneq t s ht hs
@@ -340,23 +340,23 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
       subst this
       exact hiff i
     ext x
-    have hUx : ∀ y : Fin n, y ∈ Sigref.cls (bdOf p n).setoid x0 \ Sigref.cls (bdOf p2 n).setoid x1 ↔
+    have hUx : ∀ y : Fin n, y ∈ MercLib.Sigref.cls (bdOf p n).setoid x0 \ MercLib.Sigref.cls (bdOf p2 n).setoid x1 ↔
         (bp.blocks.val.length ≤ e2bAt p1 y.val ∧ e2bAt p1 y.val < bp.blocks.val.length + k) := by
       intro y
       rw [← hU y]
       exact and_congr (hcls y) (not_congr (hcls' y))
     have hset : {d : Fin n | e2bAt p d.val = b ∧ IsMarked p d.val} =
-        Sigref.cls (bdOf p n).setoid x0 ∩ {x : Fin n | IsMarked p x.val} := by
+        MercLib.Sigref.cls (bdOf p n).setoid x0 ∩ {x : Fin n | IsMarked p x.val} := by
       ext d; exact and_congr (hcls d).symm Iff.rfl
-    have hICs : ∀ y : Fin n, y ∈ Sigref.inertClosure (aLTS LTSInst sys n) (cfgOf p n).π
-        (Sigref.cls (cfgOf p n).π x0 ∩ (cfgOf p n).X) ↔ (e2bAt p y.val = b ∧ IsMarked bp y.val) := by
+    have hICs : ∀ y : Fin n, y ∈ MercLib.Sigref.inertClosure (aLTS LTSInst sys n) (cfgOf p n).π
+        (MercLib.Sigref.cls (cfgOf p n).π x0 ∩ (cfgOf p n).X) ↔ (e2bAt p y.val = b ∧ IsMarked bp y.val) := by
       intro y; have := hIC y; rw [hset] at this; exact this
     have hmono : ∀ y : Fin n, e2bAt p y.val = b → IsMarked p y.val → IsMarked bp y.val := by
       intro y h hm
       exact (hin y h).2 ⟨y, ⟨h, hm⟩, Relation.ReflTransGen.refl⟩
     have hP : (∃ f, bp.blocks.val.length ≤ f ∧ f < bp.blocks.val.length + k ∧
-        PredBlkG p1 numB incoming n f (stOf x)) ↔ x ∈ Sigref.predB (aLTS LTSInst sys n)
-          (Sigref.cls (cfgOf p n).π x0 \ Sigref.cls (cfgOf p2 n).π x1) := by
+        PredBlkG p1 numB incoming n f (stOf x)) ↔ x ∈ MercLib.Sigref.predB (aLTS LTSInst sys n)
+          (MercLib.Sigref.cls (cfgOf p n).π x0 \ MercLib.Sigref.cls (cfgOf p2 n).π x1) := by
       constructor
       · rintro ⟨f, hf1, hf2, s, hsn, hsf, res, hres, i, hi, hg, hfrom⟩
         obtain ⟨μ, s', hs'n, htr, hpair⟩ := (hmem i s hsn res hres).1 hi
@@ -399,8 +399,8 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
     show IsMarked p2 x.val ↔ x ∈ ({y : Fin n | IsMarked p y.val} \ _) ∪ _
     rw [hDx, hm1 x]
     refine or_congr ?_ hP
-    show _ ↔ x ∈ {y : Fin n | IsMarked p y.val} ∧ ¬ x ∈ Sigref.inertClosure (aLTS LTSInst sys n)
-      (cfgOf p n).π (Sigref.cls (cfgOf p n).π x0 ∩ (cfgOf p n).X)
+    show _ ↔ x ∈ {y : Fin n | IsMarked p y.val} ∧ ¬ x ∈ MercLib.Sigref.inertClosure (aLTS LTSInst sys n)
+      (cfgOf p n).π (MercLib.Sigref.cls (cfgOf p n).π x0 ∩ (cfgOf p n).X)
     rw [hICs x]
     by_cases h : e2bAt p x.val = b
     · constructor
@@ -429,7 +429,7 @@ theorem branching_worklist_step_struct {L Label : Type}
     (hI : BrLoopInv LTSInst sys nU.val ctx) :
     ∃ ctx', branching_process_worklist_block LTSInst sys incoming { ctx with worklist := w } b = ok ctx' ∧
       BrLoopInv LTSInst sys nU.val ctx' ∧
-      Sigref.BranchingStep (aLTS LTSInst sys nU.val) (cfgOf ctx.partition nU.val)
+      MercLib.Sigref.BranchingStep (aLTS LTSInst sys nU.val) (cfgOf ctx.partition nU.val)
         (cfgOf ctx'.partition nU.val) ∧
       bworklistMeasure nU.val ctx' < bworklistMeasure nU.val ctx := by
   obtain ⟨⟨hp, hnd, hwl⟩, hstk, hmq, hsem⟩ := hI
@@ -451,7 +451,7 @@ theorem branching_worklist_step_struct {L Label : Type}
   have hcon := branching_process_worklist_block_contract LTSInst sys incoming
     { ctx with worklist := w } b hbN _ hb0 (partInv_blockWF hp hbN) hbmark
   have hbhid := hE.hid
-  have htopoA : Sigref.RP.TopoSorted (aLTS LTSInst sys nU.val) := by
+  have htopoA : MercLib.Sigref.RP.TopoSorted (aLTS LTSInst sys nU.val) := by
     intro s t h
     have h0 := (label_eq_tau_iff _).1 (rfl : (Cslib.HasTau.τ : TagIndex Std.Usize LabelTag) = _)
     have := htopo (stOf s) _ (stOf t) h h0
@@ -467,7 +467,7 @@ theorem branching_worklist_step_struct {L Label : Type}
     have h1 : (blkAt bp b.index.val).«end».val = (blkAt ctx.partition b.index.val).«end».val := by
       rw [hmono.end_eq]
     omega
-  have hbinv : Sigref.RP.BlockInv (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val :=
+  have hbinv : MercLib.Sigref.RP.BlockInv (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val :=
     blockInv_of_closure hnmax hbpe hout hin hsem
   obtain ⟨idm, hidm, hid⟩ := std.collections.hash.map.HashMapKVSGlobal.default_spec
     (alloc.vec.Vec ((TagIndex Std.Usize LabelTag) × BT)) BT
@@ -560,16 +560,16 @@ theorem branching_worklist_step_struct {L Label : Type}
     simp only [uTag]; rw [uTotal_val_of_lt (by omega)]
   have hsg : ∀ s t : Fin nU.val, e2bAt ctx.partition s.val = b.index.val →
       e2bAt ctx.partition t.val = b.index.val → IsMarked bp s.val → IsMarked bp t.val →
-      ((fun s : ST => Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val
+      ((fun s : ST => MercLib.Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val
           (keyOf ctx.state_to_key) (toFin hn0 s)) (stOf s) =
-        (fun s : ST => Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val
+        (fun s : ST => MercLib.Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val
           (keyOf ctx.state_to_key) (toFin hn0 s)) (stOf t) ↔
-        Sigref.E (aLTS LTSInst sys nU.val) (bdOf ctx.partition nU.val).setoid s t) := by
+        MercLib.Sigref.E (aLTS LTSInst sys nU.val) (bdOf ctx.partition nU.val).setoid s t) := by
     intro s t hs ht hms hmt
-    have := Sigref.RP.keyCompCorrect (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val
+    have := MercLib.Sigref.RP.keyCompCorrect (aLTS LTSInst sys nU.val) (bdOf bp nU.val) b.index.val
       (keyOf ctx.state_to_key) htopoA hbinv s t (by show e2bAt bp s.val = _; rw [hbpe]; exact hs)
       (by show e2bAt bp t.val = _; rw [hbpe]; exact ht) hms hmt
-    show Sigref.RP.keysOf _ _ _ _ (toFin hn0 (stOf s)) = Sigref.RP.keysOf _ _ _ _ (toFin hn0 (stOf t)) ↔ _
+    show MercLib.Sigref.RP.keysOf _ _ _ _ (toFin hn0 (stOf s)) = MercLib.Sigref.RP.keysOf _ _ _ _ (toFin hn0 (stOf t)) ↔ _
     rw [htoFin, htoFin, this, bdOf_setoid_eq hbpe]
   have hmarkp0 : ∃ x : Fin nU.val, e2bAt ctx.partition x.val = b.index.val ∧
       IsMarked ctx.partition x.val := by
@@ -639,12 +639,12 @@ theorem branching_worklist_step_struct {L Label : Type}
       ok ({ partition := r.1, worklist := r.2.1, states := r.2.2, builder := sigb1,
             split_builder := sb1, state_to_key := stk1 } : WorklistContextBranching)) = ok ctx' ∧
     BrLoopInv LTSInst sys nU.val ctx' ∧
-    Sigref.BranchingStep (aLTS LTSInst sys nU.val) (cfgOf ctx.partition nU.val)
+    MercLib.Sigref.BranchingStep (aLTS LTSInst sys nU.val) (cfgOf ctx.partition nU.val)
       (cfgOf ctx'.partition nU.val) ∧ bworklistMeasure nU.val ctx' < bworklistMeasure nU.val ctx
   rw [hrun]
   simp only [bind_ok]
   refine ⟨_, rfl, ⟨hI2, hstk1, hsem2.2.2, ?_⟩, hstep, ?_⟩
-  · exact Sigref.branchingInv_step _ (Sigref.RP.tauLoopFree_of_topo _ htopoA) hsem hstep
+  · exact MercLib.Sigref.branchingInv_step _ (MercLib.Sigref.RP.tauLoopFree_of_topo _ htopoA) hsem hstep
   · unfold bworklistMeasure; exact hmeas
 
 end MercVerified.Refinement.Proofs

@@ -7,7 +7,7 @@ import Aeneas.Std.WP
 The two-pointer subset test of the branching algorithm: on strictly sorted slices it decides
 `∀ e ∈ subset, e ≠ exclude → e ∈ superset`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -53,7 +53,9 @@ theorem entEq_ok (a b : SigEntry) :
 theorem slice_index_ok {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
     Slice.index_usize s i = ok (s.val[i.val]'h) := by
   have hs := Slice.index_usize_spec s i h
-  obtain ⟨x, hx, hxe⟩ := Std.WP.spec_imp_exists hs
+  obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hs⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+  rename_i x
   rw [hx, hxe]
 
 theorem entCmp_ok (a b : SigEntry) :
@@ -83,15 +85,21 @@ theorem iss_body {sup sub : Slice SigEntry} {ex : SigEntry} {i j : Std.Usize}
   have hmax_j : j.val + 1 ≤ Usize.max := by
     have := sub.property; scalar_tac
   have hidx := slice_index_ok sub j hj
-  obtain ⟨j', hj'e, hj'v⟩ : ∃ j' : Std.Usize, j + 1#usize = ok j' ∧ j'.val = j.val + 1 :=
-    spec_imp_exists (Usize.add_spec (x := j) (y := 1#usize) (by simp; omega))
+  obtain ⟨j', hj'e, hj'v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := j) (y := 1#usize) (by simp; omega)⟩
+  cases j' <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hj'v
+  rename_i j'
+  replace hj'v : j'.val = j.val + 1 := hj'v
   refine ⟨fun hex => ⟨j', hj'v, ?_⟩, fun hne hij => ?_, fun hne hij => ?_⟩
   · unfold is_subset_excluding_loop.body
     simp [hjlt, hidx, entEq_ok, hex, hj'e]
   · have hpidx := slice_index_ok sup i hij
-    obtain ⟨i', hi'e, hi'v⟩ : ∃ i' : Std.Usize, i + 1#usize = ok i' ∧ i'.val = i.val + 1 :=
-      spec_imp_exists (Usize.add_spec (x := i) (y := 1#usize) (by
-        have := sup.property; simp; omega))
+    obtain ⟨i', hi'e, hi'v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.add_spec (x := i) (y := 1#usize) (by
+        have := sup.property; simp; omega)⟩
+    cases i' <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi'v
+    rename_i i'
+    replace hi'v : i'.val = i.val + 1 := hi'v
     have hilt : i < Slice.len sup := by simp [Slice.len, UScalar.lt_equiv]; exact hij
     refine ⟨fun heq => ⟨i', j', hi'v, hj'v, ?_⟩, fun hneq hlt => ⟨i', hi'v, ?_⟩, fun hneq hnlt => ?_⟩
     · unfold is_subset_excluding_loop.body
@@ -116,7 +124,6 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
     ∃ r, is_subset_excluding sup sub ex = ok r ∧
       (r = true ↔ ∀ e ∈ sub.val, e ≠ ex → e ∈ sup.val) := by
   unfold is_subset_excluding is_subset_excluding_loop
-  apply spec_imp_exists
   have hspec :
       loop (fun x : Std.Usize × Std.Usize × Bool =>
           is_subset_excluding_loop.body sup sub ex x.1 x.2.1 x.2.2) (0#usize, 0#usize, true)
@@ -252,6 +259,9 @@ theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
           apply hT1 e _ hne
           rw [hjeq, List.take_length]; exact he
     · refine ⟨by simp, by simp, fun _ => ⟨by simp, by simp⟩, by simp⟩
-  simpa using hspec
+  obtain ⟨r, hr, h⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+  exact ⟨_, hr, h⟩
 
 end MercVerified.Refinement.Proofs

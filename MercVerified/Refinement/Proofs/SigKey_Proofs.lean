@@ -11,7 +11,7 @@ members. This file proves that the instances used (`Pair` of `TagIndex`-of-`usiz
 lawfulness hypotheses of the `sort_unstable`/`dedup` axioms and derives the canonical-form lemma
 `sigKey_unique`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result

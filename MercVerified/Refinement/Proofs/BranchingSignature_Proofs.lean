@@ -7,9 +7,9 @@ import Aeneas.Std.WP
 # Leaf functions of the branching algorithm
 
 Specifications of `is_element_marked`, `tau_hat`, `branching_bisim_signature_inductive` (the flat
-signature of the key computation, `Sigref.RP.flatSig`).
+signature of the key computation, `MercLib.Sigref.RP.flatSig`).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -124,7 +124,7 @@ theorem br_body_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partiti
   obtain ⟨it1, hnext, hit1⟩ := into_iter_next_some' iter hd tl hiter
   have hdm : hd ∈ hd :: tl := List.mem_cons_self
   have push_ok : ∀ e : SigEntry, ∃ v', builder.push e = ok v' ∧ v'.val = builder.val ++ [e] :=
-    fun e => spec_imp_exists (alloc.vec.Vec.push_spec builder e hlen)
+    fun e => vec_push_val builder e hlen
   unfold verified.merc_reduction.signatures.branching_bisim_signature_inductive_loop.body
   rw [hnext]
   by_cases hc1 : bn s = bn hd.to
@@ -164,7 +164,6 @@ theorem br_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partiti
         sys partition state_to_key builder = ok b' ∧
       b'.val = builder.val ++ l.map (brEntry hat bn hid mk key s) := by
   unfold verified.merc_reduction.signatures.branching_bisim_signature_inductive_loop
-  apply spec_imp_exists
   have hspec :
       loop (fun x : alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec SigEntry =>
           verified.merc_reduction.signatures.branching_bisim_signature_inductive_loop.body LTSInst s
@@ -210,7 +209,10 @@ theorem br_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partiti
         · show it1.val.length < x.1.val.length
           rw [hit1, hx1]; simp
     · exact ⟨[], l, by simp, hiter, by simp⟩
-  simpa using hspec
+  obtain ⟨r, hr, h⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+  exact ⟨_, hr, h⟩
 
 /-- **`branching_bisim_signature_inductive`**: succeeds and returns a strictly sorted list of
 exactly the entries of the outgoing transitions of `s`. -/

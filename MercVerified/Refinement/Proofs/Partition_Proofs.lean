@@ -13,7 +13,7 @@ indexing. This file records the lemmas the worklist-loop proof derives from
 that: reads like `BlockPartition.block` and `BlockPartition.element_to_block`
 collapse to `List.get` on the underlying vectors.
 
-Machine-generated proofs; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated proofs; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -45,7 +45,11 @@ theorem blocks_index_mut_contract
   rw [vec_tagged_index_mut_eq]
   have := Slice.index_mut_usize_spec p.blocks.slice block_index.index
     (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
-  obtain ⟨⟨x, back⟩, hx, hxe, hb⟩ := Std.WP.spec_imp_exists this
+  obtain ⟨res, hx, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, this⟩
+  cases res <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i res
+  obtain ⟨x, back⟩ := res
+  obtain ⟨hxe, hb⟩ := hres
   simp only [hx]
   simp only [bind_ok]
   subst hb
@@ -431,7 +435,14 @@ theorem new_loop_spec (num : Sz) :
         (alloc.vec.Vec.new (TagIndex Sz BlockTagIdx))
         (alloc.vec.Vec.new Sz)
         = ok res ∧ newLoopPost num res := by
-  apply Std.WP.spec_imp_exists
+  suffices h : Std.WP.spec (verified.merc_reduction.block_partition.BlockPartition.new_loop
+        { start := 0#usize, «end» := num }
+        (alloc.vec.Vec.new (TagIndex Sz StateTag))
+        (alloc.vec.Vec.new (TagIndex Sz BlockTagIdx))
+        (alloc.vec.Vec.new Sz)) (newLoopPost num) by
+    obtain ⟨r, hr, h⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, h⟩
+    cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+    exact ⟨_, hr, h⟩
   have hInit : newLoopInv num
       ({ start := 0#usize, «end» := num },
         (alloc.vec.Vec.new (TagIndex Sz StateTag)),
@@ -451,10 +462,10 @@ theorem new_loop_spec (num : Sz) :
   · intro x hx
     by_cases h : x.1.start.val < x.1.end.val
     · rcases new_loop_body_step num x hx h with ⟨x', hstep, hinv', hl⟩
-      exact Std.WP.exists_imp_spec ⟨cont x', hstep, hinv', hl⟩
+      exact (congrArg (Std.WP.spec · _) hstep).mpr ((Std.WP.spec_ok _).2 ⟨hinv', hl⟩)
     · have hge : x.1.end.val ≤ x.1.start.val := by omega
       rcases new_loop_body_done num x hx hge with ⟨hstep, hpost⟩
-      exact Std.WP.exists_imp_spec ⟨done (x.2.1, x.2.2.1, x.2.2.2), hstep, hpost⟩
+      exact (congrArg (Std.WP.spec · _) hstep).mpr ((Std.WP.spec_ok _).2 hpost)
   · exact hInit
 
 /-- `BlockPartition::new` builds the initial partition over `[0, num)`: one
@@ -543,12 +554,19 @@ theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
   unfold verified.merc_reduction.block_partition.BlockPartition.swap_elements
   have haS : a.val < p.elements.slice.length := ha
   have hbS : b.val < p.elements.slice.length := hb
-  obtain ⟨s1, hs1, hl1, hA, hB, hO⟩ :=
-    spec_imp_exists (core.slice.Slice.swap_spec p.elements.slice a b haS hbS)
+  obtain ⟨s1, hs1, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, core.slice.Slice.swap_spec p.elements.slice a b haS hbS⟩
+  cases s1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i s1
+  obtain ⟨hl1, hA, hB, hO⟩ := hres
   have hsa : a.val < s1.length := by rw [hl1]; exact haS
   have hsb : b.val < s1.length := by rw [hl1]; exact hbS
-  obtain ⟨xa, hxa, hxa'⟩ := spec_imp_exists (Slice.index_usize_spec s1 a hsa)
-  obtain ⟨xb, hxb, hxb'⟩ := spec_imp_exists (Slice.index_usize_spec s1 b hsb)
+  obtain ⟨xa, hxa, hxa'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, Slice.index_usize_spec s1 a hsa⟩
+  cases xa <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxa'
+  rename_i xa
+  obtain ⟨xb, hxb, hxb'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, Slice.index_usize_spec s1 b hsb⟩
+  cases xb <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxb'
+  rename_i xb
   have hxa_eq : xa = p.elements.val[b.val] := by
     rw [hxa']
     have := hA
@@ -565,14 +583,21 @@ theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
     h3 _ hmem_b
   have hbnd_b : (p.elements.val[a.val]).index.val < p.element_offset.slice.length :=
     h3 _ hmem_a
-  obtain ⟨⟨_, back1⟩, hm1, _, hb1⟩ := spec_imp_exists
-    (Slice.index_mut_usize_spec p.element_offset.slice (p.elements.val[b.val]).index hbnd_a)
+  obtain ⟨res, hm1, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Slice.index_mut_usize_spec p.element_offset.slice (p.elements.val[b.val]).index hbnd_a⟩
+  cases res <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i res
+  obtain ⟨_, back1⟩ := res
+  obtain ⟨_, hb1⟩ := hres
   have hbnd2 : (p.elements.val[a.val]).index.val <
       (p.element_offset.slice.set (p.elements.val[b.val]).index a).length := by
     rw [Slice.set_length]; exact hbnd_b
-  obtain ⟨⟨_, back2⟩, hm2, _, hb2⟩ := spec_imp_exists
-    (Slice.index_mut_usize_spec (p.element_offset.slice.set (p.elements.val[b.val]).index a)
-      (p.elements.val[a.val]).index hbnd2)
+  obtain ⟨res, hm2, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Slice.index_mut_usize_spec (p.element_offset.slice.set (p.elements.val[b.val]).index a) (p.elements.val[a.val]).index hbnd2⟩
+  cases res <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i res
+  obtain ⟨_, back2⟩ := res
+  obtain ⟨_, hb2⟩ := hres
   refine ⟨{ elements := ⟨s1⟩, blocks := p.blocks, element_to_block := p.element_to_block,
             element_offset := ⟨back2 b⟩ }, ?_, ?_⟩
   · simp [alloc.vec.Vec.deref_mut, lift, hs1, alloc.vec.Vec.index, core.slice.index.Usize.index,

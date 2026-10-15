@@ -5,7 +5,7 @@ import Aeneas.Std.WP
 /-!
 # Small tools for the proofs about the preprocessing
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow

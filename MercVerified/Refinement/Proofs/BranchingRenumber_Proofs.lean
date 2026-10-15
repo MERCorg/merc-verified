@@ -8,7 +8,7 @@ The backwards scan of a sorted signature: for the hat entries from the largest k
 the first whose interned signature absorbs the rest of the signature; the scan stops at the first
 non-hat entry.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -92,7 +92,11 @@ theorem rn_body {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usi
         renumber_branching_loop.body LTSInst sys sig kts result index false
           = ok (cont (result, i1, true))) := by
   obtain ⟨i1, hi1e, hi1v⟩ : ∃ i1 : Std.Usize, index - 1#usize = ok i1 ∧ i1.val = index.val - 1 := by
-    obtain ⟨y, hy, hv, -⟩ := spec_imp_exists (Usize.sub_spec (x := index) (y := 1#usize) (by simp; omega))
+    obtain ⟨y, hy, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := index) (y := 1#usize) (by simp; omega)⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i y
+    obtain ⟨hv, -⟩ := hres
     exact ⟨y, hy, by simpa using hv⟩
   refine ⟨i1, hi1v, fun hm => ?_⟩
   have hgt : index > 0#usize := by simp [UScalar.lt_equiv]; omega
@@ -150,7 +154,6 @@ theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
       r = rnScan nl.val (kts.val.map (·.val)) sig.val sig.val.reverse := by
   unfold renumber_branching renumber_branching_loop
   simp only
-  apply spec_imp_exists
   set F := rnScan nl.val (kts.val.map (·.val)) sig.val sig.val.reverse with hF
   have hspec :
       loop (fun x : Option BT × Std.Usize × Bool =>
@@ -209,6 +212,9 @@ theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
           rw [hres, ← hFe, hz]; simp [rnScan]
     · refine ⟨by simp [Slice.len], fun _ => ⟨rfl, ?_⟩, fun h => absurd h (by simp)⟩
       simp [Slice.len, hF]
-  simpa using hspec
+  obtain ⟨r, hr, h⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+  exact ⟨_, hr, h⟩
 
 end MercVerified.Refinement.Proofs

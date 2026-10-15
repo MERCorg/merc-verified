@@ -8,7 +8,7 @@ the transition targets `tos` (by the `toList` model of `ByteCompressedVec`) and 
 structural invariants of `assert_valid`. From it we derive `LabelledTransitionSystemValid` and the
 exact outgoing transitions of every state (`raw_outgoing`).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -242,8 +242,11 @@ theorem raw_outgoing {Label : Type} (TLInst : TransitionLabel Label)
   have hmax := h.off_le
   have hsl : s.index.val < (ByteCompressedVec.toList sys.states).length := by omega
   have hstart := merc_collections.compressed_vec.ByteCompressedVec.index_spec UIdx sys.states s.index hsl
-  obtain ⟨i1, hi1, hi1v⟩ := spec_imp_exists (Usize.add_spec (x := s.index) (y := 1#usize)
-    (by simp; omega))
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := s.index) (y := 1#usize)
+    (by simp; omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   have hi1v' : i1.val = s.index.val + 1 := by simpa using hi1v
   have hel : i1.val < (ByteCompressedVec.toList sys.states).length := by omega
   have hend := merc_collections.compressed_vec.ByteCompressedVec.index_spec UIdx sys.states i1 hel
@@ -253,7 +256,10 @@ theorem raw_outgoing {Label : Type} (TLInst : TransitionLabel Label)
   have hev : endV.val = off.getD (s.index.val + 1) 0 := by rw [h.st_get _ hel, hi1v']
   have hle : startV.val ≤ endV.val := by
     rw [hsv, hev]; exact h.off_mono (by omega) (by omega)
-  obtain ⟨i2, hi2, hi2v⟩ := spec_imp_exists (Usize.sub_spec (x := endV) (y := startV) hle)
+  obtain ⟨i2, hi2, hi2v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := endV) (y := startV) hle⟩
+  cases i2 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi2v
+  rename_i i2
   have hi2v' : i2.val = endV.val - startV.val := (by simpa using hi2v : _ ∧ _).1
   have hendle : endV.val ≤ labs.length := by rw [hev]; exact h.off_le_labs (by omega)
   have hwc : (alloc.vec.Vec.with_capacity Transition i2).val = [] := by
@@ -290,7 +296,10 @@ theorem range_check_loop
     (start : Std.Usize) (hlo : lo ≤ start.val) (hst : start.val ≤ e.val) :
     loop body ({ start := start, «end» := e } : core.ops.range.Range Std.Usize) = ok () := by
   have : ∃ r : Unit, loop body ({ start := start, «end» := e } : core.ops.range.Range Std.Usize) = ok r ∧ True := by
-    apply Std.WP.spec_imp_exists
+    suffices h : Std.WP.spec (loop body ({ start := start, «end» := e } : core.ops.range.Range Std.Usize)) (fun _ => True) by
+      obtain ⟨r, hr, h⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, h⟩
+      cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+      exact ⟨_, hr, h⟩
     apply loop.spec_decr_nat
       (measure := fun x => e.val - x.start.val)
       (inv := fun x => x.«end» = e ∧ lo ≤ x.start.val ∧ x.start.val ≤ e.val)
@@ -299,10 +308,10 @@ theorem range_check_loop
       subst hend
       by_cases hlt : i.val < e'.val
       · obtain ⟨i1, hi1, hb⟩ := hsome i hlo' hlt
-        exact Std.WP.exists_imp_spec ⟨cont _, hb, ⟨rfl, by simp only; omega, by simp only; omega⟩,
-          by simp only; omega⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨rfl, by simp only; omega, by simp only; omega⟩, by simp only; omega⟩)
       · have heq : i.val = e'.val := by omega
-        exact Std.WP.exists_imp_spec ⟨done (), hnone i heq, trivial⟩
+        exact (congrArg (Std.WP.spec · _) (hnone i heq)).mpr ((Std.WP.spec_ok _).2 trivial)
     · exact ⟨rfl, hlo, hst⟩
   obtain ⟨r, hr, -⟩ := this
   cases r
@@ -318,7 +327,10 @@ theorem offsets_valid_ok {Label : Type} {sys : LabelledTransitionSystem Label} {
   apply range_check_loop _ nU 0
   · intro i _ hi
     have hi' : i.val < n := by omega
-    obtain ⟨i2, hi2, hi2v⟩ := spec_imp_exists (Usize.add_spec (x := i) (y := 1#usize) (by simp; omega))
+    obtain ⟨i2, hi2, hi2v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.add_spec (x := i) (y := 1#usize) (by simp; omega)⟩
+    cases i2 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi2v
+    rename_i i2
     have hi2v' : i2.val = i.val + 1 := by simpa using hi2v
     obtain ⟨o, it1, hnext, ho, hs1, he1⟩ := next_range_some
       ({ start := i, «end» := nU } : core.ops.range.Range Std.Usize) hi
@@ -355,7 +367,9 @@ theorem vec_index_ok' {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
     (h : i.val < v.val.length) :
     alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice U) v i = ok (v.val[i.val]'h) := by
   have hs := Slice.index_usize_spec v.slice i (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
-  obtain ⟨x, hx, hxe⟩ := Std.WP.spec_imp_exists hs
+  obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hs⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+  rename_i x
   simp only [alloc.vec.Vec.index, core.slice.index.Usize.index]
   rw [hx, hxe]
   rfl
@@ -487,7 +501,10 @@ theorem unique_ok {Label : Type} (TLInst : TransitionLabel Label)
     verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.assert_transition_unique
       TLInst sys i end_ = ok () := by
   have hmax := h.tmax
-  obtain ⟨i1, hi1, hi1v⟩ := spec_imp_exists (Usize.add_spec (x := i) (y := 1#usize) (by simp; omega))
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := i) (y := 1#usize) (by simp; omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   have hi1v' : i1.val = i.val + 1 := by simpa using hi1v
   unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.assert_transition_unique
   rw [hi1]
@@ -546,7 +563,10 @@ theorem no_dup_ok {Label : Type} (TLInst : TransitionLabel Label)
         { start := st1, «end» := nU } := by rw [he1]
     rw [hit1] at hnext
     refine ⟨st1, hs1, ?_⟩
-    obtain ⟨i2, hi2, hi2v⟩ := spec_imp_exists (Usize.add_spec (x := i) (y := 1#usize) (by simp; omega))
+    obtain ⟨i2, hi2, hi2v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.add_spec (x := i) (y := 1#usize) (by simp; omega)⟩
+    cases i2 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi2v
+    rename_i i2
     have hi2v' : i2.val = i.val + 1 := by simpa using hi2v
     have hl1 : i.val < (ByteCompressedVec.toList sys.states).length := by rw [h.st_length]; omega
     have hl2 : i2.val < (ByteCompressedVec.toList sys.states).length := by rw [h.st_length]; omega
@@ -586,7 +606,10 @@ theorem assert_valid_ok {Label : Type} (TLInst : TransitionLabel Label)
   obtain ⟨ls, hls, hlsv⟩ := merc_collections.compressed_vec.ByteCompressedVec.len_spec UIdx sys.states
     (by rw [h.st_length]; omega)
   rw [h.st_length] at hlsv
-  obtain ⟨nU, hnU, hnUv⟩ := spec_imp_exists (Usize.sub_spec (x := ls) (y := 1#usize) (by simp; omega))
+  obtain ⟨nU, hnU, hnUv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := ls) (y := 1#usize) (by simp; omega)⟩
+  cases nU <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hnUv
+  rename_i nU
   have hnUv' : nU.val = n := by have := hnUv.1; simp at this; omega
   obtain ⟨tl, htl, htlv⟩ := merc_collections.compressed_vec.ByteCompressedVec.len_spec LIdx
     sys.transition_labels (by rw [h.lab]; omega)

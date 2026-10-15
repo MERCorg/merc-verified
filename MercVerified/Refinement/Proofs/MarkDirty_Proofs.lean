@@ -7,7 +7,7 @@ import Aeneas.Std.WP
 The worklist stays duplicate-free, every queued block is valid and has a marked suffix, and the
 partition stays a consistent one with the same number of blocks.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -141,7 +141,10 @@ theorem dirty_transition_step {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {
         · simp at hx; subst hx; exact hoBlt)
     have hwlen : w.val.length < Usize.max := by
       simp at hlenle; omega
-    obtain ⟨w1, hpush, hw1⟩ := spec_imp_exists (alloc.vec.Vec.push_spec w oB hwlen)
+    obtain ⟨w1, hpush, hw1⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, alloc.vec.Vec.push_spec w oB hwlen⟩
+    cases w1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hw1
+    rename_i w1
     refine ⟨oB, false, p', w1, hbn, ⟨_, hblock, by rw [hhm]; simp [hnm]⟩, Or.inr ⟨rfl, hpush⟩, hmark,
       ⟨hp', by rw [hw1]; exact hnd', ?_⟩, hlen', ?_⟩
     · intro x hx

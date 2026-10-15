@@ -10,7 +10,7 @@ import Aeneas.Std.WP
 (`IncomingTransitionsCorrect_Proofs`, `Zp`), so the silent ones (label `0`) come first and
 `incoming_silent_transitions`, which stops at the first non-silent one, returns all of them.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -106,7 +106,7 @@ theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
           unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop.body
           rw [hnext, hone]
           simp
-        refine Std.WP.exists_imp_spec ⟨done st.2, hbody, ?_⟩
+        refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
         show ∀ i : FromTransition, i ∈ st.2.val ↔ i ∈ transitions.val ∧ i.label.index.val = 0
         rw [hres]
         exact silent_post transitions hz _ hle (fun p h => hall p h (by omega)) (Or.inl (by omega))
@@ -115,7 +115,9 @@ theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
         have hlt' : st.1.start.val < transitions.val.length := by omega
         have hidx : transitions.index_usize st.1.start = ok (transitions.val[st.1.start.val]'hlt') := by
           have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec transitions st.1.start hlt'
-          rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+          obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+          cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+          rename_i y
           rw [hy, hyv]
         have hnew : TagIndex.new LabelTag 0#usize = ok ({ index := 0#usize, marker := () } :
             TagIndex Std.Usize LabelTag) := by simp
@@ -128,7 +130,7 @@ theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
             unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop.body
             rw [hnext, hsome]
             simp [hidx, label_ne_zero, hl, hpush]
-          refine Std.WP.exists_imp_spec ⟨cont (it1, v'), hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           show (it1.end.val = transitions.val.length ∧ it1.start.val ≤ transitions.val.length ∧
             v'.val = transitions.val.take it1.start.val ∧
             ∀ p (h : p < it1.start.val) (h' : p < transitions.val.length),
@@ -148,12 +150,14 @@ theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
             unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop.body
             rw [hnext, hsome]
             simp [hidx, label_ne_zero, hl]
-          refine Std.WP.exists_imp_spec ⟨done st.2, hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           show ∀ i : FromTransition, i ∈ st.2.val ↔ i ∈ transitions.val ∧ i.label.index.val = 0
           rw [hres]
           exact silent_post transitions hz _ hle (fun p h => hall p h (by omega)) (Or.inr ⟨hlt', hl⟩)
     · exact ⟨he, Nat.zero_le _, by simp [hr0], fun p hp => by simp at hp⟩
-  obtain ⟨sil, hsil, hpost⟩ := Std.WP.spec_imp_exists hspec
+  obtain ⟨sil, hsil, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases sil <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i sil
   refine ⟨sil, ?_, hpost⟩
   unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_silent_transitions_loop
   exact hsil

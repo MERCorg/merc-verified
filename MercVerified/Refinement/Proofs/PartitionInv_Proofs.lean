@@ -10,7 +10,7 @@ The invariant of `BlockPartition` that the termination proof of the worklist loo
 `element_offset` its inverse, the blocks are non-empty, pairwise disjoint ranges of
 `elements`, and every state's `element_to_block` entry names the block containing its offset.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -76,12 +76,19 @@ theorem swap_elements_content (p : BlockPartition) (a b : Std.Usize)
   unfold verified.merc_reduction.block_partition.BlockPartition.swap_elements
   have haS : a.val < p.elements.slice.length := ha
   have hbS : b.val < p.elements.slice.length := hb
-  obtain ⟨s1, hs1, hl1, hA, hB, hO⟩ :=
-    spec_imp_exists (core.slice.Slice.swap_spec p.elements.slice a b haS hbS)
+  obtain ⟨s1, hs1, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, core.slice.Slice.swap_spec p.elements.slice a b haS hbS⟩
+  cases s1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i s1
+  obtain ⟨hl1, hA, hB, hO⟩ := hres
   have hsa : a.val < s1.length := by rw [hl1]; exact haS
   have hsb : b.val < s1.length := by rw [hl1]; exact hbS
-  obtain ⟨xa, hxa, hxa'⟩ := spec_imp_exists (Slice.index_usize_spec s1 a hsa)
-  obtain ⟨xb, hxb, hxb'⟩ := spec_imp_exists (Slice.index_usize_spec s1 b hsb)
+  obtain ⟨xa, hxa, hxa'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, Slice.index_usize_spec s1 a hsa⟩
+  cases xa <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxa'
+  rename_i xa
+  obtain ⟨xb, hxb, hxb'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, Slice.index_usize_spec s1 b hsb⟩
+  cases xb <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxb'
+  rename_i xb
   have hxa_eq : xa = p.elements.val[b.val] := by
     rw [hxa']
     have := hA
@@ -98,14 +105,21 @@ theorem swap_elements_content (p : BlockPartition) (a b : Std.Usize)
     h3 _ hmem_b
   have hbnd_b : (p.elements.val[a.val]).index.val < p.element_offset.slice.length :=
     h3 _ hmem_a
-  obtain ⟨⟨_, back1⟩, hm1, _, hb1⟩ := spec_imp_exists
-    (Slice.index_mut_usize_spec p.element_offset.slice (p.elements.val[b.val]).index hbnd_a)
+  obtain ⟨res, hm1, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Slice.index_mut_usize_spec p.element_offset.slice (p.elements.val[b.val]).index hbnd_a⟩
+  cases res <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i res
+  obtain ⟨_, back1⟩ := res
+  obtain ⟨_, hb1⟩ := hres
   have hbnd2 : (p.elements.val[a.val]).index.val <
       (p.element_offset.slice.set (p.elements.val[b.val]).index a).length := by
     rw [Slice.set_length]; exact hbnd_b
-  obtain ⟨⟨_, back2⟩, hm2, _, hb2⟩ := spec_imp_exists
-    (Slice.index_mut_usize_spec (p.element_offset.slice.set (p.elements.val[b.val]).index a)
-      (p.elements.val[a.val]).index hbnd2)
+  obtain ⟨res, hm2, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Slice.index_mut_usize_spec (p.element_offset.slice.set (p.elements.val[b.val]).index a) (p.elements.val[a.val]).index hbnd2⟩
+  cases res <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i res
+  obtain ⟨_, back2⟩ := res
+  obtain ⟨_, hb2⟩ := hres
   refine ⟨{ elements := ⟨s1⟩, blocks := p.blocks, element_to_block := p.element_to_block,
             element_offset := ⟨back2 b⟩ }, ?_, rfl, rfl, ?_, ?_⟩
   · simp [alloc.vec.Vec.deref_mut, lift, hs1, alloc.vec.Vec.index, core.slice.index.Usize.index,
@@ -478,8 +492,11 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
   · have hlt' : o.val < (blkAt p K).marked_split.val := hlt
     rw [ite_eq_left hlt]
     have hsub : (1#usize).val ≤ (blkAt p K).marked_split.val := by rw [usize_one_val]; omega
-    obtain ⟨i, hi, hival, -⟩ := spec_imp_exists
-      (Usize.sub_spec (x := (blkAt p K).marked_split) (y := 1#usize) hsub)
+    obtain ⟨i, hi, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := (blkAt p K).marked_split) (y := 1#usize) hsub⟩
+    cases i <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i i
+    obtain ⟨hival, -⟩ := hres
     simp only [usize_one_val] at hival
     rw [hi]
     simp only [bind_ok]
@@ -496,8 +513,11 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
     have hb1 : self1.blocks.slice.val[bi.index.val]'hbN1 = blkAt p K := by
       rw [← hbk1, blkAt_eq_getElem (by omega)]; congr 1
     rw [hb1]
-    obtain ⟨i1, hi1, hi1v, -⟩ := spec_imp_exists
-      (Usize.sub_spec (x := (blkAt p K).marked_split) (y := 1#usize) hsub)
+    obtain ⟨i1, hi1, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := (blkAt p K).marked_split) (y := 1#usize) hsub⟩
+    cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i i1
+    obtain ⟨hi1v, -⟩ := hres
     simp only [usize_one_val] at hi1v
     have hbkK : blkAt self1 bi.index.val = blkAt p K := by rw [hbi]; exact hbk1
     have hnb : ({ blkAt self1 bi.index.val with marked_split := i1 } : Block) =

@@ -6,9 +6,9 @@ import Aeneas.Std.WP
 # `branching_partition_marked`
 
 The branching analogue of `strong_partition_marked_spec`: the split key is the abstract key
-computation `Sigref.RP.keysOf`.
+computation `MercLib.Sigref.RP.keysOf`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -61,8 +61,8 @@ theorem oldsF_eq {n : Nat} (hn0 : 0 < n) (p : BlockPartition) (b : Nat) (olds : 
     (hsorted : List.Pairwise (fun a c : ST => a.index.val < c.index.val) olds)
     (hmem : ∀ x : ST, x.index.val < n →
       ((e2bAt p x.index.val = b ∧ IsMarked p x.index.val) ↔ x ∈ olds)) (hn : n ≤ Usize.max) :
-    olds.map (toFin hn0) = Sigref.RP.sortedDirty (bdOf p n) b := by
-  obtain ⟨hpw, hmemD⟩ := Sigref.RP.sortedDirty_facts (bdOf p n) b
+    olds.map (toFin hn0) = MercLib.Sigref.RP.sortedDirty (bdOf p n) b := by
+  obtain ⟨hpw, hmemD⟩ := MercLib.Sigref.RP.sortedDirty_facts (bdOf p n) b
   have htf : ∀ s ∈ olds, (toFin hn0 s).val = s.index.val := fun s hs =>
     Nat.mod_eq_of_lt (hold s hs)
   have hpw' : List.Pairwise (· < ·) (olds.map (toFin hn0)) := by
@@ -105,7 +105,7 @@ theorem branching_partition_marked_spec {L Label : Type}
       branching_partition_marked LTSInst sys p b id kts sigb sb stk
         = ok (nbi, p', id1, kts1, sigb1, sb1, stk1) ∧
       stk1.val.length = nU.val ∧
-      SplitPostG (fun s : ST => Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf p nU.val)
+      SplitPostG (fun s : ST => MercLib.Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf p nU.val)
         b.index.val (keyOf stk) (toFin hn0 s)) nU.val p b nbi p' := by
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
   have hn2 := hfit nU hns
@@ -243,13 +243,13 @@ theorem branching_partition_marked_spec {L Label : Type}
       -- the classes are the abstract keys
       have hfe := oldsF_eq hn0 p b.index.val sb1.old_elements.val hold hsort1 hmemO hnmax
       have hrunkeys : ∀ a : Fin nU.val, keyOf (n := nU.val) stk1 a =
-          Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf p nU.val) b.index.val (keyOf stk) a := by
+          MercLib.Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf p nU.val) b.index.val (keyOf stk) a := by
         intro a
-        have h := congrArg Sigref.KC.key hsem.abs
+        have h := congrArg MercLib.Sigref.KC.key hsem.abs
         rw [List.take_length, hfe] at h
         exact congrFun h a
       have hkeyEq : ∀ t, t < sb1.old_elements.val.length →
-          clsAt sb2 t = Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf p nU.val) b.index.val
+          clsAt sb2 t = MercLib.Sigref.RP.keysOf (aLTS LTSInst sys nU.val) (bdOf p nU.val) b.index.val
             (keyOf stk) (toFin hn0 (sb1.old_elements.val.getD t zST)) := by
         intro t ht
         rw [← hrunkeys, hsem.cls t ht]

@@ -10,7 +10,7 @@ helpers and `Range`/`Vec::push` step lemmas. These are used by the `merc_lts` pr
 (`IncomingTransitions_Proofs`, `LabelledTransitionSystem_Proofs`) and by the `merc_refinement`
 proofs, which import this file, mirroring the crate dependency direction.
 
-Machine-generated proofs; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated proofs; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -117,8 +117,10 @@ theorem vec_tagged_index_val {U : Type} {Tag : Type}
       (core.slice.index.SliceIndexUsizeSlice U) v t = ok (v.slice.val[t.index.val]) := by
   rw [vec_tagged_index_eq]
   have := Slice.index_usize_spec v.slice t.index (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
-  obtain ⟨x, hx, hxe⟩ := Std.WP.spec_imp_exists this
-  rw [hx, hxe]
+  obtain ⟨r, hx⟩ : ∃ r, v.slice.index_usize t.index = r := ⟨_, rfl⟩
+  rw [hx] at this
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at this
+  rw [hx, this]
   rfl
 
 /-- `usize` with payload `k % 2^bits` (total construction). -/
@@ -177,9 +179,13 @@ lemma next_range_some (it : core.ops.range.Range Sz)
     (ty := UScalarTy.Usize) (cloneInst := core.clone.CloneUsize)
     (partialOrdInst := core.cmp.PartialOrdUsize)
     (by intro x; simp) (by intros a b; rfl) it h
-  rcases Std.WP.spec_imp_exists hnext with ⟨p, hp, hpost⟩
+  obtain ⟨r, hp⟩ : ∃ r, core.iter.range.IteratorRange.next core.iter.range.StepUsize it = r :=
+    ⟨_, rfl⟩
+  rw [hp] at hnext
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hnext
+  rename_i p
   rcases p with ⟨opt, it1⟩
-  rcases hpost with ⟨hopt, hstart, hend⟩
+  rcases hnext with ⟨hopt, hstart, hend⟩
   exact ⟨opt, it1, hp, hopt, hstart, hend⟩
 
 lemma next_range_none (it : core.ops.range.Range Sz)
@@ -190,14 +196,22 @@ lemma next_range_none (it : core.ops.range.Range Sz)
   have hnext := core.iter.range.IteratorRange.next_UScalar_none_spec
     (ty := UScalarTy.Usize) (cloneInst := core.clone.CloneUsize)
     (partialOrdInst := core.cmp.PartialOrdUsize) (by intros a b; rfl) it h
-  rcases Std.WP.spec_imp_exists hnext with ⟨p, hp, hpost⟩
+  obtain ⟨r, hp⟩ : ∃ r, core.iter.range.IteratorRange.next core.iter.range.StepUsize it = r :=
+    ⟨_, rfl⟩
+  rw [hp] at hnext
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hnext
+  rename_i p
   rcases p with ⟨opt, it1⟩
-  rcases hpost with ⟨hopt, hident⟩
+  rcases hnext with ⟨hopt, hident⟩
   exact ⟨opt, it1, hp, hopt, hident⟩
 
 lemma vec_push_val {U : Type} (v : alloc.vec.Vec U) (x : U)
     (hb : v.val.length < Usize.max) :
-    ∃ v', v.push x = ok v' ∧ v'.val = v.val ++ [x] :=
-  Std.WP.spec_imp_exists (alloc.vec.Vec.push_spec v x hb)
+    ∃ v', v.push x = ok v' ∧ v'.val = v.val ++ [x] := by
+  have h := alloc.vec.Vec.push_spec v x hb
+  obtain ⟨r, hv⟩ : ∃ r, v.push x = r := ⟨_, rfl⟩
+  rw [hv] at h
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+  exact ⟨_, hv, h⟩
 
 end MercVerified.Lts.Proofs

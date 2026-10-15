@@ -3,7 +3,7 @@ import MercVerified.Refinement.Proofs.Partition_Proofs
 import MercVerified.Refinement.Proofs.PartitionInv_Proofs
 import MercVerified.Refinement.Proofs.LoopTools_Proofs
 import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-import Sigref.Proofs.CountingSort_Proofs
+import MercLib.Sigref.Proofs.CountingSort_Proofs
 import MercVerified.Refinement.Proofs.FinishPartition_Proofs
 import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
 import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
@@ -16,7 +16,7 @@ import Aeneas.Std.WP
 first class reuses the old block when the block has no unmarked part), and overwrites each size
 with the class's start offset (through the `IterMut`'s write-back closure).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -28,7 +28,7 @@ open verified.merc_reduction.block_partition (BlockPartition Block)
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
 
-open Sigref
+open MercLib.Sigref
 
 namespace MercVerified.Refinement.Proofs
 
@@ -72,8 +72,10 @@ theorem finish0_step_first_unmarked
           fun im => back { im with slice := im.slice.setAtNat m block.marked_split },
           v6, block, i1)) := by
   have hmS : m < S.length := hm
-  obtain ⟨i1, hi1, hi1v⟩ := spec_imp_exists
-    (Usize.add_spec (x := block.marked_split) (y := S.val[m]'hm) (by omega))
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := block.marked_split) (y := S.val[m]'hm) (by omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   have hv8 : ({ slice := v5.slice.set block_index.index (unmRec block.begin block.marked_split) } :
       alloc.vec.Vec Block).val = v5.val.set block_index.index.val
       (unmRec block.begin block.marked_split) := by
@@ -144,8 +146,10 @@ theorem finish0_step_first_plain
     congr
     funext it' x
     cases x <;> rfl
-  obtain ⟨i1, hi1, hi1v⟩ := spec_imp_exists
-    (Usize.add_spec (x := block.begin) (y := S.val[m]'hm) (by omega))
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := block.begin) (y := S.val[m]'hm) (by omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   have hv8 : ({ slice := v5.slice.set block_index.index (unmRec block.begin i1) } :
       alloc.vec.Vec Block).val = v5.val.set block_index.index.val (unmRec block.begin i1) := by
     show (v5.slice.set _ _).val = _
@@ -195,8 +199,10 @@ theorem finish0_step_later
     congr
     funext it' x
     cases x <;> rfl
-  obtain ⟨i1, hi1, hi1v⟩ := spec_imp_exists
-    (Usize.add_spec (x := current) (y := S.val[m]'hm) (by omega))
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := current) (y := S.val[m]'hm) (by omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   obtain ⟨v9, hpush9, hv9⟩ := vec_push_val v5 (unmRec current i1) hpush
   refine ⟨i1, v9, hi1v, hv9, ?_⟩
   unfold verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked_loop0.body
@@ -810,8 +816,11 @@ theorem finish_unfold (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
       core.slice.Slice.iter_mut, lift]
     rfl
   · have hsub : 1 ≤ p.blocks.val.length := by omega
-    obtain ⟨z, hz, hzv, -⟩ := spec_imp_exists
-      (Usize.sub_spec (x := alloc.vec.Vec.len p.blocks) (y := 1#usize) (by simp [hlen]; omega))
+    obtain ⟨z, hz, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := alloc.vec.Vec.len p.blocks) (y := 1#usize) (by simp [hlen]; omega)⟩
+    cases z <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i z
+    obtain ⟨hzv, -⟩ := hres
     refine ⟨z, by simp [hun, hzv, hlen], ?_⟩
     simp [hun, hbk, hhas, vec_tagged_index_val p.blocks b hb, alloc.vec.Vec.deref_mut,
       core.slice.Slice.iter_mut, lift, hz]

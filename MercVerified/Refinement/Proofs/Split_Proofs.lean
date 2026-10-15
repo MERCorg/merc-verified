@@ -4,7 +4,7 @@ import Aeneas.Std.WP
 /-!
 # `strong_partition_marked`: structure and semantics of the split
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -15,6 +15,7 @@ open verified.merc_reduction.block_partition (BlockPartition BlockPartitionBuild
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 
@@ -130,8 +131,11 @@ theorem is_trivially_partitioned_ok {n : Nat} {p : BlockPartition} (hp : PartInv
       (tb = true → (blkAt p b.index.val).«end».val = (blkAt p b.index.val).begin.val + 1) := by
   rw [is_trivially_partitioned_after_ok p b hb, ← blkAt_eq_getElem hb]
   have hbk := hp.blk b.index.val hb
-  obtain ⟨i, hi, hiv, -⟩ := spec_imp_exists
-    (Usize.sub_spec (x := (blkAt p b.index.val).«end») (y := (blkAt p b.index.val).begin) (by omega))
+  obtain ⟨i, hi, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := (blkAt p b.index.val).«end») (y := (blkAt p b.index.val).begin) (by omega)⟩
+  cases i <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i i
+  obtain ⟨hiv, -⟩ := hres
   refine ⟨decide (i = 1#usize), ?_, ?_⟩
   · simp only [bind_ok]
     rw [block_len_contract _ (partInv_blockWF hp hb), hi, bind_ok]

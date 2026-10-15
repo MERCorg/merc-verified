@@ -5,7 +5,7 @@ import Aeneas.Std.WP
 /-!
 # `lts_wellFormed`: `LabelledTransitionSystem` satisfies `LTS.WellFormed`
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `LabelledTransitionSystemValid` (defined below; moved out of `Basic.lean` while it is not part
 of the pinned contract, to be restated as a theorem later - see `docs/axiom-audit-plan.md`) states the raw structural
@@ -165,7 +165,9 @@ private theorem outgoing_transitions_loop_bounded
     unfold StatesIdx at hvt
     have hcaplen : result.val.length < Usize.max := by omega
     have hpush := alloc.vec.Vec.push_spec result ({ label := vl, «to» := vt } : Transition) hcaplen
-    obtain ⟨result1, hpush', hpushv⟩ := Std.WP.spec_imp_exists hpush
+    obtain ⟨result1, hpush', hpushv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hpush⟩
+    cases result1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpushv
+    rename_i result1
     have hbody : ul (iter, result) = ok (ControlFlow.cont (iter1, result1)) := by
       show verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.outgoing_transitions_loop.body
         bcv bcv1 iter result = ok (ControlFlow.cont (iter1, result1))
@@ -214,7 +216,10 @@ theorem lts_wellFormed {Label : Type}
   -- A real `Usize` whose value is `numStates` (obtained from `statesLen - 1`), used to look
   -- up the sentinel entry `statesAt numStates = numTransitions` and bound `numTransitions`.
   have h1le : (1#usize).val ≤ statesLen.val := by simp; omega
-  obtain ⟨numStatesU, hnsu_eq, hnsu_val, -⟩ := Std.WP.spec_imp_exists (Usize.sub_spec h1le)
+  obtain ⟨numStatesU, hnsu_eq, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, Usize.sub_spec h1le⟩
+  cases numStatesU <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i numStatesU
+  obtain ⟨hnsu_val, -⟩ := hres
   have hnsu_valEq : numStatesU.val = numStates := by simp at hnsu_val; omega
   have hnumStatesMax : numStates ≤ Usize.max := by have := usize_le_max numStatesU; omega
   obtain ⟨sentinelV, hsentinelV_eq, hsentinelV_val⟩ := hstatesIdx numStatesU (by omega)
@@ -243,8 +248,11 @@ theorem lts_wellFormed {Label : Type}
     have hile : s.index.val ≤ numStates := by omega
     obtain ⟨startV, hstartV_eq, hstartV_val⟩ := hstatesIdx s.index hile
     have hi1max : s.index.val + 1 ≤ Usize.max := by omega
-    obtain ⟨i1, hi1_eq, hi1_val⟩ := Std.WP.spec_imp_exists (Usize.add_spec (x := s.index) (y := 1#usize)
-      (by simp [hi1max]))
+    obtain ⟨i1, hi1_eq, hi1_val⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.add_spec (x := s.index) (y := 1#usize)
+      (by simp [hi1max])⟩
+    cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1_val
+    rename_i i1
     have hi1le : i1.val ≤ numStates := by simp at hi1_val; omega
     obtain ⟨endV, hendV_eq, hendV_val⟩ := hstatesIdx i1 hi1le
     have hstartend : startV.val ≤ endV.val := by
@@ -252,7 +260,11 @@ theorem lts_wellFormed {Label : Type}
       have hi1v' : i1.val = s.index.val + 1 := by simp at hi1_val; omega
       rw [hi1v']
       exact statesAt_mono hmono s.index.val (s.index.val + 1) (by omega) (by omega)
-    obtain ⟨i2, hi2_eq, hi2_val, -⟩ := Std.WP.spec_imp_exists (Usize.sub_spec (x := endV) (y := startV) hstartend)
+    obtain ⟨i2, hi2_eq, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := endV) (y := startV) hstartend⟩
+    cases i2 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i i2
+    obtain ⟨hi2_val, -⟩ := hres
     have hendMax : endV.val ≤ numTransitions := by
       rw [hendV_val]
       have hi1v' : i1.val = s.index.val + 1 := by simp at hi1_val; omega
@@ -337,7 +349,9 @@ theorem lts_wellFormed {Label : Type}
           unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states_loop.body
           rw [hnext, hopt]
           simp)
-      obtain ⟨sv, hsv, hpost⟩ := Std.WP.spec_imp_exists hg
+      obtain ⟨sv, hsv, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hg⟩
+      cases sv <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+      rename_i sv
       refine ⟨sv, ?_, by rw [hpost.1, hnsu_valEq], fun k hk => by rw [hpost.2 k (by omega)]⟩
       show verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS.iter_states
         TLInst sys = ok sv

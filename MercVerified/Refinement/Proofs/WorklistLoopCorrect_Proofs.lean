@@ -1,6 +1,6 @@
 import MercVerified.Refinement.Proofs.WorklistStep_Proofs
 import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
-import Signatures.Proofs.Signature_Proofs
+import MercLib.Signatures.Proofs.Signature_Proofs
 import Aeneas.Std.WP
 
 /-!
@@ -11,7 +11,7 @@ import Aeneas.Std.WP
 needed for `strong_run_worklist_loop_partial_correct`'s remaining two conjuncts (stability and
 `StrongFixPoint`-completeness), carried alongside `LoopInv` through the same outer loop.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -24,6 +24,7 @@ open verified.merc_reduction.signature_refinement (WorklistContextStrong)
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 

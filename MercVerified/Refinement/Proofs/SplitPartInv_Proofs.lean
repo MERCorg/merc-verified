@@ -1,6 +1,6 @@
 import MercVerified.Refinement.Refinement
 import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import Sigref.Proofs.CountingSort_Proofs
+import MercLib.Sigref.Proofs.CountingSort_Proofs
 import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
 import Aeneas.Std.WP
 
@@ -13,7 +13,7 @@ a pointwise description of the new arrays (the scatter loop's `ScInv`) and of th
 It is pure reasoning about lists; the loops that establish the description are in
 `ScatterLoop_Proofs.lean` and `FinishBlocks_Proofs.lean`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -25,7 +25,7 @@ open verified.merc_reduction.block_partition (BlockPartition Block)
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
 
-open Sigref
+open MercLib.Sigref
 
 namespace MercVerified.Refinement.Proofs
 

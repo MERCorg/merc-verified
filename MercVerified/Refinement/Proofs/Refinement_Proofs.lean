@@ -1,11 +1,11 @@
 import MercVerified.Refinement.Refinement
-import Signatures.Proofs.Signature_Proofs
+import MercLib.Signatures.Proofs.Signature_Proofs
 import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
 import MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
 /-!
 # Proofs for the `strong_bisim_sigref` correctness contract
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `strong_bisim_sigref_correct` proves the `StrongBisimSigrefCorrectSpec`
 contract stated in `MercVerified/Refinement/Refinement.lean`, generically for
@@ -52,6 +52,7 @@ open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open MercVerified.Lts (toLTS)
 
 open MercVerified.Lts.Proofs
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 
@@ -295,7 +296,7 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
 
 /-- The partition that `strong_bisim_sigref` returns puts exactly the
     `StrongFixPoint`-related (equivalently, by `StrongFixPoint.bisimilarity` /
-    `Signatures.strongFixPoint`, the bisimilar) in-range states in the same
+    `MercLib.Signatures.strongFixPoint`, the bisimilar) in-range states in the same
     block: soundness from `stable_implies_strong_fixpoint`, completeness from
     the spec's own completeness conjunct. -/
 theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
@@ -324,7 +325,7 @@ theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     are strongly bisimilar in the `toLTS` view of the
     `LTS` implementor. The right-to-left direction is the spec's
     `StrongFixPoint`-completeness conjunct chained through
-    `Signatures.strongFixPoint`; the left-to-right is the spec's
+    `MercLib.Signatures.strongFixPoint`; the left-to-right is the spec's
     stability conjunct witnessed through `stable_implies_strong_fixpoint` and
     `StrongFixPoint.bisimilarity`. -/
 theorem strong_bisim_sigref_same_block_iff_bisimilar
@@ -347,8 +348,8 @@ theorem strong_bisim_sigref_same_block_iff_bisimilar
       StrongFixPoint (toLTS LTSInst sys) s s' := hiff n hns s s' hs hs'
   constructor
   · intro hab
-    exact Signatures.StrongFixPoint.bisimilarity (toLTS LTSInst sys) (hss'.1 hab)
+    exact MercLib.Signatures.StrongFixPoint.bisimilarity (toLTS LTSInst sys) (hss'.1 hab)
   · intro hb
-    exact hss'.2 (Signatures.strongFixPoint (toLTS LTSInst sys) hb)
+    exact hss'.2 (MercLib.Signatures.strongFixPoint (toLTS LTSInst sys) hb)
 
 end MercVerified.Refinement.Proofs

@@ -5,7 +5,7 @@ import MercVerified.Refinement.Proofs.QuotientSort_Proofs
 /-!
 # `quotient_lts_naive` computes the τ-SCC quotient
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow

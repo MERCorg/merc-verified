@@ -11,7 +11,7 @@ import Aeneas.Std.WP
 that was asked for, stored at the class index that names its position in `kts`. Consequently `kts`
 has no duplicates, so two states get the same class iff their keys are equal.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result

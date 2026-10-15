@@ -6,7 +6,7 @@ import MercVerified.Refinement.Proofs.SigKey_Proofs
 The analogue of `SigKey_Proofs` for the pairs collected by `quotient_collect_transitions`
 (`(label, block)` with the block as a `StateTag` index of the quotient).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result

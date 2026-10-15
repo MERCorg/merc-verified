@@ -1,14 +1,14 @@
 import MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
-import Sigref.Proofs.KeyComp_Proofs
+import MercLib.Sigref.Proofs.KeyComp_Proofs
 import Aeneas.Std.WP
 
 /-!
-# `branching_process_marked_elements`: the concrete key computation is `Sigref.RP.kcRun`
+# `branching_process_marked_elements`: the concrete key computation is `MercLib.Sigref.RP.kcRun`
 
 The abstract view of the concrete data (`stOf`, `aLTS`, `bdOf`, `absOf`) and the translation of the
-flat signature built by `branching_bisim_signature_inductive` to `Sigref.RP.flatSig`.
+flat signature built by `branching_bisim_signature_inductive` to `MercLib.Sigref.RP.flatSig`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -41,7 +41,7 @@ def aLTS {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) :
   Tr a μ b := MercVerified.Lts.tr LTSInst sys (stOf a) μ (stOf b)
 
 /-- The block data of a concrete partition. -/
-def bdOf (p : BlockPartition) (n : Nat) : Sigref.BD n :=
+def bdOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.BD n :=
   ⟨fun a => e2bAt p a.val, fun a => IsMarked p a.val⟩
 
 /-- The `state_to_key` array read as a function on `Fin n`. -/
@@ -49,13 +49,13 @@ def keyOf {n : Nat} (stk : VecTy BT) : Fin n → Nat := fun a => (stk.val.getD a
 
 /-- The abstract flat signature represented by a sorted entry list: the entries whose label is not
 the hat label are visible entries, the others hat entries carrying keys. -/
-def decodeSig (nl : Nat) (l : List SigEntry) : Sigref.KSig (TagIndex Std.Usize LabelTag) where
+def decodeSig (nl : Nat) (l : List SigEntry) : MercLib.Sigref.KSig (TagIndex Std.Usize LabelTag) where
   vis := {e | ∃ x ∈ l, x.1.index.val ≠ nl ∧ e = (x.1, x.2.index.val)}
   hat := {k | ∃ x ∈ l, x.1.index.val = nl ∧ k = x.2.index.val}
 
 /-- The abstract key-computation state of the concrete `state_to_key` and `key_to_signature`. -/
 def absOf {n : Nat} (nl : Nat) (stk : VecTy BT) (kts : VecTy SigKey) :
-    Sigref.KC n (TagIndex Std.Usize LabelTag) :=
+    MercLib.Sigref.KC n (TagIndex Std.Usize LabelTag) :=
   ⟨keyOf stk, kts.val.map (fun v => decodeSig nl v.val)⟩
 
 /-- What the key computation needs of the `LTS` implementor and its labels. -/
@@ -86,7 +86,7 @@ theorem label_eq_tau_iff (l : TagIndex Std.Usize LabelTag) :
 theorem bt_eq_iff (a b : BT) : a = b ↔ a.index.val = b.index.val :=
   ⟨fun h => by rw [h], fun h => merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq h)⟩
 
-/-- **The concrete flat signature is `Sigref.RP.flatSig`.** -/
+/-- **The concrete flat signature is `MercLib.Sigref.RP.flatSig`.** -/
 theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usize}
     (hE : CEnv LTSInst sys nl) {n : Nat} (hn : n ≤ Usize.max) (s : Fin n)
     (ts : alloc.vec.Vec Transition) (hout : LTSInst.outgoing_transitions sys (stOf s) = ok ts)
@@ -95,7 +95,7 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
         (fun t => p.element_to_block.val.getD t.index.val zBT)
         (fun l => decide (l.index.val = 0)) (fun t => decide (IsMarked p t.index.val))
         (fun t => stk.val.getD t.index.val zBT) (stOf s)))
-      = Sigref.RP.flatSig (aLTS LTSInst sys n) (bdOf p n).blk (bdOf p n).Dirty (keyOf stk) s := by
+      = MercLib.Sigref.RP.flatSig (aLTS LTSInst sys n) (bdOf p n).blk (bdOf p n).Dirty (keyOf stk) s := by
   have hlabt : ∀ t ∈ ts.val, t.label.index.val < nl.val := fun t ht =>
     hE.lab _ _ _ ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht))
   -- targets as `Fin n`
@@ -135,7 +135,7 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
     apply Fin.ext
     show t.to.index.val = t'.val
     rw [h, stOf_index _ hn]
-  unfold decodeSig Sigref.RP.flatSig
+  unfold decodeSig MercLib.Sigref.RP.flatSig
   congr 1
   · ext ⟨a, β⟩
     constructor
@@ -258,14 +258,14 @@ theorem entry_ext' {a b : SigEntry} (h1 : a.1 = b.1) (h2 : a.2.index.val = b.2.i
 theorem rnTest_iff (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) (e : SigEntry)
     (_heL : e ∈ L) (hhat : e.1.index.val = nl) (hk : e.2.index.val < kts.length) :
     RnTest nl kts L e ↔
-      Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[e.2.index.val]'(by simpa using hk))
+      MercLib.Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[e.2.index.val]'(by simpa using hk))
         (decodeSig nl L) e.2.index.val := by
   have hget : (kts.map (decodeSig nl))[e.2.index.val]'(by simpa using hk) =
       decodeSig nl (kts[e.2.index.val]'hk) := by simp
   have hgd : kts.getD e.2.index.val [] = kts[e.2.index.val]'hk := by
     simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hk]
   rw [hget]
-  unfold RnTest Sigref.RP.SubsetExcl
+  unfold RnTest MercLib.Sigref.RP.SubsetExcl
   rw [hgd]
   constructor
   · intro h
@@ -297,14 +297,14 @@ theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEnt
     (hL : List.Pairwise entLt L) (hle : ∀ e ∈ L, e.1.index.val ≤ nl)
     (hkeys : ∀ e ∈ L, e.1.index.val = nl → e.2.index.val < kts.length) :
     (rnScan nl kts L L.reverse).map (fun c => c.index.val) =
-      Sigref.RP.renumber (kts.map (decodeSig nl)) (decodeSig nl L) := by
+      MercLib.Sigref.RP.renumber (kts.map (decodeSig nl)) (decodeSig nl L) := by
   have hR : L.reverse.Pairwise (fun a b => entLt b a) := by
     rw [List.pairwise_reverse]; exact hL
   have hRle : ∀ e ∈ L.reverse, e.1.index.val ≤ nl := fun e he => hle e (List.mem_reverse.1 he)
   obtain ⟨hc1, hc2⟩ := rnScan_char nl kts L L.reverse hRle hR
   have hmem_hat : ∀ k, k ∈ (decodeSig nl L).hat ↔ ∃ x ∈ L, x.1.index.val = nl ∧ k = x.2.index.val :=
     fun k => Iff.rfl
-  unfold Sigref.RP.renumber
+  unfold MercLib.Sigref.RP.renumber
   cases hscan : rnScan nl kts L L.reverse with
   | none =>
     rw [dite_eq_right]
@@ -319,12 +319,12 @@ theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEnt
     have heL := List.mem_reverse.1 he
     have hek := hkeys e heL he1
     let P : Nat → Prop := fun k => ∃ hk : k < (kts.map (decodeSig nl)).length,
-      k ∈ (decodeSig nl L).hat ∧ Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[k]) (decodeSig nl L) k
+      k ∈ (decodeSig nl L).hat ∧ MercLib.Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[k]) (decodeSig nl L) k
     have hk0 : e.2.index.val < (kts.map (decodeSig nl)).length := by simpa using hek
     have hPk0 : P e.2.index.val :=
       ⟨hk0, (hmem_hat _).2 ⟨e, heL, he1, rfl⟩, (rnTest_iff nl kts L e heL he1 hek).1 het⟩
     have hex : ∃ k, ∃ hk : k < (kts.map (decodeSig nl)).length, k ∈ (decodeSig nl L).hat ∧
-        Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[k]) (decodeSig nl L) k := ⟨_, hPk0⟩
+        MercLib.Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[k]) (decodeSig nl L) k := ⟨_, hPk0⟩
     rw [dite_eq_left hex]
     simp only [Option.map_some]
     congr 1
@@ -370,10 +370,10 @@ theorem bsi_eq {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usiz
   cases r <;> simp
 
 theorem kcRun_snoc {n : Nat} {Label : Type} [Cslib.HasTau Label] (lts : Cslib.LTS (Fin n) Label)
-    (blk : Fin n → ℕ) (dirty : Fin n → Prop) (l : List (Fin n)) (z : Fin n) (st : Sigref.KC n Label) :
-    Sigref.RP.kcRun lts blk dirty (l ++ [z]) st =
-      Sigref.RP.kcStep lts blk dirty (Sigref.RP.kcRun lts blk dirty l st) z := by
-  unfold Sigref.RP.kcRun
+    (blk : Fin n → ℕ) (dirty : Fin n → Prop) (l : List (Fin n)) (z : Fin n) (st : MercLib.Sigref.KC n Label) :
+    MercLib.Sigref.RP.kcRun lts blk dirty (l ++ [z]) st =
+      MercLib.Sigref.RP.kcStep lts blk dirty (MercLib.Sigref.RP.kcRun lts blk dirty l st) z := by
+  unfold MercLib.Sigref.RP.kcRun
   rw [List.foldl_append]; rfl
 
 /-- Writing `idx` into `state_to_key[i]` updates `keyOf` at `z = i`. -/
@@ -492,10 +492,10 @@ theorem decodeSig_inj (nl : Nat) {l l' : List SigEntry} (hl : List.Pairwise entL
   sigKey_unique hl hl' (fun e => ⟨mem_of_decode_eq nl h e, mem_of_decode_eq nl h.symm e⟩)
 
 /-- Interning a signature that is stored at `i` in a duplicate-free table returns `i`. -/
-theorem intern_found {Label : Type} (tbl : List (Sigref.KSig Label)) (sg : Sigref.KSig Label)
+theorem intern_found {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg : MercLib.Sigref.KSig Label)
     (hnd : tbl.Nodup) (i : Nat) (hi : i < tbl.length) (hs : tbl[i] = sg) :
-    Sigref.RP.intern tbl sg = (i, tbl) := by
-  unfold Sigref.RP.intern
+    MercLib.Sigref.RP.intern tbl sg = (i, tbl) := by
+  unfold MercLib.Sigref.RP.intern
   have hex : ∃ k, ∃ hk : k < tbl.length, tbl[k] = sg := ⟨i, hi, hs⟩
   rw [dite_eq_left hex]
   have hk := hex.choose_spec.choose_spec
@@ -505,10 +505,10 @@ theorem intern_found {Label : Type} (tbl : List (Sigref.KSig Label)) (sg : Sigre
     exact this
   rw [this]
 
-theorem intern_new {Label : Type} (tbl : List (Sigref.KSig Label)) (sg : Sigref.KSig Label)
+theorem intern_new {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg : MercLib.Sigref.KSig Label)
     (hnew : ∀ i, ∀ hi : i < tbl.length, tbl[i] ≠ sg) :
-    Sigref.RP.intern tbl sg = (tbl.length, tbl ++ [sg]) := by
-  unfold Sigref.RP.intern
+    MercLib.Sigref.RP.intern tbl sg = (tbl.length, tbl ++ [sg]) := by
+  unfold MercLib.Sigref.RP.intern
   have hex : ¬ ∃ k, ∃ hk : k < tbl.length, tbl[k] = sg := fun ⟨k, hk, h⟩ => hnew k hk h
   rw [dite_eq_right hex]
 
@@ -546,7 +546,7 @@ def ConcTopo {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
 def toFin {n : Nat} (hn0 : 0 < n) (s : ST) : Fin n := ⟨s.index.val % n, Nat.mod_lt _ hn0⟩
 
 /-- The abstract initial key-computation state. -/
-def absInit {n : Nat} (stk0 : VecTy BT) : Sigref.KC n (TagIndex Std.Usize LabelTag) :=
+def absInit {n : Nat} (stk0 : VecTy BT) : MercLib.Sigref.KC n (TagIndex Std.Usize LabelTag) :=
   ⟨keyOf stk0, []⟩
 
 /-- The semantic loop invariant of `branching_process_marked_elements` after `m` elements. -/
@@ -556,7 +556,7 @@ structure BrSem {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usi
   idinv : IdInv id kts
   sorted : ∀ v ∈ kts.val, List.Pairwise entLt v.val ∧ ∀ e ∈ v.val, e.1.index.val ≤ nl.val
   abs : absOf nl.val stk kts =
-    Sigref.RP.kcRun (aLTS LTSInst sys n) (bdOf p n).blk (bdOf p n).Dirty
+    MercLib.Sigref.RP.kcRun (aLTS LTSInst sys n) (bdOf p n).blk (bdOf p n).Dirty
       ((olds.val.take m).map (toFin hn0)) (absInit stk0)
   keysLt : ∀ t, t < m →
     (stk.val.getD (olds.val.getD t zST).index.val zBT).index.val < kts.val.length
@@ -585,8 +585,10 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
   have hold' := hinv.old
   have hlt : ei.val < spb.old_elements.val.length := by rw [hold', hinv.ei_eq]; exact hm
-  obtain ⟨state_index, hsid, hsval⟩ := spec_imp_exists
-    (alloc.vec.Vec.index_usize_spec spb.old_elements ei hlt)
+  obtain ⟨state_index, hsid, hsval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_usize_spec spb.old_elements ei hlt⟩
+  cases state_index <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hsval
+  rename_i state_index
   have hsi : state_index ∈ olds.val := by
     rw [hsval, ← hold']; exact List.getElem_mem _
   have hsi_lt := hold _ hsi
@@ -667,7 +669,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   -- the abstract signature of the current state
   have hout' : LTSInst.outgoing_transitions sys (stOf z) = ok ts := by rw [hstz]; exact hout
   have hdec : decodeSig nl.val sigb1.val =
-      Sigref.RP.flatSig (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
+      MercLib.Sigref.RP.flatSig (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
         (keyOf stk) z := by
     rw [decodeSig_congr nl.val hkmem]
     have := decode_brEntries LTSInst sys hE hnmax z ts hout' htgt p stk
@@ -681,18 +683,18 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     simp [absOf, List.map_map, Function.comp_def]
   rw [hmapmap] at hren
   -- the abstract run
-  have hrun : Sigref.RP.kcRun (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
+  have hrun : MercLib.Sigref.RP.kcRun (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
       ((olds.val.take (m + 1)).map (toFin hn0)) (absInit stk0) =
-      Sigref.RP.kcStep (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
+      MercLib.Sigref.RP.kcStep (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
         (absOf (n := nU.val) nl.val stk kts) z := by
     have htake : (olds.val.take (m + 1)).map (toFin hn0) = (olds.val.take m).map (toFin hn0) ++ [z] := by
       have hzo : z = toFin hn0 (olds.val[m]'hm) := by rw [hz, holdsm]
       rw [List.take_add_one, List.getElem?_eq_getElem hm, hzo]
       simp only [Option.toList_some, List.map_append, List.map_cons, List.map_nil]
     rw [htake, kcRun_snoc, ← hsem.abs]
-  have hcasesA := Sigref.RP.kcStep_cases (lts := aLTS LTSInst sys nU.val) (rp := bdOf p nU.val)
+  have hcasesA := MercLib.Sigref.RP.kcStep_cases (lts := aLTS LTSInst sys nU.val) (rp := bdOf p nU.val)
     (absOf (n := nU.val) nl.val stk kts) z
-  have hsg : Sigref.RP.fsig (aLTS LTSInst sys nU.val) (bdOf p nU.val)
+  have hsg : MercLib.Sigref.RP.fsig (aLTS LTSInst sys nU.val) (bdOf p nU.val)
       (absOf (n := nU.val) nl.val stk kts).key z = decodeSig nl.val sigb1.val := hdec.symm
   rw [hsg] at hcasesA
   -- structural facts about the mutations (as for the strong loop)
@@ -714,11 +716,11 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     simp [absOf]
   cases hscan : rnScan nl.val (kts.val.map (·.val)) sigb1.val sigb1.val.reverse with
   | some key0 =>
-    have hren' : Sigref.RP.renumber (absOf (n := nU.val) nl.val stk kts).tbl (decodeSig nl.val sigb1.val)
+    have hren' : MercLib.Sigref.RP.renumber (absOf (n := nU.val) nl.val stk kts).tbl (decodeSig nl.val sigb1.val)
         = some key0.index.val := by rw [← hren, hscan]; rfl
     have hbsi' : branching_signature_index LTSInst sys id kts sigb1 = ok (key0, id, kts) := by
       rw [hbsi, hscan]
-    obtain ⟨hklt, -, -⟩ := Sigref.RP.renumber_some hren'
+    obtain ⟨hklt, -, -⟩ := MercLib.Sigref.RP.renumber_some hren'
     have hidxlt : key0.index.val < kts.val.length := by omega
     obtain ⟨v, hcount, hinv'⟩ := spme_commit_old
       (stk1 := ({ slice := stk.slice.set state_index.index key0 } : VecTy BT)) (ei1 := ei1)
@@ -766,7 +768,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
           rw [ite_eq_right htm, ite_eq_right hne]
           exact hsem.cls t htm'
   | none =>
-    have hren' : Sigref.RP.renumber (absOf (n := nU.val) nl.val stk kts).tbl (decodeSig nl.val sigb1.val)
+    have hren' : MercLib.Sigref.RP.renumber (absOf (n := nU.val) nl.val stk kts).tbl (decodeSig nl.val sigb1.val)
         = none := by rw [← hren, hscan]; rfl
     have hbsi' : branching_signature_index LTSInst sys id kts sigb1 =
         strong_intern_signature id kts sigb1 := by rw [hbsi, hscan]
@@ -970,7 +972,7 @@ theorem branching_process_marked_elements_dense {L Label : Type} (LTSInst : LTS 
   have hsem0 : BrSem LTSInst sys nl hn0 p olds 0 stk stk id kts spb := by
     refine ⟨IdInv.of_empty hid hkts, by simp [hkts], ?_, fun t ht => absurd ht (Nat.not_lt_zero _),
       fun t ht => absurd ht (Nat.not_lt_zero _)⟩
-    simp [absOf, absInit, Sigref.RP.kcRun, hkts]
+    simp [absOf, absInit, MercLib.Sigref.RP.kcRun, hkts]
   obtain ⟨y, hy, hQ⟩ := loop_nat_spec
     (fun (x : SpmeState) =>
       branching_process_marked_elements_loop.body LTSInst sys p x.1 x.2.1 x.2.2.1 x.2.2.2.1

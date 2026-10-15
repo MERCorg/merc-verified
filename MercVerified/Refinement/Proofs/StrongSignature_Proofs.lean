@@ -6,7 +6,7 @@ import Aeneas.Std.WP
 /-!
 # Proofs for the `strong_bisim_signature` correctness contract
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `strong_bisim_signature_spec_general` proves the `StrongBisimSignatureSpec`
 contract (defined below - an internal lemma of the refinement proof, not a
@@ -25,6 +25,7 @@ open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
 open MercVerified.Lts (toLTS toLTS_Tr tr)
 
 open MercVerified.Lts.Proofs
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 
@@ -87,7 +88,6 @@ private theorem strong_bisim_signature_loop_spec
     ∃ builder', strong_bisim_signature_loop PInst iter partition builder = ok builder'
       ∧ builder'.val = builder.val ++ List.map (sigEntry blockNumber) l := by
   rw [strong_bisim_signature_loop]
-  apply (spec_imp_exists _)
   have hspec :
       loop (fun x : State =>
             strong_bisim_signature_loop.body PInst partition x.1 x.2)
@@ -180,7 +180,10 @@ private theorem strong_bisim_signature_loop_spec
             simp [List.append_assoc, List.map_append]
         · simp [hh2, hitl]
     · exact ⟨[], l, by simp, by simpa using hiter, by simp⟩
-  simpa using hspec
+  obtain ⟨r, hr, h⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at h
+  exact ⟨_, hr, h⟩
 
 /-- The accumulator element type of `strong_bisim_signature`: a label index
     paired with a block index. -/

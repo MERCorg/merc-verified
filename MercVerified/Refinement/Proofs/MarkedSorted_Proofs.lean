@@ -12,7 +12,7 @@ import Aeneas.Std.WP
 Resets the builder for a block: `block_sizes` is emptied, `index_to_block` becomes `len_marked`
 zeros and `old_elements` the sorted marked elements of the block.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -65,8 +65,11 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
   -- `len_marked`
   obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok bk
     ⟨hbkr.1, hbkr.2.2.1, hbkr.2.2.2⟩
-  obtain ⟨i, hi, hiv, -⟩ := spec_imp_exists
-    (Usize.sub_spec (x := bk.«end») (y := bk.marked_split) (by omega))
+  obtain ⟨i, hi, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := bk.«end») (y := bk.marked_split) (by omega)⟩
+  cases i <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i i
+  obtain ⟨hiv, -⟩ := hres
   have hlm : verified.merc_reduction.block_partition.Block.len_marked bk = ok i := by
     unfold verified.merc_reduction.block_partition.Block.len_marked
     rw [hu]; simpa using hi
@@ -75,9 +78,10 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
         core.clone.CloneUsize).clone x = ok x := by
     intro x
     simp [verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone]
-  obtain ⟨v3, hv3, hv3v⟩ := spec_imp_exists (alloc.vec.Vec.resize_spec
-    (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone BlockTag core.clone.CloneUsize)
-    v i ({ index := 0#usize, marker := () } : TagIndex Std.Usize BlockTag) (hcl _))
+  obtain ⟨v3, hv3, hv3v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.resize_spec (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone BlockTag core.clone.CloneUsize) v i ({ index := 0#usize, marker := () } : TagIndex Std.Usize BlockTag) (hcl _)⟩
+  cases v3 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hv3v
+  rename_i v3
   have hnle : n ≤ Usize.max := by
     have := p.elements.property
     rw [hp.len_e] at this; exact this

@@ -1,5 +1,5 @@
 import MercVerified.Lts.Lts
-import Sigref.Scc
+import MercLib.Sigref.Scc
 
 open Aeneas Aeneas.Std Result
 open merc_utilities.timing (Timing)
@@ -9,6 +9,7 @@ open verified.merc_collections.indexed_partition (BlockTag)
 open verified.merc_reduction.block_partition (BlockPartition)
 open verified.merc_reduction.signature_refinement (strong_bisim_sigref branching_bisim_sigref_impl branching_bisim_sigref)
 open MercVerified.Lts (toLTS)
+open MercLib.Signatures MercLib.LTS
 
 namespace MercVerified.Refinement
 
@@ -141,7 +142,7 @@ def BranchingBisimSigrefCorrectSpec
     branching_bisim_sigref LTSInst sys state false timing = ok (R, state', partition) ∧
     (∀ n, LTSInst.num_of_states sys = ok n → state.index.val < n.val →
       state'.index.val = f state.index.val) ∧
-    Sigref.IsCrossBB (toLTS LTSInst sys)
+    MercLib.Sigref.IsCrossBB (toLTS LTSInst sys)
       (toLTS (verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.Insts.Merc_ltsLtsLTS
         LTSInst.TransitionLabelInst) R)
       (fun s s' => (∃ n, LTSInst.num_of_states sys = ok n ∧ s.index.val < n.val) ∧

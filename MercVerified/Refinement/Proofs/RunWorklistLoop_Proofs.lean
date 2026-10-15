@@ -1,13 +1,13 @@
 import MercVerified.Refinement.Proofs.WorklistStep_Proofs
 import MercVerified.Refinement.Proofs.WorklistLoopCorrect_Proofs
 import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
-import Signatures.Proofs.Signature_Proofs
+import MercLib.Signatures.Proofs.Signature_Proofs
 import Aeneas.Std.WP
 
 /-!
 # Termination of `strong_run_worklist_loop`
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -20,6 +20,7 @@ open verified.merc_reduction.signature_refinement (WorklistContextStrong)
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 
@@ -161,7 +162,7 @@ theorem strong_run_worklist_loop_terminates'
               x.1.state_to_key)) := by
           unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop.body
           simp [alloc.vec.Vec.pop_nil_spec Global x.1.worklist hwl]
-        exact Std.WP.exists_imp_spec ⟨_, hb, ⟨x.1, rfl, hI, hwl⟩⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr ((Std.WP.spec_ok _).2 ⟨x.1, rfl, hI, hwl⟩)
       · have hne : x.1.worklist.val ≠ [] := hwl
         have hsplit : x.1.worklist.val = x.1.worklist.val.dropLast ++ [x.1.worklist.val.getLast hne] :=
           (List.dropLast_append_getLast hne).symm
@@ -178,9 +179,12 @@ theorem strong_run_worklist_loop_terminates'
         have hit1 : it1.val = x.2.val + 1 := usize_add_one_val x.2 it1 hadd
         have hb := strong_run_worklist_loop_body_pop_ext false LTSInst sys incoming progress x.1 ctx'
           (x.1.worklist.val.getLast hne) ⟨v', hpop, hproc⟩ x.2 it1 hadd
-        exact Std.WP.exists_imp_spec ⟨cont (ctx', it1), hb, ⟨hI', by simp only []; omega⟩, by simp only []; omega⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨hI', by simp only []; omega⟩, by simp only []; omega⟩)
     · exact ⟨hI0, by simp⟩
-  obtain ⟨y, hy, hpost⟩ := spec_imp_exists hspec
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   exact ⟨y, hy, hpost⟩
 
 /-- Termination of `strong_run_worklist_loop` from the initial context of a well-formed LTS. -/
@@ -274,7 +278,8 @@ theorem strong_run_worklist_loop_RefinesQ
               x.1.state_to_key)) := by
           unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop.body
           simp [alloc.vec.Vec.pop_nil_spec Global x.1.worklist hwl]
-        exact Std.WP.exists_imp_spec ⟨_, hb, ⟨x.1, rfl, hI, hwl, hRQx, hSSx⟩⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr
+          ((Std.WP.spec_ok _).2 ⟨x.1, rfl, hI, hwl, hRQx, hSSx⟩)
       · have hne : x.1.worklist.val ≠ [] := hwl
         have hsplit : x.1.worklist.val = x.1.worklist.val.dropLast ++ [x.1.worklist.val.getLast hne] :=
           (List.dropLast_append_getLast hne).symm
@@ -292,10 +297,12 @@ theorem strong_run_worklist_loop_RefinesQ
         have hit1 : it1.val = x.2.val + 1 := usize_add_one_val x.2 it1 hadd
         have hb := strong_run_worklist_loop_body_pop_ext false LTSInst sys incoming progress x.1 ctx'
           (x.1.worklist.val.getLast hne) ⟨v', hpop, hproc⟩ x.2 it1 hadd
-        exact Std.WP.exists_imp_spec
-          ⟨cont (ctx', it1), hb, ⟨hI', hRQ', hSS', by simp only []; omega⟩, by simp only []; omega⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨hI', hRQ', hSS', by simp only []; omega⟩, by simp only []; omega⟩)
     · exact ⟨hI0, hRQ0, hSS0, by simp⟩
-  obtain ⟨y, hy, hpost⟩ := spec_imp_exists hspec
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   exact ⟨y, hy, hpost⟩
 
 /-- Partial correctness of `strong_run_worklist_loop`: whenever it returns, the result is correct. -/

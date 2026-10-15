@@ -6,7 +6,7 @@ import Aeneas.Std.WP
 /-!
 # Proofs about the `strong_run_worklist_loop` worklist loop
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 Building blocks that reason about the *translated bodies* of `strong_run_worklist_loop_loop`,
 `strong_process_marked_elements` and `strong_intern_signature` (in `MercVerified/Code/Funs.lean`):
@@ -29,6 +29,7 @@ open verified.merc_reduction.block_partition (BlockPartition BlockPartitionBuild
 open verified.merc_reduction.signature_refinement (WorklistContextStrong)
 
 open MercVerified.Lts.Proofs
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 
@@ -100,7 +101,9 @@ theorem strong_run_worklist_loop_loop_base
       subst v
       simp [spec_ok, post]
     · rfl
-  rcases (spec_imp_exists hspec) with ⟨y, hy, hpost⟩
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   rw [hy]
   rw [hpost]
 
@@ -633,7 +636,10 @@ theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
           (core.slice.index.SliceIndexUsizeSlice Std.Usize) block_sizes index = ok (x0, back) ∧
         x0 = block_sizes.val.get ⟨index.index.val, h⟩ ∧
         back = fun u : Sz => ({ slice := Slice.set block_sizes.slice index.index u } : alloc.vec.Vec Sz) := by
-    rcases spec_imp_exists (Slice.index_mut_usize_spec block_sizes.slice index.index h) with ⟨w, hw, hpost⟩
+    obtain ⟨w, hw, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Slice.index_mut_usize_spec block_sizes.slice index.index h⟩
+    cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+    rename_i w
     rcases w with ⟨x, f⟩
     rcases hpost with ⟨hx, hf⟩
     refine ⟨x, fun u : Sz => ({ slice := f u } : alloc.vec.Vec Sz), ?_, ?_, ?_⟩
@@ -745,9 +751,10 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
   simp [hlenle]
   have hval : (Usize.ofNatCore (index.index.val + 1) hb).val = index.index.val + 1 := by
     simp [Usize.ofNatCore]
-  rcases spec_imp_exists
-      (alloc.vec.Vec.resize_spec core.clone.CloneUsize block_sizes
-        (Usize.ofNatCore (index.index.val + 1) hb) 0#usize hcl0) with ⟨bs1, hresok, hresval⟩
+  obtain ⟨bs1, hresok, hresval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.resize_spec core.clone.CloneUsize block_sizes (Usize.ofNatCore (index.index.val + 1) hb) 0#usize hcl0⟩
+  cases bs1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hresval
+  rename_i bs1
   have hresval' : bs1.val = List.resize block_sizes.val (index.index.val + 1) 0#usize := by
     simpa [hval] using hresval
   have hbound : index.index.val < bs1.val.length := by
@@ -778,7 +785,10 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
     simpa [h1] using hzz2
   have hzeroElem : bs1.val[index.index.val] = (0#usize : Sz) := by
     simp [hresval', hzz]
-  rcases spec_imp_exists (Slice.index_mut_usize_spec bs1.slice index.index hbound) with ⟨w, hw, hpost⟩
+  obtain ⟨w, hw, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Slice.index_mut_usize_spec bs1.slice index.index hbound⟩
+  cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i w
   rcases w with ⟨x, f⟩
   rcases hpost with ⟨hx2, hf2⟩
   let back : Sz → alloc.vec.Vec Sz :=
@@ -991,7 +1001,9 @@ lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKe
     have hm : Slice.clone (BuiltinClone SigPair).clone sx ⦃ s' => sx = s' ⦄ :=
       Slice.clone_spec (clone := (BuiltinClone SigPair).clone) (s := sx) (by
         intro y hy; unfold BuiltinClone; rfl)
-    rcases Std.WP.spec_imp_exists hm with ⟨s', hs', heq'⟩
+    obtain ⟨s', hs', heq'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hm⟩
+    cases s' <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at heq'
+    rename_i s'
     subst heq'
     rw [hs']
     simp
@@ -1023,7 +1035,10 @@ lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKe
     have := hins'.symm.trans hins
     simp only [ok.injEq, Prod.mk.injEq] at this
     rw [← this.2]; exact hget'
-  rcases Std.WP.spec_imp_exists (alloc.vec.Vec.push_spec kts sb hlen) with ⟨kts1, hpush, hval⟩
+  obtain ⟨kts1, hpush, hval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.push_spec kts sb hlen⟩
+  cases kts1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hval
+  rename_i kts1
   rw [hclone sb]
   simp
   rw [hclone sb]
@@ -1152,7 +1167,9 @@ theorem strong_process_marked_elements_loop_base
       rw [hdone]
       simp [post]
     · rfl
-  rcases (spec_imp_exists hspec) with ⟨y, hy, hpost⟩
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   rw [hy]
   rw [hpost]
 
@@ -1531,7 +1548,10 @@ theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
     (back : BT → VecTy BT) (h : i.val < v.val.length)
     (hw : v.index_mut_usize i = ok (x, back)) :
     (back y).val.length = v.val.length := by
-  rcases spec_imp_exists (alloc.vec.Vec.index_mut_usize_spec v i h) with ⟨w, hw2, hpost⟩
+  obtain ⟨w, hw2, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_mut_usize_spec v i h⟩
+  cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i w
   have hpair : w = (x, back) := Result.ok.injEq.mp (hw2.symm.trans hw)
   have hb : back = v.set i := by
     simpa [hpair] using hpost.2
@@ -1547,7 +1567,10 @@ theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
         (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = ok (x, hmut2)) :
     (hmut2 u).val.length = stk.val.length := by
   by_cases hb : state_index.index.val < stk.slice.length
-  · rcases spec_imp_exists (Slice.index_mut_usize_spec stk.slice state_index.index hb) with ⟨w, hw2, hpost⟩
+  · obtain ⟨w, hw2, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Slice.index_mut_usize_spec stk.slice state_index.index hb⟩
+    cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+    rename_i w
     rcases w with ⟨x0, f⟩
     rcases hpost with ⟨hx0, hf⟩
     have hnice :
@@ -1640,8 +1663,10 @@ theorem loopElementOk_of_reach {L : Type} {Label : Type}
       exact hdropne ((list_drop_eq_nil_iff st'.2.2.2.1.old_elements.val st'.2.2.2.2.2.val).mpr hle)
     omega
   refine ⟨hlt, ?_⟩
-  rcases spec_imp_exists (alloc.vec.Vec.index_usize_spec st'.2.2.2.1.old_elements
-      st'.2.2.2.2.2 hlt) with ⟨state_index, hsid, hsval⟩
+  obtain ⟨state_index, hsid, hsval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_usize_spec st'.2.2.2.1.old_elements st'.2.2.2.2.2 hlt⟩
+  cases state_index <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hsval
+  rename_i state_index
   refine ⟨state_index, ?_⟩
   rcases hout state_index with ⟨ts, houtq⟩
   refine ⟨ts, hsid, houtq, ?_⟩
@@ -1657,8 +1682,10 @@ theorem loopElementOk_of_reach {L : Type} {Label : Type}
   have hbound_idx : st'.2.2.2.2.2.val < st'.2.2.2.1.index_to_block.val.length := by
     rw [hIdx]
     exact hlt
-  rcases spec_imp_exists (alloc.vec.Vec.index_mut_usize_spec st'.2.2.2.1.index_to_block
-      st'.2.2.2.2.2 hbound_idx) with ⟨w, hmut1ok, _⟩
+  obtain ⟨w, hmut1ok, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_mut_usize_spec st'.2.2.2.1.index_to_block st'.2.2.2.2.2 hbound_idx⟩
+  cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i w
   refine ⟨w.2, ⟨w.1, hmut1ok⟩, ?_⟩
   rcases count_block_occurrence_spec_ok st'.2.2.2.1.block_sizes index
     (add1_ok_of_lt_max index.index (hbt index))
@@ -1681,8 +1708,10 @@ theorem loopElementOk_of_reach {L : Type} {Label : Type}
         (st'.2.2.2.2.2.val) hlt hlt_olds
     rw [hbridge]
     exact hstklen st'.2.2.2.2.2.val hlt_olds
-  rcases spec_imp_exists (Slice.index_mut_usize_spec st'.2.2.2.2.1.slice state_index.index hbound_stk)
-    with ⟨w, hwslice, hpost⟩
+  obtain ⟨w, hwslice, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Slice.index_mut_usize_spec st'.2.2.2.2.1.slice state_index.index hbound_stk⟩
+  cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i w
   rcases w with ⟨x0, f⟩
   rcases hpost with ⟨hx0, hf⟩
   have hok :

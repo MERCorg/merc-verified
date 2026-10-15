@@ -3,7 +3,7 @@ import MercVerified.Refinement.Proofs.Partition_Proofs
 import MercVerified.Refinement.Proofs.PartitionInv_Proofs
 import MercVerified.Refinement.Proofs.LoopTools_Proofs
 import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-import Sigref.Proofs.CountingSort_Proofs
+import MercLib.Sigref.Proofs.CountingSort_Proofs
 import MercVerified.Refinement.Proofs.FinishPartition_Proofs
 import Aeneas.Std.WP
 
@@ -15,7 +15,7 @@ class `cls[t]` from `index_to_block`) and writes each into the next free slot of
 `elements[posOf t] := old[t]`, `offset[old[t]] := posOf t`, `element_to_block[old[t]] :=
 label (cls[t])`, bumping the class cursor. This file proves what the loop does, pointwise.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -27,7 +27,7 @@ open verified.merc_reduction.block_partition (BlockPartition Block)
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
 
-open Sigref
+open MercLib.Sigref
 
 namespace MercVerified.Refinement.Proofs
 
@@ -114,18 +114,29 @@ theorem scatter_body_step
     unfold core.slice.iter.IteratorSliceIter.next
     simp [hmlen, Slice.len]
     rfl
-  obtain ⟨cnt', hcadd, hcv⟩ := spec_imp_exists
-    (Usize.add_spec (x := cnt) (y := 1#usize) (by simp; omega))
-  obtain ⟨i1, hi1, hi1v⟩ := spec_imp_exists
-    (Usize.add_spec (x := bo.val[(s.val[cnt.val]'hm).index.val]'hobi) (y := 1#usize) (by simp; omega))
+  obtain ⟨cnt', hcadd, hcv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := cnt) (y := 1#usize) (by simp; omega)⟩
+  cases cnt' <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hcv
+  rename_i cnt'
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := bo.val[(s.val[cnt.val]'hm).index.val]'hobi) (y := 1#usize) (by simp; omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   have hold : old.index_usize cnt = ok (old.val[cnt.val]'hmold) := by
-    obtain ⟨x, hx, hxe⟩ := spec_imp_exists (alloc.vec.Vec.index_usize_spec old cnt hmold)
+    obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, alloc.vec.Vec.index_usize_spec old cnt hmold⟩
+    cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+    rename_i x
     rw [hx, hxe]
   have hEm : E.index_mut_usize (bo.val[(s.val[cnt.val]'hm).index.val]'hobi)
       = ok (E.val[(bo.val[(s.val[cnt.val]'hm).index.val]'hobi).val]'hi,
         E.set (bo.val[(s.val[cnt.val]'hm).index.val]'hobi)) := by
-    obtain ⟨⟨x, back⟩, hx, hxe, hb⟩ := spec_imp_exists
-      (alloc.vec.Vec.index_mut_usize_spec E (bo.val[(s.val[cnt.val]'hm).index.val]'hobi) hi)
+    obtain ⟨res, hx, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, alloc.vec.Vec.index_mut_usize_spec E (bo.val[(s.val[cnt.val]'hm).index.val]'hobi) hi⟩
+    cases res <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i res
+    obtain ⟨x, back⟩ := res
+    obtain ⟨hxe, hb⟩ := hres
     rw [hx, hxe, hb]
   refine ⟨cnt', i1, E.set (bo.val[(s.val[cnt.val]'hm).index.val]'hobi) (old.val[cnt.val]'hmold),
     { slice := B.slice.set (old.val[cnt.val]'hmold).index
@@ -404,16 +415,15 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
   have hsval : s.val = idxv.val := by rw [hs]; simp [alloc.vec.Vec.deref]
   have hlenidx : idxv.val.length = cls.length := by
     have := congrArg List.length hidx; simpa using this
-  obtain ⟨y, hy, hpost⟩ : ∃ y, loop
+  have hspec : loop
       (fun x : core.iter.adapters.enumerate.Enumerate (core.slice.iter.Iter (TagIndex Std.Usize BlockTag)) ×
         alloc.vec.Vec (TagIndex Std.Usize StateTag) × alloc.vec.Vec (TagIndex Std.Usize BlockTag) ×
         alloc.vec.Vec Std.Usize × alloc.vec.Vec Std.Usize =>
         verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked_loop0_loop0.body
           block_index old block nbi x.1 x.2.1 x.2.2.1 x.2.2.2.1 x.2.2.2.2)
-      ({ iter := { slice := s, i := 0 }, count := 0#usize }, E0, B0, O0, bo0) = ok y ∧
+      ({ iter := { slice := s, i := 0 }, count := 0#usize }, E0, B0, O0, bo0) ⦃ y =>
       ScInv ms szs cls K old.val block_index (decide (block.begin.val < block.marked_split.val))
-        nbi n cls.length E0.val B0.val O0.val y.1.val y.2.1.val y.2.2.1.val y.2.2.2.val := by
-    apply Std.WP.spec_imp_exists
+        nbi n cls.length E0.val B0.val O0.val y.1.val y.2.1.val y.2.2.1.val y.2.2.2.val ⦄ := by
     refine loop.spec_decr_nat
       (measure := fun x : ScState => cls.length - x.1.iter.i)
       (inv := fun x : ScState => ∃ (m : Nat) (cnt : Std.Usize),
@@ -454,8 +464,10 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
         have hbo_pm := hpm hobi
         have hz : ∃ z : Std.Usize, nbi + (s.val[cnt.val]'hm).index = ok z ∧
             z.val = nbi.val + (s.val[cnt.val]'hm).index.val := by
-          obtain ⟨z, hz, hzv⟩ := spec_imp_exists
-            (Usize.add_spec (x := nbi) (y := (s.val[cnt.val]'hm).index) (by omega))
+          obtain ⟨z, hz, hzv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+            ⟨_, rfl, Usize.add_spec (x := nbi) (y := (s.val[cnt.val]'hm).index) (by omega)⟩
+          cases z <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hzv
+          rename_i z
           exact ⟨z, hz, hzv⟩
         obtain ⟨z, hz, hzv⟩ := hz
         obtain ⟨cnt', i1, E', B', O', bo', hc', hi1v, hbody, hE', hO', hB', hbo''⟩ :=
@@ -484,8 +496,8 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
           rw [hi1v, hgetbo]
         have hnew := hI.step hK hcnt hlt hlt' hold hnd hpos hn hoidx i1 hi1'
         rw [← hE'', ← hB'', ← hO'', ← hbo3] at hnew
-        exact Std.WP.exists_imp_spec ⟨cont ({ iter := { slice := s, i := cnt.val + 1 }, count := cnt' },
-          E', B', O', bo'), hbody, ⟨⟨cnt.val + 1, cnt', rfl, hc', by omega, hnew⟩, by simp; omega⟩⟩
+        exact (congrArg (Std.WP.spec · _) hbody).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨cnt.val + 1, cnt', rfl, hc', by omega, hnew⟩, by simp; omega⟩)
       · subst hcm
         have hmeq : cnt.val = cls.length := by omega
         have hnm : ¬ cnt.val < s.length := by
@@ -506,7 +518,7 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
             E B O bo = ok (done (E, B, O, bo)) := by
           unfold verified.merc_reduction.block_partition.BlockPartition.finish_partition_marked_loop0_loop0.body
           simp [core.iter.adapters.enumerate.IteratorEnumerate.next, hnext]
-        exact Std.WP.exists_imp_spec ⟨done (E, B, O, bo), hbody, hI⟩
+        exact (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 hI)
     · refine ⟨0, 0#usize, rfl, rfl, Nat.zero_le _, ?_⟩
       refine ⟨hE, hB, hO, hbo, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       · intro t ht; omega
@@ -519,6 +531,9 @@ theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.le
         have := hbo' j hj
         rw [List.getD_eq_getElem?_getD] at this
         simpa using this
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   exact ⟨y.1, y.2.1, y.2.2.1, y.2.2.2, hy, hpost⟩
 
 end MercVerified.Refinement.Proofs

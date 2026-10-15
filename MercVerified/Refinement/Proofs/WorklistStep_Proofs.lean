@@ -6,7 +6,7 @@ import Aeneas.Std.WP
 
 `strong_process_worklist_block` keeps `LoopInv` and strictly decreases `worklistMeasure`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow

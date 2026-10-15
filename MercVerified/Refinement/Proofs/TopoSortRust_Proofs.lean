@@ -2,12 +2,12 @@ import MercVerified.Refinement.Proofs.RustTools_Proofs
 import MercVerified.Refinement.Proofs.MarkDirty_Proofs
 import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
 import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
-import Sigref.Proofs.TopoSort_Proofs
+import MercLib.Sigref.Proofs.TopoSort_Proofs
 
 /-!
 # `sort_topological_hidden` is the abstract topological sort
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -17,7 +17,7 @@ open MercVerified.Lts.Proofs MercVerified.Refinement
 
 namespace MercVerified.Refinement.Proofs
 
-open Sigref.Topo
+open MercLib.Sigref.Topo
 
 abbrev RMark := verified.merc_reduction.sort_topological.Mark
 
@@ -28,13 +28,13 @@ abbrev rTemp : RMark := verified.merc_reduction.sort_topological.Mark.Temporary
 abbrev rPerm : RMark := verified.merc_reduction.sort_topological.Mark.Permanent
 
 /-- The model mark of a Rust mark. -/
-def mOf : Option RMark → Option Sigref.Topo.Mark
+def mOf : Option RMark → Option MercLib.Sigref.Topo.Mark
   | none => none
   | some .Temporary => some .temp
   | some .Permanent => some .perm
 
 /-- The model marks of the Rust marks vector. -/
-def mkOf {n : Nat} (ms : List (Option RMark)) : Fin n → Option Sigref.Topo.Mark :=
+def mkOf {n : Nat} (ms : List (Option RMark)) : Fin n → Option MercLib.Sigref.Topo.Mark :=
   fun i => mOf (ms.getD i.val none)
 
 /-- The targets of the hidden transitions that are not self-loops, in order. -/
@@ -143,7 +143,7 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
               simp [tag_ne_ok, hid, hidx, hmk, hself, hh]
             rw [psl_unfold, hbody]; simp only [bind_ok]
             obtain ⟨D', b, hl, hv, hb⟩ := ih htg' it1 D false DL hit1 hD hroom'
-            have hm' : mkOf marks.val (toFin hn0 t.to) = some Sigref.Topo.Mark.temp := by
+            have hm' : mkOf marks.val (toFin hn0 t.to) = some MercLib.Sigref.Topo.Mark.temp := by
               unfold mkOf mOf; rw [hmark, hmk]
             refine ⟨D', b, hl, ?_, ?_⟩
             · rw [hv, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]; simp [pushSuccs, hm']
@@ -156,7 +156,7 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
               simp [tag_ne_ok, hid, hidx, hmk, hself, hh]
             rw [psl_unfold, hbody]; simp only [bind_ok]
             obtain ⟨D', b, hl, hv, hb⟩ := ih htg' it1 D a DL hit1 hD hroom'
-            have hm' : mkOf marks.val (toFin hn0 t.to) = some Sigref.Topo.Mark.perm := by
+            have hm' : mkOf marks.val (toFin hn0 t.to) = some MercLib.Sigref.Topo.Mark.perm := by
               unfold mkOf mOf; rw [hmark, hmk]
             refine ⟨D', b, hl, ?_, ?_⟩
             · rw [hv, hsucc_cons, ite_eq_left ⟨hsc, hh⟩]; simp [pushSuccs, hm']
@@ -239,7 +239,7 @@ theorem push_succ_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   have hsx : (stOf x).index.val = x.val := stOf_index x hnmax
   exact ⟨D', b, hl, by rw [hv, hsx]; rfl, by rw [hb, hsx]; rfl⟩
 
-theorem pushSuccs_fst_acyc {n : Nat} (m : Fin n → Option Sigref.Topo.Mark) :
+theorem pushSuccs_fst_acyc {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
     ∀ (ts D : List (Fin n)) (a : Bool),
       (pushSuccs m ts D a).1 = (pushSuccs m ts D true).1 ∧
       (pushSuccs m ts D a).2 = (a && (pushSuccs m ts D true).2) := by
@@ -269,18 +269,18 @@ noncomputable def outLen {n : Nat} (u : Fin n) : Nat := (outVec LTSInst sys (stO
 noncomputable def Eout (n : Nat) : Nat := ∑ u : Fin n, outLen LTSInst sys u
 
 /-- The transitions of the states that are not yet marked. -/
-noncomputable def potSum {n : Nat} (m : Fin n → Option Sigref.Topo.Mark) : Nat :=
+noncomputable def potSum {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) : Nat :=
   ∑ u : Fin n, if m u = none then outLen LTSInst sys u else 0
 
-theorem potSum_le {n : Nat} (m : Fin n → Option Sigref.Topo.Mark) :
+theorem potSum_le {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
     potSum LTSInst sys m ≤ Eout LTSInst sys n := by
   unfold potSum Eout
   apply Finset.sum_le_sum
   intro u _
   split_ifs <;> omega
 
-theorem potSum_update_none {n : Nat} (m : Fin n → Option Sigref.Topo.Mark) (x : Fin n)
-    (hx : m x = none) (mk : Sigref.Topo.Mark) :
+theorem potSum_update_none {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) (x : Fin n)
+    (hx : m x = none) (mk : MercLib.Sigref.Topo.Mark) :
     potSum LTSInst sys (Function.update m x (some mk)) + outLen LTSInst sys x =
       potSum LTSInst sys m := by
   unfold potSum
@@ -295,8 +295,8 @@ theorem potSum_update_none {n : Nat} (m : Fin n → Option Sigref.Topo.Mark) (x 
   simp [hx]
   omega
 
-theorem potSum_update_ne {n : Nat} (m : Fin n → Option Sigref.Topo.Mark) (x : Fin n)
-    (hx : m x ≠ none) (mk : Sigref.Topo.Mark) :
+theorem potSum_update_ne {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) (x : Fin n)
+    (hx : m x ≠ none) (mk : MercLib.Sigref.Topo.Mark) :
     potSum LTSInst sys (Function.update m x (some mk)) = potSum LTSInst sys m := by
   unfold potSum
   apply Finset.sum_congr rfl
@@ -346,7 +346,7 @@ structure RI {n : Nat} (D : alloc.vec.Vec ST) (marks : alloc.vec.Vec (Option RMa
   dlt : ∀ t ∈ D.val, t.index.val < n
   slt : ∀ t ∈ stack.val, t.index.val < n
   scount : stack.val.length =
-    (Finset.univ.filter (fun u : Fin n => mkOf (n := n) marks.val u = some Sigref.Topo.Mark.perm)).card
+    (Finset.univ.filter (fun u : Fin n => mkOf (n := n) marks.val u = some MercLib.Sigref.Topo.Mark.perm)).card
   pot : D.val.length + potSum LTSInst sys (mkOf (n := n) marks.val) ≤ Eout LTSInst sys n + 1
 
 
@@ -374,7 +374,7 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       sort_topological_visit_hidden_loop.body LTSInst sys D marks stack acyclic =
         ok (cont (D', marks', stack', acyc')) ∧
       RI LTSInst sys (n := n0.val) D' marks' stack' ∧
-      Sigref.Topo.step (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx) =
+      MercLib.Sigref.Topo.step (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx) =
         some (toCfg hn0 D' marks' stack' acyc' idx) := by
   have hnmax : n0.val ≤ Usize.max := hnlt.le
   rcases List.eq_nil_or_concat D.val with hnil | ⟨rest, x, hrest⟩
@@ -410,7 +410,7 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     have hmod : c0.marks xf = none := by
       show mkOf marks.val xf = none
       rw [hmark_xf, hmk]; rfl
-    have hstep := Sigref.Topo.step_none (tsucc LTSInst sys hn0) c0 xf _ hc0d hmod
+    have hstep := MercLib.Sigref.Topo.step_none (tsucc LTSInst sys hn0) c0 xf _ hc0d hmod
     set marks1 : alloc.vec.Vec (Option RMark) :=
       ({ slice := marks.slice.set x.index (some rTemp) } : alloc.vec.Vec (Option RMark))
       with hm1
@@ -433,9 +433,9 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       · simp [hxfv]
     have hD2len : D2.val.length = D.val.length := by rw [hD2v, hD1v, hrest]
     have hm0 : mkOf (n := n0.val) marks.val xf = none := by rw [hmark_xf, hmk]; rfl
-    have hpot0 := potSum_update_none LTSInst sys (mkOf (n := n0.val) marks.val) xf hm0 Sigref.Topo.Mark.temp
+    have hpot0 := potSum_update_none LTSInst sys (mkOf (n := n0.val) marks.val) xf hm0 MercLib.Sigref.Topo.Mark.temp
     have hm1eq : mkOf (n := n0.val) marks1.val =
-        Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.temp) := by
+        Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.temp) := by
       rw [hm1v, ← hxfv, mkOf_set marks.val hri.mlen xf]
       rfl
     have hroom : D2.val.length + (outVec LTSInst sys (stOf xf)).val.length ≤ Usize.max := by
@@ -465,14 +465,14 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     have hlen3 : D3.val.length ≤ D.val.length + outLen LTSInst sys xf := by
       have h1 := congrArg List.length hp1'
       simp only [List.length_map, List.length_reverse] at h1
-      have h2 := (pushSuccs_spec (Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.temp)) (tsucc LTSInst sys hn0 xf)
+      have h2 := (pushSuccs_spec (Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.temp)) (tsucc LTSInst sys hn0 xf)
         (xf :: (rest.map (toFin hn0)).reverse) true).1
       have h3 : (tsucc LTSInst sys hn0 xf).length ≤ outLen LTSInst sys xf := by
         unfold tsucc hsucc outLen
         exact List.length_filterMap_le _ _
       rw [h2] at h1
       simp only [List.length_append, List.length_reverse, List.length_cons, List.length_map] at h1
-      have h4 := List.length_filter_le (fun w => decide (Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.temp) w = none))
+      have h4 := List.length_filter_le (fun w => decide (Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.temp) w = none))
         (tsucc LTSInst sys hn0 xf)
       omega
     refine ⟨D3, marks1, stack, if b = true then acyclic else false, hbody, ?_, ?_⟩
@@ -484,10 +484,10 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         rw [← hw]; exact w.2
       · rw [hm1eq]
         have hset : Finset.univ.filter (fun u : Fin n0.val =>
-            Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.temp) u =
-              some Sigref.Topo.Mark.perm) =
+            Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.temp) u =
+              some MercLib.Sigref.Topo.Mark.perm) =
             Finset.univ.filter (fun u : Fin n0.val => mkOf (n := n0.val) marks.val u =
-              some Sigref.Topo.Mark.perm) := by
+              some MercLib.Sigref.Topo.Mark.perm) := by
           ext u
           by_cases hu : u = xf
           · subst hu; simp [hm0]
@@ -498,27 +498,27 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         omega
     · rw [hstep]
       have hdepth3 : D3.val.map (toFin hn0) =
-          (pushSuccs (Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.temp)) (tsucc LTSInst sys hn0 xf)
+          (pushSuccs (Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.temp)) (tsucc LTSInst sys hn0 xf)
             (xf :: (rest.map (toFin hn0)).reverse) true).1.reverse := fin_list_eq hn0 _ _ hp1'
       have hfst := pushSuccs_fst_acyc
-        (Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.temp))
+        (Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.temp))
         (tsucc LTSInst sys hn0 xf) (xf :: (rest.map (toFin hn0)).reverse) acyclic
-      simp only [hc0, toCfg, Option.some.injEq, Sigref.Topo.Cfg.mk.injEq]
+      simp only [hc0, toCfg, Option.some.injEq, MercLib.Sigref.Topo.Cfg.mk.injEq]
       refine ⟨hm1eq.symm, ?_, trivial, ?_, trivial⟩
       · rw [hdepth3, List.reverse_reverse]
         exact hfst.1
       · rw [hfst.2, hp2']
         cases hh : (pushSuccs (Function.update (mkOf (n := n0.val) marks.val) xf
-          (some Sigref.Topo.Mark.temp)) (tsucc LTSInst sys hn0 xf)
+          (some MercLib.Sigref.Topo.Mark.temp)) (tsucc LTSInst sys hn0 xf)
           (xf :: (rest.map (toFin hn0)).reverse) true).2 <;> simp
   · have hD1len : D1.val.length = rest.length := by rw [hD1v]
     have hDsub : ∀ t ∈ D1.val, t.index.val < n0.val := fun t ht => hrestlt t (by rwa [hD1v] at ht)
     cases mk with
     | Temporary =>
-      have hmod : c0.marks xf = some Sigref.Topo.Mark.temp := by
+      have hmod : c0.marks xf = some MercLib.Sigref.Topo.Mark.temp := by
         show mkOf marks.val xf = _
         rw [hmark_xf, hmk]; rfl
-      have hstep := Sigref.Topo.step_temp (tsucc LTSInst sys hn0) c0 xf _ hc0d hmod
+      have hstep := MercLib.Sigref.Topo.step_temp (tsucc LTSInst sys hn0) c0 xf _ hc0d hmod
       set marks1 : alloc.vec.Vec (Option RMark) :=
         ({ slice := marks.slice.set x.index (some rPerm) } : alloc.vec.Vec (Option RMark))
         with hm1
@@ -533,7 +533,7 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         omega
       obtain ⟨stack1, hstk1, hstk1v⟩ := vec_push_val stack x hscount_lt
       have hm1eq : mkOf (n := n0.val) marks1.val =
-          Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.perm) := by
+          Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.perm) := by
         rw [hm1v, ← hxfv, mkOf_set marks.val hri.mlen xf]
         rfl
       have hbody : sort_topological_visit_hidden_loop.body LTSInst sys D marks stack acyclic =
@@ -550,30 +550,30 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
           · simp at h; rw [h]; exact hxlt
         · rw [hm1eq, hstk1v]
           have hset : Finset.univ.filter (fun u : Fin n0.val =>
-              Function.update (mkOf (n := n0.val) marks.val) xf (some Sigref.Topo.Mark.perm) u =
-                some Sigref.Topo.Mark.perm) =
+              Function.update (mkOf (n := n0.val) marks.val) xf (some MercLib.Sigref.Topo.Mark.perm) u =
+                some MercLib.Sigref.Topo.Mark.perm) =
               insert xf (Finset.univ.filter (fun u : Fin n0.val => mkOf (n := n0.val) marks.val u =
-                some Sigref.Topo.Mark.perm)) := by
+                some MercLib.Sigref.Topo.Mark.perm)) := by
             ext u
             by_cases hu : u = xf
             · subst hu; simp
             · simp [hu]
-          have hmod' : mkOf (n := n0.val) marks.val xf = some Sigref.Topo.Mark.temp := hmod
+          have hmod' : mkOf (n := n0.val) marks.val xf = some MercLib.Sigref.Topo.Mark.temp := hmod
           rw [hset, Finset.card_insert_of_notMem (by simp [hmod'])]
           simp [hri.scount]
-        · rw [hm1eq, potSum_update_ne LTSInst sys _ xf (by rw [show mkOf (n := n0.val) marks.val xf = _ from hmod]; simp) Sigref.Topo.Mark.perm]
+        · rw [hm1eq, potSum_update_ne LTSInst sys _ xf (by rw [show mkOf (n := n0.val) marks.val xf = _ from hmod]; simp) MercLib.Sigref.Topo.Mark.perm]
           have := hri.pot
           omega
       · rw [hstep]
-        simp only [hc0, toCfg, Option.some.injEq, Sigref.Topo.Cfg.mk.injEq]
+        simp only [hc0, toCfg, Option.some.injEq, MercLib.Sigref.Topo.Cfg.mk.injEq]
         refine ⟨hm1eq.symm, ?_, ?_, trivial, trivial⟩
         · rw [hD1v]
         · rw [hstk1v]; simp [hxf]
     | Permanent =>
-      have hmod : c0.marks xf = some Sigref.Topo.Mark.perm := by
+      have hmod : c0.marks xf = some MercLib.Sigref.Topo.Mark.perm := by
         show mkOf marks.val xf = _
         rw [hmark_xf, hmk]; rfl
-      have hstep := Sigref.Topo.step_perm (tsucc LTSInst sys hn0) c0 xf _ hc0d hmod
+      have hstep := MercLib.Sigref.Topo.step_perm (tsucc LTSInst sys hn0) c0 xf _ hc0d hmod
       have hbody : sort_topological_visit_hidden_loop.body LTSInst sys D marks stack acyclic =
           ok (cont (D1, marks, stack, acyclic)) := by
         unfold sort_topological_visit_hidden_loop.body
@@ -584,7 +584,7 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         have := hri.pot
         omega
       · rw [hstep]
-        simp only [hc0, toCfg, Option.some.injEq, Sigref.Topo.Cfg.mk.injEq]
+        simp only [hc0, toCfg, Option.some.injEq, MercLib.Sigref.Topo.Cfg.mk.injEq]
         refine ⟨trivial, ?_, trivial, trivial, trivial⟩
         rw [hD1v]
 
@@ -603,7 +603,7 @@ theorem visit_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       sort_topological_visit_hidden_loop LTSInst D sys marks stack acyclic =
         ok (acyc', D', marks', stack') ∧
       RI LTSInst sys (n := n0.val) D' marks' stack' ∧ D'.val = [] ∧
-      Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
+      MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
         (toCfg hn0 D' marks' stack' acyc' idx) := by
   unfold sort_topological_visit_hidden_loop
   have hspec : loop (fun x : alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST × Bool =>
@@ -611,33 +611,35 @@ theorem visit_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       (D, marks, stack, acyclic)
       ⦃ fun r : Bool × alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST =>
         RI LTSInst sys (n := n0.val) r.2.1 r.2.2.1 r.2.2.2 ∧ r.2.1.val = [] ∧
-        Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
+        MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
           (toCfg hn0 r.2.1 r.2.2.1 r.2.2.2 r.1 idx) ⦄ := by
     apply loop.spec_decr_nat
       (measure := fun x : alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST × Bool =>
-        Sigref.Topo.measure (tsucc LTSInst sys hn0) (toCfg hn0 x.1 x.2.1 x.2.2.1 x.2.2.2 idx))
+        MercLib.Sigref.Topo.measure (tsucc LTSInst sys hn0) (toCfg hn0 x.1 x.2.1 x.2.2.1 x.2.2.2 idx))
       (inv := fun x : alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST × Bool =>
         RI LTSInst sys (n := n0.val) x.1 x.2.1 x.2.2.1 ∧
-        Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
+        MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
           (toCfg hn0 x.1 x.2.1 x.2.2.1 x.2.2.2 idx))
       (post := fun r : Bool × alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST =>
         RI LTSInst sys (n := n0.val) r.2.1 r.2.2.1 r.2.2.2 ∧ r.2.1.val = [] ∧
-        Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
+        MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D marks stack acyclic idx)
           (toCfg hn0 r.2.1 r.2.2.1 r.2.2.2 r.1 idx))
       (body := fun x : alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST × Bool =>
         sort_topological_visit_hidden_loop.body LTSInst sys x.1 x.2.1 x.2.2.1 x.2.2.2)
       (x := (D, marks, stack, acyclic))
     · rintro ⟨D1, m1, s1, a1⟩ ⟨hri1, hr1⟩
       by_cases hD1 : D1.val = []
-      · exact Std.WP.exists_imp_spec ⟨done (a1, D1, m1, s1), visit_body_done LTSInst sys D1 m1 s1 a1 hD1,
-          hri1, hD1, hr1⟩
+      · exact (congrArg (Std.WP.spec · _) (visit_body_done LTSInst sys D1 m1 s1 a1 hD1)).mpr
+          ((Std.WP.spec_ok _).2 ⟨hri1, hD1, hr1⟩)
       · obtain ⟨D', m', s', a', hb, hri', hstep⟩ := visit_body_cont LTSInst sys hwf n0 hns hn0 hid hnlt
           hEout D1 m1 s1 a1 idx hri1 hD1
-        refine Std.WP.exists_imp_spec ⟨cont (D', m', s', a'), hb, ⟨hri', ?_⟩, ?_⟩
+        refine (congrArg (Std.WP.spec · _) hb).mpr ((Std.WP.spec_ok _).2 ⟨⟨hri', ?_⟩, ?_⟩)
         · exact hr1.tail hstep
-        · exact Sigref.Topo.topoSortTerminates _ _ _ hstep
+        · exact MercLib.Sigref.Topo.topoSortTerminates _ _ _ hstep
     · exact ⟨hri, Relation.ReflTransGen.refl⟩
-  obtain ⟨r, hr, hpost⟩ := Std.WP.spec_imp_exists hspec
+  obtain ⟨r, hr, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i r
   obtain ⟨a', D', m', s'⟩ := r
   exact ⟨D', m', s', a', hr, hpost⟩
 
@@ -656,7 +658,7 @@ theorem visit_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       D1.val = [state] ∧
       sort_topological_visit_hidden LTSInst sys state D marks stack = ok (b, D', marks', stack') ∧
       RI LTSInst sys (n := n0.val) D' marks' stack' ∧ D'.val = [] ∧
-      Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D1 marks stack true idx)
+      MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (toCfg hn0 D1 marks stack true idx)
         (toCfg hn0 D' marks' stack' b idx) := by
   unfold sort_topological_visit_hidden
   obtain ⟨D1, hD1, hD1v⟩ := vec_push_val D state (by rw [hD]; simp; omega)
@@ -683,33 +685,33 @@ theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
     (hnlt : n0.val < Usize.max) (hEout : Eout LTSInst sys n0.val + 1 ≤ Usize.max)
-    (hA : Sigref.Topo.Acyclic (tsucc LTSInst sys hn0))
+    (hA : MercLib.Sigref.Topo.Acyclic (tsucc LTSInst sys hn0))
     (D : alloc.vec.Vec ST) (hD : D.val = []) (marks : alloc.vec.Vec (Option RMark))
     (stack : alloc.vec.Vec ST) (hri : RI LTSInst sys (n := n0.val) D marks stack)
-    (hinit : toCfg hn0 D marks stack true 0 = Sigref.Topo.init n0.val) :
+    (hinit : toCfg hn0 D marks stack true 0 = MercLib.Sigref.Topo.init n0.val) :
     ∃ b D' marks' stack' c,
       sort_topological_visit_all_loop LTSInst { start := 0#usize, «end» := n0 } sys D marks stack true =
         ok (b, D', marks', stack') ∧
       RI LTSInst sys (n := n0.val) D' marks' stack' ∧ D'.val = [] ∧
-      Sigref.Topo.Root (tsucc LTSInst sys hn0) c ∧ c.idx = n0.val ∧
-      Sigref.Topo.Runs (tsucc LTSInst sys hn0) (Sigref.Topo.init n0.val) c ∧
+      MercLib.Sigref.Topo.Root (tsucc LTSInst sys hn0) c ∧ c.idx = n0.val ∧
+      MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (MercLib.Sigref.Topo.init n0.val) c ∧
       toCfg hn0 D' marks' stack' b n0.val = c := by
   unfold sort_topological_visit_all_loop
   have hspec := range_loop_spec
     (σ := alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST × Bool)
     (ρ := Bool × alloc.vec.Vec ST × alloc.vec.Vec (Option RMark) × alloc.vec.Vec ST)
     (fun x => sort_topological_visit_all_loop.body LTSInst sys x.1 x.2.1 x.2.2.1 x.2.2.2.1 x.2.2.2.2)
-    (fun i s => ∃ c, Sigref.Topo.Root (tsucc LTSInst sys hn0) c ∧ c.idx = i ∧
-      Sigref.Topo.Runs (tsucc LTSInst sys hn0) (Sigref.Topo.init n0.val) c ∧
+    (fun i s => ∃ c, MercLib.Sigref.Topo.Root (tsucc LTSInst sys hn0) c ∧ c.idx = i ∧
+      MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (MercLib.Sigref.Topo.init n0.val) c ∧
       RI LTSInst sys (n := n0.val) s.1 s.2.1 s.2.2.1 ∧ s.1.val = [] ∧
       toCfg hn0 s.1 s.2.1 s.2.2.1 s.2.2.2 i = c)
-    (fun r => ∃ c, Sigref.Topo.Root (tsucc LTSInst sys hn0) c ∧ c.idx = n0.val ∧
-      Sigref.Topo.Runs (tsucc LTSInst sys hn0) (Sigref.Topo.init n0.val) c ∧
+    (fun r => ∃ c, MercLib.Sigref.Topo.Root (tsucc LTSInst sys hn0) c ∧ c.idx = n0.val ∧
+      MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) (MercLib.Sigref.Topo.init n0.val) c ∧
       RI LTSInst sys (n := n0.val) r.2.1 r.2.2.1 r.2.2.2 ∧ r.2.1.val = [] ∧
       toCfg hn0 r.2.1 r.2.2.1 r.2.2.2 r.1 n0.val = c)
     n0 ?hsome ?hnone 0#usize (D, marks, stack, true) (by simp) ?h0
   case h0 =>
-    exact ⟨Sigref.Topo.init n0.val, Sigref.Topo.root_init _, rfl, Relation.ReflTransGen.refl, hri,
+    exact ⟨MercLib.Sigref.Topo.init n0.val, MercLib.Sigref.Topo.root_init _, rfl, Relation.ReflTransGen.refl, hri,
       hD, hinit⟩
   case hnone =>
     intro i s hi hinv
@@ -731,7 +733,7 @@ theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     obtain ⟨Ds, ms, ss, ac⟩ := s
     simp only at hri' hD' hc
     have hi' : i.val < n0.val := hi
-    have hsucc_eq := Sigref.Topo.root_step hA hroot (by rw [hci]; exact hi')
+    have hsucc_eq := MercLib.Sigref.Topo.root_step hA hroot (by rw [hci]; exact hi')
     obtain ⟨c2, hrc2, hroot2, hidx2⟩ := hsucc_eq
     obtain ⟨o, it1, hnext, hsome, hs1, he1⟩ := MercVerified.Lts.Proofs.next_range_some
       ({ start := i, «end» := n0 } : core.ops.range.Range Std.Usize) (by simpa using hi)
@@ -774,21 +776,21 @@ theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     rcases hmk : ms.val[i.val]'hmi with _ | mk
     · -- an unvisited state: visit it
       have hmod : c.marks ⟨c.idx, hcN⟩ = none := by rw [hfin, hcmarks, hmk]; rfl
-      have hc1 := Sigref.Topo.step_root (tsucc LTSInst sys hn0) c hcd hcN hmod
+      have hc1 := MercLib.Sigref.Topo.step_root (tsucc LTSInst sys hn0) c hcd hcN hmod
       have hstlt : st.index.val < n0.val := by rw [hstidx]; exact hi'
       obtain ⟨D1, b, D', m', s', hD1v, hvis, hri'', hD'', hruns''⟩ := visit_hidden_spec LTSInst sys hwf
         n0 hns hn0 hid hnlt hEout st hstlt Ds hD' ms ss (i.val + 1) hri'
       have hc1eq : toCfg hn0 D1 ms ss true (i.val + 1) =
           { c with depth := [⟨c.idx, hcN⟩], idx := c.idx + 1 } := by
         simp only [toCfg, hD1v, List.map_cons, List.map_nil, List.reverse_cons, List.reverse_nil,
-          List.nil_append, hstfin, Sigref.Topo.Cfg.mk.injEq]
+          List.nil_append, hstfin, MercLib.Sigref.Topo.Cfg.mk.injEq]
         refine ⟨hcm.symm, ?_, hcord.symm, hroot.acyc.symm, by rw [hcidx]⟩
         rw [hfin]
-      have hr3 : Sigref.Topo.Runs (tsucc LTSInst sys hn0) c (toCfg hn0 D' m' s' b (i.val + 1)) := by
+      have hr3 : MercLib.Sigref.Topo.Runs (tsucc LTSInst sys hn0) c (toCfg hn0 D' m' s' b (i.val + 1)) := by
         rw [hc1eq] at hruns''
         exact Relation.ReflTransGen.head hc1 hruns''
       have hdeq : c2 = toCfg hn0 D' m' s' b (i.val + 1) := by
-        apply Sigref.Topo.unique_empty hrc2 hr3 hroot2.depth
+        apply MercLib.Sigref.Topo.unique_empty hrc2 hr3 hroot2.depth
         · simp [toCfg, hD'']
         · simp [toCfg, hidx2, hcidx]
       have hb : b = true := by
@@ -808,9 +810,9 @@ theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     · -- an already visited state
       have hmod : c.marks ⟨c.idx, hcN⟩ ≠ none := by
         rw [hfin, hcmarks, hmk]; cases mk <;> simp [mOf]
-      have hc1 := Sigref.Topo.step_root_marked (tsucc LTSInst sys hn0) c hcd hcN hmod
+      have hc1 := MercLib.Sigref.Topo.step_root_marked (tsucc LTSInst sys hn0) c hcd hcN hmod
       have hdeq : c2 = { c with idx := c.idx + 1 } := by
-        apply Sigref.Topo.unique_empty hrc2 (Relation.ReflTransGen.head hc1 Relation.ReflTransGen.refl)
+        apply MercLib.Sigref.Topo.unique_empty hrc2 (Relation.ReflTransGen.head hc1 Relation.ReflTransGen.refl)
           hroot2.depth hcd
         simp [hidx2]
       have hbody : sort_topological_visit_all_loop.body LTSInst sys
@@ -823,7 +825,7 @@ theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       refine ⟨st1, (Ds, ms, ss, true), hs1, hbody, c2, hroot2, hidx2.trans (by rw [hcidx]), ?_, hri', hD', ?_⟩
       · exact hruns.trans hrc2
       · rw [hdeq]
-        simp only [toCfg, Sigref.Topo.Cfg.mk.injEq]
+        simp only [toCfg, MercLib.Sigref.Topo.Cfg.mk.injEq]
         refine ⟨hcm.symm, ?_, hcord.symm, hroot.acyc.symm, by rw [hcidx]⟩
         rw [← hc]; rfl
   obtain ⟨r, hr, c, hroot, hidx, hruns, hri', hD', htc⟩ := hspec
@@ -885,9 +887,11 @@ theorem order_to_permutation_spec (order : Slice ST) (n : Nat) (hlen : order.val
     simp [verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone]
   have hnew0 : verified.merc_utilities.tagged_index.TagIndex.new StateTag 0#usize =
       ok ({ index := 0#usize, marker := () } : ST) := by simp
-  obtain ⟨reorder, hre, hrev, hrel⟩ := spec_imp_exists (alloc.vec.from_elem_spec
-    (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone StateTag core.clone.CloneUsize)
-    ({ index := 0#usize, marker := () } : ST) (Slice.len order) (hcl _))
+  obtain ⟨reorder, hre, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.from_elem_spec (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone StateTag core.clone.CloneUsize) ({ index := 0#usize, marker := () } : ST) (Slice.len order) (hcl _)⟩
+  cases reorder <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i reorder
+  obtain ⟨hrev, hrel⟩ := hres
   have hSlen : (Slice.len order).val = n := by simpa [Slice.len] using hlen
   rw [hnew0]
   simp only [bind_ok]
@@ -916,7 +920,10 @@ theorem order_to_permutation_spec (order : Slice ST) (n : Nat) (hlen : order.val
         { start := st1, «end» := Slice.len order } := by rw [he1]
     rw [hit1] at hnext
     have hiO : i.val < order.val.length := by omega
-    obtain ⟨ti1, hti1e, hti1'⟩ := spec_imp_exists (Slice.index_usize_spec order i hiO)
+    obtain ⟨ti1, hti1e, hti1'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Slice.index_usize_spec order i hiO⟩
+    cases ti1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hti1'
+    rename_i ti1
     have hj : (order.val[i.val]'hiO).index.val < m.val.length := by
       rw [hm.1]; exact hlt _ (List.getElem_mem hiO)
     have hmut := vec_index_mut_ok m (order.val[i.val]'hiO).index hj
@@ -991,7 +998,7 @@ theorem sort_topological_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (s
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
     (hnlt : n0.val < Usize.max) (hEout : Eout LTSInst sys n0.val + 1 ≤ Usize.max)
-    (hA : Sigref.Topo.Acyclic (tsucc LTSInst sys hn0)) :
+    (hA : MercLib.Sigref.Topo.Acyclic (tsucc LTSInst sys hn0)) :
     ∃ perm : alloc.vec.Vec ST, sort_topological_hidden LTSInst sys = ok (some perm) ∧
       perm.val.length = n0.val ∧
       (∀ s (hs : s < perm.val.length), (perm.val[s]'hs).index.val < n0.val) ∧
@@ -1018,11 +1025,11 @@ theorem sort_topological_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (s
       simp [alloc.vec.Vec.new]
       omega
   have hinit0 : toCfg hn0 (alloc.vec.Vec.new ST) marks (alloc.vec.Vec.new ST) true 0 =
-      Sigref.Topo.init n0.val := by
+      MercLib.Sigref.Topo.init n0.val := by
     have hnv : (alloc.vec.Vec.new ST).val = [] := rfl
-    unfold toCfg Sigref.Topo.init
+    unfold toCfg MercLib.Sigref.Topo.init
     rw [hnv]
-    simp only [List.map_nil, List.reverse_nil, Sigref.Topo.Cfg.mk.injEq]
+    simp only [List.map_nil, List.reverse_nil, MercLib.Sigref.Topo.Cfg.mk.injEq]
     refine ⟨?_, trivial, trivial, trivial, trivial⟩
     funext u; exact hnone u
   obtain ⟨b, D', m', s', c, hl, hri', hD', hroot, hidx, hruns, htc⟩ := visit_all_loop_spec LTSInst sys
@@ -1034,9 +1041,9 @@ theorem sort_topological_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (s
     rw [← htc] at this
     exact this
   subst hbtrue
-  have hstep : Sigref.Topo.step (tsucc LTSInst sys hn0) c = none :=
-    Sigref.Topo.step_end _ c hroot.depth (by omega)
-  obtain ⟨_, hnd, hall, hclosed⟩ := Sigref.Topo.topoSortCorrect (tsucc LTSInst sys hn0) hA c hruns hstep
+  have hstep : MercLib.Sigref.Topo.step (tsucc LTSInst sys hn0) c = none :=
+    MercLib.Sigref.Topo.step_end _ c hroot.depth (by omega)
+  obtain ⟨_, hnd, hall, hclosed⟩ := MercLib.Sigref.Topo.topoSortCorrect (tsucc LTSInst sys hn0) hA c hruns hstep
   have hord : c.order = s'.val.map (toFin hn0) := by rw [← htc]; rfl
   have hslt := hri'.slt
   have hvals : ∀ t ∈ s'.val, (toFin hn0 t).val = t.index.val := fun t ht => toFin_val hn0 t (hslt t ht)

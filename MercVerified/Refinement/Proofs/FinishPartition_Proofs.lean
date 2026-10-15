@@ -13,7 +13,7 @@ largest one, `swap_blocks` (see `SwapBlocks_Proofs.lean`) moves that piece to th
 index, and `finish_partition_marked` (two loops that create the pieces and scatter the marked
 elements) glues them together.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -64,11 +64,17 @@ theorem nbts_inner_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     have hbk := hp.blk _ hcb
     have hbkWF : merc_reduction.block_partition.Block.WellFormed (blkAt p (nbi.val[i.val]'hiv).index.val) :=
       partInv_blockWF hp hcb
-    obtain ⟨cl, hcl, hclv, -⟩ := spec_imp_exists
-      (Usize.sub_spec (x := (blkAt p (nbi.val[i.val]'hiv).index.val).«end»)
-        (y := (blkAt p (nbi.val[i.val]'hiv).index.val).begin) (by omega))
+    obtain ⟨cl, hcl, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.sub_spec (x := (blkAt p (nbi.val[i.val]'hiv).index.val).«end»)
+        (y := (blkAt p (nbi.val[i.val]'hiv).index.val).begin) (by omega)⟩
+    cases cl <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+    rename_i cl
+    obtain ⟨hclv, -⟩ := hres
     have hidx : nbi.index_usize i = ok (nbi.val[i.val]'hiv) := by
-      obtain ⟨x, hx, hxe⟩ := spec_imp_exists (alloc.vec.Vec.index_usize_spec nbi i hiv)
+      obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+        ⟨_, rfl, alloc.vec.Vec.index_usize_spec nbi i hiv⟩
+      cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+      rename_i x
       rw [hx, hxe]
     generalize alloc.vec.Vec.len nbi = E at hi hnext hend ⊢
     have hit1 : it1 = ({ start := it1.start, «end» := E } : core.ops.range.Range Std.Usize) := by
@@ -181,16 +187,22 @@ theorem nbts_outer_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
         have : 0 < nbi0.val.length := List.length_pos_of_ne_nil hne
         simp; omega
       have hidx0 : cur.index_usize 0#usize = ok (cur.val[0]'hne') := by
-        obtain ⟨x, hx, hxe⟩ := spec_imp_exists (alloc.vec.Vec.index_usize_spec cur 0#usize (by simpa using hne'))
+        obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+          ⟨_, rfl, alloc.vec.Vec.index_usize_spec cur 0#usize (by simpa using hne')⟩
+        cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+        rename_i x
         rw [hx, hxe]; rfl
       have hc0mem : cur.val[0]'hne' ∈ cur.val := List.getElem_mem hne'
       have hc0 := hallcur _ hc0mem
       have hbk := hp.blk _ hc0
       have hbkWF : merc_reduction.block_partition.Block.WellFormed (blkAt p (cur.val[0]'hne').index.val) :=
         partInv_blockWF hp hc0
-      obtain ⟨ml, hml, -, -⟩ := spec_imp_exists
-        (Usize.sub_spec (x := (blkAt p (cur.val[0]'hne').index.val).«end»)
-          (y := (blkAt p (cur.val[0]'hne').index.val).begin) (by omega))
+      obtain ⟨ml, hml, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+        ⟨_, rfl, Usize.sub_spec (x := (blkAt p (cur.val[0]'hne').index.val).«end»)
+          (y := (blkAt p (cur.val[0]'hne').index.val).begin) (by omega)⟩
+      cases ml <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+      rename_i ml
+      obtain ⟨-, -⟩ := hres
       obtain ⟨mx, hmx, hmxmem⟩ := nbts_inner_spec hp cur hallcur (by omega) _ ml hc0mem
       refine ⟨(mx, cur), ?_, ?_, hmxmem⟩
       · unfold verified.merc_reduction.block_partition.BlockPartition.new_block_to_swap_loop0.body
@@ -212,12 +224,17 @@ theorem new_block_to_swap_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
   unfold verified.merc_reduction.block_partition.BlockPartition.new_block_to_swap
   have hlen : (alloc.vec.Vec.len p.blocks).val = p.blocks.val.length := by
     simp [alloc.vec.Vec.len]
-  obtain ⟨i1, hi1, hi1v, -⟩ := spec_imp_exists
-    (Usize.sub_spec (x := alloc.vec.Vec.len p.blocks) (y := eb) (by omega))
+  obtain ⟨i1, hi1, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := alloc.vec.Vec.len p.blocks) (y := eb) (by omega)⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i i1
+  obtain ⟨hi1v, -⟩ := hres
   have h1 : (1#usize).val = 1 := rfl
-  obtain ⟨i2, hi2, hi2v⟩ := spec_imp_exists
-    (Usize.add_spec (x := 1#usize) (y := i1) (by
-      simp only [h1]; omega))
+  obtain ⟨i2, hi2, hi2v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := 1#usize) (y := i1) (by
+      simp only [h1]; omega)⟩
+  cases i2 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi2v
+  rename_i i2
   have hwc : (alloc.vec.Vec.with_capacity (TagIndex Std.Usize BlockTag) i2).val = [] := rfl
   have hmaxpos : 0 < Usize.max := by
     simp [Usize.max, Usize.numBits]

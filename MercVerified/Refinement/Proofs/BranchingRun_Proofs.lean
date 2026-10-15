@@ -6,12 +6,12 @@ import Aeneas.Std.WP
 /-!
 # The outer loop `branching_run_worklist_loop`
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 The loop pops blocks from the worklist and runs `branching_process_worklist_block`, which is a step
 of the abstract algorithm (`BranchingStep_Proofs`). It terminates (`bworklistMeasure`), and at exit
 the worklist is empty, hence no state is marked, hence the partition is branching bisimilarity
-(`Sigref.branchingInv_final`).
+(`MercLib.Sigref.branchingInv_final`).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -24,6 +24,7 @@ open verified.merc_reduction.signature_refinement (WorklistContextBranching)
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+open MercLib.Signatures MercLib.LTS
 
 namespace MercVerified.Refinement.Proofs
 
@@ -112,9 +113,9 @@ theorem branching_initial_inv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     have hzeroF : ∀ x : Fin n.val, e2bAt p x.val = 0 := fun x => by
       have := hzero (stOf x) (by rw [stOf_index _ hnm]; exact x.2)
       rwa [stOf_index _ hnm] at this
-    have hcfg : cfgOf ctx0.partition n.val = Sigref.initConfig (Fin n.val) := by
+    have hcfg : cfgOf ctx0.partition n.val = MercLib.Sigref.initConfig (Fin n.val) := by
       rw [hp]
-      have h1 : (bdOf p n.val).setoid = Sigref.topSetoid (Fin n.val) :=
+      have h1 : (bdOf p n.val).setoid = MercLib.Sigref.topSetoid (Fin n.val) :=
         Setoid.ext fun x y => by
           show e2bAt p x.val = e2bAt p y.val ↔ True
           rw [hzeroF x, hzeroF y]
@@ -125,11 +126,11 @@ theorem branching_initial_inv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
           unfold IsMarked
           rw [hzeroF x, hblk]
           exact Nat.zero_le _
-      show (⟨(bdOf p n.val).setoid, {x | IsMarked p x.val}⟩ : Sigref.Config (Fin n.val)) =
-        ⟨Sigref.topSetoid (Fin n.val), Set.univ⟩
+      show (⟨(bdOf p n.val).setoid, {x | IsMarked p x.val}⟩ : MercLib.Sigref.Config (Fin n.val)) =
+        ⟨MercLib.Sigref.topSetoid (Fin n.val), Set.univ⟩
       rw [h1, h2]
     rw [hcfg]
-    exact Sigref.branchingInv_init _
+    exact MercLib.Sigref.branchingInv_init _
   · unfold bworklistMeasure
     rw [hp, hN, hwv]
     simp only [List.length_singleton]
@@ -203,7 +204,7 @@ theorem branching_run_worklist_loop_terminates {L Label : Type}
       obtain ⟨hI, hit⟩ := hx
       by_cases hwl : x.1.worklist.val = []
       · have hb := branching_run_worklist_loop_body_done LTSInst sys incoming progress x.1 x.2 hwl
-        exact Std.WP.exists_imp_spec ⟨_, hb, ⟨x.1, rfl, hI, hwl⟩⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr ((Std.WP.spec_ok _).2 ⟨x.1, rfl, hI, hwl⟩)
       · have hne : x.1.worklist.val ≠ [] := hwl
         have hsplit : x.1.worklist.val =
             x.1.worklist.val.dropLast ++ [x.1.worklist.val.getLast hne] :=
@@ -222,10 +223,12 @@ theorem branching_run_worklist_loop_terminates {L Label : Type}
         have hit1 : it1.val = x.2.val + 1 := usize_add_one_val x.2 it1 hadd
         have hb := branching_run_worklist_loop_body_pop LTSInst sys incoming progress x.1 ctx'
           (x.1.worklist.val.getLast hne) v' x.2 it1 hpop hproc hadd
-        exact Std.WP.exists_imp_spec ⟨cont (ctx', it1), hb, ⟨hI', by simp only []; omega⟩,
-          by simp only []; omega⟩
+        exact (congrArg (Std.WP.spec · _) hb).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨hI', by simp only []; omega⟩, by simp only []; omega⟩)
     · exact ⟨hI0, by simp⟩
-  obtain ⟨y, hy, hpost⟩ := spec_imp_exists hspec
+  obtain ⟨y, hy, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i y
   exact ⟨y, hy, hpost⟩
 
 /-- **Partial and total correctness of `branching_run_worklist_loop`** from the initial context:
@@ -253,6 +256,6 @@ theorem branching_run_worklist_loop_spec {L Label : Type}
     obtain ⟨y, hy, -⟩ := hI.queued (stOf x) (by rw [stOf_index _ hnmax]; exact x.2)
       (by rw [stOf_index _ hnmax]; exact hx)
     rw [hwl] at hy; simp at hy
-  exact Sigref.branchingInv_final _ hI.sem hX s t
+  exact MercLib.Sigref.branchingInv_final _ hI.sem hX s t
 
 end MercVerified.Refinement.Proofs

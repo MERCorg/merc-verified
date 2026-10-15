@@ -11,7 +11,7 @@ import Aeneas.Std.WP
 `element_to_block` for the elements in the two ranges, so that the partition stays consistent
 (`PartInv`).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -104,7 +104,10 @@ theorem relabel_loop_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
       unfold verified.merc_reduction.block_partition.BlockPartition.swap_blocks_loop0_loop0.body
       subst ho
       have hidx : v.index_usize i = ok (v.val[i.val]'hiv) := by
-        obtain ⟨x, hx, hxe⟩ := spec_imp_exists (alloc.vec.Vec.index_usize_spec v i hiv)
+        obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+          ⟨_, rfl, alloc.vec.Vec.index_usize_spec v i hiv⟩
+        cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+        rename_i x
         rw [hx, hxe]
       simp [hnext, hidx, vec_tagged_index_mut_ok cur _ hbnd]
       exact hit1
@@ -206,7 +209,10 @@ theorem swap_blocks_loop0_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
       unfold verified.merc_reduction.block_partition.BlockPartition.swap_blocks_loop0.body
       subst ho
       have hidx : v.index_usize i = ok (v.val[i.val]'hiv) := by
-        obtain ⟨x, hx, hxe⟩ := spec_imp_exists (alloc.vec.Vec.index_usize_spec v i hiv)
+        obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+          ⟨_, rfl, alloc.vec.Vec.index_usize_spec v i hiv⟩
+        cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+        rename_i x
         rw [hx, hxe]
       simp [hnext, hidx, vec_tagged_index_mut_ok cur _ hbnd]
       exact hit1

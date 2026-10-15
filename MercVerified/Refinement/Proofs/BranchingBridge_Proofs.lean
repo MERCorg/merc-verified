@@ -1,4 +1,4 @@
-import Signatures.BranchingBisimilarity
+import MercLib.LTS.BranchingBisimilarity
 import Mathlib.Logic.Relation
 
 /-!
@@ -8,10 +8,11 @@ If `f : S → T` embeds `l1` into `l2` as a closed sub-LTS, branching bisimilari
 `l2` agree on the image of `f`. Used to move between the LTS on `Fin n` of the real states and
 the LTS on all state indices.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Cslib
+open MercLib.LTS
 
 namespace MercVerified.Refinement.Proofs
 

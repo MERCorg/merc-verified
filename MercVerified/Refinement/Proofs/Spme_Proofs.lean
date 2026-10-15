@@ -14,7 +14,7 @@ Starting from the builder that `marked_elements_sorted` leaves (zeroed `index_to
 classes `0 .. K-1` (`K = key_to_signature.length`) that are all non-empty, with `block_sizes`
 counting exactly the class occurrences in `index_to_block`.
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -25,6 +25,7 @@ open verified.merc_reduction.block_partition (BlockPartition BlockPartitionBuild
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+open MercLib.Signatures
 
 namespace MercVerified.Refinement.Proofs
 
@@ -133,10 +134,13 @@ theorem spme_commit_old {n : Nat} {olds : VecTy ST} {m : Nat} {id : InternMap} {
         ≤ ((spb.index_to_block.val.map (fun x => x.index.val)).take m).length := List.count_le_length
       _ ≤ m := by simp
   have h1 : (1#usize).val = 1 := by simp
-  obtain ⟨newelem, hadd, hnv⟩ := spec_imp_exists (Usize.add_spec
+  obtain ⟨newelem, hadd, hnv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec
     (x := spb.block_sizes.val.get ⟨idx.index.val, hcK⟩) (y := 1#usize) (by
       rw [h1, hget]
-      have := hinv.m_le; have := hinv.olds_le; omega))
+      have := hinv.m_le; have := hinv.olds_le; omega)⟩
+  cases newelem <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hnv
+  rename_i newelem
   obtain ⟨v, hv, newelem', hadd', hvval⟩ :=
     count_block_occurrence_spec_lt spb.block_sizes idx hcK ⟨newelem, hadd⟩
   have hne : newelem' = newelem := by
@@ -327,8 +331,10 @@ theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
   have hnmax : nU.val ≤ Usize.max := by scalar_tac
   have hold' := hinv.old
   have hlt : ei.val < spb.old_elements.val.length := by rw [hold', hinv.ei_eq]; exact hm
-  obtain ⟨state_index, hsid, hsval⟩ := spec_imp_exists
-    (alloc.vec.Vec.index_usize_spec spb.old_elements ei hlt)
+  obtain ⟨state_index, hsid, hsval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_usize_spec spb.old_elements ei hlt⟩
+  cases state_index <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hsval
+  rename_i state_index
   have hsi : state_index ∈ olds.val := by
     rw [hsval, ← hold']; exact List.getElem_mem _
   have hsi_lt := hold _ hsi

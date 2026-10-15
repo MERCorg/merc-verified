@@ -5,7 +5,7 @@ import Aeneas.Std.WP
 /-!
 # Proofs for the `IncomingTransitions::new` correctness contract
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `IncomingTransitionsCorrect` (defined below) is the gating lemma for
 `strong_run_worklist_loop_partial_correct`: the worklist invariant's soundness
@@ -179,14 +179,14 @@ theorem constPush_loop_spec {α : Type} (x : α)
         rw [hstart, hend', hend]
         rw [hend] at hlt
         omega
-      exact Std.WP.exists_imp_spec ⟨cont (it1, v1), hbody, hinv', hlt'⟩
+      exact (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv', hlt'⟩)
     · have hge : st.1.end.val ≤ st.1.start.val := by omega
       have hstart : st.1.start.val = n.val := by
         apply Nat.le_antisymm hle
         rw [← hend]; exact hge
       have hpost : st.2.val = List.replicate n.val x := by
         rw [hval, hstart]
-      exact Std.WP.exists_imp_spec ⟨done st.2, hdone st.1 st.2 hge, hpost⟩
+      exact (congrArg (Std.WP.spec · _) (hdone st.1 st.2 hge)).mpr ((Std.WP.spec_ok _).2 hpost)
   · refine ⟨rfl, ?_, ?_⟩
     · simp
     · simp
@@ -219,10 +219,10 @@ theorem new_labels_spec (n : Sz) :
     ∃ v : alloc.vec.Vec (TagIndex Sz LabelTag),
       verified.merc_lts.incoming_transitions.new_labels n = ok v ∧
       v.val = List.replicate n.val zeroLabel := by
-  rcases Std.WP.spec_imp_exists
-      (constPush_loop_spec zeroLabel
-        verified.merc_lts.incoming_transitions.new_labels_loop.body
-        new_labels_step new_labels_done n) with ⟨v, hloop, hval⟩
+  obtain ⟨v, hloop, hval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, constPush_loop_spec zeroLabel verified.merc_lts.incoming_transitions.new_labels_loop.body new_labels_step new_labels_done n⟩
+  cases v <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hval
+  rename_i v
   refine ⟨v, ?_, hval⟩
   unfold verified.merc_lts.incoming_transitions.new_labels
   simp only [alloc.vec.Vec.with_capacity,
@@ -255,10 +255,10 @@ theorem new_states_spec (n : Sz) :
     ∃ v : alloc.vec.Vec (TagIndex Sz StateTag),
       verified.merc_lts.incoming_transitions.new_states n = ok v ∧
       v.val = List.replicate n.val zeroState := by
-  rcases Std.WP.spec_imp_exists
-      (constPush_loop_spec zeroState
-        verified.merc_lts.incoming_transitions.new_states_loop.body
-        new_states_step new_states_done n) with ⟨v, hloop, hval⟩
+  obtain ⟨v, hloop, hval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, constPush_loop_spec zeroState verified.merc_lts.incoming_transitions.new_states_loop.body new_states_step new_states_done n⟩
+  cases v <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hval
+  rename_i v
   refine ⟨v, ?_, hval⟩
   unfold verified.merc_lts.incoming_transitions.new_states
   simp only [alloc.vec.Vec.with_capacity,
@@ -291,10 +291,10 @@ theorem new_counts_spec (n : Sz) :
     ∃ v : alloc.vec.Vec Sz,
       verified.merc_lts.incoming_transitions.new_counts n = ok v ∧
       v.val = List.replicate n.val (0#usize) := by
-  rcases Std.WP.spec_imp_exists
-      (constPush_loop_spec (0#usize)
-        verified.merc_lts.incoming_transitions.new_counts_loop.body
-        new_counts_step new_counts_done n) with ⟨v, hloop, hval⟩
+  obtain ⟨v, hloop, hval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, constPush_loop_spec (0#usize) verified.merc_lts.incoming_transitions.new_counts_loop.body new_counts_step new_counts_done n⟩
+  cases v <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hval
+  rename_i v
   refine ⟨v, ?_, hval⟩
   unfold verified.merc_lts.incoming_transitions.new_counts
   simp only [alloc.vec.Vec.with_capacity,
@@ -420,7 +420,9 @@ theorem prefix_sum_step (it : ItSz) (v : alloc.vec.Vec Sz)
       off1.val = off.val + v.val[it.start.val].val := by
   rcases next_range_some it h with ⟨o, it1, hnext, hopt, hstart, hend⟩
   have hidx' := Aeneas.Std.alloc.vec.Vec.index_usize_spec v it.start hidx
-  rcases Std.WP.spec_imp_exists hidx' with ⟨x, hx, hxv⟩
+  obtain ⟨x, hx, hxv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidx'⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxv
+  rename_i x
   have hidxS : v.index_usize it.start = ok (v.val[it.start.val]) := by
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hx, hxv]
@@ -428,7 +430,9 @@ theorem prefix_sum_step (it : ItSz) (v : alloc.vec.Vec Sz)
       = ok (v.val[it.start.val], fun x => v.set it.start x) := by
     simp [alloc.vec.Vec.index_mut_usize, hidxS]
   have hadd := Usize.add_spec (x := off) (y := v.val[it.start.val]) hmax
-  rcases Std.WP.spec_imp_exists hadd with ⟨z, hz, hzval⟩
+  obtain ⟨z, hz, hzval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hadd⟩
+  cases z <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hzval
+  rename_i z
   refine ⟨it1, v.set it.start off, z, ?_, hstart, hend, ?_, ?_⟩
   · unfold verified.merc_lts.incoming_transitions.prefix_sum_loop.body
     rw [hnext]
@@ -519,13 +523,13 @@ theorem prefix_sum_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
         rw [hstart, hend', hend]
         rw [hend] at hlt
         omega
-      exact Std.WP.exists_imp_spec ⟨cont (it1, v1, off1), hbody, hinv', hlt'⟩
+      exact (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv', hlt'⟩)
     · have hge : st.1.end.val ≤ st.1.start.val := by omega
       have hstart : st.1.start.val = n.val := by
         apply Nat.le_antisymm hle
         rw [← hend]; exact hge
-      refine Std.WP.exists_imp_spec ⟨done (st.2.1, st.2.2),
-        prefix_sum_done st.1 st.2.1 st.2.2 hge, ?_⟩
+      refine (congrArg (Std.WP.spec · _) (prefix_sum_done st.1 st.2.1 st.2.2 hge)).mpr
+        ((Std.WP.spec_ok _).2 ?_)
       refine ⟨by
         change st.2.2 = uTotal (natSum c.val n.val)
         rw [← hstart]
@@ -556,7 +560,10 @@ theorem prefix_sum_spec (c : alloc.vec.Vec Sz) (n : Sz)
       verified.merc_lts.incoming_transitions.prefix_sum c n = ok r ∧
       r.val.length = c.val.length ∧
       ∀ k, k < n.val + 1 → r.val.getD k 0#usize = uTotal (natSum c.val k) := by
-  rcases Std.WP.spec_imp_exists (prefix_sum_loop_spec c n hc hnoovf) with ⟨p, hloop, hpost⟩
+  obtain ⟨p, hloop, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, prefix_sum_loop_spec c n hc hnoovf⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i p
   rcases hpost with ⟨hoff, hlen, hpt⟩
   have hidx : n.val < p.1.val.length := by rw [hlen]; exact hc
   have hmain : ∀ (counts1 : alloc.vec.Vec Sz) (offset : Sz),
@@ -665,7 +672,9 @@ private theorem vec_next_eq {α : Type} (v : alloc.vec.Vec α)
         = ok (o, it1) ∧ o = some t ∧ it1.val = tl := by
   have hn : alloc.vec.into_iter.IteratorIntoIter.next (v : alloc.vec.into_iter.IntoIter α)
       ⦃ p => p.1 = some t ∧ p.2.val = tl ⦄ := vec_next_some v t tl h
-  rcases Std.WP.spec_imp_exists hn with ⟨p, hp, hpt⟩
+  obtain ⟨p, hp, hpt⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hn⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpt
+  rename_i p
   cases p with
   | mk o it1 => exact ⟨o, it1, hp, hpt.1, hpt.2⟩
 
@@ -686,7 +695,9 @@ theorem count_incoming_step
       counts1.val = counts.val.set t.to.index.val z ∧
       z.val = (counts.val.getD t.to.index.val 0#usize).val + 1 := by
   have hidx' := Aeneas.Std.alloc.vec.Vec.index_usize_spec counts t.to.index hidx
-  rcases Std.WP.spec_imp_exists hidx' with ⟨x, hx, hxv⟩
+  obtain ⟨x, hx, hxv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidx'⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxv
+  rename_i x
   have hidxS : counts.index_usize t.to.index = ok (counts.val[t.to.index.val]'hidx) := by
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hx, hxv]
@@ -694,7 +705,9 @@ theorem count_incoming_step
       = (counts.val.getD t.to.index.val 0#usize).val := by grind
   have hadd' : (counts.val[t.to.index.val]'hidx).val + 1 ≤ Usize.max := by grind
   have hsz := Usize.add_spec (x := counts.val[t.to.index.val]'hidx) (y := 1#usize) hadd'
-  rcases Std.WP.spec_imp_exists hsz with ⟨z, hzok, hzval⟩
+  obtain ⟨z, hzok, hzval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hsz⟩
+  cases z <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hzval
+  rename_i z
   have himutS : counts.index_mut_usize t.to.index
       = ok (counts.val[t.to.index.val]'hidx, fun x => counts.set t.to.index x) := by
     simp [alloc.vec.Vec.index_mut_usize, hidxS]
@@ -773,7 +786,9 @@ theorem count_incoming_done (st : CiSt) (h : st.1.val = []) :
   have hn : alloc.vec.into_iter.IteratorIntoIter.next
         (st.1 : alloc.vec.into_iter.IntoIter Transition)
       ⦃ p => p.1 = none ∧ p.2 = st.1 ⦄ := vec_next_none st.1 h
-  rcases Std.WP.spec_imp_exists hn with ⟨p, hp, hpt⟩
+  obtain ⟨p, hp, hpt⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hn⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpt
+  rename_i p
   cases p with
   | mk o it1 =>
     simp only at hpt
@@ -806,7 +821,8 @@ theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.
       rcases hinv with ⟨hiter, hlen, hval, hcons, hovf'⟩
       set k := trans.val.length - st.1.val.length with hkdef
       by_cases hnil : st.1.val = []
-      · refine Std.WP.exists_imp_spec ⟨done st.2, count_incoming_done st hnil, ?_⟩
+      · refine (congrArg (Std.WP.spec · _) (count_incoming_done st hnil)).mpr
+          ((Std.WP.spec_ok _).2 ?_)
         refine ⟨hlen, ?_⟩
         intro j hj
         have hklen : k = trans.val.length := by
@@ -857,8 +873,8 @@ theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.
           calc iter1.val = tl := hit1
             _ = trans.val.drop (k + 1) := hiter'
             _ = trans.val.drop (trans.val.length - iter1.val.length) := by rw [hk1]
-        refine Std.WP.exists_imp_spec
-          ⟨cont (iter1, counts1), hbody, ⟨hiter'', ?_, ?_, ?_, ?_⟩, ?_⟩
+        refine (congrArg (Std.WP.spec · _) hbody).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨hiter'', ?_, ?_, ?_, ?_⟩, ?_⟩)
         · -- the counters keep their length
           rw [hset, List.length_set, hlen]
         · -- slot-wise: one more tick
@@ -919,7 +935,9 @@ theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.
       · intro j hj
         simp [List.take_zero, toCount_nil, List.drop_zero]
       · exact hovf
-  rcases Std.WP.spec_imp_exists hspec with ⟨p, hloop, hpost⟩
+  obtain ⟨p, hloop, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i p
   exact ⟨p, hloop, hpost⟩
 
 /-- `count_incoming_loop` in equation form. -/
@@ -1080,7 +1098,9 @@ theorem count_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : 
   have hn : alloc.vec.into_iter.IteratorIntoIter.next
         (st.1 : alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag))
       ⦃ p => p.1 = none ∧ p.2 = st.1 ⦄ := vec_next_none st.1 h
-  rcases Std.WP.spec_imp_exists hn with ⟨p, hp, hpt⟩
+  obtain ⟨p, hp, hpt⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hn⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpt
+  rename_i p
   cases p with
   | mk o it1 =>
     simp only at hpt
@@ -1165,7 +1185,7 @@ theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
       by_cases hnil : st.1.val = []
       · rcases count_all_incoming_done LTSInst sys sv.val c0 st hnil hinv' with
           ⟨hbody, hpost⟩
-        exact Std.WP.exists_imp_spec ⟨done st.2, hbody, hpost⟩
+        exact (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 hpost)
       · obtain ⟨s, sl, hst⟩ := List.exists_cons_of_ne_nil hnil
         have hdrop : sv.val.drop k = s :: sl := hiter.symm.trans hst
         have hle : (s :: sl).length ≤ sv.val.length := by
@@ -1242,7 +1262,7 @@ theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
           · intro j hj
             have hj2 : j < counts1.val.length := hj
             exact hovf' j (lt_of_lt_of_eq hj2 hpost.1)
-        refine Std.WP.exists_imp_spec ⟨cont (iter1, counts1), hbody, hinv'', ?_⟩
+        refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv'', ?_⟩)
         · rw [hit1, hst]
           simp
     · refine ⟨?_, ?_, ?_, ?_⟩
@@ -1251,7 +1271,9 @@ theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
       · intro j hj
         simp [seenCount_zero]
       · exact hovf
-  rcases Std.WP.spec_imp_exists hspec with ⟨p, hloop, hpost⟩
+  obtain ⟨p, hloop, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i p
   exact ⟨p, hloop, hpost⟩
 
 /-- `count_all_incoming_loop` in equation form. -/
@@ -1357,14 +1379,14 @@ theorem gather_loop_spec {α : Type} (n : Sz) (f : Nat → α) (d : α) (hn : n.
         rw [hstart, hend', hend]
         rw [hend] at hlt
         omega
-      exact Std.WP.exists_imp_spec ⟨cont (it1, v1), hbody, hinv', hlt'⟩
+      exact (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv', hlt'⟩)
     · have hge : st.1.end.val ≤ st.1.start.val := by omega
       have hstart : st.1.start.val = n.val := by
         apply Nat.le_antisymm hle
         rw [← hend]; exact hge
       have hpost : st.2.val.length = n.val ∧ ∀ k, k < n.val → st.2.val.getD k d = f k := by
         refine ⟨hlen ▸ hstart, fun k hk => hpt k (by omega)⟩
-      exact Std.WP.exists_imp_spec ⟨done st.2, hdone st.1 st.2 hge, hpost⟩
+      exact (congrArg (Std.WP.spec · _) (hdone st.1 st.2 hge)).mpr ((Std.WP.spec_ok _).2 hpost)
   · refine ⟨rfl, ?_, ?_, ?_⟩
     · simp
     · simp
@@ -1383,7 +1405,9 @@ theorem copy_prefix_step (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.
   have hnext := next_range_some it h
   rcases hnext with ⟨o, it1, hnext_e, hopt, hstart', hend'⟩
   have hidx' := Aeneas.Std.alloc.vec.Vec.index_usize_spec source it.start hidx
-  rcases Std.WP.spec_imp_exists hidx' with ⟨x, hx, hxv⟩
+  obtain ⟨x, hx, hxv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidx'⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxv
+  rename_i x
   have hidx_u : source.index_usize it.start = ok (source.val[it.start.val]) := by
     rw [hx, hxv]
   have hidx : alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Sz) source it.start
@@ -1643,18 +1667,24 @@ theorem place_incoming_step
       labels1.val = labels.val.set (cursor.val[t.to.index.val]'hidx) t.label ∧
       src1.val = src.val.set (cursor.val[t.to.index.val]'hidx) state_index ∧
       z.val = (cursor.val[t.to.index.val]'hidx).val + 1 := by
-  rcases Std.WP.spec_imp_exists
-      (Aeneas.Std.alloc.vec.Vec.index_usize_spec cursor t.to.index hidx) with ⟨pos, hposok, hposval⟩
+  obtain ⟨pos, hposok, hposval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Aeneas.Std.alloc.vec.Vec.index_usize_spec cursor t.to.index hidx⟩
+  cases pos <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hposval
+  rename_i pos
   have hposL : pos.val < labels.val.length := by grind
   have hposF : pos.val < src.val.length := by grind
   have hadd' : pos.val + 1 ≤ Usize.max := by grind
   have hidxL := Aeneas.Std.alloc.vec.Vec.index_usize_spec labels pos hposL
-  rcases Std.WP.spec_imp_exists hidxL with ⟨y, hy, hyv⟩
+  obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidxL⟩
+  cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+  rename_i y
   have hidxLS : labels.index_usize pos = ok (labels.val[pos.val]'hposL) := by
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have hidxF := Aeneas.Std.alloc.vec.Vec.index_usize_spec src pos hposF
-  rcases Std.WP.spec_imp_exists hidxF with ⟨w, hw, hwv⟩
+  obtain ⟨w, hw, hwv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidxF⟩
+  cases w <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hwv
+  rename_i w
   have hidxFS : src.index_usize pos = ok (src.val[pos.val]'hposF) := by
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hw, hwv]
@@ -1668,7 +1698,9 @@ theorem place_incoming_step
       = ok (src.val[pos.val]'hposF, fun x => src.set pos x) := by
     simp [alloc.vec.Vec.index_mut_usize, hidxFS]
   have hsz := Usize.add_spec (x := pos) (y := 1#usize) hadd'
-  rcases Std.WP.spec_imp_exists hsz with ⟨z, hzok, hzval⟩
+  obtain ⟨z, hzok, hzval⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hsz⟩
+  cases z <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hzval
+  rename_i z
   refine ⟨alloc.vec.Vec.from tl (by grind),
     alloc.vec.Vec.from (cursor.val.set t.to.index.val z) (by grind),
     alloc.vec.Vec.from (labels.val.set pos.val t.label) (by grind),
@@ -1848,7 +1880,9 @@ theorem place_incoming_done (s : TagIndex Sz StateTag) (st : PiSt) (h : st.1.val
   have hn : alloc.vec.into_iter.IteratorIntoIter.next
         (st.1 : alloc.vec.into_iter.IntoIter Transition)
       ⦃ p => p.1 = none ∧ p.2 = st.1 ⦄ := vec_next_none st.1 h
-  rcases Std.WP.spec_imp_exists hn with ⟨p, hp, hpt⟩
+  obtain ⟨p, hp, hpt⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hn⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpt
+  rename_i p
   cases p with
   | mk o it1 =>
     simp only at hpt
@@ -1921,8 +1955,8 @@ theorem place_incoming_loop_spec
       rcases hinv with ⟨hiter, hlenC, hlenL, hlenS, hval, hcont, hprot⟩
       set k := ts.val.length - st.1.val.length with hkdef
       by_cases hnil : st.1.val = []
-      · refine Std.WP.exists_imp_spec
-          ⟨done (st.2.1, st.2.2.1, st.2.2.2), place_incoming_done s st hnil, ?_⟩
+      · refine (congrArg (Std.WP.spec · _) (place_incoming_done s st hnil)).mpr
+          ((Std.WP.spec_ok _).2 ?_)
         have hklen : k = ts.val.length := by
           have h1 := congrArg List.length hiter
           rw [hnil, List.length_nil, List.length_drop] at h1
@@ -2042,9 +2076,8 @@ theorem place_incoming_loop_spec
           calc iter1.val = tl := hit1
             _ = ts.val.drop (k + 1) := hiter'
             _ = ts.val.drop (ts.val.length - iter1.val.length) := by rw [hk1]
-        refine Std.WP.exists_imp_spec
-          ⟨cont (iter1, (cursor1, (labels1, src1))), hbody,
-            ⟨hiter'', ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+        refine (congrArg (Std.WP.spec · _) hbody).mpr
+          ((Std.WP.spec_ok _).2 ⟨⟨hiter'', ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩)
         · -- the three arrays keep their lengths
           rw [hsetC, List.length_set, hlenC]
         · rw [hsetL, List.length_set, hlenL]
@@ -2130,7 +2163,9 @@ theorem place_incoming_loop_spec
         exact slotEntries_of_le _ _ _ _ (le_refl _)
       · intro j hj
         rfl
-  rcases Std.WP.spec_imp_exists hspec with ⟨p, hloop, hpost⟩
+  obtain ⟨p, hloop, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i p
   exact ⟨p.1, p.2.1, p.2.2, hloop, hpost⟩
 
 /-! ## Stage 6b: the outer scan `place_all_incoming`
@@ -2400,7 +2435,9 @@ theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : 
   have hn : alloc.vec.into_iter.IteratorIntoIter.next
         (st.1 : alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag))
       ⦃ p => p.1 = none ∧ p.2 = st.1 ⦄ := vec_next_none st.1 h
-  rcases Std.WP.spec_imp_exists hn with ⟨p, hp, hpt⟩
+  obtain ⟨p, hp, hpt⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hn⟩
+  cases p <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpt
+  rename_i p
   cases p with
   | mk o it1 =>
     simp only at hpt
@@ -2617,7 +2654,7 @@ theorem place_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
       by_cases hnil : st.1.val = []
       · rcases place_all_incoming_done LTSInst sys sv r labels0 src0 st hnil hinv with
           ⟨hdone, hpost⟩
-        exact Std.WP.exists_imp_spec ⟨done st.2, hdone, hpost⟩
+        exact (congrArg (Std.WP.spec · _) hdone).mpr ((Std.WP.spec_ok _).2 hpost)
       · obtain ⟨s, sl, hst⟩ := List.exists_cons_of_ne_nil hnil
         have hiter : st.1.val = sv.val.drop (sv.val.length - st.1.val.length) := hinv.1
         have hdrop : sv.val.drop (sv.val.length - st.1.val.length) = s :: sl :=
@@ -2628,12 +2665,13 @@ theorem place_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
             (sv.val.length - st.1.val.length) hst hiter hinv (hout s hmem) (hin s hmem)
             hlens hrlen hmono hcsr hfill hlenmax
           with ⟨iter1, cursor1, labels1, src1, hbody, hit1, hinv1⟩
-        refine Std.WP.exists_imp_spec
-          ⟨cont (iter1, (cursor1, (labels1, src1))), hbody, hinv1, ?_⟩
+        refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv1, ?_⟩)
         rw [hit1, hst]
         simp
     · exact hinv
-  rcases Std.WP.spec_imp_exists hspec with ⟨c, hloop, hpost⟩
+  obtain ⟨c, hloop, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases c <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i c
   exact ⟨c.1, c.2.1, c.2.2, hloop, hpost⟩
 
 /-- `place_all_incoming` (`:193`): with the state enumeration coming from `iter_states`, the
@@ -2876,14 +2914,18 @@ theorem insert_sorted_done_cmp (start : Sz) (label : TagIndex Sz LabelTag)
   have hpos : j.val - 1 < labels.val.length := by omega
   have hpos' : j.val - 1 < src.val.length := by omega
   have hsub : 1 ≤ j.val := by omega
-  rcases Std.WP.spec_imp_exists (Usize.sub_spec (x := j) (y := 1#usize) hsub) with
-    ⟨i, hi, hival⟩
+  obtain ⟨i, hi, hival⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := j) (y := 1#usize) hsub⟩
+  cases i <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hival
+  rename_i i
   rcases hival with ⟨hival', hivalle⟩
   simp only [one_val] at hival' hivalle
   have hposI : i.val < labels.val.length := by rw [hival']; exact hpos
   have hidxL : labels.index_usize i = ok (labels.val[i.val]'hposI) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec labels i hposI
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have hget : labels.val[i.val]'hposI = labels.val.getD (j.val - 1) zeroLabel := by
@@ -2929,24 +2971,32 @@ theorem insert_sorted_step
   have hjlt : j.val < labels.val.length := by omega
   have hjlt' : j.val < src.val.length := by omega
   have hsub : 1 ≤ j.val := by omega
-  rcases Std.WP.spec_imp_exists (Usize.sub_spec (x := j) (y := 1#usize) hsub) with
-    ⟨j1, hj1, hj1all⟩
+  obtain ⟨j1, hj1, hj1all⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := j) (y := 1#usize) hsub⟩
+  cases j1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hj1all
+  rename_i j1
   rcases hj1all with ⟨hj1val, hj1le⟩
   simp only [one_val] at hj1val hj1le
   have hpos1 : j1.val < labels.val.length := by rw [hj1val]; exact hpos
   have hidxL : labels.index_usize j1 = ok (labels.val[j1.val]'hpos1) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec labels j1 hpos1
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have hidxLj : labels.index_usize j = ok (labels.val[j.val]'hjlt) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec labels j hjlt
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have hidxFj : src.index_usize j = ok (src.val[j.val]'hjlt') := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec src j hjlt'
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have himutLj : labels.index_mut_usize j
@@ -2970,7 +3020,9 @@ theorem insert_sorted_step
   have hposF1 : j1.val < src.val.length := by rw [hj1val]; exact hpos'
   have hidxF1 : src.index_usize j1 = ok (src.val[j1.val]'hposF1) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec src j1 hposF1
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have hgetF1 : src.val[j1.val]'hposF1 = src.val.getD (j.val - 1) zeroState := by
@@ -3080,8 +3132,8 @@ theorem insert_sorted_loop_spec
       rcases hinv with ⟨hinv, hjlt⟩
       rcases hinv with ⟨hstart0, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩
       by_cases hle : st.2.2.val ≤ start.val
-      · refine Std.WP.exists_imp_spec
-          ⟨done st, insert_sorted_done_start start label st.1 st.2.1 st.2.2 hle, ?_⟩
+      · refine (congrArg (Std.WP.spec · _) (insert_sorted_done_start start label st.1 st.2.1 st.2.2 hle)).mpr
+          ((Std.WP.spec_ok _).2 ?_)
         exact isPost_of_inv labels0 src0 start.val i.val st
           ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩ (Or.inl hle)
       · have hgt : start.val < st.2.2.val := by omega
@@ -3092,18 +3144,15 @@ theorem insert_sorted_loop_spec
             insert_sorted_step labels0 src0 start label i st.2.2 st.1 st.2.1
               hi hgt (by simpa using hcmp) hlab
               ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩
-          refine Std.WP.exists_imp_spec ⟨cont (labels1, src1, j1), hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           show IsLoop labels0 src0 start.val i.val (labels1, src1, j1) ∧ j1.val < st.2.2.val
           unfold IsLoop
           have htuple : (labels1, src1, j1).2.2.val = j1.val := rfl
           refine ⟨⟨hinv', ?_⟩, by omega⟩
           rw [htuple]
           omega
-        · refine Std.WP.exists_imp_spec
-            ⟨done st,
-              insert_sorted_done_cmp start label st.1 st.2.1 st.2.2 (by omega) (by omega) hgt
-                (by simpa using hcmp),
-              ?_⟩
+        · refine (congrArg (Std.WP.spec · _) (insert_sorted_done_cmp start label st.1 st.2.1 st.2.2 (by omega) (by omega) hgt (by simpa using hcmp))).mpr
+            ((Std.WP.spec_ok _).2 ?_)
           refine isPost_of_inv labels0 src0 start.val i.val st
             ⟨by omega, hji, hlenL, hlenS, hlen0, hA, hB, hC, hD⟩ (Or.inr ?_)
           have h1 : st.1.val.getD (st.2.2.val - 1) zeroLabel
@@ -3113,7 +3162,9 @@ theorem insert_sorted_loop_spec
           omega
 
     · exact hloop
-  rcases Std.WP.spec_imp_exists hspec with ⟨st, hloop', hpost⟩
+  obtain ⟨st, hloop', hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases st <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i st
   exact ⟨st, hloop', hpost⟩
 
 /-- What `insert_sorted` leaves behind: the window `[start, i + 1)` holds the pairs it held
@@ -3143,13 +3194,17 @@ theorem insert_sorted_spec
   have hi' : i.val < src0.val.length := by omega
   have hidxL : labels0.index_usize i = ok (labels0.val.getD i.val zeroLabel) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec labels0 i hi
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv,
       getElem_eq_getD labels0.val i.val zeroLabel hi]
   have hidxF : src0.index_usize i = ok (src0.val.getD i.val zeroState) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec src0 i hi'
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv,
       getElem_eq_getD src0.val i.val zeroState hi']
@@ -3175,12 +3230,16 @@ theorem insert_sorted_spec
   have hjlt' : j.val < src1.val.length := by rw [hlenS]; omega
   have hidxLj : labels1.index_usize j = ok (labels1.val[j.val]'hjlt) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec labels1 j hjlt
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have hidxFj : src1.index_usize j = ok (src1.val[j.val]'hjlt') := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec src1 j hjlt'
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv]
   have himutLj : labels1.index_mut_usize j
@@ -3387,7 +3446,7 @@ theorem sort_incoming_loop_spec
             unfold verified.merc_lts.incoming_transitions.sort_incoming_loop.body
             rw [hnext, hone]
             simp
-          refine Std.WP.exists_imp_spec ⟨done (st.2.1, st.2.2), hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           show sameWindow st.2.1.val st.2.2.val labels0.val src0.val start.val iter.end.val ∧
             st.2.1.val.length = labels0.val.length ∧ st.2.2.val.length = src0.val.length ∧
             (∀ p, p < start.val → pairAt st.2.1.val st.2.2.val p
@@ -3410,7 +3469,7 @@ theorem sort_incoming_loop_spec
             unfold verified.merc_lts.incoming_transitions.sort_incoming_loop.body
             rw [hnext, hsome]
             simp [hsort]
-          refine Std.WP.exists_imp_spec ⟨cont (iter1, labels1, src1), hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           change SorInv labels0 src0 start iter.end (iter1, labels1, src1) ∧
             (iter1.end.val - iter1.start.val) < (st.1.end.val - st.1.start.val)
           rcases hins with ⟨hwin', htail, hlenL', hlenS', hbelow, hzins⟩
@@ -3463,7 +3522,7 @@ theorem sort_incoming_loop_spec
             unfold verified.merc_lts.incoming_transitions.sort_incoming_loop.body
             rw [hnext, hone]
             simp
-          refine Std.WP.exists_imp_spec ⟨done (st.2.1, st.2.2), hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           show sameWindow st.2.1.val st.2.2.val labels0.val src0.val start.val iter.end.val ∧
             st.2.1.val.length = labels0.val.length ∧ st.2.2.val.length = src0.val.length ∧
             (∀ p, p < start.val → pairAt st.2.1.val st.2.2.val p
@@ -3484,7 +3543,7 @@ theorem sort_incoming_loop_spec
             unfold verified.merc_lts.incoming_transitions.sort_incoming_loop.body
             rw [hnext, hsome]
             simp [hsort]
-          refine Std.WP.exists_imp_spec ⟨cont (iter1, labels1, src1), hbody, ?_⟩
+          refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ?_)
           change SorInv labels0 src0 start iter.end (iter1, labels1, src1) ∧
             (iter1.end.val - iter1.start.val) < (st.1.end.val - st.1.start.val)
           rcases hins with ⟨hwin', htail, hlenL', hlenS', hbelow, hzins⟩
@@ -3531,7 +3590,9 @@ theorem sort_incoming_loop_spec
             show Zp labels1.val start.val iter1.start.val
             rw [hstart1]; exact hzins hZ⟩, hlt'⟩
     · exact hinv
-  rcases Std.WP.spec_imp_exists hspec with ⟨r, hloop', hpost⟩
+  obtain ⟨r, hloop', hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i r
   exact ⟨r.1, r.2, hloop', hpost⟩
 
 /-- `sort_incoming labels from start stop` leaves the range `[start, stop)` holding the pairs it
@@ -3553,7 +3614,9 @@ theorem sort_incoming_spec
         = ok (labels1, src1) ∧
       SorPost labels0 src0 start stop (labels1, src1) := by
   have hadd := Usize.add_spec (x := start) (y := 1#usize) hnoovf
-  rcases Std.WP.spec_imp_exists hadd with ⟨i, hadd_eq, hi_val⟩
+  obtain ⟨i, hadd_eq, hi_val⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hadd⟩
+  cases i <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi_val
+  rename_i i
   have hi : i = uTotal (start.val + 1) := by
     apply sz_eq_from_val
     rw [hi_val, one_val, uTotal_val_of_lt (lt_two_pow_of_le_max hnoovf)]
@@ -3748,18 +3811,24 @@ private theorem sort_all_incoming_step (c : alloc.vec.Vec Sz) (n : Sz)
   have hend1v : iter1.end.val = st.1.end.val := congrArg _ hend1
   have hidx0 : c.index_usize st.1.start = ok (c.val.getD st.1.start.val 0#usize) := by
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec c st.1.start (by omega)
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     rw [← alloc.vec.Vec.index_slice_index]
     rw [alloc.vec.Vec.index_slice_index, hy, hyv,
       getElem_eq_getD c.val st.1.start.val 0#usize (by omega)]
   have hadd1v : st.1.start.val + 1 ≤ Usize.max := by omega
-  obtain ⟨i1, hadd1_eq, hi1⟩ :=
-    Std.WP.spec_imp_exists (Usize.add_spec (x := st.1.start) (y := 1#usize) hadd1v)
+  obtain ⟨i1, hadd1_eq, hi1⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := st.1.start) (y := 1#usize) hadd1v⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1
+  rename_i i1
   have hi1v : i1.val = st.1.start.val + 1 := by rw [hi1, one_val]
   have hidx1 : c.index_usize i1 = ok (c.val.getD i1.val 0#usize) := by
     have hbound : i1.val < c.val.length := by rw [hi1v]; omega
     have hl := Aeneas.Std.alloc.vec.Vec.index_usize_spec c i1 (by rw [hcl]; exact hbound)
-    rcases Std.WP.spec_imp_exists hl with ⟨y, hy, hyv⟩
+    obtain ⟨y, hy, hyv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hl⟩
+    cases y <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hyv
+    rename_i y
     have hidxI : c.index_usize i1 = ok (c.val[i1.val]) := by
       rw [← alloc.vec.Vec.index_slice_index]
       rw [alloc.vec.Vec.index_slice_index, hy, hyv]
@@ -3880,18 +3949,20 @@ theorem sort_all_incoming_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
     · intro s hinv
       by_cases hge : n.val ≤ s.1.start.val
       · rcases sort_all_incoming_done c n labels0 src0 s hinv hge with ⟨hdone, hpost⟩
-        exact Std.WP.exists_imp_spec ⟨done (s.2.1, s.2.2), hdone, hpost⟩
+        exact (congrArg (Std.WP.spec · _) hdone).mpr ((Std.WP.spec_ok _).2 hpost)
       · rcases sort_all_incoming_step c n labels0 src0 s hinv hge hrlen hclen
           hmono hfill hlen0 hlenmax
           with ⟨iter1, labels1, src1, hbody, hstart1, hend1, hinv1⟩
-        refine Std.WP.exists_imp_spec ⟨cont (iter1, labels1, src1), hbody, hinv1, ?_⟩
+        refine (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv1, ?_⟩)
         have hend1v : iter1.end.val = s.1.end.val := congrArg _ hend1
         have hle := hinv.1
         have hend_n := hinv.2
         rw [hend1v, hstart1]
         omega
     · exact hinv
-  rcases Std.WP.spec_imp_exists hspec with ⟨r, hloop, hpost⟩
+  obtain ⟨r, hloop, hpost⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hspec⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hpost
+  rename_i r
   exact ⟨r.1, r.2, hloop, hpost⟩
 
 /-- `sort_all_incoming` walks the states `0, …, n-1`. -/
@@ -4011,7 +4082,7 @@ theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (
         rw [hstart, hend', hend]
         rw [hend] at hlt
         omega
-      exact Std.WP.exists_imp_spec ⟨cont (it1, v1), hbody, hinv', hlt'⟩
+      exact (congrArg (Std.WP.spec · _) hbody).mpr ((Std.WP.spec_ok _).2 ⟨hinv', hlt'⟩)
     · have hge : st.1.end.val ≤ st.1.start.val := by omega
       have hstart : st.1.start.val = n.val := by
         apply Nat.le_antisymm hle2
@@ -4019,7 +4090,7 @@ theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (
       have hpost : st.2.val.length = n.val - s.val ∧
           ∀ k, k < n.val - s.val → st.2.val.getD k d = f (k + s.val) := by
         refine ⟨by rw [hlen, hstart], fun k hk => hpt k (by omega)⟩
-      exact Std.WP.exists_imp_spec ⟨done st.2, hdone st.1 st.2 hge, hpost⟩
+      exact (congrArg (Std.WP.spec · _) (hdone st.1 st.2 hge)).mpr ((Std.WP.spec_ok _).2 hpost)
   · refine ⟨rfl, ?_, ?_, ?_, ?_⟩
     · exact Nat.le_refl _
     · exact hsn
@@ -4051,10 +4122,14 @@ theorem incoming_transitions_loop_step
       res1.val = res.val ++ [ftAt labels.val src.val it.start.val] := by
   have hsrc : it.start.val < src.val.length := by rw [← hlen]; exact hbound
   rcases next_range_some it hlt with ⟨o, it1, hnext, hopt, hstart, hend⟩
-  rcases Std.WP.spec_imp_exists (alloc.vec.Vec.index_usize_spec labels it.start hbound)
-    with ⟨x0, hidx0, hx0⟩
-  rcases Std.WP.spec_imp_exists (alloc.vec.Vec.index_usize_spec src it.start hsrc)
-    with ⟨x1, hidx1, hx1⟩
+  obtain ⟨x0, hidx0, hx0⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_usize_spec labels it.start hbound⟩
+  cases x0 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hx0
+  rename_i x0
+  obtain ⟨x1, hidx1, hx1⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.Vec.index_usize_spec src it.start hsrc⟩
+  cases x1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hx1
+  rename_i x1
   rcases vec_push_val res (ftAt labels.val src.val it.start.val) hmax
     with ⟨res1, hpush, hresval⟩
   refine ⟨it1, res1, ?_, hstart, hend, hresval⟩

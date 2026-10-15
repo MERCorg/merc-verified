@@ -3,7 +3,7 @@ import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
 /-!
 # `IncomingTransitions::new` is correct
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 Assembles the stage lemmas of `IncomingTransitions_Proofs` (stages 1-7 and the reader
 `incoming_transitions`) into `incoming_transitions_correct`, under `WellFormed`.
@@ -25,7 +25,9 @@ set_option maxRecDepth 10000
 theorem vec_index_sz (v : alloc.vec.Vec Sz) (i : Sz) (h : i.val < v.val.length) :
     alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Sz) v i = ok (v.val[i.val]'h) := by
   have hidx' := Aeneas.Std.alloc.vec.Vec.index_usize_spec v i h
-  rcases Std.WP.spec_imp_exists hidx' with ⟨x, hx, hxv⟩
+  obtain ⟨x, hx, hxv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidx'⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxv
+  rename_i x
   have hidx_u : v.index_usize i = ok (v.val[i.val]) := by rw [hx, hxv]
   simpa [alloc.vec.Vec.index_slice_index] using hidx_u
 
@@ -50,8 +52,10 @@ theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz 
       have := self.state2incoming.property
       simpa [Usize.max] using this
     omega
-  obtain ⟨i1, hi1, hi1v⟩ := Std.WP.spec_imp_exists
-    (Usize.add_spec (x := s.index) (y := 1#usize) (by simp [hmaxS]))
+  obtain ⟨i1, hi1, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := s.index) (y := 1#usize) (by simp [hmaxS])⟩
+  cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+  rename_i i1
   have hi1v' : i1.val = s.index.val + 1 := by simpa using hi1v
   have hget0 : self.state2incoming.val.getD s.index.val 0#usize
       = self.state2incoming.val[s.index.val]'hs0 :=
@@ -64,7 +68,11 @@ theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz 
   set e := self.state2incoming.val[i1.val]'hi1lt with he
   rw [hget0] at hle ⊢
   rw [hget1] at hle hend ⊢
-  obtain ⟨i2, hi2, hi2v, -⟩ := Std.WP.spec_imp_exists (Usize.sub_spec (x := e) (y := start) hle)
+  obtain ⟨i2, hi2, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := e) (y := start) hle⟩
+  cases i2 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i i2
+  obtain ⟨hi2v, -⟩ := hres
   have hcall : IncomingTransitions.incoming_transitions self s
       = verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions_loop
           { start := start, «end» := e } self.transition_labels self.transition_from
@@ -97,7 +105,10 @@ theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz 
       unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions_loop.body
       rw [hnext, hopt]
       simp)
-  obtain ⟨r, hr, ⟨hrlen, hrget⟩⟩ := Std.WP.spec_imp_exists hgather
+  obtain ⟨r, hr, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hgather⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i r
+  obtain ⟨hrlen, hrget⟩ := hres
   refine ⟨r, ?_, ?_⟩
   · unfold verified.merc_lts.incoming_transitions.IncomingTransitions.incoming_transitions_loop
     exact hr
@@ -222,7 +233,9 @@ theorem copy_prefix_ok (source : alloc.vec.Vec Sz) (n : Sz) (hn : n.val < Usize.
       verified.merc_lts.incoming_transitions.copy_prefix source n = ok r ∧
       r.val.length = n.val ∧
       ∀ k, k < n.val → r.val.getD k 0#usize = source.val.getD k 0#usize := by
-  obtain ⟨r, hr, hp⟩ := Std.WP.spec_imp_exists (copy_prefix_spec n source hn hsrc)
+  obtain ⟨r, hr, hp⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, copy_prefix_spec n source hn hsrc⟩
+  cases r <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hp
+  rename_i r
   exact ⟨r, hr, hp⟩
 
 /-- `IncomingTransitions::new` succeeds on a well-formed LTS, and the structure it leaves behind. -/
@@ -281,8 +294,10 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
   obtain ⟨src0, hs0, hs0v⟩ := new_states_spec m
   have hlen0 : labels0.val.length = m.val := by rw [hl0v]; simp
   have hslen0 : src0.val.length = m.val := by rw [hs0v]; simp
-  obtain ⟨i, hi, hiv⟩ := Std.WP.spec_imp_exists
-    (Usize.add_spec (x := n0) (y := 1#usize) (by simp; omega))
+  obtain ⟨i, hi, hiv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.add_spec (x := n0) (y := 1#usize) (by simp; omega)⟩
+  cases i <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hiv
+  rename_i i
   have hiv' : i.val = n0.val + 1 := by simpa using hiv
   obtain ⟨c0, hc0, hc0v⟩ := new_counts_spec i
   have hc0len : c0.val.length = n0.val + 1 := by rw [hc0v]; simp [hiv']

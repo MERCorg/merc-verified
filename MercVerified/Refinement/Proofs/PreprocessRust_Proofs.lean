@@ -11,7 +11,7 @@ B2, B4, B5). The proofs are still `sorry`; the finished building blocks are
 `QuotientRust_Proofs` (`collect_spec`, `push_transitions_spec`, `build_body_step` partially) and
 `LtsData_Proofs` (`RawOf`, `raw_valid`, `raw_outgoing`, `assert_valid_ok`).
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
 
 open Aeneas Aeneas.Std WP Result ControlFlow
@@ -414,9 +414,10 @@ theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     simp [ti2]
   have hbk_ti : ti2.index.val = (bk ip ti.index.val).index.val := by
     simp [ti2, ti1, bk, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem htip]
-  obtain ⟨v, hv, hvslice⟩ := spec_imp_exists
-    (alloc.slice.Slice.to_vec_spec LTSInst.TransitionLabelInst.corecloneCloneInst sl
-      (fun x _ => hclone x))
+  obtain ⟨v, hv, hvslice⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.slice.Slice.to_vec_spec LTSInst.TransitionLabelInst.corecloneCloneInst sl (fun x _ => hclone x)⟩
+  cases v <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hvslice
+  rename_i v
   have hvval : v.val = sl.val := by rw [alloc.vec.Vec.val, hvslice]
   set Q : LabelledTransitionSystem Label :=
     { states := st2, transition_labels := lb, transition_to := tb, labels := v, initial_state := ti2 }
@@ -660,7 +661,7 @@ theorem quotient_lts_naive_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
     (hnlt : n0.val < Usize.max)
     (ip : IndexedPartition) (k : Nat)
     (hlen : ip.partition.val.length = n0.val) (hnb : ip.num_of_blocks.val = max 1 k)
-    (hscc : Sigref.Tarjan.IsSccPartition (gOf LTSInst sys hn0 hnlt)
+    (hscc : MercLib.Tarjan.IsSccPartition (gOf LTSInst sys hn0 hnlt)
       (view n0.val (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val) k) :
     ∃ (Q : LabelledTransitionSystem Label) (off : List Nat)
       (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag)),
@@ -814,9 +815,11 @@ theorem invert_permutation_spec (perm : Slice (TagIndex Std.Usize StateTag)) (n 
     simp [verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone.clone]
   have hnew0 : verified.merc_utilities.tagged_index.TagIndex.new StateTag 0#usize =
       ok ({ index := 0#usize, marker := () } : TagIndex Std.Usize StateTag) := by simp
-  obtain ⟨inverse, hinv, hinvv, _⟩ := spec_imp_exists (alloc.vec.from_elem_spec
-    (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone StateTag core.clone.CloneUsize)
-    ({ index := 0#usize, marker := () } : TagIndex Std.Usize StateTag) (Slice.len perm) (hcl _))
+  obtain ⟨inverse, hinv, hres⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, alloc.vec.from_elem_spec (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCloneClone StateTag core.clone.CloneUsize) ({ index := 0#usize, marker := () } : TagIndex Std.Usize StateTag) (Slice.len perm) (hcl _)⟩
+  cases inverse <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hres
+  rename_i inverse
+  obtain ⟨hinvv, _⟩ := hres
   have hSlen : (Slice.len perm).val = n := by simpa [Slice.len] using hlen
   rw [hnew0]
   simp only [bind_ok]
@@ -846,7 +849,10 @@ theorem invert_permutation_spec (perm : Slice (TagIndex Std.Usize StateTag)) (n 
         { start := st1, «end» := Slice.len perm } := by rw [he1]
     rw [hit1] at hnext
     have hiO : i.val < perm.val.length := by omega
-    obtain ⟨ti1, hti1e, hti1'⟩ := spec_imp_exists (Slice.index_usize_spec perm i hiO)
+    obtain ⟨ti1, hti1e, hti1'⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Slice.index_usize_spec perm i hiO⟩
+    cases ti1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hti1'
+    rename_i ti1
     have hj : (perm.val[i.val]'hiO).index.val < m.val.length := by
       rw [hm.1]; exact hlt _ (List.getElem_mem hiO)
     have hmut := vec_index_mut_ok m (perm.val[i.val]'hiO).index hj
@@ -921,7 +927,9 @@ def prename (perm : Slice (TagIndex Std.Usize StateTag)) (t : TagIndex Std.Usize
 theorem slice_index_ok' {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
     Slice.index_usize s i = ok (s.val[i.val]'h) := by
   have hs := Slice.index_usize_spec s i h
-  obtain ⟨x, hx, hxe⟩ := Std.WP.spec_imp_exists hs
+  obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hs⟩
+  cases x <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hxe
+  rename_i x
   rw [hx, hxe]
 
 /-- The old block index assigned to the new position `j` by the inverse permutation. -/
@@ -1568,10 +1576,12 @@ theorem nfp_outer_spec {Label : Type} (lts : LabelledTransitionSystem Label)
     have hstarti : ByteCompressedVec.index UIdx lts.states ti.index = ok sv :=
       ByteCompressedVec.index_spec UIdx lts.states ti.index holdlt
     have hsv : sv.val = off.getD ti.index.val 0 := RawOf.st_get hR ti.index.val holdlt
-    obtain ⟨i1, hadde, hi1v⟩ := Std.WP.spec_imp_exists
-      (Usize.add_spec (x := ti.index) (y := 1#usize) (by
+    obtain ⟨i1, hadde, hi1v⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+      ⟨_, rfl, Usize.add_spec (x := ti.index) (y := 1#usize) (by
         rw [htival, h1]
-        omega))
+        omega)⟩
+    cases i1 <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hi1v
+    rename_i i1
     have hi1lt : i1.val < (ByteCompressedVec.toList lts.states).length := by
       rw [hR.st_length, hi1v, h1, htival]; omega
     let ev : Std.Usize := (ByteCompressedVec.toList lts.states)[i1.val]'hi1lt
@@ -1638,8 +1648,8 @@ theorem nfp_outer_spec {Label : Type} (lts : LabelledTransitionSystem Label)
       unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.new_from_permutation_vec_loop0.body
       rw [hnext, ho, hlen]
       simp [hpush]
-      rw [hveci]
-      rw [tag_value_id, hstarti, hadde, hendi, hinner]
+      rw [alloc.vec.Vec.index_slice_index] at hveci
+      simp [hveci, hstarti, hadde, hendi, hinner]
     have hn1 : iter1.«end».val - iter1.start.val = m := by rw [hend']; omega
     have hinv1 : NfpInv inverse off labs tos perm iter1.start.val states1 TL2 TT2 := by
       rw [hstart']; exact ⟨hstates2, hTL2', hTT2'⟩
@@ -1689,7 +1699,7 @@ theorem tau_cycle_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     ∃ (R : LabelledTransitionSystem Label) (state' : TagIndex Std.Usize StateTag) (f : ℕ → ℕ),
       verified.merc_reduction.signatures.tau_cycle_elimination_and_reorder LTSInst sys state true = ok (R, state') ∧
       state'.index.val = f state.index.val ∧
-      Sigref.IsCrossBB (MercVerified.Lts.toLTS LTSInst sys)
+      MercLib.Sigref.IsCrossBB (MercVerified.Lts.toLTS LTSInst sys)
         (MercVerified.Lts.toLTS
           (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS LTSInst.TransitionLabelInst) R)
         (fun s s' => s.index.val < n0.val ∧ s'.index.val = f s.index.val) ∧

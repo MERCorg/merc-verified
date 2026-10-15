@@ -1,7 +1,5 @@
-import Signatures.BranchingBisimilarity
-import Signatures.Signature
-
-import MercVerified.AeneasCompat
+import MercLib.LTS.BranchingBisimilarity
+import MercLib.Signatures.Signature
 
 -- Import the generated Lean code
 import MercVerified.Code.Funs

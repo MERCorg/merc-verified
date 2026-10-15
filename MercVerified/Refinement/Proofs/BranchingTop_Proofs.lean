@@ -8,7 +8,7 @@ import Aeneas.Std.WP
 /-!
 # Proofs for the `branching_bisim_sigref_impl` correctness contract
 
-Machine-generated; may be freely edited or regenerated (see CLAUDE.md).
+Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `branching_bisim_sigref_impl_correct` proves `BranchingBisimSigrefImplCorrectSpec`
 (`MercVerified/Refinement/Refinement.lean`); its pin lives in `Pins/Refinement_Pins.lean`.
@@ -28,6 +28,7 @@ open MercVerified.Lts (toLTS)
 
 open MercVerified.Lts.Proofs
 open MercVerified.Refinement
+open MercLib.Signatures MercLib.LTS
 
 namespace MercVerified.Refinement.Proofs
 
