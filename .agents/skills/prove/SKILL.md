@@ -5,7 +5,7 @@ description: lean-lsp MCP workflow, key tools, and definitions for interactive L
 
 ## AI Agent Workflow (lean-lsp MCP)
 
-The `.mcp.json` configures a `lean-lsp` MCP server for interactive proving. Key tools:
+The `lean-lsp` MCP server (configured in `.mcp.json` and `opencode.json`) supports interactive proving. Key tools:
 
 - `lean_goal` — proof state at a cursor position ("no goals" = done)
 - `lean_diagnostic_messages` — compiler errors/warnings for a file

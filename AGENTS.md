@@ -6,16 +6,19 @@
 - **`Signatures/Proofs/`** — Machine-generated proofs. May be freely edited or regenerated.
 - **`MercVerified/Refinement/`** (for the `merc_refinement` crate) and **`MercVerified/Lts/`** (for the `merc_lts` crate; namespace `MercVerified.Lts`) — Human-vetted contract specs and definitions for the translated code (e.g. `Refinement/Refinement.lean`, `Lts/Lts.lean`) and the `*_Pins.lean` siblings under `Pins/` (e.g. `Refinement/Pins/Refinement_Pins.lean`). Same split as `Signatures/`: each spec file states a claim as a named `def ... : Prop`, never a theorem. Make only minimal, targeted changes.
 - **`Sigref/`** — Aeneas-independent abstract signature-refinement theory (strong and branching), same split as `Signatures/`: human-vetted spec files (`Basic`, `RelBisim`, `Strong`, `Branching`, `SigData`, `SigE`, `Refinable`, `Worklist`, `Iteration`; each headline claim is a named `def ... : Prop`), machine-generated `Sigref/Proofs/*_Proofs.lean` (also holds `CountingSort_Proofs`, moved from `MercVerified/Refinement/Proofs/` because it needs no Aeneas), and `Sigref/Pins/*_Pins.lean`. Make only minimal, targeted changes to the spec files.
-- **`ParityGame/`** — Parity games, positional strategies, attractors, Zielonka's algorithm and the generic solver (SCCs, special cases, priority compression/propagation) of Friedmann & Lange, ATVA 2009, same split as `Refinement/`: human-vetted `Defs`, `Attractor`, `Zielonka`, `Scc`, `Transform`, `Special`, `Generic` (headline claims are named `def ... : Prop`), machine-generated `Proofs/*_Proofs.lean`, and `Pins/*_Pins.lean`. Make only minimal, targeted changes to the spec files.
+- **`ParityGame/`** — Parity games, positional strategies, attractors, Zielonka's algorithm and the generic solver (SCCs, special cases, priority compression/propagation) of Friedmann & Lange, ATVA 2009, same split as `Refinement/`: human-vetted `Game`, `Attractor`, `Zielonka`, `Scc`, `Transform`, `Special`, `Generic` (headline claims are named `def ... : Prop`), machine-generated `Proofs/*_Proofs.lean`, and `Pins/*_Pins.lean`. Make only minimal, targeted changes to the spec files.
+- **`Rewriting/`** — Many-sorted conditional term rewriting: signatures and terms, oriented-CTRS rewrite relation, soundness w.r.t. a model, termination criteria (measure, monotone algebra) and semantic ground confluence. Same split as `Sigref/`: human-vetted definition files (`Signature`, `Rewrite`, `Soundness`, `Termination`, `Confluence`; no theorems), machine-generated `Proofs/*_Proofs.lean`, and `Pins/*_Pins.lean` (`example` pins restating each headline theorem's closed signature). Make only minimal, targeted changes to the definition files.
 - **`MercVerified/{Refinement,Lts}/Proofs/`** — Machine-generated proofs of the specs above. May be freely edited or regenerated. Each proved "headline" theorem is guarded against drift by a pinned `example` in the matching human-vetted `*_Pins.lean` file (not in this directory). See the lean-conventions skill for the full spec/Proofs/pin pattern.
 
 ## Skills
 
-| Command | Description |
+Task-specific instructions live in `.agents/skills/<name>/SKILL.md` (Agent Skills format: YAML frontmatter with `name` and `description`, then Markdown). Load the relevant skill before starting a matching task. `.claude/skills` is a symlink to the same directory.
+
+| Skill | Description |
 |---|---|
-| `/build` | Build and test commands |
-| `/regenerate` | Regenerate Lean code from Rust sources |
-| `/lean-conventions` | Lean 4 coding and proof conventions |
-| `/rust-conventions` | Rust coding conventions |
-| `/prove` | lean-lsp MCP workflow, tools, and key definitions |
-| `/ci` | CI workflow descriptions |
+| `build` | Build and test commands |
+| `regenerate` | Regenerate Lean code from Rust sources |
+| `lean-conventions` | Lean 4 coding and proof conventions |
+| `rust-conventions` | Rust coding conventions |
+| `prove` | lean-lsp MCP workflow, tools, and key definitions |
+| `ci` | CI workflow descriptions |
