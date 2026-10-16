@@ -69,13 +69,18 @@ def StrongBisimSigrefCorrectSpec
     * label index `0` is the hidden label (`is_hidden_label`), and every label of a transition is
       below `num_of_labels`;
     * the τ-transitions (label index `0`) go to a state with a smaller index (topological order;
-      together with this, the LTS has no τ-cycles). -/
+      together with this, the LTS has no τ-cycles).
+    The transition clauses are about the real states `s.index < n` only: the transitions of an
+    index `≥ n` read the representation out of range and are not determined. -/
 def BranchingLtsAssumptions {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
   (∃ nl : Std.Usize, LTSInst.num_of_labels sys = ok nl ∧
     (∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0))) ∧
-    ∀ s μ s', MercVerified.Lts.tr LTSInst sys s μ s' → μ.index.val < nl.val) ∧
-  (∀ s μ t, MercVerified.Lts.tr LTSInst sys s μ t → μ.index.val = 0 → t.index.val < s.index.val)
+    ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+      ∀ s μ s', s.index.val < n.val → MercVerified.Lts.tr LTSInst sys s μ s' → μ.index.val < nl.val) ∧
+  (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+    ∀ s μ t, s.index.val < n.val → MercVerified.Lts.tr LTSInst sys s μ t → μ.index.val = 0 →
+      t.index.val < s.index.val)
 
 /-- Correctness of `branching_bisim_sigref_impl` for any `LTS` trait implementor `L` whose state
     space is well-formed (`hwf`), fits the loop counter (`hfit`) and satisfies
@@ -123,8 +128,9 @@ def PreprocessAssumptions {L Label : Type} (LTSInst : LTS L Label) (sys : L) : P
   (∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
     ∃ i, LTSInst.initial_state_index sys = ok i ∧ i.index.val < n.val)
 
-/-- Correctness of `branching_bisim_sigref` for `divergence_preserving = false`. The call succeeds
-    and returns the preprocessed LTS `R`, the image `state'` of `state` and a partition of `R`:
+/-- Correctness of `branching_bisim_sigref` for `divergence_preserving = false`, for a real state
+    `state` (`_hstate`; the call fails otherwise, since it looks up the block of `state`). The call
+    succeeds and returns the preprocessed LTS `R`, the image `state'` of `state` and a partition of `R`:
     * the preprocessing is correct: `R` is `WellFormed`, fits the loop counter and satisfies
       `BranchingLtsAssumptions`, and the map `f` (state ↦ its τ-SCC, renumbered topologically) is a
       branching bisimulation between the input and `R`, with `state' = f state`;
@@ -135,7 +141,9 @@ def BranchingBisimSigrefCorrectSpec
     {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (_hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (_hass : PreprocessAssumptions LTSInst sys)
-    (state : TagIndex Std.Usize StateTag) (timing : Timing) : Prop :=
+    (state : TagIndex Std.Usize StateTag)
+    (_hstate : ∀ n, LTSInst.num_of_states sys = ok n → state.index.val < n.val)
+    (timing : Timing) : Prop :=
   ∃ (R : verified.merc_lts.labelled_transition_system.LabelledTransitionSystem Label)
     (state' : TagIndex Std.Usize StateTag) (partition : BlockPartition)
     (f : ℕ → ℕ) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),

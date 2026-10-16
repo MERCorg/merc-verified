@@ -171,18 +171,17 @@ theorem sigData_exists (lts : LTS State Label) (hWF : TauLoopFree lts) (π : Set
     rcases htot a b hne with h' | h'
     · exact H2 b a b (Or.inr h') (Or.inl rfl) h
     · exact H2 a a b (Or.inl rfl) (Or.inr h') h
-omit [Finite State] in
 section
 open MercLib.Signatures
 
 /-- Existence of hash-coherent signature data on a finite τ-loop-free LTS. -/
-def SigDataExists [Finite State] (lts : LTS State Label) (π : Setoid State) : Prop :=
+def SigDataExists (lts : LTS State Label) (π : Setoid State) : Prop :=
   TauLoopFree lts → Nonempty (SigData lts π)
 
 end
 
 /-- Headline: hash-coherent signature data exists. -/
-theorem sigDataExists [Finite State] (lts : LTS State Label) (π : Setoid State) :
+theorem sigDataExists (lts : LTS State Label) (π : Setoid State) :
     SigDataExists lts π :=
   fun hWF => sigData_exists lts hWF π
 

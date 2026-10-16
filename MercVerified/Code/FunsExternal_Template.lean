@@ -12,6 +12,7 @@ set_option linter.unusedVariables false
 set_option linter.style.whitespace false
 set_option linter.style.setOption false
 set_option linter.style.longLine false
+set_option linter.internalConstructors false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
@@ -25,7 +26,7 @@ open verified
     Name pattern: [core::borrow::{core::borrow::Borrow<@T, @T>}::borrow]
     Visibility: public -/
 @[rust_fun "core::borrow::{core::borrow::Borrow<@T, @T>}::borrow"]
-axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
+axiom core.borrow.Borrow.Blanket.borrow {T : Type _} : T → Result T
 
 /-- [core::hash::impls::{impl core::hash::Hash for usize}::hash]:
     Source: '/rustc/library/core/src/hash/mod.rs', lines 813:16-813:56
@@ -33,7 +34,7 @@ axiom core.borrow.Borrow.Blanket.borrow {T : Type} : T → Result T
     Visibility: public -/
 @[rust_fun "core::hash::impls::{core::hash::Hash<usize>}::hash"]
 axiom Usize.Insts.CoreHashHash.hash
-  {H : Type} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
+  {H : Type _} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
 /-- [core::hash::impls::{impl core::hash::Hash for (T, B)}::hash]:
     Source: '/rustc/library/core/src/hash/mod.rs', lines 894:20-894:60
@@ -41,8 +42,8 @@ axiom Usize.Insts.CoreHashHash.hash
     Visibility: public -/
 @[rust_fun "core::hash::impls::{core::hash::Hash<(@T, @B)>}::hash"]
 axiom Pair.Insts.CoreHashHash.hash
-  {T : Type} {B : Type} {S : Type} (HashInst : core.hash.Hash T) (HashInst1 :
-  core.hash.Hash B) (HasherInst : core.hash.Hasher S) :
+  {T : Type _} {B : Type _} {S : Type _} (HashInst : core.hash.Hash T)
+  (HashInst1 : core.hash.Hash B) (HasherInst : core.hash.Hasher S) :
   (T × B) → S → Result S
 
 /-- [core::slice::{[T]}::sort_unstable]:
@@ -51,7 +52,7 @@ axiom Pair.Insts.CoreHashHash.hash
     Visibility: public -/
 @[rust_fun "core::slice::{[@T]}::sort_unstable"]
 axiom core.slice.Slice.sort_unstable
-  {T : Type} (cmpOrdInst : core.cmp.Ord T) : Slice T → Result (Slice T)
+  {T : Type _} (cmpOrdInst : core.cmp.Ord T) : Slice T → Result (Slice T)
 
 /-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::ne]:
     Source: '/rustc/library/core/src/tuple.rs', lines 34:16-34:55
@@ -59,7 +60,7 @@ axiom core.slice.Slice.sort_unstable
     Visibility: public -/
 @[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne"]
 axiom Pair.Insts.CoreCmpPartialEqPair.ne
-  {U : Type} {T : Type} (cmpPartialEqInst : core.cmp.PartialEq U U)
+  {U : Type _} {T : Type _} (cmpPartialEqInst : core.cmp.PartialEq U U)
   (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
   (U × T) → (U × T) → Result Bool
 
@@ -69,7 +70,7 @@ axiom Pair.Insts.CoreCmpPartialEqPair.ne
     Visibility: public -/
 @[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq"]
 axiom Pair.Insts.CoreCmpPartialEqPair.eq
-  {U : Type} {T : Type} (cmpPartialEqInst : core.cmp.PartialEq U U)
+  {U : Type _} {T : Type _} (cmpPartialEqInst : core.cmp.PartialEq U U)
   (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
   (U × T) → (U × T) → Result Bool
 
@@ -80,7 +81,7 @@ axiom Pair.Insts.CoreCmpPartialEqPair.eq
 @[rust_fun
   "core::tuple::{core::cmp::PartialOrd<(@U, @T), (@U, @T)>}::partial_cmp"]
 axiom Pair.Insts.CoreCmpPartialOrdPair.partial_cmp
-  {U : Type} {T : Type} (cmpPartialOrdInst : core.cmp.PartialOrd U U)
+  {U : Type _} {T : Type _} (cmpPartialOrdInst : core.cmp.PartialOrd U U)
   (cmpPartialOrdInst1 : core.cmp.PartialOrd T T) :
   (U × T) → (U × T) → Result (Option Ordering)
 
@@ -90,7 +91,7 @@ axiom Pair.Insts.CoreCmpPartialOrdPair.partial_cmp
     Visibility: public -/
 @[rust_fun "core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp"]
 axiom Pair.Insts.CoreCmpOrd.cmp
-  {U : Type} {T : Type} (cmpOrdInst : core.cmp.Ord U) (cmpOrdInst1 :
+  {U : Type _} {T : Type _} (cmpOrdInst : core.cmp.Ord U) (cmpOrdInst1 :
   core.cmp.Ord T) :
   (U × T) → (U × T) → Result Ordering
 
@@ -101,11 +102,11 @@ axiom Pair.Insts.CoreCmpOrd.cmp
 @[rust_fun
   "std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::get_key_value"]
 axiom std.collections.hash.map.HashMap.get_key_value
-  {K : Type} {V : Type} {S : Type} {A : Type} {Q : Type} {Clause2_Hasher :
-  Type} (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
-  (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher)
-  (coreborrowBorrowInst : core.borrow.Borrow K Q) (corehashHashInst1 :
-  core.hash.Hash Q) (corecmpEqInst1 : core.cmp.Eq Q) :
+  {K : Type _} {V : Type _} {S : Type _} {A : Type _} {Q : Type _}
+  {Clause2_Hasher : Type _} (corecmpEqInst : core.cmp.Eq K) (corehashHashInst :
+  core.hash.Hash K) (corehashBuildHasherInst : core.hash.BuildHasher S
+  Clause2_Hasher) (coreborrowBorrowInst : core.borrow.Borrow K Q)
+  (corehashHashInst1 : core.hash.Hash Q) (corecmpEqInst1 : core.cmp.Eq Q) :
   std.collections.hash.map.HashMap K V S A → Q → Result (Option (K × V))
 
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::insert]:
@@ -115,7 +116,7 @@ axiom std.collections.hash.map.HashMap.get_key_value
 @[rust_fun
   "std::collections::hash::map::{std::collections::hash::map::HashMap<@K, @V, @S, @A>}::insert"]
 axiom std.collections.hash.map.HashMap.insert
-  {K : Type} {V : Type} {S : Type} {A : Type} {Clause2_Hasher : Type}
+  {K : Type _} {V : Type _} {S : Type _} {A : Type _} {Clause2_Hasher : Type _}
   (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)
   (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher) :
   std.collections.hash.map.HashMap K V S A → K → V → Result ((Option V)
@@ -129,7 +130,7 @@ axiom std.collections.hash.map.HashMap.insert
   "std::collections::hash::map::{core::default::Default<std::collections::hash::map::HashMap<@K, @V, @S, alloc::alloc::Global>>}::default"]
 axiom
   std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default
-  (K : Type) (V : Type) {S : Type} (coredefaultDefaultInst :
+  (K : Type _) (V : Type _) {S : Type _} (coredefaultDefaultInst :
   core.default.Default S) :
   Result (std.collections.hash.map.HashMap K V S Global)
 
@@ -140,7 +141,7 @@ axiom
 @[rust_fun
   "std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::clear"]
 axiom std.collections.hash.set.HashSet.clear
-  {T : Type} {S : Type} {A : Type} :
+  {T : Type _} {S : Type _} {A : Type _} :
   std.collections.hash.set.HashSet T S A → Result
     (std.collections.hash.set.HashSet T S A)
 
@@ -151,7 +152,7 @@ axiom std.collections.hash.set.HashSet.clear
 @[rust_fun
   "std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::contains"]
 axiom std.collections.hash.set.HashSet.contains
-  {T : Type} {S : Type} {A : Type} {Q : Type} {Clause2_Hasher : Type}
+  {T : Type _} {S : Type _} {A : Type _} {Q : Type _} {Clause2_Hasher : Type _}
   (corecmpEqInst : core.cmp.Eq T) (corehashHashInst : core.hash.Hash T)
   (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher)
   (coreborrowBorrowInst : core.borrow.Borrow T Q) (corehashHashInst1 :
@@ -165,9 +166,9 @@ axiom std.collections.hash.set.HashSet.contains
 @[rust_fun
   "std::collections::hash::set::{std::collections::hash::set::HashSet<@T, @S, @A>}::insert"]
 axiom std.collections.hash.set.HashSet.insert
-  {T : Type} {S : Type} {A : Type} {Clause2_Hasher : Type} (corecmpEqInst :
-  core.cmp.Eq T) (corehashHashInst : core.hash.Hash T) (corehashBuildHasherInst
-  : core.hash.BuildHasher S Clause2_Hasher) :
+  {T : Type _} {S : Type _} {A : Type _} {Clause2_Hasher : Type _}
+  (corecmpEqInst : core.cmp.Eq T) (corehashHashInst : core.hash.Hash T)
+  (corehashBuildHasherInst : core.hash.BuildHasher S Clause2_Hasher) :
   std.collections.hash.set.HashSet T S A → T → Result (Bool ×
     (std.collections.hash.set.HashSet T S A))
 
@@ -177,7 +178,7 @@ axiom std.collections.hash.set.HashSet.insert
     Visibility: public -/
 @[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::pop"]
 axiom alloc.vec.Vec.pop
-  {T : Type} (A : Type) :
+  {T : Type _} (A : Type _) :
   alloc.vec.Vec T → Result ((Option T) × (alloc.vec.Vec T))
 
 /-- [alloc::vec::{alloc::vec::Vec<T>}::clear]:
@@ -186,7 +187,7 @@ axiom alloc.vec.Vec.pop
     Visibility: public -/
 @[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::clear"]
 axiom alloc.vec.Vec.clear
-  {T : Type} (A : Type) : alloc.vec.Vec T → Result (alloc.vec.Vec T)
+  {T : Type _} (A : Type _) : alloc.vec.Vec T → Result (alloc.vec.Vec T)
 
 /-- [alloc::vec::{alloc::vec::Vec<T>}::is_empty]:
     Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3160:4-3160:40
@@ -194,7 +195,7 @@ axiom alloc.vec.Vec.clear
     Visibility: public -/
 @[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::is_empty"]
 axiom alloc.vec.Vec.is_empty
-  {T : Type} (A : Type) : alloc.vec.Vec T → Result Bool
+  {T : Type _} (A : Type _) : alloc.vec.Vec T → Result Bool
 
 /-- [alloc::vec::{alloc::vec::Vec<T>}::resize_with]:
     Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3255:4-3257:24
@@ -202,7 +203,7 @@ axiom alloc.vec.Vec.is_empty
     Visibility: public -/
 @[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::resize_with"]
 axiom alloc.vec.Vec.resize_with
-  {T : Type} (A : Type) {F : Type} (coreopsfunctionFnMutFTupleTInst :
+  {T : Type _} (A : Type _) {F : Type _} (coreopsfunctionFnMutFTupleTInst :
   core.ops.function.FnMut F Unit T) :
   alloc.vec.Vec T → Std.Usize → F → Result (alloc.vec.Vec T)
 
@@ -212,7 +213,7 @@ axiom alloc.vec.Vec.resize_with
     Visibility: public -/
 @[rust_fun "alloc::vec::{alloc::vec::Vec<@T>}::dedup"]
 axiom alloc.vec.Vec.dedup
-  {T : Type} (A : Type) (corecmpPartialEqInst : core.cmp.PartialEq T T) :
+  {T : Type _} (A : Type _) (corecmpPartialEqInst : core.cmp.PartialEq T T) :
   alloc.vec.Vec T → Result (alloc.vec.Vec T)
 
 /-- [alloc::vec::{impl core::hash::Hash for alloc::vec::Vec<T>}::hash]:
@@ -221,7 +222,7 @@ axiom alloc.vec.Vec.dedup
     Visibility: public -/
 @[rust_fun "alloc::vec::{core::hash::Hash<alloc::vec::Vec<@T>>}::hash"]
 axiom alloc.vec.Vec.Insts.CoreHashHash.hash
-  {T : Type} (A : Type) {H : Type} (corehashHashInst : core.hash.Hash T)
+  {T : Type _} (A : Type _) {H : Type _} (corehashHashInst : core.hash.Hash T)
   (corehashHasherInst : core.hash.Hasher H) :
   alloc.vec.Vec T → H → Result H
 
@@ -232,7 +233,7 @@ axiom alloc.vec.Vec.Insts.CoreHashHash.hash
 @[rust_fun
   "alloc::vec::{core::iter::traits::collect::Extend<alloc::vec::Vec<@T>, @T>}::extend"]
 axiom alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend
-  {T : Type} (A : Type) {I : Type} {Clause0_IntoIter : Type}
+  {T : Type _} (A : Type _) {I : Type _} {Clause0_IntoIter : Type _}
   (coreitertraitscollectIntoIteratorInst :
   core.iter.traits.collect.IntoIterator I T Clause0_IntoIter) :
   alloc.vec.Vec T → I → Result (alloc.vec.Vec T)
@@ -244,7 +245,7 @@ axiom alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend
 @[rust_fun
   "alloc::vec::{core::default::Default<alloc::vec::Vec<@T>>}::default"]
 axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
-  (T : Type) : Result (alloc.vec.Vec T)
+  (T : Type _) : Result (alloc.vec.Vec T)
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::new]:
     Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 37:4-37:40
@@ -253,7 +254,7 @@ axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
 @[rust_fun
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::new"]
 axiom merc_collections.compressed_vec.ByteCompressedVec.new
-  {T : Type} (CompressedEntryInst :
+  {T : Type _} (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) :
   Result (merc_collections.compressed_vec.ByteCompressedVec T)
 
@@ -264,7 +265,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.new
 @[rust_fun
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::push"]
 axiom merc_collections.compressed_vec.ByteCompressedVec.push
-  {T : Type} (CompressedEntryInst :
+  {T : Type _} (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) :
   merc_collections.compressed_vec.ByteCompressedVec T → T → Result
     (merc_collections.compressed_vec.ByteCompressedVec T)
@@ -276,7 +277,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.push
 @[rust_fun
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::index"]
 axiom merc_collections.compressed_vec.ByteCompressedVec.index
-  {T : Type} (CompressedEntryInst :
+  {T : Type _} (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) :
   merc_collections.compressed_vec.ByteCompressedVec T → Std.Usize → Result
     T
@@ -288,7 +289,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.index
 @[rust_fun
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::len"]
 axiom merc_collections.compressed_vec.ByteCompressedVec.len
-  {T : Type} (CompressedEntryInst :
+  {T : Type _} (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) :
   merc_collections.compressed_vec.ByteCompressedVec T → Result Std.Usize
 
@@ -327,7 +328,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.to_bytes
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::from_bytes"]
 axiom
   merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry.from_bytes
-  {T : Type} (Tag : Type) (CompressedEntryInst :
+  {T : Type _} (Tag : Type _) (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) (coremarkerCopyInst :
   core.marker.Copy T) :
   Slice Std.U8 → Result (merc_utilities.tagged_index.TagIndex T Tag)
@@ -340,7 +341,7 @@ axiom
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::bytes_required"]
 axiom
   merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry.bytes_required
-  {T : Type} {Tag : Type} (CompressedEntryInst :
+  {T : Type _} {Tag : Type _} (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) (coremarkerCopyInst :
   core.marker.Copy T) :
   merc_utilities.tagged_index.TagIndex T Tag → Result Std.Usize
@@ -353,7 +354,7 @@ axiom
   "merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::to_bytes"]
 axiom
   merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry.to_bytes
-  {T : Type} {Tag : Type} (CompressedEntryInst :
+  {T : Type _} {Tag : Type _} (CompressedEntryInst :
   merc_collections.compressed_vec.CompressedEntry T) (coremarkerCopyInst :
   core.marker.Copy T) :
   merc_utilities.tagged_index.TagIndex T Tag → Slice Std.U8 → Result (Slice
@@ -365,7 +366,7 @@ axiom
     Visibility: public -/
 @[rust_fun "merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print"]
 axiom merc_io.progress.TimeProgress.print
-  {T : Type} : merc_io.progress.TimeProgress T → T → Result Unit
+  {T : Type _} : merc_io.progress.TimeProgress T → T → Result Unit
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
     Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:4-532:31
@@ -389,7 +390,7 @@ axiom merc_reduction.block_partition.BlockPartition.assert_consistent
     Visibility: public -/
 @[rust_fun "merc_utilities::timing::{merc_utilities::timing::Timing}::measure"]
 axiom merc_utilities.timing.Timing.measure
-  {F : Type} {O : Type} (coreopsfunctionFnOnceFTupleOInst :
+  {F : Type _} {O : Type _} (coreopsfunctionFnOnceFTupleOInst :
   core.ops.function.FnOnce F Unit O) :
   merc_utilities.timing.Timing → Str → F → Result O
 
@@ -434,8 +435,8 @@ axiom rustc_hash.FxHasher.Insts.CoreHashHasher.write
 @[rust_fun
   "merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash"]
 axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
-  {T : Type} {Tag : Type} {H : Type} (corehashHashInst : core.hash.Hash T)
-  (corehashHasherInst : core.hash.Hasher H) :
+  {T : Type _} {Tag : Type _} {H : Type _} (corehashHashInst : core.hash.Hash
+  T) (corehashHasherInst : core.hash.Hasher H) :
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
 
 /-- [merc_reduction::signature_refinement::new_worklist_progress]:

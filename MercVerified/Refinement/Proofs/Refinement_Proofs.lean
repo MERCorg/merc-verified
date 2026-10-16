@@ -9,10 +9,9 @@ Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `strong_bisim_sigref_correct` proves the `StrongBisimSigrefCorrectSpec`
 contract stated in `MercVerified/Refinement/Refinement.lean`, generically for
-any `LTS` trait implementor with a well-formed state space (`hwf`). Its contract
-pin (an `example` re-stating its exact closed signature, so `lake build` fails
-if a regeneration drifts from the pinned shape) lives in the human-vetted
-`MercVerified/Refinement/Pins/Refinement_Pins.lean`, not in this file.
+any `LTS` trait implementor with a well-formed state space (`hwf`). Its statement
+is re-stated as a comparator challenge in the human-vetted `Challenges/MercVerified.lean`
+(checked by `lake comparator`), not in this file.
 That a concrete implementor such as `LabelledTransitionSystem` satisfies `hwf`
 is a separate concern (see `docs/axiom-audit-plan.md`).
 

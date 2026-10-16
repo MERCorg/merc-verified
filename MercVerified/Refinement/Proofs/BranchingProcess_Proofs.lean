@@ -63,7 +63,8 @@ structure CEnv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usiz
   num : LTSInst.num_of_labels sys = ok nl
   hid : ∀ l : TagIndex Std.Usize LabelTag,
     LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0))
-  lab : ∀ s μ s', MercVerified.Lts.tr LTSInst sys s μ s' → μ.index.val < nl.val
+  lab : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+    ∀ s μ s', s.index.val < n.val → MercVerified.Lts.tr LTSInst sys s μ s' → μ.index.val < nl.val
 
 theorem tr_iff_mem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {s : ST}
     {ts : alloc.vec.Vec Transition} (h : LTSInst.outgoing_transitions sys s = ok ts)
@@ -90,6 +91,7 @@ theorem bt_eq_iff (a b : BT) : a = b ↔ a.index.val = b.index.val :=
 theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usize}
     (hE : CEnv LTSInst sys nl) {n : Nat} (hn : n ≤ Usize.max) (s : Fin n)
     (ts : alloc.vec.Vec Transition) (hout : LTSInst.outgoing_transitions sys (stOf s) = ok ts)
+    {nU : Std.Usize} (hns : LTSInst.num_of_states sys = ok nU) (hsn : (stOf s).index.val < nU.val)
     (htgt : ∀ t ∈ ts.val, t.to.index.val < n) (p : BlockPartition) (stk : VecTy BT) :
     decodeSig nl.val (ts.val.map (brEntry ({ index := nl, marker := () } : TagIndex Std.Usize LabelTag)
         (fun t => p.element_to_block.val.getD t.index.val zBT)
@@ -97,7 +99,7 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
         (fun t => stk.val.getD t.index.val zBT) (stOf s)))
       = MercLib.Sigref.RP.flatSig (aLTS LTSInst sys n) (bdOf p n).blk (bdOf p n).Dirty (keyOf stk) s := by
   have hlabt : ∀ t ∈ ts.val, t.label.index.val < nl.val := fun t ht =>
-    hE.lab _ _ _ ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht))
+    hE.lab nU hns _ _ _ hsn ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht))
   -- targets as `Fin n`
   let tf : ∀ t ∈ ts.val, Fin n := fun t ht => ⟨t.to.index.val, htgt t ht⟩
   have hst : ∀ (t : Transition) (ht : t ∈ ts.val), stOf (tf t ht) = t.to := by
@@ -540,7 +542,9 @@ theorem stk_set_getD (stk : VecTy BT) (i : Std.Usize) (idx : BT) (hi : i.val < s
 
 /-- Concrete topological order: inert τ-steps go to a state with a smaller index. -/
 def ConcTopo {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
-  ∀ s μ t, MercVerified.Lts.tr LTSInst sys s μ t → μ.index.val = 0 → t.index.val < s.index.val
+  ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
+    ∀ s μ t, s.index.val < n.val → MercVerified.Lts.tr LTSInst sys s μ t → μ.index.val = 0 →
+      t.index.val < s.index.val
 
 /-- The state with index `s mod n`. -/
 def toFin {n : Nat} (hn0 : 0 < n) (s : ST) : Fin n := ⟨s.index.val % n, Nat.mod_lt _ hn0⟩
@@ -630,7 +634,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   have hoz : olds.val[m]'hm = state_index := holdsm.symm
   have hbz : e2bAt p state_index.index.val = b := ((hmem state_index hsi_lt).2 hsi).1
   have hlabt : ∀ t ∈ ts.val, t.label.index.val < nl.val := fun t ht =>
-    hE.lab _ _ _ ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht))
+    hE.lab nU hns _ _ _ hsi_lt ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht))
   -- classification of the entries
   have hcls : ∀ e ∈ sigb1.val, (e.1.index.val < nl.val ∨ e.1.index.val = nl.val) ∧
       (e.1.index.val = nl.val → ∃ t ∈ ts.val, e.2 = stk.val.getD t.to.index.val zBT ∧
@@ -660,7 +664,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     have hto : t.to ∈ olds.val := (hmem t.to (htgt t ht)).1 ⟨hbt, hmk'⟩
     have hlt0 : t.to.index.val < (olds.val[m]'hm).index.val := by
       rw [hoz]
-      exact htopo _ _ _ ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht)) hlab0
+      exact htopo nU hns _ _ _ hsi_lt ((tr_iff_mem hout t.label t.to).2 (by cases t; exact ht)) hlab0
     obtain ⟨j, hj, hjv⟩ := before_of_lt (fun x : ST => x.index.val) hsorted hm hto hlt0
     have := hsem.keysLt j hj
     have hjl : j < olds.val.length := by omega
@@ -672,7 +676,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       MercLib.Sigref.RP.flatSig (aLTS LTSInst sys nU.val) (bdOf p nU.val).blk (bdOf p nU.val).Dirty
         (keyOf stk) z := by
     rw [decodeSig_congr nl.val hkmem]
-    have := decode_brEntries LTSInst sys hE hnmax z ts hout' htgt p stk
+    have := decode_brEntries LTSInst sys hE hnmax z ts hout' hns (by rw [hstz]; exact hsi_lt) htgt p stk
     rw [hstz] at this
     exact this
   have hbsi := bsi_eq LTSInst sys hE.num id kts sigb1 hksort

@@ -1,5 +1,9 @@
-import MercLib.LTS.BranchingBisimilarity
-import Mathlib.Logic.Relation
+module
+
+public import MercLib.LTS.BranchingBisimilarity
+public import Mathlib.Logic.Relation
+
+@[expose] public section
 
 /-!
 # Branching bisimilarity of an embedded sub-LTS

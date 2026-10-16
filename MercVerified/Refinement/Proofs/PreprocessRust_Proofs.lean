@@ -1,15 +1,19 @@
 import MercVerified.Refinement.Proofs.QuotientRust_Proofs
 import MercVerified.Refinement.Proofs.BranchingTop_Proofs
 import MercVerified.Refinement.Refinement
+import MercLib.Sigref.Proofs.TarjanBridge_Proofs
+import MercLib.Sigref.Proofs.Scc_Proofs
 
 /-!
-# `tau_cycle_elimination_and_reorder` and `branching_bisim_sigref`: statements
+# `tau_cycle_elimination_and_reorder` and `branching_bisim_sigref`
 
-Remaining statements of the preprocessing verification (plan: `docs/preprocessing-plan.md`, stages
-B2, B4, B5). The proofs are still `sorry`; the finished building blocks are
+The preprocessing verification (plan: `docs/preprocessing-plan.md`, stages B2, B4, B5): the
+quotient by the τ-SCCs (`quotient_lts_naive_spec`), the renumbering (`new_from_permutation_vec_spec`),
+their composition (`tau_cycle_spec`: a branching bisimulation onto a topologically ordered LTS) and
+the headline `branching_bisim_sigref_correct` (`BranchingBisimSigrefCorrectSpec`). Building blocks:
 `SccRust_Proofs` (`tau_scc_spec`), `TopoSortRust_Proofs` (`sort_topological_hidden_spec`),
-`QuotientRust_Proofs` (`collect_spec`, `push_transitions_spec`, `build_body_step` partially) and
-`LtsData_Proofs` (`RawOf`, `raw_valid`, `raw_outgoing`, `assert_valid_ok`).
+`QuotientRust_Proofs` and `LtsData_Proofs` (`RawOf`, `raw_valid`, `raw_outgoing`, `assert_valid_ok`),
+and the abstract `MercLib.Sigref.quotientTauAcyclic`/`isTauSccPartition_of_scc`.
 
 Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 -/
@@ -361,7 +365,7 @@ theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hK : 1 ≤ ip.num_of_blocks.val)
     (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (hlen : outgoing.val.length = ip.num_of_blocks.val)
     (hBig : tot outgoing ip.num_of_blocks.val < Std.Usize.max)
-    (sv : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (hsv : LTSInst.iter_states sys = ok sv)
+    (sv : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (_hsv : LTSInst.iter_states sys = ok sv)
     (hmem : ∀ s, s ∈ sv.val ↔ s.index.val < n0.val)
     (hrow : ∀ c, rowOf outgoing c = rowAcc ip (fun s => (outVec LTSInst sys s).val) sv.val c) :
     ∃ (Q : LabelledTransitionSystem Label) (off : List Nat)
@@ -373,7 +377,7 @@ theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       (∃ sl, LTSInst.labels sys = ok sl ∧ Q.labels.val = sl.val) ∧
       (∃ i, LTSInst.initial_state_index sys = ok i ∧
         Q.initial_state.index.val = (bk ip i.index.val).index.val) ∧
-      ∀ b (hb : b < ip.num_of_blocks.val),
+      ∀ b, b < ip.num_of_blocks.val →
         List.Pairwise qLt (segPairs off labs tos b) ∧
         ∀ x, x ∈ segPairs off labs tos b ↔ x ∈ rowOf outgoing b := by
   obtain ⟨hhid, ⟨sl, hsl, hsl1, ht0, hlab⟩, hclone, hfit, hinit⟩ := hass
@@ -523,7 +527,7 @@ theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         have hpair : List.Pairwise qLt (Ls[s]'hbL) := by
           have := (hsortmem s hs).1
           rwa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hbL] at this
-        have hkm := (List.getElem_inj (h₀ := hkl) (h₁ := hml) (pairwise_qLt_nodup hpair)).mp hfl_eq
+        have hkm := (List.Nodup.getElem_inj_iff (pairwise_qLt_nodup hpair) (hi := hkl) (hj := hml)).mp hfl_eq
         omega }
   refine ⟨Q, offs Ls ip.num_of_blocks.val ++ [Ls.flatten.length],
     Ls.flatten.map Prod.fst, Ls.flatten.map Prod.snd, ?hbuild, hRawOf, hRawGood, ?hlabels, ?hinitQ, ?hseg⟩
@@ -950,7 +954,7 @@ def blocksList (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : Li
 
 theorem segPairs_fst (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat)
-    (h1 : off.getD (b + 1) 0 ≤ labs.length) (h0 : off.getD b 0 ≤ off.getD (b + 1) 0)
+    (_h1 : off.getD (b + 1) 0 ≤ labs.length) (h0 : off.getD b 0 ≤ off.getD (b + 1) 0)
     (h1' : off.getD (b + 1) 0 ≤ tos.length) :
     (segPairs off labs tos b).map Prod.fst =
       (labs.drop (off.getD b 0)).take (off.getD (b + 1) 0 - off.getD b 0) := by
@@ -962,7 +966,7 @@ theorem segPairs_fst (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)
 theorem segPairs_snd (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat)
     (h1 : off.getD (b + 1) 0 ≤ labs.length) (h0 : off.getD b 0 ≤ off.getD (b + 1) 0)
-    (h1' : off.getD (b + 1) 0 ≤ tos.length) :
+    (_h1' : off.getD (b + 1) 0 ≤ tos.length) :
     (segPairs off labs tos b).map Prod.snd =
       (tos.drop (off.getD b 0)).take (off.getD (b + 1) 0 - off.getD b 0) := by
   unfold segPairs
@@ -1088,7 +1092,7 @@ theorem perm_surj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
 
 /-- `invAt inverse` inverts `perm` on `.index` values. -/
 theorem invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
-    {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (hinvlen : inverse.val.length = n)
+    {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (_hinvlen : inverse.val.length = n)
     (hlen : perm.val.length = n)
     (hinv : ∀ q (hq : q < n),
       ∃ h : (perm.val[q]'(by omega)).index.val < inverse.val.length,
@@ -1662,6 +1666,66 @@ theorem nfp_outer_spec {Label : Type} (lts : LabelledTransitionSystem Label)
       exact hloop
     · rw [← hend']; exact hinv'
 
+theorem segPairs_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+    (tos : List (TagIndex Std.Usize StateTag)) (b : Nat)
+    (h1 : off.getD (b + 1) 0 ≤ labs.length) (hle : labs.length = tos.length) :
+    (segPairs off labs tos b).length = off.getD (b + 1) 0 - off.getD b 0 := by
+  unfold segPairs
+  simp only [List.length_zip, List.length_take, List.length_drop]
+  omega
+
+theorem segPairs_getElem (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+    (tos : List (TagIndex Std.Usize StateTag)) (b i : Nat)
+    (hi : i < (segPairs off labs tos b).length) :
+    ∃ (h1 : off.getD b 0 + i < labs.length) (h2 : off.getD b 0 + i < tos.length),
+      (segPairs off labs tos b)[i] = (labs[off.getD b 0 + i], tos[off.getD b 0 + i]) := by
+  unfold segPairs at hi ⊢
+  simp only [List.length_zip, List.length_take, List.length_drop] at hi
+  refine ⟨by omega, by omega, ?_⟩
+  simp [List.getElem_zip]
+
+theorem mem_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+    (tos : List (TagIndex Std.Usize StateTag)) (b : Nat) (x : QElem)
+    (hx : x ∈ segPairs off labs tos b) : x.1 ∈ labs ∧ x.2 ∈ tos := by
+  unfold segPairs at hx
+  have h := List.of_mem_zip hx
+  exact ⟨List.mem_of_mem_drop (List.mem_of_mem_take h.1),
+    List.mem_of_mem_drop (List.mem_of_mem_take h.2)⟩
+
+/-- The `nodup` side condition of `RawGood` says exactly that every block is duplicate-free. -/
+theorem rawGood_nodup_iff {n : Nat} {off : List Nat} {labs : List (TagIndex Std.Usize LabelTag)}
+    {tos : List (TagIndex Std.Usize StateTag)} (hmono : off.Pairwise (· ≤ ·))
+    (hlast : off.getLast? = some labs.length) (hle : labs.length = tos.length)
+    (hoff : off.length = n + 1) :
+    (∀ s, s < n → ∀ i j, off.getD s 0 ≤ i → i < j → j < off.getD (s + 1) 0 →
+      ∀ (hi : i < labs.length) (hj : j < labs.length) (hi' : i < tos.length) (hj' : j < tos.length),
+        labs[i] = labs[j] → tos[i] = tos[j] → False) ↔
+    ∀ s, s < n → (segPairs off labs tos s).Nodup := by
+  constructor
+  · intro H s hs
+    have h1 : off.getD (s + 1) 0 ≤ labs.length := off_getD_le_last hmono hlast (by omega)
+    have hlen := segPairs_length off labs tos s h1 hle
+    rw [List.nodup_iff_pairwise_ne, List.pairwise_iff_getElem]
+    intro i j hi hj hij heq
+    obtain ⟨a1, a2, ha⟩ := segPairs_getElem off labs tos s i hi
+    obtain ⟨b1, b2, hb⟩ := segPairs_getElem off labs tos s j hj
+    rw [ha, hb, Prod.mk.injEq] at heq
+    exact H s hs _ _ (by omega) (by omega) (by omega) a1 b1 a2 b2 heq.1 heq.2
+  · intro H s hs i j hsi hij hjs hi hj hi' hj' hl ht
+    have h1 : off.getD (s + 1) 0 ≤ labs.length := off_getD_le_last hmono hlast (by omega)
+    have hlen := segPairs_length off labs tos s h1 hle
+    have hnd := H s hs
+    rw [List.nodup_iff_pairwise_ne, List.pairwise_iff_getElem] at hnd
+    have hi2 : i - off.getD s 0 < (segPairs off labs tos s).length := by omega
+    have hj2 : j - off.getD s 0 < (segPairs off labs tos s).length := by omega
+    apply hnd _ _ hi2 hj2 (by omega)
+    obtain ⟨a1, a2, ha⟩ := segPairs_getElem off labs tos s _ hi2
+    obtain ⟨b1, b2, hb⟩ := segPairs_getElem off labs tos s _ hj2
+    rw [ha, hb]
+    have e1 : off.getD s 0 + (i - off.getD s 0) = i := by omega
+    have e2 : off.getD s 0 + (j - off.getD s 0) = j := by omega
+    simp only [e1, e2, hl, ht]
+
 /-- **`new_from_permutation_vec` renames the states by the permutation**: the block `b` of the
     result at position `perm b` holds the transitions of `b` with renamed targets. -/
 theorem new_from_permutation_vec_spec {Label : Type} (TLInst : TransitionLabel Label)
@@ -1683,9 +1747,356 @@ theorem new_from_permutation_vec_spec {Label : Type} (TLInst : TransitionLabel L
           (segPairs off labs tos b).map
             (fun x => (x.1, ({ index := (perm.val.getD x.2.index.val default).index, marker := () } :
               TagIndex Std.Usize StateTag))) := by
-  sorry
+  have hn := hR.n_pos
+  have hmax := hR.off_le
+  have hsurj := perm_surj hlen hlt hinj
+  obtain ⟨inv, hinvE, hinvlen, hpost⟩ := invert_permutation_spec perm n hlen hlt hinj
+  obtain ⟨st0, hst_new, hst0⟩ := merc_collections.compressed_vec.ByteCompressedVec.new_spec UIdx
+  obtain ⟨lb0, hlb_new, hlb0⟩ := merc_collections.compressed_vec.ByteCompressedVec.new_spec LIdx
+  obtain ⟨tb0, htb_new, htb0⟩ := merc_collections.compressed_vec.ByteCompressedVec.new_spec SIdx
+  have hlenv : (alloc.vec.Vec.len inv).val = n := by rw [vec_len_val']; exact hinvlen
+  have hinv0 : NfpInv inv off labs tos perm 0 st0 lb0 tb0 := by
+    refine ⟨?_, ?_, ?_⟩ <;> simp [hst0, hlb0, htb0, blocksList, offs]
+  obtain ⟨lts', st, TL, TT, hloop, hlts', hinvN⟩ :=
+    nfp_outer_spec Q perm inv hR hinvlen hlen hlt hinj hpost n
+      { start := 0#usize, «end» := alloc.vec.Vec.len inv } st0 lb0 tb0
+      (by simp [hlenv]) (by simp [hlenv]) (by simp) hinv0
+  subst hlts'
+  obtain ⟨hstN, hTLN, hTTN⟩ := hinvN
+  simp only [hlenv] at hstN hTLN hTTN
+  set Ls := blocksList inv off labs tos perm n with hLsdef
+  have hLlen : Ls.length = n := blocksList_length inv off labs tos perm n
+  have hflen : Ls.flatten.length ≤ labs.length :=
+    blocksList_flatten_length_le inv off labs tos perm hR.mono hR.last hR.len_eq hR.offlen hinvlen
+      hlen hpost hsurj n le_rfl
+  have hTLlen : (ByteCompressedVec.toList TL).length ≤ Std.Usize.max := by
+    rw [hTLN, List.length_map]; have := hR.tmax; omega
+  obtain ⟨i1, hlen_TL, hi1v⟩ := merc_collections.compressed_vec.ByteCompressedVec.len_spec LIdx TL hTLlen
+  have hi1v' : i1.val = Ls.flatten.length := by rw [hi1v, hTLN, List.length_map]
+  have hstlen : (ByteCompressedVec.toList st).length = n := by
+    have h := congrArg List.length hstN
+    simpa [List.length_map, offs_length] using h
+  obtain ⟨st2, hpst, hst2⟩ :=
+    merc_collections.compressed_vec.ByteCompressedVec.push_spec UIdx st i1 (by rw [hstlen]; omega)
+  have hst2v : (ByteCompressedVec.toList st2).map (fun u : Std.Usize => u.val) =
+      offs Ls n ++ [Ls.flatten.length] := by
+    rw [hst2, List.map_append, hstN]; simp [hi1v']
+  have hinitlt : lts'.initial_state.index.val < perm.val.length := by rw [hlen]; exact hR.init
+  set ti := perm.val[lts'.initial_state.index.val]'hinitlt with htidef
+  have hti : Slice.index_usize perm lts'.initial_state.index = ok ti :=
+    slice_index_ok' perm _ hinitlt
+  set R : LabelledTransitionSystem Label :=
+    { states := st2, transition_labels := TL, transition_to := TT, labels := lts'.labels,
+      initial_state := ti } with hRdef
+  have hgetLs : ∀ j (hj : j < Ls.length), Ls[j] = renamedBlock inv off labs tos perm j := by
+    intro j hj; simp [hLsdef, blocksList]
+  have hmem : ∀ y ∈ Ls.flatten, ∃ x : QElem, x.1 ∈ labs ∧ x.2 ∈ tos ∧ y = (x.1, prename perm x.2) := by
+    intro y hy
+    obtain ⟨l, hl, hyl⟩ := List.mem_flatten.mp hy
+    obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hl
+    rw [hgetLs j hj] at hyl
+    unfold renamedBlock at hyl
+    obtain ⟨x, hx, rfl⟩ := List.mem_map.mp hyl
+    exact ⟨x, (mem_segPairs _ _ _ _ x hx).1, (mem_segPairs _ _ _ _ x hx).2, rfl⟩
+  have hprename_lt : ∀ t ∈ tos, (prename perm t).index.val < n := by
+    intro t ht
+    have htn := hR.tlt t ht
+    unfold prename
+    rw [List.getD_eq_getElem perm.val default (by omega)]
+    exact hlt _ (List.getElem_mem _)
+  have hRawOf : RawOf R n (offs Ls n ++ [Ls.flatten.length]) (Ls.flatten.map Prod.fst)
+      (Ls.flatten.map Prod.snd) :=
+    { st := hst2v
+      lab := hTLN
+      tl := hTTN
+      offlen := by rw [List.length_append, offs_length]; simp
+      mono := offs_pairwise Ls n
+      last := by
+        rw [List.getLast?_append, List.getLast?_singleton, Option.some_or, Option.some.injEq,
+          List.length_map]
+      len_eq := by rw [List.length_map, List.length_map]
+      tlt := by
+        intro t ht
+        obtain ⟨y, hy, rfl⟩ := List.mem_map.mp ht
+        obtain ⟨x, -, hx2, rfl⟩ := hmem y hy
+        exact hprename_lt x.2 hx2
+      init := by
+        show ti.index.val < n
+        exact hlt _ (List.getElem_mem _)
+      small := hR.small
+      tmax := by rw [List.length_map]; have := hR.tmax; omega }
+  have hseg : ∀ s (hs : s < n), segPairs (offs Ls n ++ [Ls.flatten.length]) (Ls.flatten.map Prod.fst)
+      (Ls.flatten.map Prod.snd) s = renamedBlock inv off labs tos perm s := by
+    intro s hs
+    rw [segPairs_of_offs Ls hLlen hs, hgetLs]
+  have hRawGood : RawGood R n (offs Ls n ++ [Ls.flatten.length]) (Ls.flatten.map Prod.fst)
+      (Ls.flatten.map Prod.snd) :=
+    { labs_lt := by
+        intro l hl
+        obtain ⟨y, hy, rfl⟩ := List.mem_map.mp hl
+        obtain ⟨x, hx1, -, rfl⟩ := hmem y hy
+        exact hG.labs_lt x.1 hx1
+      nodup := by
+        rw [rawGood_nodup_iff hRawOf.mono hRawOf.last hRawOf.len_eq hRawOf.offlen]
+        intro s hs
+        rw [hseg s hs]
+        unfold renamedBlock
+        have hj := invAt_lt hinvlen hlen hpost hsurj hs
+        have hnd := (rawGood_nodup_iff hR.mono hR.last hR.len_eq hR.offlen).mp hG.nodup _ hj
+        refine hnd.map_on ?_
+        intro x hx y hy hxy
+        rw [Prod.mk.injEq] at hxy
+        have hx2 := hR.tlt _ (mem_segPairs _ _ _ _ x hx).2
+        have hy2 := hR.tlt _ (mem_segPairs _ _ _ _ y hy).2
+        have hidx : x.2.index.val = y.2.index.val := by
+          have h2 := congrArg (fun t : TagIndex Std.Usize StateTag => t.index.val) hxy.2
+          simp only [prename, List.getD_eq_getElem perm.val default (show x.2.index.val < perm.val.length by omega),
+            List.getD_eq_getElem perm.val default (show y.2.index.val < perm.val.length by omega)] at h2
+          have := (List.Nodup.getElem_inj_iff hinj
+            (i := x.2.index.val) (j := y.2.index.val) (hi := by simp; omega) (hj := by simp; omega)).mp
+            (by simpa using h2)
+          exact this
+        exact qelem_ext (by rw [hxy.1]) hidx }
+  refine ⟨R, offs Ls n ++ [Ls.flatten.length], Ls.flatten.map Prod.fst, Ls.flatten.map Prod.snd,
+    ?_, hRawOf, hRawGood, rfl, ?_, ?_⟩
+  · have hav := assert_valid_ok TLInst hRawOf hRawGood hlab htau
+    unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.new_from_permutation_vec
+    rw [hinvE]
+    simp only [bind_ok]
+    have hlb_tb : lb0 = tb0 := by
+      have h2 : (merc_collections.compressed_vec.ByteCompressedVec.new LIdx) =
+          (merc_collections.compressed_vec.ByteCompressedVec.new SIdx) := rfl
+      have h3 : (ok lb0 : Result (merc_collections.compressed_vec.ByteCompressedVec
+          (verified.merc_utilities.tagged_index.TagIndex Std.Usize verified.merc_lts.lts.LabelTag))) = ok tb0 :=
+        hlb_new.symm.trans (h2.trans htb_new)
+      exact Result.ok.injEq.mp h3
+    rw [hst_new, hlb_new]
+    rw [← hlb_tb] at hloop
+    simp only [bind_ok, hloop, tag_value_id]
+    show (do
+      let i1 ← ByteCompressedVec.len LIdx TL
+      let states2 ← ByteCompressedVec.push UIdx st i1
+      let ti ← Slice.index_usize perm lts'.initial_state.index
+      verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.from_raw_parts
+        TLInst ti states2 TL TT lts'.labels) = ok R
+    rw [hlen_TL, bind_ok, hpst, bind_ok, hti, bind_ok]
+    unfold verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.from_raw_parts
+    show (do verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.assert_valid TLInst R
+             ok R) = ok R
+    rw [hav, bind_ok]
+  · show ti.index.val = _
+    rw [List.getD_eq_getElem perm.val default hinitlt]
+  · intro b hb
+    have hpb : (perm.val.getD b default).index.val < n := by
+      rw [List.getD_eq_getElem perm.val default (by omega)]
+      exact hlt _ (List.getElem_mem _)
+    rw [hseg _ hpb]
+    unfold renamedBlock
+    rw [invAt_perm hinvlen hlen hpost hb]
+    rfl
 
 end Permute
+
+section Raw
+
+variable {Label : Type} (TLInst : TransitionLabel Label)
+
+theorem raw_num_of_states {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
+    (h : RawOf X m off labs tos) :
+    ∃ mU : Std.Usize,
+      (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).num_of_states X = ok mU ∧ mU.val = m := by
+  have hmax := h.off_le
+  obtain ⟨ls, hls, hlsv⟩ := merc_collections.compressed_vec.ByteCompressedVec.len_spec UIdx X.states
+    (by rw [h.st_length]; omega)
+  rw [h.st_length] at hlsv
+  obtain ⟨mU, hmU, hmUv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
+    ⟨_, rfl, Usize.sub_spec (x := ls) (y := 1#usize) (by simp; omega)⟩
+  cases mU <;> simp only [Std.WP.spec_ok, Std.WP.spec_vis, Std.WP.spec_div] at hmUv
+  rename_i mU
+  refine ⟨mU, ?_, by have := hmUv.1; simp at this; omega⟩
+  show (do
+    let i ← merc_collections.compressed_vec.ByteCompressedVec.len UIdx X.states
+    i - 1#usize) = ok mU
+  rw [hls, bind_ok, hmU]
+
+theorem lts_is_hidden (X : LabelledTransitionSystem Label) (l : TagIndex Std.Usize LabelTag) :
+    (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).is_hidden_label X l =
+      ok (decide (l.index.val = 0)) := by
+  show (do
+    let i ← verified.merc_utilities.tagged_index.TagIndex.value core.marker.CopyUsize l
+    ok (i = 0#usize)) = ok (decide (l.index.val = 0))
+  simp only [tag_value_id, bind_ok]
+  congr 1
+  apply decide_eq_decide.mpr
+  constructor
+  · intro h; rw [h]; rfl
+  · intro h; exact UScalar.eq_of_val_eq (by simpa using h)
+
+theorem segment_eq_map_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+    (tos : List (TagIndex Std.Usize StateTag)) (b : Nat) :
+    segment labs tos (off.getD b 0) (off.getD (b + 1) 0 - off.getD b 0) =
+      (segPairs off labs tos b).map (fun x => ({ label := x.1, «to» := x.2 } : Transition)) := by
+  unfold segment segPairs
+  simp [List.zip, List.map_zipWith]
+
+theorem raw_tr_iff {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
+    (h : RawOf X m off labs tos) (s : TagIndex Std.Usize StateTag) (hs : s.index.val < m)
+    (μ : TagIndex Std.Usize LabelTag) (t : TagIndex Std.Usize StateTag) :
+    MercVerified.Lts.tr (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) X s μ t ↔
+      (μ, t) ∈ segPairs off labs tos s.index.val := by
+  obtain ⟨ts, hts, htsv⟩ := raw_outgoing TLInst h s hs
+  rw [tr_iff_mem hts, htsv, segment_eq_map_segPairs, List.mem_map]
+  constructor
+  · rintro ⟨x, hx, he⟩
+    simp only [Transition.mk.injEq] at he
+    obtain ⟨rfl, rfl⟩ := he
+    exact hx
+  · intro hx
+    exact ⟨_, hx, rfl⟩
+
+theorem raw_Eout_le {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
+    (h : RawOf X m off labs tos) :
+    Eout (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) X m ≤ labs.length := by
+  have hmax := h.off_le
+  have hoff := h.offlen
+  have hlen : ∀ u : Fin m, outLen (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) X u =
+      off.getD (u.val + 1) 0 - off.getD u.val 0 := by
+    intro u
+    have hu : (stOf u).index.val < m := stOf_lt u (by omega)
+    obtain ⟨ts, hts, htsv⟩ := raw_outgoing TLInst h (stOf u) hu
+    unfold outLen
+    rw [outVec_of_ok _ _ _ ts hts, htsv, segment_eq_map_segPairs, List.length_map,
+      segPairs_length _ _ _ _ (h.off_le_labs (by omega)) h.len_eq, stOf_index u (by omega)]
+  unfold Eout
+  simp only [hlen]
+  rw [Fin.sum_univ_eq_sum_range (fun i => off.getD (i + 1) 0 - off.getD i 0)]
+  have key : ∀ N, N ≤ m → ∑ i ∈ Finset.range N, (off.getD (i + 1) 0 - off.getD i 0) =
+      off.getD N 0 - off.getD 0 0 := by
+    intro N
+    induction N with
+    | zero => intro _; simp
+    | succ N ih =>
+      intro hN
+      rw [Finset.sum_range_succ, ih (by omega)]
+      have h1 := h.off_mono (i := 0) (j := N) (by omega) (by omega)
+      have h2 := h.off_mono (i := N) (j := N + 1) (by omega) (by omega)
+      omega
+  rw [key m le_rfl]
+  have := h.off_le_labs (i := m) (by omega)
+  omega
+
+end Raw
+
+section Graph
+
+variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+
+theorem stOf_mk {n : Nat} (t : TagIndex Std.Usize StateTag) (ht : t.index.val < n) (hn : n ≤ Usize.max) :
+    stOf (⟨t.index.val, ht⟩ : Fin n) = t := by
+  apply merc_utilities.tagged_index.TagIndex.ext
+  apply UScalar.eq_of_val_eq
+  rw [stOf_index _ hn]
+
+/-- The hidden edges of the SCC graph are the τ-steps of the `Fin n` view. -/
+theorem edge_gOf_iff (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+    (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val) (hnlt : n0.val < Usize.max)
+    (u v : Fin n0.val) :
+    MercLib.Tarjan.Edge (gOf LTSInst sys hn0 hnlt) u v ↔
+      (aLTS LTSInst sys n0.val).Tr u Cslib.HasTau.τ v := by
+  have hn : n0.val ≤ Usize.max := by omega
+  obtain ⟨ts, hts, htlt⟩ := hwf.2.1 n0 hns (stOf u) (stOf_lt u hn)
+  show (true, v) ∈ (outVec LTSInst sys (stOf u)).val.map _ ↔ MercVerified.Lts.tr LTSInst sys (stOf u) _ (stOf v)
+  rw [outVec_of_ok _ _ _ ts hts, tr_iff_mem hts, List.mem_map]
+  constructor
+  · rintro ⟨t, ht, he⟩
+    simp only [Prod.mk.injEq, decide_eq_true_eq] at he
+    obtain ⟨h0, hv⟩ := he
+    have htl : t.to.index.val < n0.val := htlt t ht
+    have hto : t.to = stOf v := by
+      rw [← hv, show toFin hn0 t.to = ⟨t.to.index.val, htl⟩ from Fin.ext (toFin_val hn0 _ htl),
+        stOf_mk _ htl hn]
+    have hlab : t.label = Cslib.HasTau.τ := (label_eq_tau_iff _).2 h0
+    rw [← hto, ← hlab]; exact ht
+  · intro hmem
+    refine ⟨_, hmem, ?_⟩
+    simp only [Prod.mk.injEq, decide_eq_true_eq]
+    refine ⟨(label_eq_tau_iff _).1 rfl, ?_⟩
+    apply Fin.ext
+    rw [toFin_val hn0 _ (stOf_lt v hn), stOf_index v hn]
+
+/-- A successor in the topological-sort graph is a τ-step to a different state. -/
+theorem mem_tsucc {n : Nat} (hn0 : 0 < n) (hn : n ≤ Usize.max)
+    (htlt : ∀ u : Fin n, ∀ t ∈ (outVec LTSInst sys (stOf u)).val, t.to.index.val < n)
+    (a b : Fin n) (h : b ∈ tsucc LTSInst sys hn0 a) :
+    a ≠ b ∧ ({ label := Cslib.HasTau.τ, «to» := stOf b } : Transition) ∈ (outVec LTSInst sys (stOf a)).val := by
+  unfold tsucc hsucc at h
+  rw [List.mem_filterMap] at h
+  obtain ⟨t, ht, he⟩ := h
+  split_ifs at he with hc
+  cases he
+  have htl := htlt a t ht
+  have hto : t.to = stOf (toFin hn0 t.to) := by
+    rw [show toFin hn0 t.to = ⟨t.to.index.val, htl⟩ from Fin.ext (toFin_val hn0 _ htl), stOf_mk _ htl hn]
+  refine ⟨?_, ?_⟩
+  · intro hab
+    apply hc.1
+    rw [hab, toFin_val hn0 _ htl]
+  · have hlab : t.label = Cslib.HasTau.τ := (label_eq_tau_iff _).2 hc.2
+    rw [← hto, ← hlab]; exact ht
+
+theorem view_bk (ip : IndexedPartition) {n : Nat} (i : Nat) (hi : i < n)
+    (hl : ip.partition.val.length = n) :
+    view n (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val ⟨i, hi⟩ =
+      (bk ip i).index.val := by
+  unfold view bk
+  rw [List.getElem?_eq_getElem (by omega), List.getD_eq_getElem _ _ (by omega)]
+  rfl
+
+theorem tr_target_lt (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+    (hns : LTSInst.num_of_states sys = ok n0) {s : TagIndex Std.Usize StateTag}
+    {μ : TagIndex Std.Usize LabelTag} {t : TagIndex Std.Usize StateTag}
+    (h : MercVerified.Lts.tr LTSInst sys s μ t) (hs : s.index.val < n0.val) : t.index.val < n0.val := by
+  obtain ⟨ts, hts, htlt⟩ := hwf.2.1 n0 hns s hs
+  exact htlt _ ((tr_iff_mem hts μ t).1 h)
+
+theorem tsucc_of_tr {n : Nat} (hn0 : 0 < n) (a : Fin n) (t : TagIndex Std.Usize StateTag)
+    (htr : MercVerified.Lts.tr LTSInst sys (stOf a) Cslib.HasTau.τ t) (htl : t.index.val < n)
+    (hne : t.index.val ≠ a.val) :
+    (⟨t.index.val, htl⟩ : Fin n) ∈ tsucc LTSInst sys hn0 a := by
+  obtain ⟨ts, hts, hmem⟩ := htr
+  unfold tsucc hsucc
+  rw [outVec_of_ok _ _ _ ts hts, List.mem_filterMap]
+  refine ⟨_, hmem, ?_⟩
+  split_ifs with hc
+  · congr 1
+    exact Fin.ext (toFin_val hn0 _ htl)
+  · exact absurd ⟨hne, (label_eq_tau_iff _).1 rfl⟩ hc
+
+/-- States in the same τ-SCC block reach each other by τ-steps. -/
+theorem sameBlock_tauSTr (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+    (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val) (hnlt : n0.val < Usize.max)
+    (ip : IndexedPartition) (k : Nat) (hlen : ip.partition.val.length = n0.val)
+    (hscc : MercLib.Tarjan.IsSccPartition (gOf LTSInst sys hn0 hnlt)
+      (view n0.val (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val) k)
+    (s t : TagIndex Std.Usize StateTag) (hs : s.index.val < n0.val) (ht : t.index.val < n0.val)
+    (h : (bk ip s.index.val).index.val = (bk ip t.index.val).index.val) :
+    (MercVerified.Lts.toLTS LTSInst sys).τSTr s t := by
+  have hn : n0.val ≤ Usize.max := by omega
+  have hP := MercLib.Sigref.isTauSccPartition_of_scc (aLTS LTSInst sys n0.val)
+    (gOf LTSInst sys hn0 hnlt) (edge_gOf_iff LTSInst sys hwf n0 hns hn0 hnlt) hscc
+  have hab := ((hP.2.2 ⟨s.index.val, hs⟩ ⟨t.index.val, ht⟩).1
+    (by rw [view_bk ip _ hs hlen, view_bk ip _ ht hlen]; exact h)).1
+  have hlift : ∀ a b : Fin n0.val, (aLTS LTSInst sys n0.val).τSTr a b →
+      (MercVerified.Lts.toLTS LTSInst sys).τSTr (stOf a) (stOf b) := by
+    intro a b hab
+    induction hab with
+    | refl => exact Relation.ReflTransGen.refl
+    | tail _ hbc ih => exact ih.tail hbc
+  have hl := hlift _ _ hab
+  rw [stOf_mk s hs hn, stOf_mk t ht hn] at hl
+  exact hl
+
+end Graph
 
 section Top
 
@@ -1705,14 +2116,256 @@ theorem tau_cycle_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         (fun s s' => s.index.val < n0.val ∧ s'.index.val = f s.index.val) ∧
       (let I := LabelledTransitionSystem.Insts.Merc_ltsLtsLTS LTSInst.TransitionLabelInst
        MercVerified.Lts.WellFormed I R ∧ StateCountFits I R ∧ BranchingLtsAssumptions I R) := by
-  sorry
+  have hass' := hass
+  obtain ⟨hhid, -, -, hfit, -⟩ := hass'
+  have hn0 : 0 < n0.val := by
+    obtain ⟨n1, hn1, hn1pos⟩ := hwf.1
+    have e : n0 = n1 := by have h := hns.symm.trans hn1; simpa using h
+    rw [e]; exact hn1pos
+  have hnlt : n0.val < Usize.max := by have := hfit n0 hns; nlinarith
+  have hnmax : n0.val ≤ Usize.max := by omega
+  obtain ⟨ip, k, hip, hlen, hnb, hscc⟩ := tau_scc_spec LTSInst sys hwf n0 hns hn0 hhid hnlt
+  obtain ⟨Q, off, labs, tos, hQ, hRQ, hGQ, hlabQ, hinitQ, hsegQ⟩ :=
+    quotient_lts_naive_spec LTSInst sys hwf hass n0 hns hn0 hnlt ip k hlen hnb hscc
+  set I := LabelledTransitionSystem.Insts.Merc_ltsLtsLTS LTSInst.TransitionLabelInst with hIdef
+  obtain ⟨kU, hkU, hkUv⟩ := raw_num_of_states LTSInst.TransitionLabelInst hRQ
+  have hk0 : 0 < k := hRQ.n_pos
+  have hkpos : 0 < kU.val := by omega
+  have hkmax : k + 1 ≤ Usize.max := hRQ.off_le
+  have hknlt : kU.val < Usize.max := by omega
+  have hwfQ : MercVerified.Lts.WellFormed I Q := lts_wellFormed _ Q (raw_valid hRQ)
+  have hEout : Eout I Q kU.val + 1 ≤ Usize.max := by
+    have h1 : Eout I Q k ≤ labs.length := raw_Eout_le LTSInst.TransitionLabelInst hRQ
+    rw [hkUv]; have := hRQ.tmax; omega
+  -- block of a state, as a number
+  have hblk_lt : ∀ i, i < n0.val → (bk ip i).index.val < k := by
+    intro i hi
+    rw [← view_bk ip i hi hlen]
+    exact hscc.1 _
+  have hknmax : kU.val ≤ Usize.max := by omega
+  have htltQ : ∀ u : Fin kU.val, ∀ t ∈ (outVec I Q (stOf u)).val, t.to.index.val < kU.val := by
+    intro u t ht
+    obtain ⟨ts, hts, htlt⟩ := hwfQ.2.1 kU hkU (stOf u) (stOf_lt u hknmax)
+    rw [outVec_of_ok _ _ _ ts hts] at ht
+    exact htlt t ht
+  have hA : MercLib.Sigref.Topo.Acyclic (tsucc I Q hkpos) := by
+    intro v hcyc
+    have hP := MercLib.Sigref.isTauSccPartition_of_scc (aLTS LTSInst sys n0.val)
+      (gOf LTSInst sys hn0 hnlt) (edge_gOf_iff LTSInst sys hwf n0 hns hn0 hnlt) hscc
+    have hacyc := MercLib.Sigref.quotientTauAcyclic (aLTS LTSInst sys n0.val)
+      (view n0.val (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val) k hP
+    have hstep : ∀ a b : Fin kU.val, b ∈ tsucc I Q hkpos a →
+        (MercLib.Sigref.quotientTau (aLTS LTSInst sys n0.val)
+          (view n0.val (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val)).Tr
+          a.val Cslib.HasTau.τ b.val := by
+      intro a b hab
+      obtain ⟨hne, hmem⟩ := mem_tsucc I Q hkpos hknmax htltQ a b hab
+      have hex : ∃ ts : alloc.vec.Vec Transition, I.outgoing_transitions Q (stOf a) = ok ts := by
+        obtain ⟨ts, hts, -⟩ := hwfQ.2.1 kU hkU (stOf a) (stOf_lt a hknmax)
+        exact ⟨ts, hts⟩
+      have htr : MercVerified.Lts.tr I Q (stOf a) Cslib.HasTau.τ (stOf b) :=
+        (mem_outVec_iff_tr I Q (stOf a) hex _ _).1 hmem
+      have ha : (stOf a).index.val < k := by rw [stOf_index a hknmax]; omega
+      have hseg := (raw_tr_iff LTSInst.TransitionLabelInst hRQ (stOf a) ha _ _).1 htr
+      rw [stOf_index a hknmax] at hseg
+      obtain ⟨s0, t0, hs0, ht0, hs0lt, htr0, -⟩ :=
+        (hsegQ a.val (by omega) Cslib.HasTau.τ (stOf b).index).1 hseg
+      have ht0lt := tr_target_lt LTSInst sys hwf n0 hns htr0 hs0lt
+      refine ⟨⟨s0.index.val, hs0lt⟩, ⟨t0.index.val, ht0lt⟩, ?_, ?_, ?_, ?_⟩
+      · rw [view_bk ip _ hs0lt hlen, hs0]
+      · rw [view_bk ip _ ht0lt hlen, ht0, stOf_index b hknmax]
+      · show MercVerified.Lts.tr LTSInst sys (stOf _) _ (stOf _)
+        rw [stOf_mk s0 hs0lt hnmax, stOf_mk t0 ht0lt hnmax]; exact htr0
+      · rintro ⟨-, hab'⟩; exact hne (Fin.ext hab')
+    have hlift : ∀ a b, Relation.TransGen (fun a b => b ∈ tsucc I Q hkpos a) a b →
+        Relation.TransGen (fun b c => (MercLib.Sigref.quotientTau (aLTS LTSInst sys n0.val)
+          (view n0.val (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val)).Tr
+          b Cslib.HasTau.τ c) a.val b.val := by
+      intro a b h
+      induction h with
+      | single h => exact .single (hstep _ _ h)
+      | tail _ h ih => exact ih.tail (hstep _ _ h)
+    exact hacyc v.val (hlift v v hcyc)
+  obtain ⟨perm, hperm, hplen, hplt, hpinj, hpord⟩ :=
+    sort_topological_hidden_spec I Q hwfQ kU hkU hkpos (lts_is_hidden _ Q) hknlt hEout hA
+  rw [hkUv] at hplen
+  have hdv : (alloc.vec.Vec.deref perm).val = perm.val := by simp [alloc.vec.Vec.deref]
+  have hpl : (alloc.vec.Vec.deref perm).val.length = k := by rw [hdv]; exact hplen
+  have hpltd : ∀ p ∈ (alloc.vec.Vec.deref perm).val, p.index.val < k := by
+    rw [hdv]
+    intro p hp
+    obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hp
+    have := hplt i hi; omega
+  have hpinjd : ((alloc.vec.Vec.deref perm).val.map (fun p => p.index.val)).Nodup := by
+    rw [hdv, List.nodup_iff_pairwise_ne, List.pairwise_iff_getElem]
+    intro i j hi hj hij heq
+    simp only [List.getElem_map] at heq
+    simp only [List.length_map] at hi hj
+    exact absurd (hpinj i j hi hj heq) (Nat.ne_of_lt hij)
+  obtain ⟨sl, hsl, hsl1, ⟨t0, ht0, ht0tau⟩, -⟩ := hass.2.1
+  obtain ⟨sl', hsl', hQl⟩ := hlabQ
+  have hsl_eq : sl' = sl := by have h := hsl'.symm.trans hsl; simpa using h
+  subst hsl_eq
+  have hlabQ1 : 1 ≤ Q.labels.val.length := by rw [hQl]; exact hsl1
+  have htauQ : ∃ t, Q.labels.val[0]? = some t ∧ LTSInst.TransitionLabelInst.is_tau_label t = ok true :=
+    ⟨t0, by rw [hQl]; exact ht0, ht0tau⟩
+  obtain ⟨R, off', labs', tos', hRrun, hRR, hGR, hRlab, hRinit, hRseg⟩ :=
+    new_from_permutation_vec_spec LTSInst.TransitionLabelInst hRQ hGQ hlabQ1 htauQ
+      (alloc.vec.Vec.deref perm) hpl hpltd hpinjd
+  have hsp : state.index.val < ip.partition.val.length := by rw [hlen]; exact hstate
+  have hti := ip_block_number ip state hsp
+  set ti := ip.partition.val[state.index.val]'hsp with htidef
+  have hbk_state : bk ip state.index.val = ti := by
+    simp only [bk, List.getD_eq_getElem _ _ hsp, ti]
+  have htilt : ti.index.val < perm.val.length := by
+    rw [hplen, ← hbk_state]; exact hblk_lt _ hstate
+  let f : ℕ → ℕ := fun i => (perm.val.getD (bk ip i).index.val default).index.val
+  refine ⟨R, perm.val[ti.index.val]'htilt, f, ?_, ?_, ?_, ?_⟩
+  · unfold verified.merc_reduction.signatures.tau_cycle_elimination_and_reorder
+    rw [hip, bind_ok, hQ, bind_ok, hti, bind_ok]
+    have hderef : verified.merc_utilities.tagged_index.TagIndex.Insts.CoreOpsDerefDeref.deref ti =
+        ok ti.index := rfl
+    simp only [hderef, vec_tagged_index_eq, bind_ok, merc_utilities.tagged_index.TagIndex.new_eq]
+    have hperm' : verified.merc_reduction.sort_topological.sort_topological_hidden
+        (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS LTSInst.TransitionLabelInst) Q = ok (some perm) :=
+      hperm
+    have hunw : core.option.Option.unwrap (some perm) = ok perm := rfl
+    have hsl : ti.index.val < perm.slice.val.length := htilt
+    rw [hperm', bind_ok, hunw, bind_ok, slice_index_ok' _ _ hsl, bind_ok, hRrun, bind_ok]
+    rfl
+  · show _ = (perm.val.getD (bk ip state.index.val).index.val default).index.val
+    rw [hbk_state, List.getD_eq_getElem _ _ htilt]
+  · have hpermlt : ∀ b, b < k → (perm.val.getD b default).index.val < k := by
+      intro b hb
+      rw [List.getD_eq_getElem _ _ (by omega)]
+      exact hpltd _ (by rw [hdv]; exact List.getElem_mem _)
+    simp only [hdv] at hRseg
+    intro s t hr μ
+    obtain ⟨hs, ht⟩ := hr
+    have hbs := hblk_lt _ hs
+    have htk : t.index.val < k := by rw [ht]; exact hpermlt _ hbs
+    constructor
+    · intro s' hstep
+      have hs' := tr_target_lt LTSInst sys hwf n0 hns hstep hs
+      by_cases hc : μ.index.val = 0 ∧
+          (bk ip s.index.val).index.val = (bk ip s'.index.val).index.val
+      · left
+        refine ⟨(label_eq_tau_iff μ).2 hc.1, hs', ?_⟩
+        rw [ht]
+        show (perm.val.getD (bk ip s.index.val).index.val default).index.val =
+          (perm.val.getD (bk ip s'.index.val).index.val default).index.val
+        rw [hc.2]
+      · right
+        have hmemQ : (μ, ({ index := (bk ip s'.index.val).index, marker := () } :
+            TagIndex Std.Usize StateTag)) ∈ segPairs off labs tos (bk ip s.index.val).index.val :=
+          (hsegQ _ hbs μ (bk ip s'.index.val).index).2 ⟨s, s', rfl, rfl, hs, hstep, hc⟩
+        have hmemR : (μ, ({ index := (perm.val.getD (bk ip s'.index.val).index.val default).index, marker := () } : TagIndex Std.Usize StateTag)) ∈
+            segPairs off' labs' tos' t.index.val := by
+          rw [ht]
+          show _ ∈ segPairs off' labs' tos'
+            (perm.val.getD (bk ip s.index.val).index.val default).index.val
+          rw [hRseg _ hbs]
+          exact List.mem_map.2 ⟨_, hmemQ, rfl⟩
+        exact ⟨t, _, Cslib.LTS.STr.refl, (raw_tr_iff _ hRR t htk _ _).2 hmemR, ⟨hs, ht⟩, hs', rfl⟩
+    · intro t' hstep
+      have hmemR := (raw_tr_iff _ hRR t htk _ _).1 hstep
+      rw [ht] at hmemR
+      change (μ, t') ∈ segPairs off' labs' tos'
+        (perm.val.getD (bk ip s.index.val).index.val default).index.val at hmemR
+      rw [hRseg _ hbs] at hmemR
+      obtain ⟨x, hx, hxe⟩ := List.mem_map.1 hmemR
+      simp only [Prod.mk.injEq] at hxe
+      obtain ⟨hx1, hx2⟩ := hxe
+      have hx' : (μ, ({ index := x.2.index, marker := () } : TagIndex Std.Usize StateTag)) ∈
+          segPairs off labs tos (bk ip s.index.val).index.val := by
+        rw [← hx1]; exact hx
+      obtain ⟨s0, t0, hs0, ht0, hs0lt, htr0, -⟩ := (hsegQ _ hbs μ x.2.index).1 hx'
+      have ht0lt := tr_target_lt LTSInst sys hwf n0 hns htr0 hs0lt
+      right
+      refine ⟨s0, t0, (Cslib.LTS.sTr_τSTr_iff _).2
+        (sameBlock_tauSTr LTSInst sys hwf n0 hns hn0 hnlt ip k hlen hscc s s0 hs hs0lt hs0.symm),
+        htr0, ⟨hs0lt, ?_⟩, ⟨ht0lt, ?_⟩⟩
+      · rw [ht]
+        show (perm.val.getD (bk ip s.index.val).index.val default).index.val =
+          (perm.val.getD (bk ip s0.index.val).index.val default).index.val
+        rw [hs0]
+      · rw [← hx2]
+        show (perm.val.getD x.2.index.val default).index.val =
+          (perm.val.getD (bk ip t0.index.val).index.val default).index.val
+        rw [ht0]
+  · obtain ⟨mU, hmU, hmUv⟩ := raw_num_of_states LTSInst.TransitionLabelInst hRR
+    have hmeq : ∀ m, (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS LTSInst.TransitionLabelInst).num_of_states R = ok m → m.val = k := by
+      intro m hm
+      have e : m = mU := by have h := hm.symm.trans hmU; simpa using h
+      rw [e, hmUv]
+    simp only [hdv] at hRseg
+    refine ⟨lts_wellFormed _ R (raw_valid hRR), ?_, ?_⟩
+    · intro m hm
+      rw [hmeq m hm]; exact hRR.small
+    · refine ⟨⟨alloc.vec.Vec.len R.labels, rfl, lts_is_hidden _ R, ?_⟩, ?_⟩
+      · intro m hm s μ s' hs htr
+        rw [hmeq m hm] at hs
+        have hmem := (raw_tr_iff _ hRR s hs μ s').1 htr
+        rw [vec_len_val']
+        exact hGR.labs_lt μ (mem_segPairs _ _ _ _ _ hmem).1
+      · intro m hm s μ t hs htr hμ
+        rw [hmeq m hm] at hs
+        obtain ⟨b, hb, hbs⟩ := perm_surj hpl hpltd hpinjd s.index.val hs
+        rw [hdv] at hbs
+        have hmem := (raw_tr_iff _ hRR s hs μ t).1 htr
+        rw [← hbs, hRseg b hb] at hmem
+        obtain ⟨x, hx, hxe⟩ := List.mem_map.1 hmem
+        simp only [Prod.mk.injEq] at hxe
+        obtain ⟨hx1, hx2⟩ := hxe
+        have hx2lt : x.2.index.val < k := hRQ.tlt _ (mem_segPairs _ _ _ _ _ hx).2
+        have hx' : (μ, ({ index := x.2.index, marker := () } : TagIndex Std.Usize StateTag)) ∈
+            segPairs off labs tos b := by
+          rw [← hx1]; exact hx
+        obtain ⟨-, -, -, -, -, -, hnot⟩ := (hsegQ b hb μ x.2.index).1 hx'
+        have hne : x.2.index.val ≠ b := fun h => hnot ⟨hμ, h.symm⟩
+        have hμτ : μ = Cslib.HasTau.τ := (label_eq_tau_iff μ).2 hμ
+        have hbk : b < kU.val := by omega
+        have hsb : (stOf (⟨b, hbk⟩ : Fin kU.val)).index.val = b := stOf_index _ hknmax
+        have htrQ : MercVerified.Lts.tr I Q (stOf (⟨b, hbk⟩ : Fin kU.val)) Cslib.HasTau.τ x.2 := by
+          apply (raw_tr_iff _ hRQ _ (by rw [hsb]; exact hb) _ _).2
+          rw [hsb, ← hμτ, ← hx1]
+          exact hx
+        have hsucc := tsucc_of_tr I Q hkpos ⟨b, hbk⟩ x.2 htrQ (by omega) hne
+        obtain ⟨ha, hb', hlt⟩ := hpord _ _ hsucc
+        rw [← hx2, ← hbs]
+        show (perm.val.getD x.2.index.val default).index.val <
+          (perm.val.getD b default).index.val
+        rw [List.getD_eq_getElem _ _ hb', List.getD_eq_getElem _ _ ha]
+        exact hlt
 
 /-- **`branching_bisim_sigref` for `divergence_preserving = false`.** -/
 theorem branching_bisim_sigref_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hass : PreprocessAssumptions LTSInst sys)
-    (state : TagIndex Std.Usize StateTag) (timing : merc_utilities.timing.Timing) :
-    BranchingBisimSigrefCorrectSpec LTSInst sys hwf hass state timing := by
-  sorry
+    (state : TagIndex Std.Usize StateTag)
+    (hstate : ∀ n, LTSInst.num_of_states sys = ok n → state.index.val < n.val)
+    (timing : merc_utilities.timing.Timing) :
+    BranchingBisimSigrefCorrectSpec LTSInst sys hwf hass state hstate timing := by
+  obtain ⟨n0, hns, -⟩ := hwf.1
+  obtain ⟨R, state', f, hrun, hst, hcross, hwfR, hfitR, hasmR⟩ :=
+    tau_cycle_spec LTSInst sys hwf hass state n0 hns (hstate n0 hns)
+  obtain ⟨partition, blockOf, himpl, hpwf, hcov, hiff⟩ :=
+    branching_bisim_sigref_impl_correct _ R hwfR hfitR hasmR timing
+  have hrel : (fun (s s' : TagIndex Std.Usize StateTag) =>
+      (∃ n, LTSInst.num_of_states sys = ok n ∧ s.index.val < n.val) ∧ s'.index.val = f s.index.val) =
+      (fun s s' => s.index.val < n0.val ∧ s'.index.val = f s.index.val) := by
+    funext s s'
+    apply propext
+    constructor
+    · rintro ⟨⟨n, hn, hs⟩, h⟩
+      have e : n = n0 := by have h := hn.symm.trans hns; simpa using h
+      exact ⟨e ▸ hs, h⟩
+    · rintro ⟨hs, h⟩
+      exact ⟨⟨n0, hns, hs⟩, h⟩
+  refine ⟨R, state', partition, f, blockOf, ?_, fun _ _ _ => hst, ?_,
+    hwfR, hfitR, hasmR, hpwf, hcov, hiff⟩
+  · unfold verified.merc_reduction.signature_refinement.branching_bisim_sigref
+    simp [hrun, himpl]
+  · rw [hrel]; exact hcross
 
 end Top
 

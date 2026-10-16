@@ -454,7 +454,7 @@ theorem branching_worklist_step_struct {L Label : Type}
   have htopoA : MercLib.Sigref.RP.TopoSorted (aLTS LTSInst sys nU.val) := by
     intro s t h
     have h0 := (label_eq_tau_iff _).1 (rfl : (Cslib.HasTau.τ : TagIndex Std.Usize LabelTag) = _)
-    have := htopo (stOf s) _ (stOf t) h h0
+    have := htopo nU hns (stOf s) _ (stOf t) (by rw [stOf_index _ hnmax]; exact s.2) h h0
     rw [stOf_index _ hnmax, stOf_index _ hnmax] at this
     exact this
   -- the closure

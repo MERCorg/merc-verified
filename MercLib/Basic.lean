@@ -7,4 +7,4 @@ public import MercLib.Refinement.Basic
 public import MercLib.Rewriting.Basic
 public import MercLib.Signatures.Basic
 public import MercLib.Sigref.Basic
-public import MercLib.TwoSided.Basic
+public import MercLib.HybridSI.Basic

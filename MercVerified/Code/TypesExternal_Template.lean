@@ -11,6 +11,7 @@ set_option linter.unusedVariables false
 set_option linter.style.whitespace false
 set_option linter.style.setOption false
 set_option linter.style.longLine false
+set_option linter.internalConstructors false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
@@ -23,29 +24,30 @@ set_option maxRecDepth 2048
     Name pattern: [std::collections::hash::map::HashMap]
     Visibility: public -/
 @[rust_type "std::collections::hash::map::HashMap"]
-axiom std.collections.hash.map.HashMap (K : Type) (V : Type) (S : Type) (A :
-  Type) : Type
+axiom std.collections.hash.map.HashMap (K : Type _) (V : Type _) (S : Type _)
+  (A : Type _) : Type
 
 /-- [std::collections::hash::set::HashSet]
     Source: '/rustc/library/std/src/collections/hash/set.rs', lines 126:0-130:1
     Name pattern: [std::collections::hash::set::HashSet]
     Visibility: public -/
 @[rust_type "std::collections::hash::set::HashSet"]
-axiom std.collections.hash.set.HashSet (T : Type) (S : Type) (A : Type) : Type
+axiom std.collections.hash.set.HashSet (T : Type _) (S : Type _) (A : Type _) :
+  Type
 
 /-- [merc_collections::compressed_vec::ByteCompressedVec]
     Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 30:0-30:31
     Name pattern: [merc_collections::compressed_vec::ByteCompressedVec]
     Visibility: public -/
 @[rust_type "merc_collections::compressed_vec::ByteCompressedVec"]
-axiom merc_collections.compressed_vec.ByteCompressedVec (T : Type) : Type
+axiom merc_collections.compressed_vec.ByteCompressedVec (T : Type _) : Type
 
 /-- [merc_io::progress::TimeProgress]
     Source: '3rd-party/merc/crates/io/src/progress.rs', lines 9:0-9:26
     Name pattern: [merc_io::progress::TimeProgress]
     Visibility: public -/
 @[rust_type "merc_io::progress::TimeProgress"]
-axiom merc_io.progress.TimeProgress (T : Type) : Type
+axiom merc_io.progress.TimeProgress (T : Type _) : Type
 
 /-- [merc_utilities::timing::Timing]
     Source: '3rd-party/merc/crates/utilities/src/timing.rs', lines 12:0-12:17

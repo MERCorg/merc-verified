@@ -11,7 +11,8 @@ import Aeneas.Std.WP
 Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
 `branching_bisim_sigref_impl_correct` proves `BranchingBisimSigrefImplCorrectSpec`
-(`MercVerified/Refinement/Refinement.lean`); its pin lives in `Pins/Refinement_Pins.lean`.
+(`MercVerified/Refinement/Refinement.lean`); its comparator challenge lives in
+`Challenges/MercVerified.lean`.
 The proof unfolds `branching_signature_refinement` down to `branching_run_worklist_loop`, whose
 contract (`branching_run_worklist_loop_spec`) gives the partition on the `Fin n` view; the bridge
 `bb_embed` moves branching bisimilarity to the `toLTS` view.

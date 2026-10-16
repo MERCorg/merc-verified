@@ -11,6 +11,7 @@ set_option linter.unusedVariables false
 set_option linter.style.whitespace false
 set_option linter.style.setOption false
 set_option linter.style.longLine false
+set_option linter.internalConstructors false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
@@ -25,7 +26,7 @@ namespace verified
     Name pattern: [core::borrow::Borrow]
     Visibility: public -/
 @[rust_trait "core::borrow::Borrow"]
-structure core.borrow.Borrow (Self : Type) (Borrowed : Type) where
+structure core.borrow.Borrow (Self : Type _) (Borrowed : Type _) where
   borrow : Self → Result Borrowed
 
 /-- Trait declaration: [core::hash::BuildHasher]
@@ -33,7 +34,7 @@ structure core.borrow.Borrow (Self : Type) (Borrowed : Type) where
     Name pattern: [core::hash::BuildHasher]
     Visibility: public -/
 @[rust_trait "core::hash::BuildHasher" (parentClauses := ["HasherInst"])]
-structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
+structure core.hash.BuildHasher (Self : Type _) (Self_Hasher : Type _) where
   HasherInst : core.hash.Hasher Self_Hasher
   build_hasher : Self → Result Self_Hasher
 
@@ -42,14 +43,14 @@ structure core.hash.BuildHasher (Self : Type) (Self_Hasher : Type) where
     Name pattern: [core::marker::PhantomData]
     Visibility: public -/
 @[reducible, rust_type "core::marker::PhantomData"]
-def core.marker.PhantomData (T : Type) := Unit
+def core.marker.PhantomData (T : Type _) := Unit
 
 /-- Trait declaration: [merc_collections::compressed_vec::CompressedEntry]
     Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 469:0-469:25
     Name pattern: [merc_collections::compressed_vec::CompressedEntry]
     Visibility: public -/
 @[rust_trait "merc_collections::compressed_vec::CompressedEntry"]
-structure merc_collections.compressed_vec.CompressedEntry (Self : Type) where
+structure merc_collections.compressed_vec.CompressedEntry (Self : Type _) where
   to_bytes : Self → Slice Std.U8 → Result (Slice Std.U8)
   from_bytes : Slice Std.U8 → Result Self
   bytes_required : Self → Result Std.Usize
@@ -59,7 +60,8 @@ structure merc_collections.compressed_vec.CompressedEntry (Self : Type) where
     Name pattern: [merc_utilities::tagged_index::TagIndex]
     Visibility: public -/
 @[rust_type "merc_utilities::tagged_index::TagIndex"]
-structure merc_utilities.tagged_index.TagIndex (T : Type) (Tag : Type) where
+structure merc_utilities.tagged_index.TagIndex (T : Type _) (Tag : Type _)
+  where
   index : T
   marker : core.marker.PhantomData Tag
 
@@ -109,7 +111,7 @@ structure merc_lts.lts.Transition where
     Visibility: public -/
 @[rust_trait "merc_lts::lts::TransitionLabel"
   (parentClauses := ["corecmpOrdInst", "corehashHashInst", "corecmpEqInst", "corecloneCloneInst", "corefmtDisplayInst", "corefmtDebugInst"])]
-structure merc_lts.lts.TransitionLabel (Self : Type) where
+structure merc_lts.lts.TransitionLabel (Self : Type _) where
   corecmpOrdInst : core.cmp.Ord Self
   corehashHashInst : core.hash.Hash Self
   corecmpEqInst : core.cmp.Eq Self
@@ -126,7 +128,7 @@ structure merc_lts.lts.TransitionLabel (Self : Type) where
     Name pattern: [merc_lts::lts::LTS]
     Visibility: public -/
 @[rust_trait "merc_lts::lts::LTS" (parentClauses := ["TransitionLabelInst"])]
-structure merc_lts.lts.LTS (Self : Type) (Self_Label : Type) where
+structure merc_lts.lts.LTS (Self : Type _) (Self_Label : Type _) where
   TransitionLabelInst : merc_lts.lts.TransitionLabel Self_Label
   initial_state_index : Self → Result (merc_utilities.tagged_index.TagIndex
     Std.Usize merc_lts.lts.StateTag)
@@ -170,7 +172,7 @@ structure merc_lts.incoming_transitions.FromTransition where
     Visibility: public -/
 @[rust_type "merc_lts::labelled_transition_system::LabelledTransitionSystem"]
 structure merc_lts.labelled_transition_system.LabelledTransitionSystem (Label :
-  Type) where
+  Type _) where
   states : merc_collections.compressed_vec.ByteCompressedVec Std.Usize
   transition_labels : merc_collections.compressed_vec.ByteCompressedVec
     (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.LabelTag)
@@ -219,7 +221,7 @@ structure merc_reduction.block_partition.BlockIter where
     Name pattern: [merc_reduction::partition::Partition]
     Visibility: public -/
 @[rust_trait "merc_reduction::partition::Partition"]
-structure merc_reduction.partition.Partition (Self : Type) where
+structure merc_reduction.partition.Partition (Self : Type _) where
   block_number : Self → merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.StateTag → Result (merc_utilities.tagged_index.TagIndex
     Std.Usize merc_collections.indexed_partition.BlockTag)
@@ -243,7 +245,7 @@ structure merc_reduction.block_partition.BlockPartitionBuilder where
     Name pattern: [merc_reduction::divergence_preserving::DivergencePreservingLts] -/
 @[rust_type "merc_reduction::divergence_preserving::DivergencePreservingLts"]
 structure merc_reduction.divergence_preserving.DivergencePreservingLts (L :
-  Type) (Clause0_Label : Type) where
+  Type _) (Clause0_Label : Type _) where
   tau_self_loops_label : merc_utilities.tagged_index.TagIndex Std.Usize
     merc_lts.lts.LabelTag
   labels : alloc.vec.Vec Clause0_Label
@@ -278,7 +280,7 @@ inductive merc_reduction.sort_topological.Mark where
 @[reducible, rust_type
   "merc_reduction::signature_refinement::branching_signature_refinement::closure"]
 def merc_reduction.signature_refinement.branching_signature_refinement.closure
-  (L : Type) (Clause0_Label : Type) :=
+  (L : Type _) (Clause0_Label : Type _) :=
 Unit
 
 /-- [rustc_hash::FxBuildHasher]
@@ -311,7 +313,7 @@ structure merc_reduction.signature_refinement.WorklistContextBranching where
 @[rust_type
   "merc_reduction::signature_refinement::branching_bisim_sigref_impl::closure"]
 def merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure (L
-  : Type) (Clause0_Label : Type) :=
+  : Type _) (Clause0_Label : Type _) :=
   L × merc_lts.incoming_transitions.IncomingTransitions
 
 /-- [merc_reduction::signature_refinement::strong_signature_refinement::{closure}]
@@ -320,7 +322,7 @@ def merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure (L
 @[reducible, rust_type
   "merc_reduction::signature_refinement::strong_signature_refinement::closure"]
 def merc_reduction.signature_refinement.strong_signature_refinement.closure (L
-  : Type) (Clause0_Label : Type) :=
+  : Type _) (Clause0_Label : Type _) :=
 Unit
 
 /-- [merc_reduction::signature_refinement::WorklistContextStrong]
@@ -345,8 +347,8 @@ structure merc_reduction.signature_refinement.WorklistContextStrong where
     Name pattern: [merc_reduction::signature_refinement::strong_bisim_sigref::closure] -/
 @[rust_type
   "merc_reduction::signature_refinement::strong_bisim_sigref::closure"]
-def merc_reduction.signature_refinement.strong_bisim_sigref.closure (L : Type)
-  (Clause0_Label : Type) :=
+def merc_reduction.signature_refinement.strong_bisim_sigref.closure (L :
+  Type _) (Clause0_Label : Type _) :=
   L × merc_lts.incoming_transitions.IncomingTransitions
 
 end verified

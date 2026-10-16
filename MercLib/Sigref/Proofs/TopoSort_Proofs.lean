@@ -329,13 +329,13 @@ theorem root_progress {succ : Fin n → List (Fin n)} (hA : Acyclic succ) :
         subst this; exact hperm
 
 /-- **Correctness of the topological sort.** -/
-private def TopoSortCorrect (succ : Fin n → List (Fin n)) : Prop :=
+def TopoSortCorrect (succ : Fin n → List (Fin n)) : Prop :=
   Acyclic succ → ∀ c, Relation.ReflTransGen (fun a b => step succ a = some b) (init n) c →
     step succ c = none →
       c.acyc = true ∧ c.order.Nodup ∧ (∀ v, v ∈ c.order) ∧
       ∀ l1 a l2, c.order = l1 ++ a :: l2 → ∀ b ∈ succ a, b ∈ l1
 
-private theorem topoSortCorrect (succ : Fin n → List (Fin n)) : TopoSortCorrect succ := by
+theorem topoSortCorrect (succ : Fin n → List (Fin n)) : TopoSortCorrect succ := by
   intro hA c hc hterm
   obtain ⟨cn, hrn, hroot, hidx⟩ := root_progress hA n le_rfl
   have hterm_n : step succ cn = none := step_end succ cn hroot.depth (by omega)
@@ -372,10 +372,10 @@ theorem filter_none_update_ne (marks : Fin n → Option Mark) (x : Fin n) (mk : 
   · simp [Function.update_of_ne hu]
 
 /-- **Termination of the topological sort.** -/
-private def TopoSortTerminates (succ : Fin n → List (Fin n)) : Prop :=
+def TopoSortTerminates (succ : Fin n → List (Fin n)) : Prop :=
   ∀ c c', step succ c = some c' → measure succ c' < measure succ c
 
-private theorem topoSortTerminates (succ : Fin n → List (Fin n)) : TopoSortTerminates succ := by
+theorem topoSortTerminates (succ : Fin n → List (Fin n)) : TopoSortTerminates succ := by
   intro c c' h
   unfold step at h
   rcases hd : c.depth with _ | ⟨x, D⟩

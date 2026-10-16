@@ -19,7 +19,7 @@ variable {n : ℕ} {Label : Type} [HasTau Label]
 
 /-- If the hidden edges of the graph are the τ-steps of the LTS, an SCC numbering of the graph is a
 τ-SCC numbering of the LTS. -/
-private theorem isTauSccPartition_of_scc (lts : LTS (Fin n) Label) (g : Graph n)
+theorem isTauSccPartition_of_scc (lts : LTS (Fin n) Label) (g : Graph n)
     (hE : ∀ u v, Edge g u v ↔ lts.Tr u HasTau.τ v) {blk : Fin n → ℕ} {k : ℕ}
     (h : IsSccPartition g blk k) : Sigref.IsTauSccPartition lts blk k := by
   have hR : ∀ u v, ReflTransGen (Edge g) u v ↔ lts.τSTr u v := by
