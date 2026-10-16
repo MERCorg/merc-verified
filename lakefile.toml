@@ -10,7 +10,8 @@ globs = ["MercVerified.*"]
 name = "MercLib"
 globs = ["MercLib.*"]
 
-# `lake comparator` challenges/solutions (see `comparator.json`); not a default target, since the
+# `lake comparator` challenges/solutions (see `comparator.json` for `MercLib` and
+# `comparator_MercVerified.json` for `MercVerified`); not a default target, since the
 # challenges state their theorems with `sorry`.
 [[lean_lib]]
 name = "Challenges"
