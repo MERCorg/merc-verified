@@ -88,9 +88,9 @@ theorem strong_run_worklist_loop_loop_base
       have hc : x.1 = ctx := hx
       rw [hc]
       unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop.body
-      have hnext : alloc.vec.Vec.pop Global ctx.worklist
+      have hnext : alloc.vec.Vec.pop alloc.alloc.Global ctx.worklist
           ⦃ o v => o = none ∧ v = ctx.worklist ⦄ := by
-        rw [alloc.vec.Vec.pop_nil_spec Global ctx.worklist hwl]
+        rw [alloc.vec.Vec.pop_nil_spec alloc.alloc.Global ctx.worklist hwl]
         simp [spec_ok]
       apply spec_bind hnext
       intro y hy
@@ -148,7 +148,7 @@ theorem strong_run_worklist_loop_body_pop
     (w : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (ctx' : WorklistContextStrong)
     (it iteration1 : Std.Usize)
-    (hpop : alloc.vec.Vec.pop Global ctx.worklist = ok (some b, w))
+    (hpop : alloc.vec.Vec.pop alloc.alloc.Global ctx.worklist = ok (some b, w))
     (hproc :
       verified.merc_reduction.signature_refinement.strong_process_worklist_block
         BRANCHING LTSInst sys incoming { ctx with worklist := w } b = ok ctx')
@@ -168,8 +168,8 @@ theorem strong_run_worklist_loop_body_pop
 theorem worklist_pop_some {T : Type} (v : alloc.vec.Vec T) (x : T) (rest : List T)
     (h : v.val = rest ++ [x]) :
     ∃ v' : alloc.vec.Vec T,
-      alloc.vec.Vec.pop Global v = ok (some x, v') ∧ v'.val = rest :=
-  alloc.vec.Vec.pop_cons_spec Global v x rest h
+      alloc.vec.Vec.pop alloc.alloc.Global v = ok (some x, v') ∧ v'.val = rest :=
+  alloc.vec.Vec.pop_cons_spec alloc.alloc.Global v x rest h
 
 /-- Same as `strong_run_worklist_loop_body_pop`, but with the pop/process
     results bundled into a single existential witness `w` (the shape that will
@@ -184,7 +184,7 @@ theorem strong_run_worklist_loop_body_pop_ext
     (ctx ctx' : WorklistContextStrong)
     (b : TagIndex Std.Usize BlockTag)
     (hpop : ∃ w : alloc.vec.Vec (TagIndex Std.Usize BlockTag),
-        alloc.vec.Vec.pop Global ctx.worklist = ok (some b, w) ∧
+        alloc.vec.Vec.pop alloc.alloc.Global ctx.worklist = ok (some b, w) ∧
         (verified.merc_reduction.signature_refinement.strong_process_worklist_block
           BRANCHING LTSInst sys incoming { ctx with worklist := w } b = ok ctx'))
     (it iteration1 : Std.Usize) (hadd : it + 1#usize = ok iteration1) :
@@ -868,15 +868,15 @@ fresh index. -/
 
 abbrev SigPair := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)
 abbrev SigKey := alloc.vec.Vec SigPair
-abbrev InternMap := std.collections.hash.map.HashMap SigKey BT verified.rustc_hash.FxBuildHasher Global
+abbrev InternMap := std.collections.hash.map.HashMap SigKey BT verified.rustc_hash.FxBuildHasher alloc.alloc.Global
 
 noncomputable abbrev internEqInst : core.cmp.Eq SigKey :=
-  verified.alloc.vec.Vec.Insts.CoreCmpEq Global (verified.Pair.Insts.CoreCmpEq
+  verified.alloc.vec.Vec.Insts.CoreCmpEq alloc.alloc.Global (verified.Pair.Insts.CoreCmpEq
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq LabelTag core.cmp.EqUsize)
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq BlockTag core.cmp.EqUsize))
 
 noncomputable abbrev internHashInst : core.hash.Hash SigKey :=
-  verified.alloc.vec.Vec.Insts.CoreHashHash Global (verified.Pair.Insts.CoreHashHash
+  verified.alloc.vec.Vec.Insts.CoreHashHash alloc.alloc.Global (verified.Pair.Insts.CoreHashHash
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash LabelTag verified.Usize.Insts.CoreHashHash)
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash BlockTag verified.Usize.Insts.CoreHashHash))
 
@@ -1948,7 +1948,7 @@ def InitialWorklistContext {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS
     verified.merc_utilities.tagged_index.TagIndex.new BlockTag 0#usize = ok ti ∧
     alloc.vec.FromVecArray.from (Array.make 1#usize [ti]) = ok ctx0.worklist ∧
     BlockPartition.new n = ok ctx0.partition ∧
-    alloc.vec.Vec.resize_with Global
+    alloc.vec.Vec.resize_with alloc.alloc.Global
       (verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
         LTSInst)
       (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n () = ok ctx0.state_to_key ∧

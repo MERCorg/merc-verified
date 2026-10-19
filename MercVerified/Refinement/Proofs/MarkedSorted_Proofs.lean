@@ -59,9 +59,9 @@ theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv
   have hbkr : bk.begin.val < bk.«end».val ∧ bk.«end».val ≤ n ∧ bk.begin.val ≤ bk.marked_split.val ∧
       bk.marked_split.val ≤ bk.«end».val := hp.blk b.index.val hb
   have hbkread : p.blocks.slice.val[b.index.val]'hb = bk := (blkAt_eq_getElem hb).symm
-  obtain ⟨v, hv, hv0⟩ := alloc.vec.Vec.clear_spec Global sb.index_to_block
-  obtain ⟨v1, hv1, hv10⟩ := alloc.vec.Vec.clear_spec Global sb.block_sizes
-  obtain ⟨v2, hv2, hv20⟩ := alloc.vec.Vec.clear_spec Global sb.old_elements
+  obtain ⟨v, hv, hv0⟩ := alloc.vec.Vec.clear_spec alloc.alloc.Global sb.index_to_block
+  obtain ⟨v1, hv1, hv10⟩ := alloc.vec.Vec.clear_spec alloc.alloc.Global sb.block_sizes
+  obtain ⟨v2, hv2, hv20⟩ := alloc.vec.Vec.clear_spec alloc.alloc.Global sb.old_elements
   -- `len_marked`
   obtain ⟨u, hu⟩ := merc_reduction.block_partition.Block.assert_consistent_ok bk
     ⟨hbkr.1, hbkr.2.2.1, hbkr.2.2.2⟩

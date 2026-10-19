@@ -135,7 +135,7 @@ theorem is_trivially_partitioned_after_ok
 
 private abbrev PartitionSigKey := alloc.vec.Vec ((TagIndex Std.Usize verified.merc_lts.lts.LabelTag) × BlockIndex)
 private abbrev PartitionInternMap :=
-  std.collections.hash.map.HashMap PartitionSigKey BlockIndex verified.rustc_hash.FxBuildHasher Global
+  std.collections.hash.map.HashMap PartitionSigKey BlockIndex verified.rustc_hash.FxBuildHasher alloc.alloc.Global
 
 private abbrev PPBuilder := verified.merc_reduction.block_partition.BlockPartitionBuilder
 

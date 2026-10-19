@@ -122,7 +122,7 @@ private theorem signature_refinement_spec
       ∀ n, LTSInst.num_of_states sys = ok n →
         ∀ s s' : TagIndex Std.Usize StateTag, s.index.val < n.val → s'.index.val < n.val →
           StrongFixPoint (toLTS LTSInst sys) s s' → blockOf s = blockOf s' := by
-  rcases (alloc.vec.Vec.resize_with_spec Global (resizeFnMut LTSInst) (resizeFnMut_total LTSInst)
+  rcases (alloc.vec.Vec.resize_with_spec alloc.alloc.Global (resizeFnMut LTSInst) (resizeFnMut_total LTSInst)
       (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n ()) with ⟨state_to_key, hstate_to_key, -⟩
   rcases (block_partition_new_spec n hnpos) with ⟨bp, hbp, -⟩
   rcases (merc_utilities.tagged_index.TagIndex.new_spec (T := Std.Usize) BlockTag 0#usize) with ⟨ti, hti⟩

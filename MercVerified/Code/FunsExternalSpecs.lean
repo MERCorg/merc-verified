@@ -146,7 +146,7 @@ axiom alloc.vec.Vec.extend_blockIter_spec
     (hend : bi.«end».val ≤ bi.elements.val.length)
     (hlen : v.val.length + (bi.«end».val - bi.index.val) ≤ Std.Usize.max) :
     ∃ v' : alloc.vec.Vec (merc_utilities.tagged_index.TagIndex Std.Usize merc_lts.lts.StateTag),
-      alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend Global
+      alloc.vec.Vec.Insts.CoreIterTraitsCollectExtend.extend alloc.alloc.Global
         (core.iter.traits.collect.IntoIterator.Blanket
           merc_reduction.block_partition.BlockIter.Insts.CoreIterTraitsIteratorIteratorTagIndexUsizeStateTag)
         v bi = ok v' ∧
@@ -279,7 +279,7 @@ axiom std.collections.hash.map.HashMap.get_key_value_eq
 /-- `HashMap::default` succeeds and yields an empty map: every lookup finds nothing. -/
 axiom std.collections.hash.map.HashMapKVSGlobal.default_spec
   (K : Type) (V : Type) {S : Type} (coredefaultDefaultInst : core.default.Default S) :
-  ∃ m : std.collections.hash.map.HashMap K V S Global,
+  ∃ m : std.collections.hash.map.HashMap K V S alloc.alloc.Global,
     std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default K V
       coredefaultDefaultInst = ok m ∧
     ∀ {Clause2_Hasher : Type} (corecmpEqInst : core.cmp.Eq K) (corehashHashInst : core.hash.Hash K)

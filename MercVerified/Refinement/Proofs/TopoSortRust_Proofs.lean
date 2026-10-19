@@ -357,7 +357,7 @@ theorem visit_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     sort_topological_visit_hidden_loop.body LTSInst sys D marks stack acyclic =
       ok (done (acyclic, D, marks, stack)) := by
   unfold sort_topological_visit_hidden_loop.body
-  rw [alloc.vec.Vec.pop_nil_spec Global D hD]
+  rw [alloc.vec.Vec.pop_nil_spec alloc.alloc.Global D hD]
   simp
 
 open verified.merc_reduction.sort_topological in
@@ -380,7 +380,7 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   rcases List.eq_nil_or_concat D.val with hnil | ⟨rest, x, hrest⟩
   · exact absurd hnil hD
   rw [List.concat_eq_append] at hrest
-  obtain ⟨D1, hpop, hD1v⟩ := alloc.vec.Vec.pop_cons_spec Global D x rest hrest
+  obtain ⟨D1, hpop, hD1v⟩ := alloc.vec.Vec.pop_cons_spec alloc.alloc.Global D x rest hrest
   have hxlt : x.index.val < n0.val := hri.dlt x (by rw [hrest]; simp)
   have hmx : x.index.val < marks.val.length := by rw [hri.mlen]; exact hxlt
   have hrestlt : ∀ t ∈ rest, t.index.val < n0.val := fun t ht =>

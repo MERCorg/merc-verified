@@ -20,7 +20,7 @@ globs = ["Challenges.+"]
 [[require]]
 name = "cslib"
 scope = "leanprover"
-rev = "v4.35.0-rc4"
+rev = "v4.35.0"
 
 [[require]]
 name = "aeneas"

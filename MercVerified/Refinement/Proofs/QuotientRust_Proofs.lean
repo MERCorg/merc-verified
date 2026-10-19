@@ -594,7 +594,7 @@ theorem build_body_step (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd StateTag core.cmp.OrdUsize))
     qelem_ord_total' v.slice
   set b3 : alloc.vec.Vec QElem := { slice := s1 } with hb3
-  obtain ⟨v3, hdedup, hdmem, hdsub, hdchain⟩ := alloc.vec.Vec.dedup_spec (T := QElem) Global
+  obtain ⟨v3, hdedup, hdmem, hdsub, hdchain⟩ := alloc.vec.Vec.dedup_spec (T := QElem) alloc.alloc.Global
     (verified.Pair.Insts.CoreCmpPartialEqPair
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex StateTag core.cmp.PartialEqUsize))

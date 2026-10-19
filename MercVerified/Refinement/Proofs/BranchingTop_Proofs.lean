@@ -99,7 +99,7 @@ theorem branching_signature_refinement_spec {L Label : Type} (LTSInst : LTS L La
         BranchingBisimilarity (aLTS LTSInst sys n.val) s t := by
   obtain ⟨⟨nl, hnl, hhid, hlab⟩, htopo⟩ := hasm
   have hE : CEnv LTSInst sys nl := ⟨hnl, hhid, hlab⟩
-  rcases (alloc.vec.Vec.resize_with_spec Global
+  rcases (alloc.vec.Vec.resize_with_spec alloc.alloc.Global
       (verified.merc_reduction.signature_refinement.branching_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
         LTSInst) (branching_resize_closure_total LTSInst)
       (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n ()) with ⟨state_to_key, hstate_to_key, hstklen⟩

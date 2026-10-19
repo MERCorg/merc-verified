@@ -226,7 +226,7 @@ theorem branching_signature_key {L Label : Type} (LTSInst : LTS L Label) (sys : 
       (∀ e, e ∈ result.val ↔ e ∈ ts.val.map (brEntry hat bn hid mk key s)) ∧
       List.Pairwise entLt result.val := by
   unfold verified.merc_reduction.signatures.branching_bisim_signature_inductive
-  rcases (alloc.vec.Vec.clear_spec (T := SigEntry) Global builder0) with ⟨builder1, hb1, hb1val⟩
+  rcases (alloc.vec.Vec.clear_spec (T := SigEntry) alloc.alloc.Global builder0) with ⟨builder1, hb1, hb1val⟩
   let iter : alloc.vec.into_iter.IntoIter Transition := ts
   have hlen : (builder1.val ++ ts.val.map (brEntry hat bn hid mk key s)).length ≤ Usize.max := by
     simp [hb1val]
@@ -238,7 +238,7 @@ theorem branching_signature_key {L Label : Type} (LTSInst : LTS L Label) (sys : 
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
       entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, hs1sorted⟩
   let builder3 : alloc.vec.Vec SigEntry := { slice := s1 }
-  rcases (alloc.vec.Vec.dedup_spec (T := SigEntry) Global
+  rcases (alloc.vec.Vec.dedup_spec (T := SigEntry) alloc.alloc.Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))

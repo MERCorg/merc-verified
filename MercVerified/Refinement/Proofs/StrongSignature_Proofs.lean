@@ -267,7 +267,7 @@ theorem strong_bisim_signature_spec_general
     StrongBisimSignatureSpec LTSInst PInst sys partition s builder0 blockNumber hblock ts houtgoing := by
   unfold StrongBisimSignatureSpec
   rw [strong_bisim_signature]
-  rcases (alloc.vec.Vec.clear_spec (T := Entry) Global builder0) with ⟨builder1, hb1, hb1val⟩
+  rcases (alloc.vec.Vec.clear_spec (T := Entry) alloc.alloc.Global builder0) with ⟨builder1, hb1, hb1val⟩
   let iter : alloc.vec.into_iter.IntoIter Transition := ts
   have hlen : (builder1.val ++ List.map (sigEntry blockNumber) ts.val).length ≤ Usize.max := by
     simp [hb1val]
@@ -279,7 +279,7 @@ theorem strong_bisim_signature_spec_general
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
       entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
-  rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
+  rcases (alloc.vec.Vec.dedup_spec (T := Entry) alloc.alloc.Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
@@ -326,7 +326,7 @@ theorem strong_bisim_signature_total
     (hblock : ∀ t ∈ ts.val, PInst.block_number partition t.to = ok (blockNumber t.to)) :
     ∃ result, strong_bisim_signature LTSInst PInst s sys partition builder0 = ok result := by
   rw [strong_bisim_signature]
-  rcases (alloc.vec.Vec.clear_spec (T := Entry) Global builder0) with ⟨builder1, hb1, hb1val⟩
+  rcases (alloc.vec.Vec.clear_spec (T := Entry) alloc.alloc.Global builder0) with ⟨builder1, hb1, hb1val⟩
   let iter : alloc.vec.into_iter.IntoIter Transition := ts
   have hlen : (builder1.val ++ List.map (sigEntry blockNumber) ts.val).length ≤ Usize.max := by
     simp [hb1val]
@@ -338,7 +338,7 @@ theorem strong_bisim_signature_total
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
       entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, -⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
-  rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
+  rcases (alloc.vec.Vec.dedup_spec (T := Entry) alloc.alloc.Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))
@@ -375,7 +375,7 @@ theorem strong_bisim_signature_key
       (∀ μ β, (μ, β) ∈ result.val ↔ (μ, β) ∈ StrongSignature (toLTS LTSInst sys) s blockNumber) ∧
       List.Pairwise entLt result.val := by
   rw [strong_bisim_signature]
-  rcases (alloc.vec.Vec.clear_spec (T := Entry) Global builder0) with ⟨builder1, hb1, hb1val⟩
+  rcases (alloc.vec.Vec.clear_spec (T := Entry) alloc.alloc.Global builder0) with ⟨builder1, hb1, hb1val⟩
   let iter : alloc.vec.into_iter.IntoIter Transition := ts
   have hlen : (builder1.val ++ List.map (sigEntry blockNumber) ts.val).length ≤ Usize.max := by
     simp [hb1val]
@@ -387,7 +387,7 @@ theorem strong_bisim_signature_key
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize))
       entry_ord_total builder2.slice) with ⟨s1, hs1, hs1perm, hs1sorted⟩
   let builder3 : alloc.vec.Vec Entry := { slice := s1 }
-  rcases (alloc.vec.Vec.dedup_spec (T := Entry) Global
+  rcases (alloc.vec.Vec.dedup_spec (T := Entry) alloc.alloc.Global
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag core.cmp.PartialEqUsize)
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex BlockTag core.cmp.PartialEqUsize))

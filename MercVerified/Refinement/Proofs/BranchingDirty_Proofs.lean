@@ -332,7 +332,7 @@ theorem bdirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS
       DirtySem n p1 p' w' (fun t => D t ∨ PredBlkG p num_blocks incoming n nb.index.val t) := by
   have hp := h.1
   have hbk := hp.blk nb.index.val hnb
-  obtain ⟨v1, hv1, hv10⟩ := alloc.vec.Vec.clear_spec Global states
+  obtain ⟨v1, hv1, hv10⟩ := alloc.vec.Vec.clear_spec alloc.alloc.Global states
   have hnle : n ≤ Usize.max := hn
   have hlenE : (alloc.vec.Vec.deref p.elements).val.length = n := by
     simp [alloc.vec.Vec.deref, hp.len_e]

@@ -472,7 +472,7 @@ theorem pop_loop_spec {n : Nat} (s : Fin n) (su : Std.Usize) (hsu : su.val = s.v
       rw [hrest, List.map_append] at hstk'; simpa using hstk'
     obtain ⟨hrmap, hxu'⟩ := List.append_inj' hstk'' (by simp)
     have hxu : x.val = u.val := by simpa using hxu'
-    obtain ⟨D1, hpopv, hD1v⟩ := alloc.vec.Vec.pop_cons_spec Global ctx.scc_stack x rest' hrest
+    obtain ⟨D1, hpopv, hD1v⟩ := alloc.vec.Vec.pop_cons_spec alloc.alloc.Global ctx.scc_stack x rest' hrest
     have hxo : x.val < ctx.on_scc_stack.val.length := by rw [hol, hxu]; exact u.2
     have hxp : x.val < ctx.partition.partition.val.length := by rw [hpl, hxu]; exact u.2
     set ti : TagIndex Std.Usize verified.merc_collections.indexed_partition.BlockTag :=
@@ -977,7 +977,7 @@ theorem process_work_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (
       refine ⟨ctx, c, ?_, Relation.ReflTransGen.refl, hcw, hsr, rfl⟩
       apply loop_done'
       unfold scc_process_work_loop.body
-      rw [alloc.vec.Vec.pop_nil_spec Global ctx.work hnil]
+      rw [alloc.vec.Vec.pop_nil_spec alloc.alloc.Global ctx.work hnil]
       simp
     · have hwv := hsr.work
       rw [hcw] at hwv
@@ -991,7 +991,7 @@ theorem process_work_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (
       obtain ⟨hrw, hxe⟩ := List.append_inj' hwv' (by simp)
       have hts : t.index.val = s.val := by simpa using (Prod.mk.inj (List.singleton_inj.mp hxe)).1
       have hos : o.val = off := by simpa using (Prod.mk.inj (List.singleton_inj.mp hxe)).2
-      obtain ⟨D1, hpop, hD1v⟩ := alloc.vec.Vec.pop_cons_spec Global ctx.work (t, o) rest hrest
+      obtain ⟨D1, hpop, hD1v⟩ := alloc.vec.Vec.pop_cons_spec alloc.alloc.Global ctx.work (t, o) rest hrest
       obtain ⟨c', hstep, hI', hmeas⟩ := MercLib.Tarjan.step_cons hI hcw
       have hsvlt : t.index.val < n0.val := by rw [hts]; exact s.2
       have hsW : SR n0.val { ctx with work := D1 } { c with work := W } := by

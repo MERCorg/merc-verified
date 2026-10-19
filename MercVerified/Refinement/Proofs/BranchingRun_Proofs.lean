@@ -49,7 +49,7 @@ theorem branching_run_worklist_loop_body_done {L Label : Type}
       ok (done (ctx.partition, ctx.worklist, ctx.states, ctx.builder, ctx.split_builder,
         ctx.state_to_key)) := by
   unfold branching_run_worklist_loop_loop.body
-  simp [alloc.vec.Vec.pop_nil_spec Global ctx.worklist hwl]
+  simp [alloc.vec.Vec.pop_nil_spec alloc.alloc.Global ctx.worklist hwl]
 
 open verified.merc_reduction.signature_refinement in
 /-- One iteration of the loop body on a non-empty worklist. -/
@@ -58,7 +58,7 @@ theorem branching_run_worklist_loop_body_pop {L Label : Type}
     (progress : merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
     (ctx ctx' : WorklistContextBranching) (b : TagIndex Std.Usize BlockTag)
     (w : alloc.vec.Vec (TagIndex Std.Usize BlockTag)) (it iteration1 : Std.Usize)
-    (hpop : alloc.vec.Vec.pop Global ctx.worklist = ok (some b, w))
+    (hpop : alloc.vec.Vec.pop alloc.alloc.Global ctx.worklist = ok (some b, w))
     (hproc : branching_process_worklist_block LTSInst sys incoming { ctx with worklist := w } b =
       ok ctx')
     (hadd : it + 1#usize = ok iteration1) :

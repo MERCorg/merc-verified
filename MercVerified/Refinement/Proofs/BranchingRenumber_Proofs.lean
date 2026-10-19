@@ -196,7 +196,7 @@ theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
             · rw [hc1 hhat hsub]; simp only [spec_ok]
               refine ⟨⟨by omega, fun h => absurd h (by simp), fun _ => ?_⟩, ?_⟩
               · rw [← hFe, hstep, ite_eq_left hhat, ite_eq_left hsub]
-              · simp [hi1v]; try omega
+              · simp [hi1v]
             · rw [hc2 hhat hsub]; simp only [spec_ok]
               refine ⟨⟨by omega, fun _ => ⟨hres, ?_⟩, fun h => absurd h (by simp)⟩, ?_⟩
               · rw [hi1v, ← hFe, hstep, ite_eq_left hhat, ite_eq_right hsub]
@@ -204,7 +204,7 @@ theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
           · rw [hc3 hhat]; simp only [spec_ok]
             refine ⟨⟨by omega, fun h => absurd h (by simp), fun _ => ?_⟩, ?_⟩
             · rw [hres, ← hFe, hstep, ite_eq_right hhat]
-            · simp [hi1v]; try omega
+            · simp [hi1v]
         · have hz : index.val = 0 := by omega
           have hnz : ¬ index > 0#usize := by simp [UScalar.lt_equiv]; omega
           unfold renumber_branching_loop.body

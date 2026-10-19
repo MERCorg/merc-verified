@@ -57,7 +57,7 @@ theorem initial_loopInv {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
   have hpp : p' = p := by
     have := hnew'.symm.trans hnew; simpa using this
   rw [hpp] at hbl
-  obtain ⟨w, hw, hwlen⟩ := alloc.vec.Vec.resize_with_spec Global
+  obtain ⟨w, hw, hwlen⟩ := alloc.vec.Vec.resize_with_spec alloc.alloc.Global
     (verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
       LTSInst) (resize_closure_total LTSInst)
     (alloc.vec.Vec.new (TagIndex Std.Usize BlockTag)) n ()
@@ -161,7 +161,7 @@ theorem strong_run_worklist_loop_terminates'
             ok (done (x.1.partition, x.1.worklist, x.1.states, x.1.builder, x.1.split_builder,
               x.1.state_to_key)) := by
           unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop.body
-          simp [alloc.vec.Vec.pop_nil_spec Global x.1.worklist hwl]
+          simp [alloc.vec.Vec.pop_nil_spec alloc.alloc.Global x.1.worklist hwl]
         exact (congrArg (Std.WP.spec · _) hb).mpr ((Std.WP.spec_ok _).2 ⟨x.1, rfl, hI, hwl⟩)
       · have hne : x.1.worklist.val ≠ [] := hwl
         have hsplit : x.1.worklist.val = x.1.worklist.val.dropLast ++ [x.1.worklist.val.getLast hne] :=
@@ -277,7 +277,7 @@ theorem strong_run_worklist_loop_RefinesQ
             ok (done (x.1.partition, x.1.worklist, x.1.states, x.1.builder, x.1.split_builder,
               x.1.state_to_key)) := by
           unfold verified.merc_reduction.signature_refinement.strong_run_worklist_loop_loop.body
-          simp [alloc.vec.Vec.pop_nil_spec Global x.1.worklist hwl]
+          simp [alloc.vec.Vec.pop_nil_spec alloc.alloc.Global x.1.worklist hwl]
         exact (congrArg (Std.WP.spec · _) hb).mpr
           ((Std.WP.spec_ok _).2 ⟨x.1, rfl, hI, hwl, hRQx, hSSx⟩)
       · have hne : x.1.worklist.val ≠ [] := hwl
