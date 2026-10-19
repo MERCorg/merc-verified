@@ -36,21 +36,21 @@ axiom std.collections.hash.set.HashSet (T : Type _) (S : Type _) (A : Type _) :
   Type
 
 /-- [merc_collections::compressed_vec::ByteCompressedVec]
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 30:0-30:31
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 30:0-30:31
     Name pattern: [merc_collections::compressed_vec::ByteCompressedVec]
     Visibility: public -/
 @[rust_type "merc_collections::compressed_vec::ByteCompressedVec"]
 axiom merc_collections.compressed_vec.ByteCompressedVec (T : Type _) : Type
 
 /-- [merc_io::progress::TimeProgress]
-    Source: '3rd-party/merc/crates/io/src/progress.rs', lines 9:0-9:26
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/io/src/progress.rs', lines 9:0-9:26
     Name pattern: [merc_io::progress::TimeProgress]
     Visibility: public -/
 @[rust_type "merc_io::progress::TimeProgress"]
 axiom merc_io.progress.TimeProgress (T : Type _) : Type
 
 /-- [merc_utilities::timing::Timing]
-    Source: '3rd-party/merc/crates/utilities/src/timing.rs', lines 12:0-12:17
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 12:0-12:17
     Name pattern: [merc_utilities::timing::Timing]
     Visibility: public -/
 @[rust_type "merc_utilities::timing::Timing"]

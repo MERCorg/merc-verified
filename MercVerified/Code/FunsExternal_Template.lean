@@ -29,7 +29,7 @@ open verified
 axiom core.borrow.Borrow.Blanket.borrow {T : Type _} : T → Result T
 
 /-- [core::hash::impls::{impl core::hash::Hash for usize}::hash]:
-    Source: '/rustc/library/core/src/hash/mod.rs', lines 813:16-813:56
+    Source: '/rustc/library/core/src/hash/mod.rs', lines 813:16-813:56; this code is generated from a macro invocation at: '/rustc/library/core/src/hash/mod.rs', lines 831:4-844:5
     Name pattern: [core::hash::impls::{core::hash::Hash<usize>}::hash]
     Visibility: public -/
 @[rust_fun "core::hash::impls::{core::hash::Hash<usize>}::hash"]
@@ -37,7 +37,7 @@ axiom Usize.Insts.CoreHashHash.hash
   {H : Type _} (HasherInst : core.hash.Hasher H) : Std.Usize → H → Result H
 
 /-- [core::hash::impls::{impl core::hash::Hash for (T, B)}::hash]:
-    Source: '/rustc/library/core/src/hash/mod.rs', lines 894:20-894:60
+    Source: '/rustc/library/core/src/hash/mod.rs', lines 894:20-894:60; this code is generated from a macro invocation at: '/rustc/library/core/src/hash/mod.rs', lines 919:4-919:28
     Name pattern: [core::hash::impls::{core::hash::Hash<(@T, @B)>}::hash]
     Visibility: public -/
 @[rust_fun "core::hash::impls::{core::hash::Hash<(@T, @B)>}::hash"]
@@ -54,28 +54,18 @@ axiom Pair.Insts.CoreHashHash.hash
 axiom core.slice.Slice.sort_unstable
   {T : Type _} (cmpOrdInst : core.cmp.Ord T) : Slice T → Result (Slice T)
 
-/-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::ne]:
-    Source: '/rustc/library/core/src/tuple.rs', lines 34:16-34:55
-    Name pattern: [core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne]
+/-- [core::tuple::{impl core::cmp::Ord for (U, T)}::cmp]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 114:16-114:60; this code is generated from a macro invocation at: '/rustc/library/core/src/tuple.rs', lines 238:0-238:37
+    Name pattern: [core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp]
     Visibility: public -/
-@[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne"]
-axiom Pair.Insts.CoreCmpPartialEqPair.ne
-  {U : Type _} {T : Type _} (cmpPartialEqInst : core.cmp.PartialEq U U)
-  (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
-  (U × T) → (U × T) → Result Bool
-
-/-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::eq]:
-    Source: '/rustc/library/core/src/tuple.rs', lines 30:16-30:55
-    Name pattern: [core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq]
-    Visibility: public -/
-@[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq"]
-axiom Pair.Insts.CoreCmpPartialEqPair.eq
-  {U : Type _} {T : Type _} (cmpPartialEqInst : core.cmp.PartialEq U U)
-  (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
-  (U × T) → (U × T) → Result Bool
+@[rust_fun "core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp"]
+axiom Pair.Insts.CoreCmpOrd.cmp
+  {U : Type _} {T : Type _} (cmpOrdInst : core.cmp.Ord U) (cmpOrdInst1 :
+  core.cmp.Ord T) :
+  (U × T) → (U × T) → Result Ordering
 
 /-- [core::tuple::{impl core::cmp::PartialOrd<(U, T)> for (U, T)}::partial_cmp]:
-    Source: '/rustc/library/core/src/tuple.rs', lines 69:16-69:76
+    Source: '/rustc/library/core/src/tuple.rs', lines 69:16-69:76; this code is generated from a macro invocation at: '/rustc/library/core/src/tuple.rs', lines 238:0-238:37
     Name pattern: [core::tuple::{core::cmp::PartialOrd<(@U, @T), (@U, @T)>}::partial_cmp]
     Visibility: public -/
 @[rust_fun
@@ -85,15 +75,25 @@ axiom Pair.Insts.CoreCmpPartialOrdPair.partial_cmp
   (cmpPartialOrdInst1 : core.cmp.PartialOrd T T) :
   (U × T) → (U × T) → Result (Option Ordering)
 
-/-- [core::tuple::{impl core::cmp::Ord for (U, T)}::cmp]:
-    Source: '/rustc/library/core/src/tuple.rs', lines 114:16-114:60
-    Name pattern: [core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp]
+/-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::ne]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 34:16-34:55; this code is generated from a macro invocation at: '/rustc/library/core/src/tuple.rs', lines 238:0-238:37
+    Name pattern: [core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne]
     Visibility: public -/
-@[rust_fun "core::tuple::{core::cmp::Ord<(@U, @T)>}::cmp"]
-axiom Pair.Insts.CoreCmpOrd.cmp
-  {U : Type _} {T : Type _} (cmpOrdInst : core.cmp.Ord U) (cmpOrdInst1 :
-  core.cmp.Ord T) :
-  (U × T) → (U × T) → Result Ordering
+@[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::ne"]
+axiom Pair.Insts.CoreCmpPartialEqPair.ne
+  {U : Type _} {T : Type _} (cmpPartialEqInst : core.cmp.PartialEq U U)
+  (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
+  (U × T) → (U × T) → Result Bool
+
+/-- [core::tuple::{impl core::cmp::PartialEq<(U, T)> for (U, T)}::eq]:
+    Source: '/rustc/library/core/src/tuple.rs', lines 30:16-30:55; this code is generated from a macro invocation at: '/rustc/library/core/src/tuple.rs', lines 238:0-238:37
+    Name pattern: [core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq]
+    Visibility: public -/
+@[rust_fun "core::tuple::{core::cmp::PartialEq<(@U, @T), (@U, @T)>}::eq"]
+axiom Pair.Insts.CoreCmpPartialEqPair.eq
+  {U : Type _} {T : Type _} (cmpPartialEqInst : core.cmp.PartialEq U U)
+  (cmpPartialEqInst1 : core.cmp.PartialEq T T) :
+  (U × T) → (U × T) → Result Bool
 
 /-- [std::collections::hash::map::{std::collections::hash::map::HashMap<K, V, S, A>}::get_key_value]:
     Source: '/rustc/library/std/src/collections/hash/map.rs', lines 1092:4-1095:21
@@ -132,7 +132,7 @@ axiom
   std.collections.hash.map.HashMapKVSGlobal.Insts.CoreDefaultDefault.default
   (K : Type _) (V : Type _) {S : Type _} (coredefaultDefaultInst :
   core.default.Default S) :
-  Result (std.collections.hash.map.HashMap K V S Global)
+  Result (std.collections.hash.map.HashMap K V S alloc.alloc.Global)
 
 /-- [std::collections::hash::set::{std::collections::hash::set::HashSet<T, S, A>}::clear]:
     Source: '/rustc/library/std/src/collections/hash/set.rs', lines 539:4-539:27
@@ -248,7 +248,7 @@ axiom alloc.vec.Vec.Insts.CoreDefaultDefault.default
   (T : Type _) : Result (alloc.vec.Vec T)
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::new]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 37:4-37:40
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 37:4-37:40
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::new]
     Visibility: public -/
 @[rust_fun
@@ -259,7 +259,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.new
   Result (merc_collections.compressed_vec.ByteCompressedVec T)
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::push]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 72:4-72:36
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 72:4-72:36
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::push]
     Visibility: public -/
 @[rust_fun
@@ -271,7 +271,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.push
     (merc_collections.compressed_vec.ByteCompressedVec T)
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::index]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 98:4-98:42
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 98:4-98:42
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::index]
     Visibility: public -/
 @[rust_fun
@@ -283,7 +283,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.index
     T
 
 /-- [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<T>}::len]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 118:4-118:30
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 118:4-118:30
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::ByteCompressedVec<@T>}::len]
     Visibility: public -/
 @[rust_fun
@@ -294,7 +294,7 @@ axiom merc_collections.compressed_vec.ByteCompressedVec.len
   merc_collections.compressed_vec.ByteCompressedVec T → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for usize}::bytes_required]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 496:4-496:37
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 496:4-496:37
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<usize>}::bytes_required]
     Visibility: public -/
 @[rust_fun
@@ -303,7 +303,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.bytes_required
   : Std.Usize → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for usize}::from_bytes]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 488:4-488:39
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 488:4-488:39
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<usize>}::from_bytes]
     Visibility: public -/
 @[rust_fun
@@ -312,7 +312,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.from_bytes
   : Slice Std.U8 → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for usize}::to_bytes]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 481:4-481:40
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 481:4-481:40
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<usize>}::to_bytes]
     Visibility: public -/
 @[rust_fun
@@ -321,7 +321,7 @@ axiom Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry.to_bytes
   : Std.Usize → Slice Std.U8 → Result (Slice Std.U8)
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for merc_utilities::tagged_index::TagIndex<T, Tag>}::from_bytes]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 519:4-519:39
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 519:4-519:39
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::from_bytes]
     Visibility: public -/
 @[rust_fun
@@ -334,7 +334,7 @@ axiom
   Slice Std.U8 → Result (merc_utilities.tagged_index.TagIndex T Tag)
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for merc_utilities::tagged_index::TagIndex<T, Tag>}::bytes_required]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 515:12-515:45
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 515:12-515:45
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::bytes_required]
     Visibility: public -/
 @[rust_fun
@@ -347,7 +347,7 @@ axiom
   merc_utilities.tagged_index.TagIndex T Tag → Result Std.Usize
 
 /-- [merc_collections::compressed_vec::{impl merc_collections::compressed_vec::CompressedEntry for merc_utilities::tagged_index::TagIndex<T, Tag>}::to_bytes]:
-    Source: '3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 514:12-514:48
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/collections/src/compressed_vec.rs', lines 514:12-514:48
     Name pattern: [merc_collections::compressed_vec::{merc_collections::compressed_vec::CompressedEntry<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::to_bytes]
     Visibility: public -/
 @[rust_fun
@@ -361,7 +361,7 @@ axiom
     Std.U8)
 
 /-- [merc_io::progress::{merc_io::progress::TimeProgress<T>}::print]:
-    Source: '3rd-party/merc/crates/io/src/progress.rs', lines 38:4-38:34
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/io/src/progress.rs', lines 38:4-38:34
     Name pattern: [merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print]
     Visibility: public -/
 @[rust_fun "merc_io::progress::{merc_io::progress::TimeProgress<@T>}::print"]
@@ -369,7 +369,7 @@ axiom merc_io.progress.TimeProgress.print
   {T : Type _} : merc_io.progress.TimeProgress T → T → Result Unit
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent]:
-    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:4-532:31
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 532:4-532:31
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::Block}::assert_consistent"]
@@ -377,7 +377,7 @@ axiom merc_reduction.block_partition.Block.assert_consistent
   : merc_reduction.block_partition.Block → Result Unit
 
 /-- [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent]:
-    Source: '3rd-party/merc/crates/reduction/src/block_partition.rs', lines 955:4-955:39
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/block_partition.rs', lines 955:4-955:39
     Name pattern: [merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent] -/
 @[rust_fun
   "merc_reduction::block_partition::{merc_reduction::block_partition::BlockPartition}::assert_consistent"]
@@ -385,7 +385,7 @@ axiom merc_reduction.block_partition.BlockPartition.assert_consistent
   : merc_reduction.block_partition.BlockPartition → Result Bool
 
 /-- [merc_utilities::timing::{merc_utilities::timing::Timing}::measure]:
-    Source: '3rd-party/merc/crates/utilities/src/timing.rs', lines 37:4-39:25
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/timing.rs', lines 37:4-39:25
     Name pattern: [merc_utilities::timing::{merc_utilities::timing::Timing}::measure]
     Visibility: public -/
 @[rust_fun "merc_utilities::timing::{merc_utilities::timing::Timing}::measure"]
@@ -429,7 +429,7 @@ axiom rustc_hash.FxHasher.Insts.CoreHashHasher.write
   : rustc_hash.FxHasher → Slice Std.U8 → Result rustc_hash.FxHasher
 
 /-- [merc_utilities::tagged_index::{impl core::hash::Hash for merc_utilities::tagged_index::TagIndex<T, Tag>}::hash]:
-    Source: '3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:55
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/utilities/src/tagged_index.rs', lines 83:4-83:55
     Name pattern: [merc_utilities::tagged_index::{core::hash::Hash<merc_utilities::tagged_index::TagIndex<@T, @Tag>>}::hash]
     Visibility: public -/
 @[rust_fun
@@ -440,7 +440,7 @@ axiom merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.hash
   merc_utilities.tagged_index.TagIndex T Tag → H → Result H
 
 /-- [merc_reduction::signature_refinement::new_worklist_progress]:
-    Source: '3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1403:0-1403:58
+    Source: '/home/mlaveaux/merc-verified/3rd-party/merc/crates/reduction/src/signature_refinement.rs', lines 1403:0-1403:58
     Name pattern: [merc_reduction::signature_refinement::new_worklist_progress] -/
 @[rust_fun "merc_reduction::signature_refinement::new_worklist_progress"]
 axiom merc_reduction.signature_refinement.new_worklist_progress
