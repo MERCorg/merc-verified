@@ -8,6 +8,7 @@ public import MercLib.Refinement.Algorithm
 public import MercLib.Refinement.Proofs.Semantics_Proofs
 public import MercLib.Refinement.Proofs.Antichain_Proofs
 public import MercLib.Refinement.Proofs.Product_Proofs
+public import MercLib.Control.Proofs.While_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -38,6 +39,22 @@ noncomputable def succSpec [HasTau Label] (lts1 : LTS State1 Label) (spec : Set 
 theorem mem_outgoing [Finite Label] [Finite State2] {lts2 : LTS State2 Label} {s : State2}
     {p : Label × State2} : p ∈ outgoing lts2 s ↔ lts2.Tr s p.1 p.2 := by
   simp [outgoing]
+
+open scoped Classical in
+/-- Lines 13-22 as a recursive function: the inner `for` loop over the outgoing transitions of
+    `impl`, extending `working` and `antichain`. Returns `none` if line 19 (`return false`)
+    fires. `forIn_outgoing` relates it to the `for` loop of `refinesNew`. -/
+noncomputable def forSuccessors [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1) :
+    List (Label × State2) → List (Set State1 × State2) → Antichain (Set State1 × State2) →
+      Option (List (Set State1 × State2) × Antichain (Set State1 × State2))
+  | [], working, antichain => some (working, antichain)
+  | (a, impl') :: rest, working, antichain =>
+    let spec' := if a = HasTau.τ then spec else { s' | ∃ s ∈ spec, WeakTr lts1 s [a] s' }
+    if spec' = ∅ then none
+    else if ¬ (spec', impl') ⊑ antichain then
+      forSuccessors lts1 spec rest ((spec', impl') :: working)
+        (insert (spec', impl') antichain)
+    else forSuccessors lts1 spec rest working antichain
 
 /-- `L1` makes the visible steps of the subset construction of `lts1` from `spec`. -/
 def StepsBy [HasTau Label] (lts1 : LTS State1 Label) (L1 : LTS (Set State1) Label)
@@ -451,61 +468,100 @@ theorem modeWitness_iff {c : Bool} {spec : Set State1} {impl : State2} (hne : sp
 
 end Mode
 
-/-- **Theorem 2**, for the `while` loop: from the invariant, the loop returns `true` iff no witness
-    is reachable. -/
-theorem refinesLoop_spec [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
-    (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool) (p0 : Set State1 × State2)
-    (done : Set (Set State1 × State2)) (working : List (Set State1 × State2))
-    (A : Antichain (Set State1 × State2))
-    (h : ExploreInv (ModeNorm lts1 c) lts2 (ModeWitness lts1 lts2 c) (Pruned lts1 c)
-      (fun _ => False) p0 done working A) :
-    refinesLoop lts1 lts2 c done working A = true ↔
-      ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach p0 q ∧ ModeWitness lts1 lts2 c q.1 q.2 := by
-  have hnp : ∀ {spec : Set State1}, (¬ SetDivergent lts1 spec ∨ c = false) →
-      ¬ Pruned lts1 c spec := by
-    rintro spec hor ⟨rfl, hd⟩
-    rcases hor with hor | hor
-    · exact hor hd
-    · cases hor
-  have found : ∀ q, (product (ModeNorm lts1 c) lts2).CanReach p0 q →
-      ModeWitness lts1 lts2 c q.1 q.2 → (false = true ↔
-        ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach p0 q ∧
-          ModeWitness lts1 lts2 c q.1 q.2) := fun q hq hw => by
-    simp only [Bool.false_eq_true, false_iff, not_not]
-    exact ⟨q, hq, hw⟩
-  fun_induction refinesLoop lts1 lts2 c done working A
-  case case1 =>
-    simp only [true_iff]
-    exact h.no_witness (modeNorm_isMonotone lts1 c)
-      (fun hle hw => modeWitness_antitone lts1 lts2 c hle hw)
-      (fun hUV => pruned_mono lts1 hUV) (fun hx hp => pruned_path lts1 lts2 hx hp)
-      (fun hw => not_pruned_of_witness lts1 lts2 hw) (fun _ hx => hx.elim)
-  case case2 _ _ spec impl _ _ hor hdiv =>
-    exact found _ h.reach_head ((modeWitness_iff lts1 lts2
-      (h.nonempty _ List.mem_cons_self) (hnp hor)).mpr (Or.inl hdiv))
-  case case3 _ _ spec impl _ _ hor _ hst =>
-    exact found _ h.reach_head ((modeWitness_iff lts1 lts2
-      (h.nonempty _ List.mem_cons_self) (hnp hor)).mpr (Or.inr hst))
-  case case4 _ _ spec impl _ _ hor _ _ hnone =>
-    obtain ⟨⟨a, t⟩, hp, he⟩ := forSuccessors_none hnone
-    refine found (succSpec lts1 spec a, t)
-      (h.reach_succ (stepsBy_modeNorm lts1 (hnp hor)) (mem_outgoing.mp hp)) ?_
-    change ModeWitness lts1 lts2 c (succSpec lts1 spec a) t
-    rw [he]
-    exact modeWitness_empty lts1 lts2 c t
-  case case5 _ _ spec impl _ _ hor hndiv hnst _ _ hsome ih =>
-    have hW : ¬ ModeWitness lts1 lts2 c spec impl := by
-      rw [modeWitness_iff lts1 lts2 (h.nonempty _ List.mem_cons_self) (hnp hor)]
-      exact not_or.mpr ⟨hndiv, hnst⟩
-    exact ih (h.step (stepsBy_modeNorm lts1 (hnp hor)) (fun _ => mem_outgoing) hW
-      (forSuccessors_some h.le_eq hsome))
-  case case6 _ _ spec impl _ _ hor ih =>
-    have hpr : Pruned lts1 c spec := by
-      rw [not_or, not_not, Bool.not_eq_false] at hor
-      exact ⟨hor.2, hor.1⟩
-    exact ih (h.prune hpr fun hw => not_pruned_of_witness lts1 lts2 hw hpr)
-  case case7 _ _ _ _ _ hd ih =>
-    exact ih (h.skip (not_not.mp hd))
+/-! ## The loops of `refinesNew` -/
+
+/-- The state of the loops of `refinesNew`: the value of a pending early `return`, `working` and
+    `antichain`. -/
+abbrev LoopState (State1 : Type u) (State2 : Type v) :=
+  Option (ULift.{max u v} Bool) × List (Set State1 × State2) × Antichain (Set State1 × State2)
+
+open scoped Classical in
+/-- One iteration of the `for` loop (lines 14-22) on the transition `impl -a-> t`. -/
+noncomputable def succStep [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
+    (a : Label) (t : State2) (w : List (Set State1 × State2))
+    (A : Antichain (Set State1 × State2)) : ForInStep (LoopState State1 State2) :=
+  if succSpec lts1 spec a = ∅ then .done (some (.up false), w, A)
+  else if ¬ (succSpec lts1 spec a, t) ⊑ A then
+    .yield (none, (succSpec lts1 spec a, t) :: w, insert (succSpec lts1 spec a, t) A)
+  else .yield (none, w, A)
+
+/-- The `for` loop (lines 13-22) computes `forSuccessors`. -/
+theorem forIn_outgoing [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+    (g : Label × State2 → LoopState State1 State2 → Id (ForInStep (LoopState State1 State2)))
+    (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStep lts1 spec a t w A) :
+    ∀ (l : List (Label × State2)) w A,
+      match forSuccessors lts1 spec l w A with
+      | none => (forIn l (none, w, A) g).run.1 = some (.up false)
+      | some (w', A') => (forIn l (none, w, A) g).run = (none, w', A')
+  | [], w, A => rfl
+  | (a, t) :: rest, w, A => by
+    rw [forSuccessors_cons]
+    simp only [List.forIn_cons, Id.run_bind, hg, succStep]
+    by_cases h1 : succSpec lts1 spec a = ∅
+    · simp only [h1, ↓reduceIte]
+      rfl
+    by_cases h2 : (succSpec lts1 spec a, t) ⊑ A
+    · simp only [h1, h2, not_true_eq_false, ↓reduceIte]
+      exact forIn_outgoing g hg rest w A
+    · simp only [h1, h2, not_false_eq_true, ↓reduceIte]
+      exact forIn_outgoing g hg rest _ _
+
+theorem forIn_outgoing_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+    (g : Label × State2 → LoopState State1 State2 → Id (ForInStep (LoopState State1 State2)))
+    (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStep lts1 spec a t w A)
+    {l : List (Label × State2)} {w A} (h : forSuccessors lts1 spec l w A = none) :
+    (forIn l (none, w, A) g).run.1 = some (.up false) := by
+  have := forIn_outgoing g hg l w A
+  rw [h] at this
+  exact this
+
+theorem forIn_outgoing_some [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+    (g : Label × State2 → LoopState State1 State2 → Id (ForInStep (LoopState State1 State2)))
+    (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStep lts1 spec a t w A)
+    {l : List (Label × State2)} {w A w' A'} (h : forSuccessors lts1 spec l w A = some (w', A')) :
+    (forIn l (none, w, A) g).run = (none, w', A') := by
+  have := forIn_outgoing g hg l w A
+  rw [h] at this
+  exact this
+
+/-- The specification pairs not (yet) covered by `A`. -/
+def pending (A : Antichain (Set State1 × State2)) : Set (Set State1 × State2) := {x | ¬ x ⊑ A}
+
+/-- The `for` loop does not increase `|pending antichain| + |working|`: every pushed pair was not
+    covered by the antichain before, and is covered after. -/
+theorem forSuccessors_measure [HasTau Label] [Finite State1] [Finite State2]
+    {lts1 : LTS State1 Label} {spec : Set State1} :
+    ∀ {l : List (Label × State2)} {w w' : List (Set State1 × State2)}
+      {A A' : Antichain (Set State1 × State2)}, A.le = ProductLE →
+      forSuccessors lts1 spec l w A = some (w', A') →
+      (pending A').ncard + w'.length ≤ (pending A).ncard + w.length
+  | [], w, w', A, A', _, h => by
+    simp only [forSuccessors, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl⟩ := h
+    exact le_rfl
+  | (a, t) :: rest, w, w', A, A', hle, h => by
+    rw [forSuccessors_cons] at h
+    split_ifs at h with h1 h2
+    · exact forSuccessors_measure hle h
+    · have ih := forSuccessors_measure (by rw [Antichain.le_insert]; exact hle) h
+      have hlt : (pending (insert (succSpec lts1 spec a, t) A)).ncard < (pending A).ncard := by
+        refine Set.ncard_lt_ncard ⟨fun x hx hxA => hx ?_, fun hsub => ?_⟩ (Set.toFinite _)
+        · exact Antichain.mem_insert_of_mem (Antichain.le_trans_of_eq hle) hxA h2
+        · exact hsub h2 (Antichain.mem_insert_self hle _)
+      simp only [List.length_cons] at ih
+      omega
+
+/-- No witness is reachable from `p0` (the right-hand side of Theorem 2). -/
+def NoWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
+    (p0 : Set State1 × State2) : Prop :=
+  ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach p0 q ∧ ModeWitness lts1 lts2 c q.1 q.2
+
+/-- The postcondition of the `while` loop: an early `return b` has `b = true` iff no witness is
+    reachable, and running out of work means no witness is reachable. -/
+def LoopPost [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
+    (p0 : Set State1 × State2) (s : LoopState State1 State2) : Prop :=
+  (s.1 = none ∧ NoWitness lts1 lts2 c p0) ∨
+    ∃ b, s.1 = some (.up b) ∧ (b = true ↔ NoWitness lts1 lts2 c p0)
 
 /-- **Theorem 2**, for the whole algorithm: `refinesNew` returns `true` iff no witness is reachable
     from the initial pair. -/
@@ -513,8 +569,92 @@ theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Finite Sta
     (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label) (s2 : State2) (c : Bool) :
     refinesNew lts1 s1 lts2 s2 c = true ↔
       ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach (NormInit lts1 s1, s2) q ∧
-        ModeWitness lts1 lts2 c q.1 q.2 :=
-  refinesLoop_spec lts1 lts2 c _ _ _ _ (ExploreInv.initial ⟨s1, WeakTr.refl s1⟩)
+        ModeWitness lts1 lts2 c q.1 q.2 := by
+  unfold refinesNew
+  dsimp only [Id.run_bind]
+  generalize hres : (forIn (m := Id) Lean.Loop.mk _ _).run = res
+  have key : LoopPost lts1 lts2 c (NormInit lts1 s1, s2) res := by
+    rw [← hres]
+    refine MercLib.Control.whileInduction _
+      (InvImage.wf (fun s : LoopState State1 State2 => (pending s.2.2).ncard + s.2.1.length)
+        Nat.lt_wfRel.wf)
+      (fun s => s.1 = none ∧ ∃ done, ExploreInv (ModeNorm lts1 c) lts2 (ModeWitness lts1 lts2 c)
+        (Pruned lts1 c) (fun _ => False) (NormInit lts1 s1, s2) done s.2.1 s.2.2)
+      _ ?_ _ ⟨rfl, ∅, ExploreInv.initial ⟨s1, WeakTr.refl s1⟩⟩
+    rintro ⟨r, w, A⟩ ⟨rfl, done, h⟩
+    clear hres
+    rcases w with _ | ⟨⟨spec, impl⟩, w⟩
+    · refine Or.inl ⟨rfl, ?_⟩
+      exact h.no_witness (modeNorm_isMonotone lts1 c)
+        (fun hle hw => modeWitness_antitone lts1 lts2 c hle hw)
+        (fun hUV => pruned_mono lts1 hUV) (fun hx hp => pruned_path lts1 lts2 hx hp)
+        (fun hw => not_pruned_of_witness lts1 lts2 hw) (fun _ hx => hx.elim)
+    have found : ∀ q, (product (ModeNorm lts1 c) lts2).CanReach (NormInit lts1 s1, s2) q →
+        ModeWitness lts1 lts2 c q.1 q.2 → (false = true ↔ NoWitness lts1 lts2 c (NormInit lts1 s1, s2)) :=
+      fun q hq hw => by
+        simp only [Bool.false_eq_true, false_iff, NoWitness, not_not]
+        exact ⟨q, hq, hw⟩
+    have hnp : (¬ SetDivergent lts1 spec ∨ c = false) → ¬ Pruned lts1 c spec := by
+      rintro hor ⟨rfl, hd⟩
+      rcases hor with hor | hor
+      · exact hor hd
+      · cases hor
+    rw [dite_eq_left (List.cons_ne_nil _ _)]
+    dsimp +instances only [List.head_cons, List.tail_cons, Id.run_bind]
+    by_cases hor : ¬ SetDivergent lts1 spec ∨ c = false
+    swap
+    · -- the pair is pruned (line 6 fails)
+      simp only [hor, ↓reduceIte]
+      have hpr : Pruned lts1 c spec := by
+        rw [not_or, not_not, Bool.not_eq_false] at hor
+        exact ⟨hor.2, hor.1⟩
+      refine ⟨⟨rfl, _, h.prune hpr fun hw => not_pruned_of_witness lts1 lts2 hw hpr⟩, ?_⟩
+      show _ + _ < _ + _
+      simp
+    simp only [hor, ↓reduceIte]
+    by_cases hdiv : c = true ∧ lts2.Divergent impl
+    · -- line 8
+      simp only [eq_true hdiv, ↓reduceIte]
+      exact Or.inr ⟨false, rfl, found _ h.reach_head ((modeWitness_iff lts1 lts2
+        (h.nonempty _ List.mem_cons_self) (hnp hor)).mpr (Or.inl hdiv))⟩
+    simp only [eq_false hdiv, ↓reduceIte]
+    by_cases hst : Stable lts2 impl ∧ ¬ refusalsOf lts2 impl ⊆ refusals lts1 spec
+    · -- line 12
+      simp only [eq_true hst.1, eq_true hst.2, ↓reduceIte]
+      exact Or.inr ⟨false, rfl, found _ h.reach_head ((modeWitness_iff lts1 lts2
+        (h.nonempty _ List.mem_cons_self) (hnp hor)).mpr (Or.inr hst))⟩
+    have hW : ¬ ModeWitness lts1 lts2 c spec impl := by
+      rw [modeWitness_iff lts1 lts2 (h.nonempty _ List.mem_cons_self) (hnp hor)]
+      exact not_or.mpr ⟨hdiv, hst⟩
+    by_cases hs : Stable lts2 impl
+    on_goal 1 =>
+      have hr : ¬ ¬ refusalsOf lts2 impl ⊆ refusals lts1 spec := fun hc => hst ⟨hs, hc⟩
+      simp only [eq_true hs, eq_false hr, ↓reduceIte]
+    on_goal 2 => simp only [eq_false hs, ↓reduceIte]
+    -- lines 13-22
+    all_goals
+      simp only [Id.run_bind]
+      rcases hfs : forSuccessors lts1 spec (outgoing lts2 impl) w A with _ | ⟨w', A'⟩
+      · -- line 19
+        rw [forIn_outgoing_none _ ?hg hfs]
+        case hg => intro _ _ _ _; rfl
+        obtain ⟨⟨a, t⟩, hp, he⟩ := forSuccessors_none hfs
+        refine Or.inr ⟨false, rfl, found (succSpec lts1 spec a, t)
+          (h.reach_succ (stepsBy_modeNorm lts1 (hnp hor)) (mem_outgoing.mp hp)) ?_⟩
+        change ModeWitness lts1 lts2 c (succSpec lts1 spec a) t
+        rw [he]
+        exact modeWitness_empty lts1 lts2 c t
+      · rw [forIn_outgoing_some _ ?hg hfs]
+        case hg => intro _ _ _ _; rfl
+        refine ⟨⟨rfl, _, h.step (stepsBy_modeNorm lts1 (hnp hor)) (fun _ => mem_outgoing) hW
+          (forSuccessors_some h.le_eq hfs)⟩, ?_⟩
+        have := forSuccessors_measure h.le_eq hfs
+        show _ + _ < _ + _
+        simp only [List.length_cons] at this ⊢
+        omega
+  rcases key with ⟨h1, h2⟩ | ⟨b, h1, h2⟩
+  · rw [h1]; exact iff_of_true rfl h2
+  · rw [h1]; exact h2
 
 /-- **Theorem 2.** `refines_new` decides stable failures refinement (`CheckDiv = false`) and
     failures-divergences refinement (`CheckDiv = true`). -/

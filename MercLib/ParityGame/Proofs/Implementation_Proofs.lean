@@ -1,6 +1,8 @@
 module
 
 public import MercLib.ParityGame.Implementation
+public import MercLib.Control.Proofs.While_Proofs
+public import Mathlib.Data.Set.Card
 public import MercLib.ParityGame.Proofs.Attractor_Proofs
 public import MercLib.ParityGame.Proofs.FatalAttractor_Proofs
 
@@ -333,21 +335,43 @@ theorem Game.acceptFatal_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSub
     rw [G.attrWithTau_win_ne X hk, hw]
     exact hr.2 k
 
-/-- The `while` loop preserves the invariant and extends the solution, as long as the candidate
-    set consists of priority-`j` nodes. -/
-theorem Game.fatalLoop_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSubgame X) (j : ℕ) :
-    ∀ fuel prev U r, G.ImplInv X r → (∀ u ∈ U, G.prio u = j) →
-      G.ImplInv X (G.fatalLoop X j fuel prev U r) ∧ r.Extends (G.fatalLoop X j fuel prev U r) := by
-  intro fuel
-  induction fuel with
-  | zero => intro _ _ r hr _; exact ⟨hr, Solution.Extends.refl r⟩
-  | succ fuel ih =>
-    intro prev U r hr hUj
-    simp only [Game.fatalLoop]
-    split_ifs with h1 h2
-    · exact ⟨hr, Solution.Extends.refl r⟩
-    · exact G.acceptFatal_inv X hsub hr hUj h2
-    · exact ih _ _ r hr fun u hu => hUj u hu.1
+open scoped Classical in
+/-- The `while` loop for priority `j` preserves the invariant and extends the solution: its state
+    is `(r, U, prev)`, and the candidate set `U` consists of priority-`j` nodes and shrinks strictly
+    in every non-breaking iteration. -/
+theorem Game.fatalLoop_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSubgame X) (j : ℕ)
+    (r0 : Solution V)
+    (g : Unit → Solution V × Set V × Set V → Id (ForInStep (Solution V × Set V × Set V)))
+    (hg : ∀ r U prev, (g () (r, U, prev)).run =
+      if U ≠ ∅ ∧ U ≠ prev then
+        if U ⊆ G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j)) then
+          .done (G.acceptFatal X j U (G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j)))
+            r, U, U)
+        else .yield (r, U ∩ G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j)), U)
+      else .done (r, U, prev)) :
+    ∀ s : Solution V × Set V × Set V, G.ImplInv X s.1 → r0.Extends s.1 →
+      (∀ u ∈ s.2.1, G.prio u = j) →
+      G.ImplInv X (forIn Lean.Loop.mk s g).run.1 ∧ r0.Extends (forIn Lean.Loop.mk s g).run.1 := by
+  intro s h1 h2 h3
+  refine MercLib.Control.whileInduction g
+    (InvImage.wf (fun s : Solution V × Set V × Set V => s.2.1.ncard) Nat.lt_wfRel.wf)
+    (fun s => G.ImplInv X s.1 ∧ r0.Extends s.1 ∧ ∀ u ∈ s.2.1, G.prio u = j)
+    (fun s => G.ImplInv X s.1 ∧ r0.Extends s.1) ?_ s ⟨h1, h2, h3⟩
+  rintro ⟨r, U, prev⟩ ⟨hr, he, hUj⟩
+  rw [hg]
+  by_cases hc : U ≠ ∅ ∧ U ≠ prev
+  · simp only [eq_true hc, ↓reduceIte]
+    by_cases hY : U ⊆ G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j))
+    · simp only [eq_true hY, ↓reduceIte]
+      obtain ⟨h1, he'⟩ := G.acceptFatal_inv X hsub hr hUj hY
+      exact ⟨h1, he.trans he'⟩
+    · simp only [eq_false hY, ↓reduceIte]
+      refine ⟨⟨hr, he, fun u hu => hUj u hu.1⟩, ?_⟩
+      show Set.ncard _ < Set.ncard _
+      exact Set.ncard_lt_ncard ⟨Set.inter_subset_left, fun h => hY fun x hx => (h hx).2⟩
+        (Set.toFinite _)
+  · simp only [eq_false hc, ↓reduceIte]
+    exact ⟨hr, he⟩
 
 /-- Contract for `FatalAttractorOriginal`. -/
 theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
@@ -363,22 +387,18 @@ theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js
       rw [G.attrWithTau_win_ne X (by decide : Player.zero ≠ Player.one),
         G.attrWithTau_win_self]
       exact G.attr_attr_subset X _ _
-  have hfold : ∀ (js : List ℕ) (r : Solution V), G.ImplInv X r →
-      G.ImplInv X (js.foldl (fun r j =>
-        G.fatalLoop X j (Nat.card V + 1) ∅
-          ({u | u ∈ X ∧ G.prio u = j} \ r.win (Player.ofPrio j).opp) r) r) ∧
-      r.Extends (js.foldl (fun r j =>
-        G.fatalLoop X j (Nat.card V + 1) ∅
-          ({u | u ∈ X ∧ G.prio u = j} \ r.win (Player.ofPrio j).opp) r) r) := by
-    intro js
-    induction js with
-    | nil => intro r hr; exact ⟨hr, Solution.Extends.refl r⟩
-    | cons j js ih =>
-      intro r hr
-      obtain ⟨h1, he⟩ := G.fatalLoop_inv X hsub j _ _ _ r hr fun u (hu : u ∈ {u | u ∈ X ∧ G.prio u = j} \ _) => hu.1.2
-      obtain ⟨h2, he'⟩ := ih _ h1
-      exact ⟨h2, he.trans he'⟩
-  obtain ⟨hf, hef⟩ := hfold js _ hinv
-  exact ⟨hf.1, (he0.trans he1).trans hef⟩
+  unfold Game.fatalAttractorOriginal
+  dsimp only [Id.run_bind]
+  generalize hres : (forIn (m := Id) js _ _).run = res
+  have key : G.ImplInv X res ∧
+      (G.attrWithTau X .one (G.attrWithTau X .zero r)).Extends res := by
+    rw [← hres]
+    refine MercLib.Control.forInList_induction _
+      (fun s => G.ImplInv X s ∧ (G.attrWithTau X .one (G.attrWithTau X .zero r)).Extends s) ?_
+      _ _ ⟨hinv, Solution.Extends.refl _⟩
+    rintro j s ⟨hs, hes⟩
+    exact G.fatalLoop_inv X hsub j _ _ (fun _ _ _ => rfl) _ hs hes
+      fun u (hu : u ∈ {u | u ∈ X ∧ G.prio u = j} \ _) => hu.1.2
+  exact ⟨key.1.1, (he0.trans he1).trans key.2⟩
 
 end MercLib.ParityGame

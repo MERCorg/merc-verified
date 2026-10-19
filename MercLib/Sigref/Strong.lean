@@ -8,15 +8,20 @@ public import MercLib.Sigref.Defs
 /-!
 # Abstract strong-bisimulation signature refinement
 
-Pseudocode (Algorithm 1 of the paper, strong signature `{(μ, π t) | s -μ→ t}`):
+Algorithm 1 of the paper (strong signature `{(μ, π t) | s -μ→ t}`) in Lean's `do` notation:
 
+```lean
+let mut c := initConfig State                     -- π := {S};  X := S (everything dirty)
+while h : ∃ s0, s0 ∈ c.X do                       -- the block B of any dirty state s0
+  let s0 := h.choose
+  let B := cls c.π s0
+  let π' := stepSetoid lts c.π c.X s0             -- B \ X and the sigS-classes of B ∩ X (w.r.t. old π)
+  let s1 := Classical.epsilon (· ∈ B)             -- the part cls π' s1 keeps the old identity
+  let U := B \ cls π' s1
+  c := ⟨π', (c.X \ B) ∪ predS lts U⟩              -- predS U = {sp | sp -μ→ u, u ∈ U}
 ```
-π := {S};  X := S                                  -- everything dirty
-while X ∩ B ≠ ∅ for some block B of π:              -- any block with a dirty state
-  split B into  B \ X  and the Sig_π-classes of  B ∩ X       (signatures taken w.r.t. old π)
-  keep one part under the old identity; U := B \ keep
-  X := (X \ B) ∪ Pred(U)                             -- Pred(U) = {sp | sp -μ→ u, u ∈ U}
-```
+
+`h.choose` and `Classical.epsilon` stand for arbitrary choices: `StrongStep` allows every choice.
 
 `StrongStep` is the non-deterministic one-iteration relation; `StrongInv` is the invariant. The main
 results are `strongInv_init`, `strongInv_step`, `strongStep_wf` (termination) and `strongInv_final`

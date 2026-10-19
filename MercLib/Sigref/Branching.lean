@@ -10,16 +10,21 @@ public import MercLib.Sigref.RelBisim
 /-!
 # Abstract branching-bisimulation signature refinement
 
-Pseudocode (Algorithm 2 of the paper) for a τ-loop-free LTS:
+Algorithm 2 of the paper for a τ-loop-free LTS, in Lean's `do` notation:
 
+```lean
+let mut c := initConfig State                     -- π := {S};  X := S
+while h : ∃ s0, s0 ∈ c.X do                       -- the block B of any dirty state s0
+  let s0 := h.choose
+  let B := cls c.π s0
+  let Bd := inertClosure lts c.π (B ∩ c.X)        -- backward inert closure of the dirty part
+  let π' : Setoid State := ⟨branchRel lts c.π c.X s0, _⟩  -- B \ Bd and the E π-classes of Bd
+  let s1 := Classical.epsilon (· ∈ B)             -- the part cls π' s1 keeps the old identity
+  let U := B \ cls π' s1
+  c := ⟨π', (c.X \ Bd) ∪ predB lts U⟩             -- predB U = {sp | sp -μ→ u, u ∈ U, μ = τ → sp ∉ U}
 ```
-π := {S};  X := S
-while some block B of π contains a dirty state:
-  Bd := { s ∈ B | s reaches some d ∈ B ∩ X by an inert τ-path }          -- backward inert closure
-  split B into  B \ Bd  and the E_π-classes of Bd                          -- E_π ≈ Sig_π-equality
-  keep one part under the old identity; U := B \ keep
-  X := (X \ Bd) ∪ Pred(U),   Pred(U) = {sp | sp -μ→ u, u ∈ U, μ = τ → sp ∉ U}
-```
+
+`h.choose` and `Classical.epsilon` stand for arbitrary choices: `BranchingStep` allows every choice.
 
 The signature equality `Sig_π(s) = Sig_π(t)` of the paper is the relation `E π` of `RelBisim.lean`
 (branching bisimilarity relative to `π`). Brute force on 40000 random LTSs found that the two

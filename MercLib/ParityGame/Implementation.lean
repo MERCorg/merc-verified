@@ -14,24 +14,11 @@ namespace MercLib.ParityGame
 A functional model of `FatalAttractorOriginal`, the implementation of the partial solver `psolB`
 of [M. Huth, J. H.-P. Kuo and N. Piterman, *Fatal Attractors in Parity Games: Building Blocks for
 Partial Solvers*][Huth2014] (Figure 3) that accumulates the decided regions `S₀, S₁` and the
-strategies `τ₀, τ₁` instead of removing the decided nodes from the game:
+strategies `τ₀, τ₁` instead of removing the decided nodes from the game. The decided regions and
+strategies are a `Solution` `r` with `r.win i = Sᵢ` and `r.strat i = τᵢ`.
 
-```
-S₀, τ₀ := AttrDefaultWithTau(S₀, 0, τ₀);  S₁, τ₁ := AttrDefaultWithTau(S₁, 1, τ₁)
-for j ∈ J:
-  α := j mod 2
-  U := {u | rnk(u) = j} \ S₁₋α;  X := ∅
-  while U ≠ ∅ ∧ U ≠ X:
-    X := U;  Y := AttrMinRankOriginal(X ∪ Sα, α, V, j)
-    if U ⊆ Y:
-      for v ∈ Y \ Sα owned by α:
-        τα(v) := (w with w ∈ succ(v) ∩ Y) if v ∈ U, else τ(v)
-      Sα, τα := AttrDefaultWithTau(Sα ∪ Y, α, τα);  break
-    else U := U ∩ Y
-```
-
-**Translation from the pseudocode.**
-* The pseudocode runs on a structure graph. Its ranks `rnk` become priorities `prio`. Its
+**Translation from Figure 3.**
+* Figure 3 runs on a structure graph. Its ranks `rnk` become priorities `prio`. Its
   decorations `▼`/`▲` become ownership by player `0`/`1`. The `true`/`false` decorations are
   not needed, because a `Game` is total, so the decoration conditions on `U` disappear.
 * As in `FatalAttractor.lean`, the priority order is dualised. `AttrMinRankOriginal(T, α, V, j)`
@@ -39,12 +26,14 @@ for j ∈ J:
   attractor `G.mattr X α j T`, which only passes through nodes of priority *at most* `j`.
 * The rank set `J` is iterated in an unspecified order, so the order is a parameter `js`.
   Theorem 6 of the paper says the result does not depend on it.
-* Everything is relative to a subgame `X` (the pseudocode's `V`, renamed so it does not clash
+* Everything is relative to a subgame `X` (the paper's `V`, renamed so it does not clash
   with the loop variable `X`, which is called `prev` here).
-* The `while` loop runs on fuel. The candidate set `U` shrinks strictly in each non-breaking
-  iteration, so `Nat.card V + 1` rounds suffice. Running out of fuel only means fewer nodes are
-  decided, never unsound ones.
-* `τ(v)` in the pseudocode is the strategy of the monotone attractor `Y`, i.e.
+* The `while` loop has no termination proof in the definition. On a finite game the candidate
+  set `U` shrinks strictly in each non-breaking iteration, so it terminates; the soundness proof
+  shows this.
+* `AttrDefaultWithTau` is `attrWithTau`, and the `then`-branch that updates `τα` on `Y \ Sα` and
+  adds `Y` to `Sα` is `acceptFatal`.
+* `τ(v)` in Figure 3 is the strategy of the monotone attractor `Y`, i.e.
   `G.mattrStrategy X α j (U ∪ Sα)`. For `v ∈ U` an arbitrary successor in `Y` (inside `X`) is
   chosen. It exists because `Sα` is closed under the `α`-attractor, so `v ∉ Sα` has no move
   into `Sα` and its attracting move lands in `Y`.
@@ -80,28 +69,24 @@ noncomputable def Game.acceptFatal (G : Game V) (X : Set V) (j : ℕ) (U Y : Set
         else r.strat α v }
 
 open scoped Classical in
-/-- The `while` loop for priority `j`, with `fuel` iterations, previous candidate set `prev` (the
-    pseudocode's `X`) and current candidate set `U`. -/
-noncomputable def Game.fatalLoop (G : Game V) (X : Set V) (j : ℕ) :
-    ℕ → Set V → Set V → Solution V → Solution V
-  | 0, _, _, r => r
-  | fuel + 1, prev, U, r =>
-    if U = ∅ ∨ U = prev then r
-    else
-      let α := Player.ofPrio j
-      let Y := G.mattr X α j (U ∪ r.win α)
-      if U ⊆ Y then G.acceptFatal X j U Y r
-      else G.fatalLoop X j fuel U (U ∩ Y) r
-
 /-- `FatalAttractorOriginal(X, S₀, S₁, τ₀, τ₁)`, processing the priorities in the order `js`:
     the input regions/strategies are given by `r` (`r.win i = Sᵢ`, `r.strat i = τᵢ`). -/
 noncomputable def Game.fatalAttractorOriginal (G : Game V) (X : Set V) (js : List ℕ)
-    (r : Solution V) : Solution V :=
-  js.foldl
-    (fun r j =>
-      G.fatalLoop X j (Nat.card V + 1) ∅
-        ({u | u ∈ X ∧ G.prio u = j} \ r.win (Player.ofPrio j).opp) r)
-    (G.attrWithTau X .one (G.attrWithTau X .zero r))
+    (r : Solution V) : Solution V := Id.run do
+  let mut r := G.attrWithTau X .one (G.attrWithTau X .zero r)
+  for j in js do
+    let α := Player.ofPrio j
+    let mut U := {u | u ∈ X ∧ G.prio u = j} \ r.win α.opp
+    let mut prev := ∅
+    while U ≠ ∅ ∧ U ≠ prev do
+      prev := U
+      let Y := G.mattr X α j (U ∪ r.win α)
+      if U ⊆ Y then
+        r := G.acceptFatal X j U Y r
+        break
+      else
+        U := U ∩ Y
+  return r
 
 /-- `W` is a region won by player `i` with `σ` inside `X`, and plays conforming to `σ` cannot
     leave it. That is, `W ⊆ X`, `σ` moves along an edge into `W` from `i`'s nodes in `W`, every
