@@ -5,6 +5,9 @@ import MercLib.HybridSI.AlgorithmPoly
 import MercLib.HybridSI.Potential
 import MercLib.HybridSI.Bounds
 import MercLib.HybridSI.SingleOdd
+import MercLib.HybridSI.SingleOddPoly
+import MercLib.HybridSI.SingleOddStretch
+import MercLib.HybridSI.SingleOddCore
 
 /-!
 # Comparator challenge: hybrid strategy improvement (human-vetted)
@@ -161,5 +164,112 @@ theorem singleOddEpochs {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [De
 /-- Local epoch changes switch `u` between successors with `u`'s cycle maximum. -/
 theorem locSameTop {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : LocSameTop G bf := sorry
+
+/-- A trace has at most `(E + 1) · n_E` iterations, `E` the number of epoch changes. -/
+theorem epochIterations {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : EpochIterations G bf := sorry
+
+/-- Epoch changes raise the escape value of any Odd vertex to a new value or are escape ties. -/
+theorem escapeCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : EscapeCount G bf := sorry
+
+/-- The escape values split by the cycle maximum of the chosen successor. -/
+theorem escapeClasses {V : Type*} [Fintype V] [LinearOrder V] : EscapeClasses V := sorry
+
+/-- Per cycle maximum, at most `2n + 1` escape values have `B`-sum `0`. -/
+theorem escapeClassSplit {V : Type*} [Fintype V] [LinearOrder V] : EscapeClassSplit V := sorry
+
+/-- The escape of an Odd vertex has at most `n² - 1` cut rounds. -/
+theorem escapeCutCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : EscapeCutCount G bf := sorry
+
+/-- At most `c` non-final epoch changes per cut-free stretch give at most `(c + 1) n²` epoch
+    changes plus those reaching the final escape value. -/
+theorem segmentCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : SegmentCount G bf := sorry
+
+/-- `SegmentConjecture` implies `SingleOddPoly`. -/
+theorem segmentReduction : SegmentReduction := sorry
+
+/-- At most `c` iterations per stretch without a cycle-maximum change bound the iterations. -/
+theorem stretchCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : StretchCount G bf := sorry
+
+/-- At most `c` iterations per stretch without a downward move bound the iterations. -/
+theorem downCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : DownCount G bf := sorry
+
+/-- `DownConjecture` implies `SingleOddPoly`. -/
+theorem downReduction : DownReduction := sorry
+
+/-- `StretchConjecture` implies `SingleOddPoly`. -/
+theorem stretchReduction : StretchReduction := sorry
+
+/-- `SingleOddEscapeConjecture` implies `SingleOddPoly`. -/
+theorem singleOddReduction : SingleOddReduction := sorry
+
+/-- Lemma NT: in an `l`-stable iteration a switched non-top Even vertex strictly raises its key. -/
+theorem nonTopStrict {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : NonTopStrict G bf := sorry
+
+/-- Lemma SK: an iteration without key change, followed by a non-final one, is an escape tie. -/
+theorem sameKeysTie {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : SameKeysTie G bf := sorry
+
+/-- Theorem DR: a stretch has at most `(R + 1) · n(2n - 1) + Tie + 1` iterations. -/
+theorem decisiveStretch {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : DecisiveStretch G bf := sorry
+
+/-- Uniform DR: at most `r` rises per stretch and `t` escape ties bound every stretch. -/
+theorem decisiveStretchBound {V : Type*} [Fintype V] [LinearOrder V] (G : Game V)
+    [DecidableRel G.edge] (bf : ℕ) : DecisiveStretchBound G bf := sorry
+
+/-- At most `r` rises per stretch and `t` escape ties bound the iterations. -/
+theorem decisiveIterations {V : Type*} [Fintype V] [LinearOrder V] (G : Game V)
+    [DecidableRel G.edge] (bf : ℕ) : DecisiveIterations G bf := sorry
+
+/-- `RiseConjecture` implies `SingleOddRisePoly`. -/
+theorem riseReduction : RiseReduction := sorry
+
+/-- A stretch with constant keys `K*` has at most `n_E` iterations. -/
+theorem kstarBlock {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : KStarBlock G bf := sorry
+
+/-- A trace has at most `C + n_E (C + 1)` iterations, `C` the number of changes of `K*`. -/
+theorem kstarCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : KStarCount G bf := sorry
+
+/-- `KChangeConjecture` implies `SingleOddPoly`. -/
+theorem kChangeReduction : KChangeReduction := sorry
+
+/-- R2: the profiles freeze on the vertices that cannot reach `u` within `numEvenIn` iterations. -/
+theorem unreachFreeze {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : UnreachFreeze G bf := sorry
+
+/-- At most `(#up + 1)(r - 1)` downward moves of the world value. -/
+theorem upDownCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : UpDownCount G bf := sorry
+
+/-- At most `deg u` distinct world values if `K*` depends only on Odd's choice at `u`. -/
+theorem worldsBound {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : WorldsBound G bf := sorry
+
+/-- If equal world values give equal `K*`, then `K*` changes only at up and down moves. -/
+theorem kstarUpDown {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : KStarUpDown G bf := sorry
+
+/-- `#K*-changes + 1 ≤ deg u · (#up + 1)`. -/
+theorem kstarUpCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : KStarUpCount G bf := sorry
+
+/-- `MonotoneWorlds` and `UpConjecture` imply `KChangeConjecture`. -/
+theorem upReduction : UpReduction := sorry
+
+/-- MW: with a single Odd choice vertex, `K*` depends only on Odd's choice at `u`, and world
+    values compare like the keys `K*`. -/
+theorem monotoneWorlds : MonotoneWorlds := sorry
+
+/-- `UpConjecture` alone implies `SingleOddPoly`. -/
+theorem upPoly : UpPoly := sorry
 
 end MercLib.HybridSI

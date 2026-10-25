@@ -9,6 +9,9 @@ public import MercLib.HybridSI.AlgorithmPoly
 public import MercLib.HybridSI.Potential
 public import MercLib.HybridSI.Bounds
 public import MercLib.HybridSI.SingleOdd
+public import MercLib.HybridSI.SingleOddPoly
+public import MercLib.HybridSI.SingleOddStretch
+public import MercLib.HybridSI.SingleOddCore
 
 public import MercLib.HybridSI.Proofs.Lasso_Proofs
 public import MercLib.HybridSI.Proofs.Key_Proofs
@@ -28,3 +31,9 @@ public import MercLib.HybridSI.Proofs.Bounds_Subgame_Proofs
 public import MercLib.HybridSI.Proofs.Bounds_Autonomy_Proofs
 public import MercLib.HybridSI.Proofs.Bounds_Epoch_Proofs
 public import MercLib.HybridSI.Proofs.SingleOdd_Proofs
+public import MercLib.HybridSI.Proofs.SingleOddPoly_Proofs
+public import MercLib.HybridSI.Proofs.SingleOddStretch_Proofs
+public import MercLib.HybridSI.Proofs.SingleOddStretch_DR_Proofs
+public import MercLib.HybridSI.Proofs.SingleOddPoly_KStar_Proofs
+public import MercLib.HybridSI.Proofs.SingleOddCore_Proofs
+public import MercLib.HybridSI.Proofs.SingleOddCore_MW_Proofs
