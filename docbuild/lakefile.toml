@@ -1,0 +1,23 @@
+# Separate Lake package for building the API documentation with doc-gen4, so that
+# doc-gen4 does not become a dependency of `merc-verified` itself. Shares the parent's
+# package directory to avoid fetching Mathlib twice.
+#
+# Usage (from this directory):
+#   lake update doc-gen4
+#   lake build MercVerified:docs MercLib:docs
+# The HTML ends up in `docbuild/.lake/build/doc/`. Note that doc-gen4 pins a different
+# `Cli` revision than the parent manifest; running `lake build` in the parent checks the
+# parent's revision out again.
+name = "docbuild"
+reservoir = false
+version = "0.1.0"
+packagesDir = "../.lake/packages"
+
+[[require]]
+name = "merc-verified"
+path = "../"
+
+[[require]]
+scope = "leanprover"
+name = "doc-gen4"
+rev = "v4.35.0"

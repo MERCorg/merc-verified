@@ -1,0 +1,58 @@
+name: Documentation
+
+# Builds the doc-gen4 API documentation (see `docbuild/lakefile.toml`) and publishes it
+# to GitHub Pages. Only runs on `main`, since documenting all of Mathlib is slow.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    - name: Install and build Lean
+      uses: leanprover/lean-action@v1
+
+    - name: Cache documentation
+      uses: actions/cache@v4
+      with:
+        path: docbuild/.lake
+        key: docbuild-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}
+        restore-keys: |
+          docbuild-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lakefile.toml') }}-
+
+    - name: Build documentation
+      working-directory: docbuild
+      run: |
+        MATHLIB_NO_CACHE_ON_UPDATE=1 lake update doc-gen4
+        lake build MercVerified:docs MercLib:docs
+
+    - name: Upload documentation
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docbuild/.lake/build/doc
+
+  deploy-docs:
+    needs: docs
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
