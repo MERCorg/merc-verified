@@ -1,7 +1,34 @@
-import MercVerified.Refinement.Proofs.Spme_Proofs
-import MercVerified.Refinement.Proofs.SigKey_Proofs
-import MercVerified.Refinement.Proofs.MarkDirty_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.Spme_Proofs
+public import MercVerified.Refinement.Proofs.SigKey_Proofs
+public import MercVerified.Refinement.Proofs.MarkDirty_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Leaf functions of the branching algorithm
@@ -28,7 +55,7 @@ set_option maxRecDepth 10000
 
 open Classical in
 /-- `is_element_marked` on a state of a consistent partition is `IsMarked`. -/
-theorem is_element_marked_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (t : ST)
+private theorem is_element_marked_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (t : ST)
     (ht : t.index.val < n) :
     verified.merc_reduction.block_partition.BlockPartition.is_element_marked p t
       = ok (decide (IsMarked p t.index.val)) := by
@@ -61,7 +88,7 @@ theorem is_element_marked_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (
   simp [Aeneas.Std.UScalar.le_equiv]
 
 /-- `TagIndex`'s `usize` equality is decidable equality, and never fails. -/
-theorem eqTag_ok {Tag : Type} (a b : TagIndex Std.Usize Tag) :
+private theorem eqTag_ok {Tag : Type} (a b : TagIndex Std.Usize Tag) :
     verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
       core.cmp.PartialEqUsize a b = ok (decide (a = b)) := by
   obtain ⟨r, hr, hiff⟩ := tagIndex_partialEq_lawful (Tag := Tag) _ usize_partialEq_lawful a b
@@ -74,7 +101,7 @@ theorem eqTag_ok {Tag : Type} (a b : TagIndex Std.Usize Tag) :
   · simp [h] at hiff ⊢; exact hiff
 
 /-- `tau_hat`: the label index `num_of_labels`. -/
-theorem tau_hat_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
+private theorem tau_hat_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
     (h : LTSInst.num_of_labels sys = ok nl) :
     verified.merc_reduction.signatures.tau_hat LTSInst sys
       = ok ({ index := nl, marker := () } : TagIndex Std.Usize LabelTag) := by
@@ -86,7 +113,7 @@ theorem tau_hat_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.
 /-- The entry that `branching_bisim_signature_inductive` pushes for a transition `t` of `s`: an
 inert τ-step into a *marked* state of the same block contributes the hat entry carrying the key of
 its target; every other transition contributes `(label, block of target)`. -/
-def brEntry (hat : TagIndex Std.Usize LabelTag) (bn : ST → BT) (hid : TagIndex Std.Usize LabelTag → Bool)
+private def brEntry (hat : TagIndex Std.Usize LabelTag) (bn : ST → BT) (hid : TagIndex Std.Usize LabelTag → Bool)
     (mk : ST → Bool) (key : ST → BT) (s : ST) (t : Transition) : SigEntry :=
   if bn s = bn t.to ∧ hid t.label = true ∧ mk t.to = true then (hat, key t.to)
   else (t.label, bn t.to)
@@ -113,7 +140,7 @@ attribute [local reducible] Aeneas.Std.WP.Post
 private abbrev BrState := alloc.vec.Vec Transition × alloc.vec.Vec SigEntry
 
 /-- One iteration of the loop of `branching_bisim_signature_inductive`. -/
-theorem br_body_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
+private theorem br_body_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
     (state_to_key : Slice BT) (s : ST) {bn hid mk key hat} (hd : Transition) (tl : List Transition)
     (hok : BrOk LTSInst sys partition state_to_key s bn hid mk key hat (hd :: tl))
     (iter : alloc.vec.into_iter.IntoIter Transition) (hiter : iter.val = hd :: tl)
@@ -146,7 +173,7 @@ theorem br_body_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partiti
     simp [hok.bt hd hdm, hok.bs, hc1', hb1]
     exact ⟨hit1, by rw [hb1v]; simp [brEntry, hc1]⟩
 
-theorem BrOk.mono {L Label : Type} {LTSInst : LTS L Label} {sys : L} {partition : BlockPartition}
+private theorem BrOk.mono {L Label : Type} {LTSInst : LTS L Label} {sys : L} {partition : BlockPartition}
     {state_to_key : Slice BT} {s : ST} {bn hid mk key hat} {l l' : List Transition}
     (h : BrOk LTSInst sys partition state_to_key s bn hid mk key hat l) (hsub : ∀ t ∈ l', t ∈ l) :
     BrOk LTSInst sys partition state_to_key s bn hid mk key hat l' :=
@@ -154,7 +181,7 @@ theorem BrOk.mono {L Label : Type} {LTSInst : LTS L Label} {sys : L} {partition 
     fun t ht => h.mkd t (hsub t ht), fun t ht => h.key t (hsub t ht), h.tau⟩
 
 /-- The loop of `branching_bisim_signature_inductive` appends the entry of every transition. -/
-theorem br_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
+private theorem br_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
     (state_to_key : Slice BT) (s : ST) {bn hid mk key hat} (l : List Transition)
     (hok : BrOk LTSInst sys partition state_to_key s bn hid mk key hat l)
     (iter : alloc.vec.into_iter.IntoIter Transition) (hiter : iter.val = l)
@@ -216,7 +243,7 @@ theorem br_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partiti
 
 /-- **`branching_bisim_signature_inductive`**: succeeds and returns a strictly sorted list of
 exactly the entries of the outgoing transitions of `s`. -/
-theorem branching_signature_key {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem branching_signature_key {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (partition : BlockPartition) (state_to_key : Slice BT) (s : ST) {bn hid mk key hat}
     (ts : alloc.vec.Vec Transition) (houtgoing : LTSInst.outgoing_transitions sys s = ok ts)
     (hok : BrOk LTSInst sys partition state_to_key s bn hid mk key hat ts.val)

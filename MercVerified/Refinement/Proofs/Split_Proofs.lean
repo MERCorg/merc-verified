@@ -1,5 +1,30 @@
-import MercVerified.Refinement.Proofs.Spme_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.Spme_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `strong_partition_marked`: structure and semantics of the split
@@ -23,10 +48,10 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The block map read off the partition: `t ↦ element_to_block[t]`. -/
-def blockFn (p : BlockPartition) : ST → BT := fun t => p.element_to_block.val.getD t.index.val zBT
+private def blockFn (p : BlockPartition) : ST → BT := fun t => p.element_to_block.val.getD t.index.val zBT
 
 /-- The strong signature of a state under the partition's block map. -/
-def SigOf {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private def SigOf {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (p : BlockPartition) (s : ST) : Set ((TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)) :=
   StrongSignature (MercVerified.Lts.toLTS LTSInst sys) s (blockFn p)
 
@@ -34,7 +59,7 @@ def SigOf {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : 
     outside `b` keep block and offset; states of `b` end up in `b` or one of the new blocks; and two
     states of `b` share a block afterwards iff both were unmarked, or both were marked with equal
     strong signature. -/
-def SplitSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (n : Nat)
+private def SplitSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (n : Nat)
     (p : BlockPartition) (b : BT) (k : Nat) (p1 : BlockPartition) : Prop :=
   (∀ s : ST, s.index.val < n → e2bAt p s.index.val ≠ b.index.val →
       e2bAt p1 s.index.val = e2bAt p s.index.val ∧ offAt p1 s.index.val = offAt p s.index.val) ∧
@@ -50,7 +75,7 @@ def SplitSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys
 
 /-- `SplitSem` for an arbitrary signature function `sg` on states: two marked states of the block
     share a block afterwards iff their `sg` agree. -/
-def SplitSemG {X : Type} (sg : ST → X) (n : Nat)
+private def SplitSemG {X : Type} (sg : ST → X) (n : Nat)
     (p : BlockPartition) (b : BT) (k : Nat) (p1 : BlockPartition) : Prop :=
   (∀ s : ST, s.index.val < n → e2bAt p s.index.val ≠ b.index.val →
       e2bAt p1 s.index.val = e2bAt p s.index.val ∧ offAt p1 s.index.val = offAt p s.index.val) ∧
@@ -63,12 +88,12 @@ def SplitSemG {X : Type} (sg : ST → X) (n : Nat)
         ((¬ IsMarked p s.index.val ∧ ¬ IsMarked p s'.index.val) ∨
           (IsMarked p s.index.val ∧ IsMarked p s'.index.val ∧ sg s = sg s'))))
 
-theorem swapIdx_inj {l r a a' : Nat} (h : swapIdx l r a = swapIdx l r a') : a = a' := by
+private theorem swapIdx_inj {l r a a' : Nat} (h : swapIdx l r a = swapIdx l r a') : a = a' := by
   have := congrArg (swapIdx l r) h
   rwa [swapIdx_invol, swapIdx_invol] at this
 
 /-- Two states get the same class iff their signature sets are equal. -/
-theorem cls_eq_iff_sig {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private theorem cls_eq_iff_sig {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (bn : ST → BT) {olds : List ST} {kts : VecTy SigKey} {cl : Nat → Nat} {len : Nat}
     (hnd : kts.val.Nodup)
     (hcls : ∀ t, t < len → cl t < kts.val.length ∧
@@ -93,7 +118,7 @@ theorem cls_eq_iff_sig {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L L
     rw [List.getD_eq_getElem _ _ hc1, List.getD_eq_getElem _ _ hc2] at hk
     exact (List.Nodup.getElem_inj_iff hnd).mp hk
 
-theorem labelIdx_inj {bi N K : Nat} {u : Bool} (hb : bi < N) {c c' : Nat} (_hc : c < K) (_hc' : c' < K)
+private theorem labelIdx_inj {bi N K : Nat} {u : Bool} (hb : bi < N) {c c' : Nat} (_hc : c < K) (_hc' : c' < K)
     (h : labelIdx bi u N c = labelIdx bi u N c') : c = c' := by
   cases u
   · simp only [labelIdx, firstNew, Bool.false_eq_true, ite_false, and_true] at h
@@ -101,14 +126,14 @@ theorem labelIdx_inj {bi N K : Nat} {u : Bool} (hb : bi < N) {c c' : Nat} (_hc :
   · simp only [labelIdx, firstNew, ite_true, Bool.true_eq_false, and_false, ite_false] at h
     omega
 
-theorem labelIdx_range {bi N K : Nat} {u : Bool} {c : Nat} (hc : c < K) :
+private theorem labelIdx_range {bi N K : Nat} {u : Bool} {c : Nat} (hc : c < K) :
     labelIdx bi u N c = bi ∨ (N ≤ labelIdx bi u N c ∧ labelIdx bi u N c < N + (K - firstNew u)) := by
   unfold labelIdx firstNew
   by_cases h : c = 0 ∧ u = false
   · left; simp [h]
   · right; simp only [h, ite_false]; split_ifs <;> simp_all; omega
 
-theorem labelIdx_ne {bi N : Nat} {u : Bool} (hb : bi < N) (hu : u = true) {c : Nat} :
+private theorem labelIdx_ne {bi N : Nat} {u : Bool} (hb : bi < N) (hu : u = true) {c : Nat} :
     labelIdx bi u N c ≠ bi := by
   unfold labelIdx firstNew
   simp [hu]; omega
@@ -116,7 +141,7 @@ theorem labelIdx_ne {bi N : Nat} {u : Bool} (hb : bi < N) (hu : u = true) {c : N
 /-- What the caller of `strong_partition_marked` learns about the new partition and the new-block
     list: `b` and the `k` fresh blocks `N, …, N+k-1` are exactly the blocks that may have changed,
     all of them unmarked afterwards, and `SplitSem` says which states moved where. -/
-def SplitPost {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (n : Nat)
+private def SplitPost {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (n : Nat)
     (p : BlockPartition) (b : BT) (nbi : VecTy BT) (p' : BlockPartition) : Prop :=
   PartInv n p' ∧ ∃ k, p'.blocks.val.length = p.blocks.val.length + k ∧
     nbi.val = b :: (List.range' p.blocks.val.length k).map uTag ∧
@@ -125,7 +150,7 @@ def SplitPost {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sy
       (blkAt p' j).marked_split.val = (blkAt p' j).«end».val) ∧
     SplitSem LTSInst sys n p b k p'
 
-theorem is_trivially_partitioned_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : BT)
+private theorem is_trivially_partitioned_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : BT)
     (hb : b.index.val < p.blocks.val.length) :
     ∃ tb, verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned p b = ok tb ∧
       (tb = true → (blkAt p b.index.val).«end».val = (blkAt p b.index.val).begin.val + 1) := by
@@ -144,7 +169,7 @@ theorem is_trivially_partitioned_ok {n : Nat} {p : BlockPartition} (hp : PartInv
     have : i.val = 1 := by rw [h']; rfl
     omega
 
-theorem regionElems_lt {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len : Nat)
+private theorem regionElems_lt {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len : Nat)
     (hle : ms + len ≤ n) : ∀ x ∈ regionElems p ms len, x.index.val < n := by
   intro x hx
   unfold regionElems at hx
@@ -153,18 +178,18 @@ theorem regionElems_lt {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len
   exact this
 
 
-theorem swapIdx_mem {b mx N k j : Nat}
+private theorem swapIdx_mem {b mx N k j : Nat}
     (hmx : mx = b ∨ (N ≤ mx ∧ mx < N + k)) (hj : j = b ∨ (N ≤ j ∧ j < N + k)) :
     swapIdx b mx j = b ∨ (N ≤ swapIdx b mx j ∧ swapIdx b mx j < N + k) := by
   unfold swapIdx
   split_ifs <;> omega
 
-theorem tag_eq_of_val {Tag : Type} {a b : TagIndex Std.Usize Tag} (h : a.index.val = b.index.val) :
+private theorem tag_eq_of_val {Tag : Type} {a b : TagIndex Std.Usize Tag} (h : a.index.val = b.index.val) :
     a = b := merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq h)
 
 /-- The semantic effect of `finish_partition_marked` (`FinishSem`) together with the class/signature
     correspondence gives `SplitSem`. -/
-theorem split_sem_nontrivialG {X : Type} (sg : ST → X)
+private theorem split_sem_nontrivialG {X : Type} (sg : ST → X)
     {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : BT) (hb : b.index.val < p.blocks.val.length)
     (K : Nat) (u : Bool)
     (hu : u = decide ((blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val))
@@ -314,7 +339,7 @@ theorem split_sem_nontrivialG {X : Type} (sg : ST → X)
         rw [hb0 s hs hX h1, hb0 s' hs' hX' h2]
         exact ⟨fun _ => Or.inl ⟨hm1, hm2⟩, fun _ => rfl⟩
 
-theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : BT) (hb : b.index.val < p.blocks.val.length)
     (K : Nat) (u : Bool)
     (hu : u = decide ((blkAt p b.index.val).begin.val < (blkAt p b.index.val).marked_split.val))
@@ -331,7 +356,7 @@ theorem split_sem_nontrivial {L Label : Type} (LTSInst : verified.merc_lts.lts.L
   split_sem_nontrivialG (SigOf LTSInst sys p) hp b hb K u hu cls old p3 hlen holdlen hperm hlt hsem hsig
 
 /-- Contract of `strong_partition_marked` on a block that has marked elements. -/
-theorem strong_partition_marked_spec {L Label : Type}
+private theorem strong_partition_marked_spec {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)

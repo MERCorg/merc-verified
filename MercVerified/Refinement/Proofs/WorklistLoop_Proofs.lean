@@ -1,7 +1,20 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.StrongSignature_Proofs
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.StrongSignature_Proofs
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+import all Aeneas.Std.Core.Cmp
+
+@[expose] public section
 
 /-!
 # Proofs about the `strong_run_worklist_loop` worklist loop
@@ -55,7 +68,7 @@ private abbrev Bounds :=
 /-- If the worklist is empty, the `strong_run_worklist_loop` loop terminates
     immediately (`Vec::pop` returns `None`), leaving the context untouched - for
     any progress ticker, iteration counter and `BRANCHING` flag. -/
-theorem strong_run_worklist_loop_loop_base
+private theorem strong_run_worklist_loop_loop_base
     (BRANCHING : Bool)
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
@@ -109,7 +122,7 @@ theorem strong_run_worklist_loop_loop_base
 
 /-- With an empty initial worklist, `strong_run_worklist_loop` returns the
     context unchanged. -/
-theorem strong_run_worklist_loop_base
+private theorem strong_run_worklist_loop_base
     (BRANCHING : Bool)
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
@@ -136,7 +149,7 @@ theorem strong_run_worklist_loop_base
     then the loop body returns `cont (ctx', iteration + 1)` - exactly the
     continuation the loop induction will walk. This holds for any progress
     ticker: the `TimeProgress.print` call never fails. -/
-theorem strong_run_worklist_loop_body_pop
+private theorem strong_run_worklist_loop_body_pop
     (BRANCHING : Bool)
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
@@ -165,7 +178,7 @@ theorem strong_run_worklist_loop_body_pop
 /-- `Vec::pop` on a vector of the form `rest ++ [x]` returns exactly `x` and a
     vector with contents `rest` (witness packaging of
     `alloc.vec.Vec.pop_cons_spec`). -/
-theorem worklist_pop_some {T : Type} (v : alloc.vec.Vec T) (x : T) (rest : List T)
+private theorem worklist_pop_some {T : Type} (v : alloc.vec.Vec T) (x : T) (rest : List T)
     (h : v.val = rest ++ [x]) :
     ∃ v' : alloc.vec.Vec T,
       alloc.vec.Vec.pop alloc.alloc.Global v = ok (some x, v') ∧ v'.val = rest :=
@@ -174,7 +187,7 @@ theorem worklist_pop_some {T : Type} (v : alloc.vec.Vec T) (x : T) (rest : List 
 /-- Same as `strong_run_worklist_loop_body_pop`, but with the pop/process
     results bundled into a single existential witness `w` (the shape that will
     arise in the loop induction from `worklist_pop_some`). -/
-theorem strong_run_worklist_loop_body_pop_ext
+private theorem strong_run_worklist_loop_body_pop_ext
     (BRANCHING : Bool)
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
@@ -211,18 +224,17 @@ split and by more than `n + 1 - n` with one. The invariants are `DirtyInv` / `Lo
 attribute [local reducible] alloc.vec.into_iter.IntoIter
 
 
-abbrev Sz := Std.Usize
 abbrev BT := TagIndex Sz BlockTag
 abbrev ST := TagIndex Sz StateTag
-abbrev InIter := alloc.vec.into_iter.IntoIter BT
+private abbrev InIter := alloc.vec.into_iter.IntoIter BT
 abbrev VecTy := alloc.vec.Vec
-abbrev PWS := BlockPartition × VecTy BT × VecTy ST
+private abbrev PWS := BlockPartition × VecTy BT × VecTy ST
 
-noncomputable abbrev tagEqInst : core.cmp.PartialEq BT BT :=
+private noncomputable abbrev tagEqInst : core.cmp.PartialEq BT BT :=
   verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
     BlockTag core.cmp.PartialEqUsize
 
-lemma tagEq_spec (a b : BT) :
+private lemma tagEq_spec (a b : BT) :
     tagEqInst.eq a b = ok (decide (a = b)) := by
   unfold tagEqInst
   have hinst : (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex
@@ -235,21 +247,21 @@ lemma tagEq_spec (a b : BT) :
   · have : a.index ≠ b.index := fun e => h (merc_utilities.tagged_index.TagIndex.ext e)
     simp [h, this]
 
-lemma neq_tag (a b : BT) :
+private lemma neq_tag (a b : BT) :
     core.cmp.PartialEq.ne.trait_default tagEqInst a b = ok (!decide (a = b)) := by
   rw [core.cmp.PartialEq.ne.trait_default]
   rw [core.cmp.PartialEq.ne.default]
   rw [tagEq_spec]
   simp
 
-theorem neq_bind {β : Type} (a b : BT) (k : Bool → Result β) :
+private theorem neq_bind {β : Type} (a b : BT) (k : Bool → Result β) :
     (do
       let x ← core.cmp.PartialEq.ne.trait_default tagEqInst a b
       k x) = k (!decide (a = b)) := by
   rw [neq_tag]
   simp
 
-lemma into_iter_next_some (it : InIter) (v : BT) (tl : List BT) (h : it.val = v :: tl) :
+private lemma into_iter_next_some (it : InIter) (v : BT) (tl : List BT) (h : it.val = v :: tl) :
     ∃ it1 : InIter,
       alloc.vec.into_iter.IteratorIntoIter.next it = ok (some v, it1) ∧ it1.val = tl := by
   unfold alloc.vec.into_iter.IteratorIntoIter.next
@@ -265,7 +277,7 @@ lemma into_iter_next_some (it : InIter) (v : BT) (tl : List BT) (h : it.val = v 
     · congr
     · simp [alloc.vec.Vec.from, alloc.vec.Vec.val]
 
-lemma into_iter_next_none (it : InIter) (h : it.val = []) :
+private lemma into_iter_next_none (it : InIter) (h : it.val = []) :
     alloc.vec.into_iter.IteratorIntoIter.next it = ok (none, it) := by
   unfold alloc.vec.into_iter.IteratorIntoIter.next
   split
@@ -274,7 +286,7 @@ lemma into_iter_next_none (it : InIter) (h : it.val = []) :
     have : hd' :: tl' = [] := heq'.symm.trans h
     cases this
 
-noncomputable def markDirtyStep (BRANCHING : Bool) {L : Type} {Label : Type}
+private noncomputable def markDirtyStep (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -287,7 +299,7 @@ noncomputable def markDirtyStep (BRANCHING : Bool) {L : Type} {Label : Type}
     ok (r.1, r.2.1, r.2.2)
   else ok (p, w, s)
 
-noncomputable def markDirtyAcc (BRANCHING : Bool) {L : Type} {Label : Type}
+private noncomputable def markDirtyAcc (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -302,7 +314,7 @@ noncomputable def markDirtyAcc (BRANCHING : Bool) {L : Type} {Label : Type}
         markDirtyAcc BRANCHING ltsInst lts incoming block_index num_blocks r.1 r.2.1 r.2.2 tl
       else markDirtyAcc BRANCHING ltsInst lts incoming block_index num_blocks p w s tl
 
-theorem markDirtyAcc_cons (BRANCHING : Bool) {L : Type} {Label : Type}
+private theorem markDirtyAcc_cons (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -330,7 +342,7 @@ theorem markDirtyAcc_cons (BRANCHING : Bool) {L : Type} {Label : Type}
     rw [hx]
     simp
 
-theorem markDirtyAcc_append (BRANCHING : Bool) {L : Type} {Label : Type}
+private theorem markDirtyAcc_append (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -350,7 +362,7 @@ theorem markDirtyAcc_append (BRANCHING : Bool) {L : Type} {Label : Type}
       funext r
       exact ih r.1 r.2.1 r.2.2
 
-lemma markDirtyStep_pos (BRANCHING : Bool) {L : Type} {Label : Type}
+private lemma markDirtyStep_pos (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz) (v : BT)
@@ -366,7 +378,7 @@ lemma markDirtyStep_pos (BRANCHING : Bool) {L : Type} {Label : Type}
   rw [hc]
   simp
 
-lemma markDirtyStep_neg (BRANCHING : Bool) {L : Type} {Label : Type}
+private lemma markDirtyStep_neg (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz) (v : BT)
@@ -389,7 +401,7 @@ lemma markDirtyStep_neg (BRANCHING : Bool) {L : Type} {Label : Type}
 
 
 
-lemma mark_dirty_new_blocks_loop.body_some_step (BRANCHING : Bool) {L : Type} {Label : Type}
+private lemma mark_dirty_new_blocks_loop.body_some_step (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -414,7 +426,7 @@ lemma mark_dirty_new_blocks_loop.body_some_step (BRANCHING : Bool) {L : Type} {L
   simp
 
 
-lemma loop_eq_bind {α β : Type} (body : α → Result (ControlFlow α β)) (x : α) :
+private lemma loop_eq_bind {α β : Type} (body : α → Result (ControlFlow α β)) (x : α) :
     Aeneas.Std.loop body x
       = (do
           let r ← body x
@@ -424,7 +436,7 @@ lemma loop_eq_bind {α β : Type} (body : α → Result (ControlFlow α β)) (x 
   rw [Aeneas.Std.loop]
   rfl
 
-theorem mark_dirty_new_blocks_loop_spec (BRANCHING : Bool) {L : Type} {Label : Type}
+private theorem mark_dirty_new_blocks_loop_spec (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -536,7 +548,7 @@ theorem mark_dirty_new_blocks_loop_spec (BRANCHING : Bool) {L : Type} {Label : T
 
 /-- `mark_dirty_new_blocks` iterates `new_block_indices` end-to-end; its
     wrapper frame is exactly the `markDirtyAcc` accumulator. -/
-theorem mark_dirty_new_blocks_contract (BRANCHING : Bool) {L : Type} {Label : Type}
+private theorem mark_dirty_new_blocks_contract (BRANCHING : Bool) {L : Type} {Label : Type}
     (ltsInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (block_index : BT) (num_blocks : Sz)
@@ -556,7 +568,7 @@ theorem mark_dirty_new_blocks_contract (BRANCHING : Bool) {L : Type} {Label : Ty
     invariant), closes the backward closure, then runs
     `strong_partition_marked` and `mark_dirty_new_blocks`. The do-mirror
     records every step with the leaf contracts already rewritten in. -/
-theorem strong_process_worklist_block_contract {L : Type} {Label : Type}
+private theorem strong_process_worklist_block_contract {L : Type} {Label : Type}
     (BRANCHING : Bool) (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (ctx : WorklistContextStrong) (b : BT)
@@ -602,7 +614,7 @@ Value-level specs for the helpers of
 counter for a block, resizing the `block_sizes` vector on demand) and
 `strong_intern_signature` (intern a signature in the `id` map). -/
 
-theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
+private theorem count_block_occurrence_spec_lt (block_sizes : alloc.vec.Vec Sz)
     (index : BT)
     (h : index.index.val < block_sizes.val.length)
     (hsucc_elem : ∃ newelem : Sz,
@@ -691,7 +703,7 @@ fresh cell with `1`. This pins the resulting value completely:
 
 The success hypothesis `hsucc_elem` guards the `index + 1` increments against
 overflow. -/
-theorem count_block_occurrence_spec_ge (block_sizes : alloc.vec.Vec Sz)
+private theorem count_block_occurrence_spec_ge (block_sizes : alloc.vec.Vec Sz)
     (index : BT)
     (h : block_sizes.val.length ≤ index.index.val)
     (hsucc_elem : ∃ i3 : Sz, index.index + 1#usize = ok i3) :
@@ -843,7 +855,7 @@ verified.merc_reduction.signature_refinement.count_block_occurrence block_sizes 
 /-- `count_block_occurrence` always succeeds: whether `index` is in range
     (increment the existing count) or out of range (resize and set to `1`),
     an updated `block_sizes` is returned. -/
-theorem count_block_occurrence_spec_ok (block_sizes : alloc.vec.Vec Sz) (index : BT)
+private theorem count_block_occurrence_spec_ok (block_sizes : alloc.vec.Vec Sz) (index : BT)
     (hsucc_index : ∃ i3 : Sz, index.index + 1#usize = ok i3)
     (hsucc_elem : ∀ (h : index.index.val < block_sizes.val.length),
       ∃ newelem : Sz, block_sizes.val.get ⟨index.index.val, h⟩ + 1#usize = ok newelem) :
@@ -883,7 +895,7 @@ noncomputable abbrev internHashInst : core.hash.Hash SigKey :=
 noncomputable abbrev internBuildHasher : verified.core.hash.BuildHasher verified.rustc_hash.FxBuildHasher rustc_hash.FxHasher :=
   verified.rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher
 
-theorem allM_zip_lawful {α : Type} [DecidableEq α] (I : core.cmp.PartialEq α α) (hI : core.cmp.PartialEq.IsLawfulEq I) :
+private theorem allM_zip_lawful {α : Type} [DecidableEq α] (I : core.cmp.PartialEq α α) (hI : core.cmp.PartialEq.IsLawfulEq I) :
     ∀ (l1 l2 : List α), l1.length = l2.length →
       List.allM (fun (x : α × α) => match x with | (x0, x1) => I.eq x0 x1) (List.zip l1 l2) = ok (decide (l1 = l2))
   | [], [], _ => by simp only [List.zip_nil_left, List.allM]; rfl
@@ -903,7 +915,7 @@ theorem allM_zip_lawful {α : Type} [DecidableEq α] (I : core.cmp.PartialEq α 
       simp
 
 /-- The equality instance of signature keys is lawful. -/
-theorem sigKey_eq_lawful : core.cmp.PartialEq.IsLawfulEq internEqInst.partialEqInst := by
+private theorem sigKey_eq_lawful : core.cmp.PartialEq.IsLawfulEq internEqInst.partialEqInst := by
   intro a b
   have hI : core.cmp.PartialEq.IsLawfulEq
       (verified.Pair.Insts.CoreCmpEq
@@ -926,22 +938,22 @@ theorem sigKey_eq_lawful : core.cmp.PartialEq.IsLawfulEq internEqInst.partialEqI
     intro h; exact hl (by rw [h])
 
 /-- The interning map's equality instance is lawful (`Eq`-level). -/
-theorem internEq_lawful : core.cmp.Eq.IsLawful internEqInst := sigKey_eq_lawful
+private theorem internEq_lawful : core.cmp.Eq.IsLawful internEqInst := sigKey_eq_lawful
 
 /-- The interning map's hash instance never fails. -/
-theorem internHash_total : core.hash.Hash.IsTotal internHashInst :=
+private theorem internHash_total : core.hash.Hash.IsTotal internHashInst :=
   alloc.vec.Vec.Insts.CoreHashHash.isTotal _ _
     (Pair.Insts.CoreHashHash.isTotal _ _
       (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.isTotal _ _ Usize.Insts.CoreHashHash.isTotal)
       (merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash.isTotal _ _ Usize.Insts.CoreHashHash.isTotal))
 
 /-- The interning map's `BuildHasher` never fails. -/
-theorem internBuildHasher_total : verified.core.hash.BuildHasher.IsTotal internBuildHasher :=
+private theorem internBuildHasher_total : verified.core.hash.BuildHasher.IsTotal internBuildHasher :=
   rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher.isTotal
 
 /-- Strong interning, cache hit: the signature is already in `id`, its stored
     block index is returned and nothing is mutated. -/
-lemma strong_intern_signature_found (id : InternMap) (kts : alloc.vec.Vec SigKey)
+private lemma strong_intern_signature_found (id : InternMap) (kts : alloc.vec.Vec SigKey)
     (sb : SigKey) (idx : BT)
     (hget : std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
       internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
@@ -954,7 +966,7 @@ lemma strong_intern_signature_found (id : InternMap) (kts : alloc.vec.Vec SigKey
 
 /-- Strong interning, cache hit (any returned key): the stored block index is returned and nothing
     is mutated. -/
-lemma strong_intern_signature_found' (id : InternMap) (kts : alloc.vec.Vec SigKey)
+private lemma strong_intern_signature_found' (id : InternMap) (kts : alloc.vec.Vec SigKey)
     (sb k : SigKey) (idx : BT)
     (hget : std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
       internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
@@ -968,7 +980,7 @@ lemma strong_intern_signature_found' (id : InternMap) (kts : alloc.vec.Vec SigKe
 /-- Strong interning, cache miss: the signature is cloned, interned at position
     `key_to_signature.length`, inserted in `id` (so a later lookup of `sb`
     returns exactly it), pushed, and the fresh index is returned. -/
-lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKey)
+private lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKey)
     (sb : SigKey)
     (hget : std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
       internBuildHasher (verified.core.borrow.Borrow.Blanket SigKey) internHashInst
@@ -1052,7 +1064,7 @@ lemma strong_intern_signature_absent (id : InternMap) (kts : alloc.vec.Vec SigKe
 /-- Strong interning always returns a fresh-or-existing index: whatever the map
     contents, an interned index exists (`found` returns the stored one, a miss
     interns `sb` at position `kts.length`). -/
-lemma strong_intern_signature_total (id : InternMap) (kts : alloc.vec.Vec SigKey)
+private lemma strong_intern_signature_total (id : InternMap) (kts : alloc.vec.Vec SigKey)
     (sb : SigKey) :
     (∃ idx : BT,
       std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst
@@ -1094,7 +1106,7 @@ When `element_index ≥ old_elements.len` the loop terminates, returning the
 /-- One iteration of `strong_process_marked_elements_loop` with the index
     past the end of `old_elements`: the loop body returns `done` with every
     accumulator unchanged. -/
-theorem strong_process_marked_elements_loop.body_done_step
+private theorem strong_process_marked_elements_loop.body_done_step
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
@@ -1117,7 +1129,7 @@ theorem strong_process_marked_elements_loop.body_done_step
 /-- If, upon entry, the loop index already sits at/past the end of
     `old_elements`, `strong_process_marked_elements_loop` terminates
     immediately and returns every accumulator unchanged. -/
-theorem strong_process_marked_elements_loop_base
+private theorem strong_process_marked_elements_loop_base
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
@@ -1178,7 +1190,7 @@ theorem strong_process_marked_elements_loop_base
     (block `index`), the element's `index_to_block` slot and the state's
     `state_to_key` slot are reassigned to `index`, the `block_sizes` counter
     is incremented, and the iteration counter advances. -/
-theorem strong_process_marked_elements_loop.body_some_step
+private theorem strong_process_marked_elements_loop.body_some_step
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L)
@@ -1238,7 +1250,7 @@ theorem strong_process_marked_elements_loop.body_some_step
 /-- The final result type of `strong_process_marked_elements_loop`:
     `(id, key_to_signature, signature_builder, index_to_block, block_sizes,
     old_elements, state_to_key)`. -/
-abbrev SpmeFinal :=
+private abbrev SpmeFinal :=
   InternMap × VecTy SigKey × SigKey × VecTy BT × VecTy Sz × VecTy ST × VecTy BT
 
 /-- The loop state type of `strong_process_marked_elements_loop`. -/
@@ -1250,7 +1262,7 @@ abbrev SpmeState :=
     exactly the hypotheses of `strong_process_marked_elements_loop.body_some_step`
     so the invariant of the loop spec can ask "every remaining element is
     processable" without naming the intermediate values. -/
-def LoopElementOk {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private def LoopElementOk {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (partition : BlockPartition) (id : InternMap) (kts : VecTy SigKey)
     (sigb : SigKey) (spb : BlockPartitionBuilder) (stk : VecTy BT) (ei : Sz) : Prop :=
   ei.val < spb.old_elements.val.length ∧
@@ -1278,7 +1290,7 @@ def LoopElementOk {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS
     (`rest` is intended to be `old_elements.val.drop element_index.val`).  Each
     step just runs the machine-generated loop body and recurses on the
     continuation state; this gives an induction-friendly view of the loop. -/
-noncomputable def spmeAcc {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private noncomputable def spmeAcc {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (partition : BlockPartition) (id : InternMap) (kts : VecTy SigKey)
     (sigb : SigKey) (spb : BlockPartitionBuilder) (stk : VecTy BT) (ei : Sz) :
     List ST → Result SpmeFinal
@@ -1297,7 +1309,7 @@ noncomputable def spmeAcc {L : Type} {Label : Type} (LTSInst : verified.merc_lts
 
 /-- A call to `spmeAcc` on the full remaining list is the same as one step of
     the fold. -/
-theorem spmeAcc_step (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private theorem spmeAcc_step (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (partition : BlockPartition) (id : InternMap) (kts : VecTy SigKey)
     (sigb : SigKey) (spb : BlockPartitionBuilder) (stk : VecTy BT) (ei : Sz)
     (head : ST) (rest : List ST) :
@@ -1315,7 +1327,7 @@ theorem spmeAcc_step (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
 
 /-- The base case of `spmeAcc`: with no remaining elements it returns the
     unchanged accumulator, matching the loop's `done` branch. -/
-theorem spmeAcc_nil (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private theorem spmeAcc_nil (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (partition : BlockPartition) (id : InternMap) (kts : VecTy SigKey)
     (sigb : SigKey) (spb : BlockPartitionBuilder) (stk : VecTy BT) (ei : Sz) :
     spmeAcc LTSInst sys partition id kts sigb spb stk ei []
@@ -1324,7 +1336,7 @@ theorem spmeAcc_nil (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
 
 /-- If the current element is processable, the loop body takes a `cont` step
     whose next state is the interned/updated accumulator. -/
-theorem spme_body_success {L : Type} {Label : Type}
+private theorem spme_body_success {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey) (spb : BlockPartitionBuilder)
     (stk : VecTy BT) (ei : Sz) (hok : LoopElementOk LTSInst sys partition id kts sigb spb stk ei) :
@@ -1357,7 +1369,7 @@ opaque helper calls), and `LoopStepEq` bundles exactly the success data of one
 
 /-- `ei + 1#usize` succeeds exactly when it produces a `Usize` of value
     `ei.val + 1` (`UScalar.add` magic, cf. `count_block_occurrence_spec_lt`). -/
-lemma usize_add_one_val (ei ei1 : Sz) (hadd : ei + 1#usize = ok ei1) : ei1.val = ei.val + 1 := by
+private lemma usize_add_one_val (ei ei1 : Sz) (hadd : ei + 1#usize = ok ei1) : ei1.val = ei.val + 1 := by
   have hb : ei.val + 1 < 2 ^ System.Platform.numBits := by
     by_contra hnot
     have hfail : ei + 1#usize = (Result.fail Error.integerOverflow : Result Sz) := by
@@ -1393,7 +1405,7 @@ lemma usize_add_one_val (ei ei1 : Sz) (hadd : ei + 1#usize = ok ei1) : ei1.val =
     _ = ei.val + 1 := hvalc
 
 /-- `drop (n+1) xs = (drop n xs).tail`. -/
-lemma list_drop_succ {α : Type} (xs : List α) (n : Nat) :
+private lemma list_drop_succ {α : Type} (xs : List α) (n : Nat) :
     xs.drop (n + 1) = (xs.drop n).tail := by
   induction xs generalizing n with
   | nil => simp
@@ -1406,7 +1418,7 @@ lemma list_drop_succ {α : Type} (xs : List α) (n : Nat) :
           exact ih n
 
 /-- `drop n l = []` iff `l.length ≤ n`. -/
-lemma list_drop_eq_nil_iff {α : Type} (l : List α) (n : Nat) :
+private lemma list_drop_eq_nil_iff {α : Type} (l : List α) (n : Nat) :
     l.drop n = [] ↔ l.length ≤ n := by
   constructor
   · intro h
@@ -1458,7 +1470,7 @@ def LoopStepEq {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L 
     c.2.2.2.2.1 = hmut2 index ∧ c.2.2.2.2.2 = ei1
 
 /-- From `LoopStepEq`, the body literally takes the recorded `cont c` step. -/
-theorem spme_step_next {L : Type} {Label : Type}
+private theorem spme_step_next {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (st c : SpmeState) (h : LoopStepEq LTSInst sys partition st c) :
     verified.merc_reduction.signature_refinement.strong_process_marked_elements_loop.body
@@ -1485,7 +1497,7 @@ theorem spme_step_next {L : Type} {Label : Type}
 /-- `LoopElementOk` at a state yields a fully-pinned `LoopStepEq` to the
     concrete successor state produced by the body.  This is the bridge from the
     element-level invariant to the reachability table `spmeTable`. -/
-theorem loopStepEq_of_elementOk {L : Type} {Label : Type}
+private theorem loopStepEq_of_elementOk {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (st : SpmeState)
     (hok : LoopElementOk LTSInst sys partition st.1 st.2.1 st.2.2.1 st.2.2.2.1
@@ -1500,7 +1512,7 @@ theorem loopStepEq_of_elementOk {L : Type} {Label : Type}
 
 /-- A `LoopStepEq` step advances the drop-remainder exactly one element: the
     successor's remaining list is the tail of the current one. -/
-theorem LoopStepEq.successor_drop {L : Type} {Label : Type}
+private theorem LoopStepEq.successor_drop {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     {st c : SpmeState} (h : LoopStepEq LTSInst sys partition st c) :
     (st.2.2.2.1.old_elements.val.drop st.2.2.2.2.2.val).tail
@@ -1515,7 +1527,7 @@ theorem LoopStepEq.successor_drop {L : Type} {Label : Type}
 
 /-- `x + 1` (as an overflowing-capable `usize` addition) always succeeds provided
     `x.val < max`: the failing case is exactly `max + 1`. -/
-theorem add1_ok_of_lt_max (a : Sz) (h : a.val < Usize.max) : ∃ b : Sz, a + 1#usize = ok b := by
+private theorem add1_ok_of_lt_max (a : Sz) (h : a.val < Usize.max) : ∃ b : Sz, a + 1#usize = ok b := by
   have hb : a.val + 1 < 2 ^ System.Platform.numBits := by
     have hmax_lt : Usize.max < 2 ^ System.Platform.numBits := by
       simp [Usize.max, Usize.numBits]
@@ -1532,7 +1544,7 @@ theorem add1_ok_of_lt_max (a : Sz) (h : a.val < Usize.max) : ∃ b : Sz, a + 1#u
 
 /-- Equal-length vectors produce equal `get` values at the same index, for
     possibly-different length proofs. -/
-theorem vec_val_getElem_congr {α : Type} (v w : VecTy α) (h : v = w) (i : Nat)
+private theorem vec_val_getElem_congr {α : Type} (v w : VecTy α) (h : v = w) (i : Nat)
     (hv : i < v.val.length) (hw : i < w.val.length) :
     v.val.get ⟨i, hv⟩ = w.val.get ⟨i, hw⟩ := by
   have hg : (v.val[i]? = w.val[i]? : Prop) := by rw [h]
@@ -1544,7 +1556,7 @@ theorem vec_val_getElem_congr {α : Type} (v w : VecTy α) (h : v = w) (i : Nat)
 
 /-- The `state_to_key` mutation produced by `index_mut` in the loop body does not
     change the length of the vector. -/
-theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
+private theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
     (back : BT → VecTy BT) (h : i.val < v.val.length)
     (hw : v.index_mut_usize i = ok (x, back)) :
     (back y).val.length = v.val.length := by
@@ -1561,7 +1573,7 @@ theorem vec_index_mut_preserves_length (v : VecTy BT) (i : Sz) (y x : BT)
 /-- The `Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut` mutation of
     `state_to_key` (the Slice-level bridge used by the loop body) preserves
     the length of the vector. -/
-theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
+private theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
     (hmut2 : BT → VecTy BT)
     (hw : verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
         (core.slice.index.SliceIndexUsizeSlice BT) stk state_index = ok (x, hmut2)) :
@@ -1612,7 +1624,7 @@ theorem stk_back_preserves_length (stk : VecTy BT) (state_index : ST) (u x : BT)
     reachable state pinning those is `LoopElementOk`, and (for the discharge)
     each visiting state's `index_to_block` has the same length as its
     `old_elements`. -/
-abbrev SpmeInvariant {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private abbrev SpmeInvariant {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (partition : BlockPartition) (olds : VecTy ST) (stk0 : VecTy BT) : Prop :=
   ∀ (st' : SpmeState) (r : List ST),
     st'.2.2.2.1.old_elements = olds →
@@ -1629,7 +1641,7 @@ abbrev SpmeInvariant {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.
     `key_to_signature` below capacity on a miss), every `usize` index/counter
     stays below `max` (`hbt`/`hcnt`/`hlen`/`hstklen`), and each reached state's
     `index_to_block` keeps the length of `old_elements`. -/
-theorem loopElementOk_of_reach {L : Type} {Label : Type}
+private theorem loopElementOk_of_reach {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (olds : VecTy ST) (stk0 : VecTy BT)
     (blockNumber : ST → BT)
@@ -1746,7 +1758,7 @@ inductive spmeTable {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.L
     every state whose remainder is that list is `LoopElementOk`.  This isolates
     the per-element processability (the caller-side invariant) from the
     table/loop machinery. -/
-theorem spmeTable_of_all_ok {L : Type} {Label : Type}
+private theorem spmeTable_of_all_ok {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (olds : VecTy ST) (stk0 : VecTy BT)
     (h : SpmeInvariant LTSInst sys partition olds stk0)
@@ -1796,7 +1808,7 @@ theorem spmeTable_of_all_ok {L : Type} {Label : Type}
 
 /-- If the reachability table for the remaining elements is provided, the loop
     and the structural fold agree on the result value. -/
-theorem strong_process_marked_elements_loop_trace
+private theorem strong_process_marked_elements_loop_trace
     {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (partition : BlockPartition) (st : SpmeState) {rest : List ST}
@@ -1877,7 +1889,7 @@ theorem strong_process_marked_elements_loop_trace
 
 /-- Loop spec in terms of the element-level invariant: if every state whose
     remainder is `rest` is `LoopElementOk`, the loop agrees with the fold. -/
-theorem strong_process_marked_elements_loop_spec {L : Type} {Label : Type}
+private theorem strong_process_marked_elements_loop_spec {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (olds : VecTy ST) (stk0 : VecTy BT)
     (st : SpmeState) {rest : List ST}
@@ -1895,7 +1907,7 @@ theorem strong_process_marked_elements_loop_spec {L : Type} {Label : Type}
 
 /-- Loop spec at the initial `element_index = 0`: the remaining list is the
     whole `old_elements`, exactly as called by `strong_process_marked_elements`. -/
-theorem strong_process_marked_elements_loop_spec_zero {L : Type} {Label : Type}
+private theorem strong_process_marked_elements_loop_spec_zero {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey) (spb : BlockPartitionBuilder)
     (stk : VecTy BT)
@@ -1913,7 +1925,7 @@ theorem strong_process_marked_elements_loop_spec_zero {L : Type} {Label : Type}
     with `SpmeInvariant` satisfied for the whole `old_elements`, running the
     loop from `element_index = 0` and repacking into a fresh
     `BlockPartitionBuilder` gives exactly the `spmeAcc` fold value. -/
-theorem strong_process_marked_elements_contract {L : Type} {Label : Type}
+private theorem strong_process_marked_elements_contract {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L) (partition : BlockPartition)
     (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey)
     (spb : BlockPartitionBuilder) (stk : VecTy BT)
@@ -1942,7 +1954,7 @@ postcondition. Both halves of the contract (`strong_run_worklist_loop_terminates
 
 /-- `ctx0` is the initial worklist context that `strong_signature_refinement` builds for a system
     with `n` states. -/
-def InitialWorklistContext {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private def InitialWorklistContext {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (n : Std.Usize) (ctx0 : WorklistContextStrong) : Prop :=
   ∃ ti : TagIndex Std.Usize BlockTag,
     verified.merc_utilities.tagged_index.TagIndex.new BlockTag 0#usize = ok ti ∧
@@ -1960,7 +1972,7 @@ def InitialWorklistContext {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS
 /-- The postcondition of the loop: the returned context's partition, read through `blockOf`, is
     coherent, covers all states, is stable for the strong signature and is complete w.r.t.
     `StrongFixPoint`. -/
-def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private def WorklistLoopCorrect {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (ctx : WorklistContextStrong)
     (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag) : Prop :=
   (∀ s b, s ∈ ctx.partition.elements.val →
@@ -1990,12 +2002,12 @@ lemmas, and is proved unconditionally below.
 /-- The number of blocks in the current partition - monotone across the loop
     (see `mark_element_blocks_length`/`finish_partition_marked_contract`) and
     bounded by the (fixed) number of states. -/
-def numBlocks (ctx : WorklistContextStrong) : Nat := ctx.partition.blocks.val.length
+private def numBlocks (ctx : WorklistContextStrong) : Nat := ctx.partition.blocks.val.length
 
 /-- `BT`'s payload (`TagIndex.index.val`) is injective: two block indices with
     the same underlying `Nat` are the same `TagIndex` (`TagIndex.ext` plus
     `Usize`'s `.val` injectivity). -/
-theorem blockTag_index_val_injective :
+private theorem blockTag_index_val_injective :
     Function.Injective (fun x : BT => x.index.val) := by
   intro a b hab
   simp only at hab
@@ -2007,7 +2019,7 @@ theorem blockTag_index_val_injective :
     "the worklist is no longer than the partition has blocks" -
     `worklist.val.length ≤ numBlocks ctx ≤ n`, the second summand of
     `measure`. -/
-theorem nodup_bounded_length_le (l : List BT) (N : Nat)
+private theorem nodup_bounded_length_le (l : List BT) (N : Nat)
     (hnodup : l.Nodup) (hbound : ∀ x ∈ l, x.index.val < N) :
     l.length ≤ N := by
   have hinj := blockTag_index_val_injective
@@ -2032,7 +2044,7 @@ theorem nodup_bounded_length_le (l : List BT) (N : Nat)
     not termination); the two invariants are carried together by the final
     `loop.spec_decr_nat` application (still to be assembled - see
     `strong_run_worklist_loop_terminates` below). -/
-def TermInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
+private def TermInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
   numBlocks ctx ≤ n ∧
   ctx.worklist.val.Nodup ∧
   ∀ b ∈ ctx.worklist.val, ∃ hb : b.index.val < numBlocks ctx,
@@ -2041,7 +2053,7 @@ def TermInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
 
 /-- Immediate corollary of `TermInv`: the worklist is no longer than the
     partition has blocks, hence no longer than `n`. -/
-theorem TermInv.worklist_length_le (n : Nat) (ctx : WorklistContextStrong)
+private theorem TermInv.worklist_length_le (n : Nat) (ctx : WorklistContextStrong)
     (h : TermInv n ctx) : ctx.worklist.val.length ≤ numBlocks ctx := by
   obtain ⟨_, hnodup, hbound⟩ := h
   exact nodup_bounded_length_le ctx.worklist.val (numBlocks ctx) hnodup
@@ -2054,7 +2066,7 @@ theorem TermInv.worklist_length_le (n : Nat) (ctx : WorklistContextStrong)
     `numBlocks` by at least `1`, dropping the first term by at least `n + 1`,
     which dominates however much the second term grows back (it stays
     `≤ n` by `TermInv.worklist_length_le`). -/
-def worklistMeasure (n : Nat) (ctx : WorklistContextStrong) : Nat :=
+private def worklistMeasure (n : Nat) (ctx : WorklistContextStrong) : Nat :=
   (n - numBlocks ctx) * (n + 1) + ctx.worklist.val.length
 
 

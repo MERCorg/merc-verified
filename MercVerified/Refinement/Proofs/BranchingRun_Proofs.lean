@@ -1,7 +1,58 @@
-import MercVerified.Refinement.Proofs.BranchingStep_Proofs
-import MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
-import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingStep_Proofs
+public import MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+public import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.Branching_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingPartition_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingStep_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoopCorrect_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.WorklistStep_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # The outer loop `branching_run_worklist_loop`
@@ -32,7 +83,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The initial context of `branching_signature_refinement` for a system with `n` states. -/
-def BranchingInitial (n : Sz) (ctx0 : WorklistContextBranching) : Prop :=
+private def BranchingInitial (n : Sz) (ctx0 : WorklistContextBranching) : Prop :=
   ∃ ti : TagIndex Std.Usize BlockTag,
     verified.merc_utilities.tagged_index.TagIndex.new BlockTag 0#usize = ok ti ∧
     alloc.vec.FromVecArray.from (Array.make 1#usize [ti]) = ok ctx0.worklist ∧
@@ -41,7 +92,7 @@ def BranchingInitial (n : Sz) (ctx0 : WorklistContextBranching) : Prop :=
 
 open verified.merc_reduction.signature_refinement in
 /-- With an empty worklist the loop body stops. -/
-theorem branching_run_worklist_loop_body_done {L Label : Type}
+private theorem branching_run_worklist_loop_body_done {L Label : Type}
     (LTSInst : LTS L Label) (sys : L) (incoming : IncomingTransitions)
     (progress : merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
     (ctx : WorklistContextBranching) (it : Std.Usize) (hwl : ctx.worklist.val = []) :
@@ -53,7 +104,7 @@ theorem branching_run_worklist_loop_body_done {L Label : Type}
 
 open verified.merc_reduction.signature_refinement in
 /-- One iteration of the loop body on a non-empty worklist. -/
-theorem branching_run_worklist_loop_body_pop {L Label : Type}
+private theorem branching_run_worklist_loop_body_pop {L Label : Type}
     (LTSInst : LTS L Label) (sys : L) (incoming : IncomingTransitions)
     (progress : merc_io.progress.TimeProgress (Std.Usize × Std.Usize))
     (ctx ctx' : WorklistContextBranching) (b : TagIndex Std.Usize BlockTag)
@@ -71,7 +122,7 @@ theorem branching_run_worklist_loop_body_pop {L Label : Type}
     merc_io.progress.TimeProgress.print_spec]
 
 /-- The initial context satisfies the loop invariant, with a measure of at most `n * (n + 2)`. -/
-theorem branching_initial_inv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Sz)
+private theorem branching_initial_inv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Sz)
     (hn : 0 < n.val) (ctx0 : WorklistContextBranching) (hinit : BranchingInitial n ctx0) :
     BrLoopInv LTSInst sys n.val ctx0 ∧ bworklistMeasure n.val ctx0 ≤ n.val * (n.val + 2) := by
   obtain ⟨ti, hti, hwl, hpart, hlen⟩ := hinit
@@ -138,12 +189,12 @@ theorem branching_initial_inv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       Nat.mul_le_mul_right _ (Nat.sub_le _ _)
     nlinarith
 
-abbrev BRunState := WorklistContextBranching × Std.Usize
+private abbrev BRunState := WorklistContextBranching × Std.Usize
 
 open verified.merc_reduction.signature_refinement in
 /-- Termination of `branching_run_worklist_loop` from the initial context, carrying the loop
 invariant to the returned context, whose worklist is empty. -/
-theorem branching_run_worklist_loop_terminates {L Label : Type}
+private theorem branching_run_worklist_loop_terminates {L Label : Type}
     (LTSInst : LTS L Label) (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : IncomingTransitions) (hIC : MercVerified.Lts.IncomingTransitionsCorrect LTSInst sys incoming)
@@ -234,7 +285,7 @@ theorem branching_run_worklist_loop_terminates {L Label : Type}
 /-- **Partial and total correctness of `branching_run_worklist_loop`** from the initial context:
 it terminates, and two states of `Fin n` are in the same block of the resulting partition exactly
 when they are branching bisimilar. -/
-theorem branching_run_worklist_loop_spec {L Label : Type}
+private theorem branching_run_worklist_loop_spec {L Label : Type}
     (LTSInst : LTS L Label) (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : IncomingTransitions) (hIC : MercVerified.Lts.IncomingTransitionsCorrect LTSInst sys incoming)

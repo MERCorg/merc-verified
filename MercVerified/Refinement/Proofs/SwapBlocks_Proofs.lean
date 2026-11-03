@@ -1,8 +1,21 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `BlockPartition::swap_blocks`
@@ -29,7 +42,7 @@ set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
 
 /-- Pointwise effect of one `Slice.set` write on the `getD` view of a `Vec`. -/
-theorem vec_set_getD {α : Type} (cur : alloc.vec.Vec α) (t : Std.Usize) (x d : α) (s : Nat)
+private theorem vec_set_getD {α : Type} (cur : alloc.vec.Vec α) (t : Std.Usize) (x d : α) (s : Nat)
     (ht : t.val < cur.val.length) :
     (({ slice := cur.slice.set t x } : alloc.vec.Vec α).val.getD s d)
       = if t.val = s then x else cur.val.getD s d := by
@@ -43,7 +56,7 @@ theorem vec_set_getD {α : Type} (cur : alloc.vec.Vec α) (t : Std.Usize) (x d :
   · rw [ite_eq_right hs, ite_eq_right hs]
 
 /-- One step of the "written so far" pointwise description used by the re-labelling loops. -/
-theorem pw_step {α : Type} (idx : Nat → Nat) (rs i s : Nat) (hrs : rs ≤ i) (lab : α)
+private theorem pw_step {α : Type} (idx : Nat → Nat) (rs i s : Nat) (hrs : rs ≤ i) (lab : α)
     (base cur : Nat → α)
     (hpt : ∀ s, cur s = if (∃ q, rs ≤ q ∧ q < i ∧ idx q = s) then lab else base s) :
     (if idx i = s then lab else cur s)
@@ -65,7 +78,7 @@ theorem pw_step {α : Type} (idx : Nat → Nat) (rs i s : Nat) (hrs : rs ≤ i) 
 /-- The re-labelling loop (`swap_blocks_loop0_loop0`, and the same-shaped first loop of
     `swap_blocks_loop0`): for each position `q ∈ [rs, re)` the element `v[q]` gets the label
     `lab` in `element_to_block`. -/
-theorem relabel_loop_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem relabel_loop_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (lab : TagIndex Std.Usize BlockTag) (rs re : Std.Usize)
     (e2b0 : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (hle : rs.val ≤ re.val) (hre : re.val ≤ v.val.length)
@@ -155,7 +168,7 @@ theorem relabel_loop_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
 /-- The `element_to_block` produced by `swap_blocks`: the elements in `rb`'s range get `r`, then
     those in `[rs1, re1)` get `l` (only where not already overwritten), everything else keeps its
     label. -/
-noncomputable def swapF (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private noncomputable def swapF (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (e2b0 : alloc.vec.Vec (TagIndex Std.Usize BlockTag)) (l r : TagIndex Std.Usize BlockTag)
     (rs1 re1 : Std.Usize) (rb : Block) (s : Nat) : TagIndex Std.Usize BlockTag :=
   if (∃ q, rb.begin.val ≤ q ∧ q < rb.«end».val ∧ (v.val.getD q zST).index.val = s) then r
@@ -166,7 +179,7 @@ noncomputable def swapF (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (`swap_blocks_loop0`, then `swap_blocks_loop0_loop0`), followed by the closing
     `assert_consistent`. The assertion is an external; its success on the result is a
     hypothesis, discharged (via `PartInv`) by the caller. -/
-theorem swap_blocks_loop0_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem swap_blocks_loop0_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (v1 : alloc.vec.Vec Block) (v2 : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (v3 : alloc.vec.Vec Std.Usize) (l r : TagIndex Std.Usize BlockTag)
     (rs1 re1 : Std.Usize) (rb : Block)
@@ -247,27 +260,27 @@ theorem swap_blocks_loop0_spec (v : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     omega
 
 /-- The block index permutation induced by exchanging the records at `l` and `r`. -/
-def swapIdx (l r j : Nat) : Nat := if j = r then l else if j = l then r else j
+private def swapIdx (l r j : Nat) : Nat := if j = r then l else if j = l then r else j
 
 /-- The block vector of `swap_blocks`: the records at `l` and `r` exchanged. -/
-def swapBlocksVec (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
+private def swapBlocksVec (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
     (bl br : Block) : alloc.vec.Vec Block :=
   { slice := (bs.slice.set l.index br).set r.index bl }
 
-theorem swapBlocksVec_val (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
+private theorem swapBlocksVec_val (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
     (bl br : Block) :
     (swapBlocksVec bs l r bl br).val = (bs.val.set l.index.val br).set r.index.val bl := by
   show ((bs.slice.set l.index br).set r.index bl).val = _
   rw [Slice.set_val_eq, Slice.set_val_eq]
   rfl
 
-theorem swapBlocksVec_length (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
+private theorem swapBlocksVec_length (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
     (bl br : Block) :
     (swapBlocksVec bs l r bl br).val.length = bs.val.length := by
   rw [swapBlocksVec_val]; simp
 
 /-- Reading the exchanged block vector. -/
-theorem swapBlocksVec_getD (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
+private theorem swapBlocksVec_getD (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize BlockTag)
     (hl : l.index.val < bs.val.length) (hr : r.index.val < bs.val.length) (hne : l.index.val ≠ r.index.val)
     (j : Nat) :
     (swapBlocksVec bs l r (bs.val.getD l.index.val blk0) (bs.val.getD r.index.val blk0)).val.getD j blk0
@@ -281,7 +294,7 @@ theorem swapBlocksVec_getD (bs : alloc.vec.Vec Block) (l r : TagIndex Std.Usize 
     · simp [hjr, hjl, Ne.symm hjr, Ne.symm hjl]
 
 /-- Elements in `[b, e)` (as positions) are exactly the states whose offset lies in it. -/
-theorem PartInv_exists_pos_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p) {b e : Nat}
+private theorem PartInv_exists_pos_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p) {b e : Nat}
     (he : e ≤ n) {s : Nat} (hs : s < n) :
     (∃ q, b ≤ q ∧ q < e ∧ (p.elements.val.getD q zST).index.val = s) ↔
       (b ≤ offAt p s ∧ offAt p s < e) := by
@@ -296,7 +309,7 @@ theorem PartInv_exists_pos_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     exact ⟨offAt p s, h1, h2, hp.inv s hs⟩
 
 /-- Exchanging two blocks (records and `element_to_block` labels) preserves `PartInv`. -/
-theorem swap_blocks_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem swap_blocks_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (l r : TagIndex Std.Usize BlockTag) (hl : l.index.val < p.blocks.val.length)
     (hr : r.index.val < p.blocks.val.length) (hne : l.index.val ≠ r.index.val)
     (e : alloc.vec.Vec (TagIndex Std.Usize BlockTag)) (hlen : e.val.length = n)
@@ -368,15 +381,15 @@ theorem swap_blocks_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     rw [hbp j, hbp k]
     exact hp.disj _ _ (hσlt j hj') (hσlt k hk') (hσinj j k hj' hk' hjk)
 
-theorem tag_eq_decide {Tag : Type} (a b : TagIndex Std.Usize Tag) :
+private theorem tag_eq_decide {Tag : Type} (a b : TagIndex Std.Usize Tag) :
     verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
       core.cmp.PartialEqUsize a b = ok (decide (a.index = b.index)) := by
   rw [tag_partial_eq_inst]
 
-theorem swapIdx_lt {l r N j : Nat} (hl : l < N) (hr : r < N) (hj : j < N) : swapIdx l r j < N := by
+private theorem swapIdx_lt {l r N j : Nat} (hl : l < N) (hr : r < N) (hj : j < N) : swapIdx l r j < N := by
   unfold swapIdx; split_ifs <;> omega
 
-theorem swapIdx_invol (l r j : Nat) : swapIdx l r (swapIdx l r j) = j := by
+private theorem swapIdx_invol (l r j : Nat) : swapIdx l r (swapIdx l r j) = j := by
   unfold swapIdx
   by_cases h1 : j = r
   · by_cases h2 : l = r
@@ -391,7 +404,7 @@ theorem swapIdx_invol (l r j : Nat) : swapIdx l r (swapIdx l r j) = j := by
 /-- Once the block records are exchanged (`blkAt p' j = blkAt p (swapIdx j)`) and `element_offset`
     is unchanged, the block of a state is the exchanged block index: `PartInv` determines
     `element_to_block` from the offsets and the block ranges. -/
-theorem swap_blocks_e2b {n : Nat} {p p' : BlockPartition} (hp : PartInv n p) (hp' : PartInv n p')
+private theorem swap_blocks_e2b {n : Nat} {p p' : BlockPartition} (hp : PartInv n p) (hp' : PartInv n p')
     (l r : Nat) (hl : l < p.blocks.val.length) (hr : r < p.blocks.val.length)
     (hoff : p'.element_offset = p.element_offset) (hlen : p'.blocks.val.length = p.blocks.val.length)
     (hblk : ∀ j, blkAt p' j = blkAt p (swapIdx l r j)) {s : Nat} (hs : s < n) :
@@ -408,7 +421,7 @@ theorem swap_blocks_e2b {n : Nat} {p p' : BlockPartition} (hp : PartInv n p) (hp
 /-- Contract of `BlockPartition::swap_blocks`: exchanges the two block records (`swapIdx`) and
     re-labels `element_to_block`; `elements` and `element_offset` are untouched; `PartInv` is
     preserved. -/
-theorem swap_blocks_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem swap_blocks_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (l r : TagIndex Std.Usize BlockTag) (hl : l.index.val < p.blocks.val.length)
     (hr : r.index.val < p.blocks.val.length) :
     ∃ p', verified.merc_reduction.block_partition.BlockPartition.swap_blocks p l r = ok p' ∧

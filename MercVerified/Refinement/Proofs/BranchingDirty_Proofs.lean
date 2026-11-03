@@ -1,6 +1,33 @@
-import MercVerified.Refinement.Proofs.MarkDirty_Proofs
-import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.MarkDirty_Proofs
+public import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `mark_dirty_states` / `mark_dirty_new_blocks` with `BRANCHING = true`
@@ -29,10 +56,10 @@ set_option maxRecDepth 10000
 
 /-- The branching marking guard of an incoming transition: a hidden transition is skipped when its
 source lies in a block created in this iteration. -/
-def BGuard (p : BlockPartition) (num_blocks : Sz) (i : FromTransition) : Prop :=
+private def BGuard (p : BlockPartition) (num_blocks : Sz) (i : FromTransition) : Prop :=
   ¬ i.label.index.val = 0 ∨ e2bAt p i.«from».index.val < num_blocks.val
 
-theorem bdirty_inner_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem bdirty_inner_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (num_blocks : Sz) {n : Nat} (hn : n ≤ Usize.max)
     (hE : ∀ l : TagIndex Std.Usize LabelTag, LTSInst.is_hidden_label lts l = ok (decide (l.index.val = 0)))
     (iter : alloc.vec.into_iter.IntoIter FromTransition) (l : List FromTransition)
@@ -190,28 +217,28 @@ theorem bdirty_inner_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS 
     (iter, p, w) ⟨by omega, by rw [hl]; simp, h, rfl, by simpa using hsem⟩
   exact ⟨y.1, y.2, hy, hp', hw', hysem⟩
 
-theorem bguard_congr {p p' : BlockPartition} (num_blocks : Sz)
+private theorem bguard_congr {p p' : BlockPartition} (num_blocks : Sz)
     (h : ∀ s, e2bAt p s = e2bAt p' s) (i : FromTransition) :
     BGuard p num_blocks i ↔ BGuard p' num_blocks i := by
   unfold BGuard; rw [h]
 
 /-- The states that have a guarded incoming transition recorded in `incoming` from a state of `S`'s
     successors. -/
-def PredOfG (p : BlockPartition) (num_blocks : Sz) (incoming : IncomingTransitions) (S : List ST)
+private def PredOfG (p : BlockPartition) (num_blocks : Sz) (incoming : IncomingTransitions) (S : List ST)
     (t : ST) : Prop :=
   ∃ s ∈ S, ∃ res : alloc.vec.Vec FromTransition,
     IncomingTransitions.incoming_transitions incoming s = ok res ∧
       ∃ i ∈ res.val, BGuard p num_blocks i ∧ i.«from».index.val = t.index.val
 
 /-- The states with a guarded transition into block `bl` of `p`. -/
-def PredBlkG (p : BlockPartition) (num_blocks : Sz) (incoming : IncomingTransitions) (n : Nat)
+private def PredBlkG (p : BlockPartition) (num_blocks : Sz) (incoming : IncomingTransitions) (n : Nat)
     (bl : Nat) (t : ST) : Prop :=
   ∃ s : ST, s.index.val < n ∧ e2bAt p s.index.val = bl ∧
     ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
         ∃ i ∈ res.val, BGuard p num_blocks i ∧ i.«from».index.val = t.index.val
 
-theorem bdirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem bdirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : IncomingTransitions) (num_blocks : Sz) {n : Nat} (hn : n ≤ Usize.max)
     (hE : ∀ l : TagIndex Std.Usize LabelTag, LTSInst.is_hidden_label lts l = ok (decide (l.index.val = 0)))
     (hinc : ∀ s : ST, s.index.val < n → ∃ res : alloc.vec.Vec FromTransition,
@@ -316,7 +343,7 @@ theorem bdirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS 
     (⟨sl, 0⟩, p, w) ⟨rfl, rfl, by omega, h, rfl, by simpa [PredOfG] using hsem⟩
   exact ⟨y.1, y.2, hy, hp', hw', hysem⟩
 
-theorem bdirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem bdirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : IncomingTransitions) (num_blocks : Sz) {n : Nat} (hn : n ≤ Usize.max)
     (hE : ∀ l : TagIndex Std.Usize LabelTag, LTSInst.is_hidden_label lts l = ok (decide (l.index.val = 0)))
     (hinc : ∀ s : ST, s.index.val < n → ∃ res : alloc.vec.Vec FromTransition,
@@ -378,7 +405,7 @@ theorem bdirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS
       · exact Or.inl h
       · exact Or.inr ⟨s, (hv2mem s).mpr ⟨hs1, hs2⟩, r⟩
 
-theorem bmarkDirtyAcc_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem bmarkDirtyAcc_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : IncomingTransitions) (block_index : BT) (num_blocks : Sz) {n : Nat}
     (hn : n ≤ Usize.max)
     (hE : ∀ l : TagIndex Std.Usize LabelTag, LTSInst.is_hidden_label lts l = ok (decide (l.index.val = 0)))

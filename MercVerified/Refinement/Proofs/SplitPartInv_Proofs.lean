@@ -1,8 +1,25 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercLib.Sigref.Proofs.CountingSort_Proofs
-import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercLib.Sigref.Proofs.CountingSort_Proofs
+public import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `PartInv` after splitting a block
@@ -34,18 +51,18 @@ set_option maxRecDepth 10000
 
 /-- The block record of the piece for class `c`: `[cumS c, cumS (c+1))`, created unmarked
     (`Block::new_unmarked`, so `marked_split = end`). -/
-def pieceRec (ms : Nat) (szs : List Nat) (c : Nat) : Block :=
+private def pieceRec (ms : Nat) (szs : List Nat) (c : Nat) : Block :=
   { begin := uTotal (cumS ms szs c), marked_split := uTotal (cumS ms szs (c + 1)),
     «end» := uTotal (cumS ms szs (c + 1)) }
 
 /-- The record `Block::new_unmarked begin end`. -/
-def unmRec (bg e : Std.Usize) : Block := { begin := bg, marked_split := e, «end» := e }
+private def unmRec (bg e : Std.Usize) : Block := { begin := bg, marked_split := e, «end» := e }
 
 /-- The states of block `b`'s marked region, read off the *old* partition. -/
-def regionElems (p : BlockPartition) (ms len : Nat) : List (TagIndex Std.Usize StateTag) :=
+private def regionElems (p : BlockPartition) (ms len : Nat) : List (TagIndex Std.Usize StateTag) :=
   (List.range len).map fun i => eAt p (ms + i)
 
-theorem regionElems_nodup {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len : Nat)
+private theorem regionElems_nodup {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len : Nat)
     (hle : ms + len ≤ n) : (regionElems p ms len).Nodup := by
   unfold regionElems
   rw [List.nodup_map_iff_inj_on (List.nodup_range)]
@@ -59,7 +76,7 @@ theorem regionElems_nodup {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms 
 
 /-- If `old` is a permutation of the region's elements, its members are exactly the elements at
     positions of the region. -/
-theorem mem_old_iff {p : BlockPartition} (old : List (TagIndex Std.Usize StateTag))
+private theorem mem_old_iff {p : BlockPartition} (old : List (TagIndex Std.Usize StateTag))
     (ms len : Nat) (hperm : old.Perm (regionElems p ms len)) (x : TagIndex Std.Usize StateTag) :
     x ∈ old ↔ ∃ q, ms ≤ q ∧ q < ms + len ∧ eAt p q = x := by
   rw [hperm.mem_iff]
@@ -70,7 +87,7 @@ theorem mem_old_iff {p : BlockPartition} (old : List (TagIndex Std.Usize StateTa
   · rintro ⟨q, h1, h2, rfl⟩; exact ⟨q - ms, by omega, by congr 1; omega⟩
 
 /-- A state is in `old` exactly when its offset lies in the region. -/
-theorem idx_in_old_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem idx_in_old_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (old : List (TagIndex Std.Usize StateTag)) (ms len : Nat)
     (hperm : old.Perm (regionElems p ms len)) (hle : ms + len ≤ n) {s : Nat} (hs : s < n) :
     (∃ x ∈ old, x.index.val = s) ↔ (ms ≤ offAt p s ∧ offAt p s < ms + len) := by
@@ -85,9 +102,9 @@ theorem idx_in_old_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p)
 
 /-- `s0`: the class index of the first *new* block (`0` when the unmarked part keeps the old
     block, `1` when class `0` itself takes the old block). -/
-def firstNew (u : Bool) : Nat := if u then 0 else 1
+private def firstNew (u : Bool) : Nat := if u then 0 else 1
 
-theorem posOf_region (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
+private theorem posOf_region (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     (t : Nat) (ht : t < cls.length) :
     ms ≤ posOf ms szs cls t ∧ posOf ms szs cls t < ms + cls.length := by
@@ -96,7 +113,7 @@ theorem posOf_region (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length 
   have := cumS_le_end ms szs cls K hK hcnt hlt (cls[t] + 1)
   omega
 
-theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem split_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (b : TagIndex Std.Usize BlockTag) (hb : b.index.val < p.blocks.val.length)
     (hmark : (blkAt p b.index.val).marked_split.val < (blkAt p b.index.val).«end».val)
     (szs cls : List Nat) (K : Nat) (hK : szs.length = K)

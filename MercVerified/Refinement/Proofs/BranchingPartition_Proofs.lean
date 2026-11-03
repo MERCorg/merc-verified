@@ -1,6 +1,44 @@
-import MercVerified.Refinement.Proofs.BranchingProcess_Proofs
-import MercVerified.Refinement.Proofs.Split_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+public import MercVerified.Refinement.Proofs.Split_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `branching_partition_marked`
@@ -26,7 +64,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The effect of a split on the partition, with the split key `sg`. -/
-def SplitPostG {X : Type} (sg : ST → X) (n : Nat)
+private def SplitPostG {X : Type} (sg : ST → X) (n : Nat)
     (p : BlockPartition) (b : BT) (nbi : VecTy BT) (p' : BlockPartition) : Prop :=
   PartInv n p' ∧ ∃ k, p'.blocks.val.length = p.blocks.val.length + k ∧
     nbi.val = b :: (List.range' p.blocks.val.length k).map uTag ∧
@@ -36,7 +74,7 @@ def SplitPostG {X : Type} (sg : ST → X) (n : Nat)
     SplitSemG sg n p b k p'
 
 open verified.merc_reduction.signature_refinement in
-theorem branching_partition_marked_nontrivial_contract {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem branching_partition_marked_nontrivial_contract {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (partition : BlockPartition) (block_index : BT) (id : InternMap) (kts : VecTy SigKey)
     (sigb : SigKey) (spb : BlockPartitionBuilder) (stk : VecTy BT)
     (hAll : verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned partition block_index = ok false) :
@@ -56,7 +94,7 @@ theorem branching_partition_marked_nontrivial_contract {L Label : Type} (LTSInst
   simp
 
 /-- The processed states `olds` as `Fin n` are the dirty states of the block, in order. -/
-theorem oldsF_eq {n : Nat} (hn0 : 0 < n) (p : BlockPartition) (b : Nat) (olds : List ST)
+private theorem oldsF_eq {n : Nat} (hn0 : 0 < n) (p : BlockPartition) (b : Nat) (olds : List ST)
     (hold : ∀ x ∈ olds, x.index.val < n)
     (hsorted : List.Pairwise (fun a c : ST => a.index.val < c.index.val) olds)
     (hmem : ∀ x : ST, x.index.val < n →
@@ -89,7 +127,7 @@ theorem oldsF_eq {n : Nat} (hn0 : 0 < n) (p : BlockPartition) (b : Nat) (olds : 
 open verified.merc_reduction.signature_refinement in
 /-- Contract of `branching_partition_marked` on a block that has marked elements: the split key is
 the abstract key computation `keysOf`. -/
-theorem branching_partition_marked_spec {L Label : Type}
+private theorem branching_partition_marked_spec {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU) (hn0 : 0 < nU.val)

@@ -1,6 +1,16 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Lts.Proofs.Foundation_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Lts.Proofs.Foundation_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Generic loop lemmas
@@ -20,7 +30,7 @@ namespace MercVerified.Refinement.Proofs
 /-- A `loop` over a `Range` starting at `start` with end `e`, whose state is `s`, terminates
     with a result satisfying `post` provided `inv i s` is preserved by every work step
     (`i < e`) and the exhausted case (`i = e`) establishes `post`. -/
-theorem range_loop_spec {σ ρ : Type}
+private theorem range_loop_spec {σ ρ : Type}
     (body : (core.ops.range.Range Std.Usize × σ) →
       Result (ControlFlow (core.ops.range.Range Std.Usize × σ) ρ))
     (inv : Nat → σ → Prop) (post : ρ → Prop) (e : Std.Usize)
@@ -58,13 +68,13 @@ open verified.merc_utilities.tagged_index (TagIndex)
 open MercVerified.Lts.Proofs
 
 /-- `Usize::MAX + 1 = 2^bits`, so `Usize.max < 2 ^ bits`. -/
-theorem usize_max_succ : Usize.max + 1 = 2 ^ UScalarTy.Usize.numBits := by
+private theorem usize_max_succ : Usize.max + 1 = 2 ^ UScalarTy.Usize.numBits := by
   rw [Usize.max_def]
   have : 0 < 2 ^ System.Platform.numBits := Nat.two_pow_pos _
   simp [UScalarTy.numBits, Usize.numBits] at *
 
 /-- Indexing a `Vec` by a plain in-bounds `usize`. -/
-theorem vec_index_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
+private theorem vec_index_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
     (h : i.val < v.val.length) :
     alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice U) v i
       = ok (v.val[i.val]'h) := by
@@ -78,7 +88,7 @@ theorem vec_index_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
 
 /-- Mutably indexing a `Vec` by a plain in-bounds `usize`: the read value and the write-back
     (`Slice.set`). -/
-theorem vec_index_mut_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
+private theorem vec_index_mut_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
     (h : i.val < v.val.length) :
     alloc.vec.Vec.index_mut (core.slice.index.SliceIndexUsizeSlice U) v i
       = ok (v.val[i.val]'h, fun u => ({ slice := v.slice.set i u } : alloc.vec.Vec U)) := by
@@ -95,7 +105,7 @@ theorem vec_index_mut_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
   rfl
 
 /-- Mutably indexing a `Vec` by an in-bounds tagged `usize`. -/
-theorem vec_tagged_index_mut_ok {U Tag : Type} (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag)
+private theorem vec_tagged_index_mut_ok {U Tag : Type} (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag)
     (h : t.index.val < v.val.length) :
     verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
       (core.slice.index.SliceIndexUsizeSlice U) v t
@@ -115,7 +125,7 @@ theorem vec_tagged_index_mut_ok {U Tag : Type} (v : alloc.vec.Vec U) (t : TagInd
 /-- A `loop` whose state carries a progress counter `idx x` that the invariant `inv m x` pins to
     `m`: if every state with `m < K` steps to a state with counter `m + 1`, and the state with
     counter `K` finishes with a result satisfying `Q`, the loop returns such a result. -/
-theorem loop_nat_spec {σ ρ : Type} (body : σ → Result (ControlFlow σ ρ)) (idx : σ → Nat)
+private theorem loop_nat_spec {σ ρ : Type} (body : σ → Result (ControlFlow σ ρ)) (idx : σ → Nat)
     (inv : Nat → σ → Prop) (Q : ρ → Prop) (K : Nat)
     (hidx : ∀ m x, inv m x → idx x = m) (hle : ∀ m x, inv m x → m ≤ K)
     (hstep : ∀ m x, m < K → inv m x → ∃ x', body x = ok (cont x') ∧ inv (m + 1) x')

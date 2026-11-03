@@ -1,6 +1,61 @@
-import MercVerified.Refinement.Proofs.SccRust_Proofs
-import MercVerified.Lts.Proofs.LtsData_Proofs
-import MercVerified.Refinement.Proofs.QuotientSort_Proofs
+module
+
+public import MercVerified.Refinement.Proofs.SccRust_Proofs
+public import MercVerified.Lts.Proofs.LtsData_Proofs
+public import MercVerified.Refinement.Proofs.QuotientSort_Proofs
+import all MercLib.Graph.Proofs.TarjanBounds_Proofs
+import all MercLib.Graph.Proofs.TarjanFinish_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanMain_Proofs
+import all MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.TopoSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Lts.Proofs.LabelledTransitionSystem_Proofs
+import all MercVerified.Lts.Proofs.LtsData_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.QuotientSort_Proofs
+import all MercVerified.Refinement.Proofs.RustTools_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SccRust_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.TopoSortRust_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `quotient_lts_naive` computes the τ-SCC quotient
@@ -18,7 +73,7 @@ namespace MercVerified.Refinement.Proofs
 
 abbrev QElem := TagIndex Std.Usize LabelTag × TagIndex Std.Usize StateTag
 
-theorem ip_block_number (ip : IndexedPartition) (st : TagIndex Std.Usize StateTag)
+private theorem ip_block_number (ip : IndexedPartition) (st : TagIndex Std.Usize StateTag)
     (h : st.index.val < ip.partition.val.length) :
     verified.merc_collections.indexed_partition.IndexedPartition.Insts.Merc_reductionPartitionPartition.block_number
       ip st = ok (ip.partition.val[st.index.val]'h) := by
@@ -27,7 +82,7 @@ theorem ip_block_number (ip : IndexedPartition) (st : TagIndex Std.Usize StateTa
   unfold verified.merc_collections.indexed_partition.IndexedPartition.block
   exact vec_index_ok' _ _ h
 
-theorem ip_num_of_blocks (ip : IndexedPartition) :
+private theorem ip_num_of_blocks (ip : IndexedPartition) :
     verified.merc_collections.indexed_partition.IndexedPartition.Insts.Merc_reductionPartitionPartition.num_of_blocks
       ip = ok ip.num_of_blocks := rfl
 
@@ -36,17 +91,17 @@ section Collect
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- The pair pushed for a kept transition. -/
-def qelem (ip : IndexedPartition) (t : Transition) (h : t.to.index.val < ip.partition.val.length) : QElem :=
+private def qelem (ip : IndexedPartition) (t : Transition) (h : t.to.index.val < ip.partition.val.length) : QElem :=
   (t.label, ({ index := (ip.partition.val[t.to.index.val]'h).index, marker := () } : TagIndex Std.Usize StateTag))
 
 /-- Whether the quotient keeps the transition `t` of the state `s` (both elimination flags set). -/
-def qkeep (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition)
+private def qkeep (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition)
     (hs : s.index.val < ip.partition.val.length) (h : t.to.index.val < ip.partition.val.length) : Prop :=
   ¬ (t.label.index.val = 0 ∧
     (ip.partition.val[s.index.val]'hs).index.val = (ip.partition.val[t.to.index.val]'h).index.val)
 
 open verified.merc_reduction.quotient in
-theorem coll_body_spec
+private theorem coll_body_spec
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
     (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag)
@@ -105,33 +160,33 @@ theorem coll_body_spec
       simp [hnext, hbn1, hbn2, hid, tag_ne_ok, hh, hbb', hst, hst']
 
 /-- The block of an element (the stored entry, default when out of range). -/
-def bk (ip : IndexedPartition) (i : Nat) : TagIndex Std.Usize BlockTag := ip.partition.val.getD i default
+private def bk (ip : IndexedPartition) (i : Nat) : TagIndex Std.Usize BlockTag := ip.partition.val.getD i default
 
-def keepB (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition) : Bool :=
+private def keepB (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition) : Bool :=
   !(decide (t.label.index.val = 0) && decide ((bk ip s.index.val).index.val = (bk ip t.to.index.val).index.val))
 
-def elemD (ip : IndexedPartition) (t : Transition) : QElem :=
+private def elemD (ip : IndexedPartition) (t : Transition) : QElem :=
   (t.label, ({ index := (bk ip t.to.index.val).index, marker := () } : TagIndex Std.Usize StateTag))
 
 /-- The pairs the quotient keeps from the transitions `l` of the state `s`. -/
-def keptList (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (l : List Transition) : List QElem :=
+private def keptList (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (l : List Transition) : List QElem :=
   l.filterMap fun t => if keepB ip s t then some (elemD ip t) else none
 
-theorem keptList_cons (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition)
+private theorem keptList_cons (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition)
     (l : List Transition) :
     keptList ip s (t :: l) = (if keepB ip s t then [elemD ip t] else []) ++ keptList ip s l := by
   unfold keptList
   simp only [List.filterMap_cons]
   split_ifs <;> simp
 
-theorem keepB_iff (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition)
+private theorem keepB_iff (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition)
     (hs : s.index.val < ip.partition.val.length) (ht : t.to.index.val < ip.partition.val.length) :
     keepB ip s t = true ↔ qkeep ip s t hs ht := by
   unfold keepB qkeep bk
   simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hs, List.getElem?_eq_getElem ht]
   tauto
 
-theorem elemD_eq (ip : IndexedPartition) (t : Transition) (ht : t.to.index.val < ip.partition.val.length) :
+private theorem elemD_eq (ip : IndexedPartition) (t : Transition) (ht : t.to.index.val < ip.partition.val.length) :
     elemD ip t = qelem ip t ht := by
   unfold elemD qelem bk
   simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem ht]
@@ -140,14 +195,14 @@ theorem elemD_eq (ip : IndexedPartition) (t : Transition) (ht : t.to.index.val <
 def rowOf (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (b : Nat) : List QElem :=
   (outgoing.val[b]?.map (fun v => v.val)).getD []
 
-theorem rowOf_set (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (b : Nat) (hb : b < outgoing.val.length)
+private theorem rowOf_set (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (b : Nat) (hb : b < outgoing.val.length)
     (v : alloc.vec.Vec QElem) (out1 : alloc.vec.Vec (alloc.vec.Vec QElem))
     (h : out1.val = outgoing.val.set b v) : rowOf out1 b = v.val := by
   unfold rowOf
   rw [h]; simp [hb]
 
 open verified.merc_reduction.quotient in
-theorem coll_inner_spec
+private theorem coll_inner_spec
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
     (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag)
@@ -230,11 +285,11 @@ theorem coll_inner_spec
         simp [hkb]
 
 /-- What rows the first states of the iteration have contributed. -/
-def rowAcc (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTag → List Transition)
+private def rowAcc (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTag → List Transition)
     (ps : List (TagIndex Std.Usize StateTag)) (c : Nat) : List QElem :=
   ps.flatMap fun s => if (bk ip s.index.val).index.val = c then keptList ip s (tsOf s) else []
 
-theorem rowAcc_len_le (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTag → List Transition)
+private theorem rowAcc_len_le (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTag → List Transition)
     (ps : List (TagIndex Std.Usize StateTag)) (c : Nat) :
     (rowAcc ip tsOf ps c).length ≤ (ps.map (fun s => (tsOf s).length)).sum := by
   induction ps with
@@ -250,13 +305,13 @@ theorem rowAcc_len_le (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTa
       · simp
     omega
 
-theorem rowAcc_append (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTag → List Transition)
+private theorem rowAcc_append (ip : IndexedPartition) (tsOf : TagIndex Std.Usize StateTag → List Transition)
     (a b : List (TagIndex Std.Usize StateTag)) (c : Nat) :
     rowAcc ip tsOf (a ++ b) c = rowAcc ip tsOf a c ++ rowAcc ip tsOf b c := by
   unfold rowAcc; simp
 
 open verified.merc_reduction.quotient in
-theorem coll_states_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem coll_states_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -340,7 +395,7 @@ theorem coll_states_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : S
       simp
 
 open verified.merc_reduction.quotient in
-theorem collect_loop0_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem collect_loop0_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -410,7 +465,7 @@ theorem collect_loop0_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 :
   exact ⟨r, hr, hp.1, hp.2⟩
 
 open verified.merc_reduction.quotient in
-theorem collect_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem collect_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -444,7 +499,7 @@ open verified.merc_reduction.quotient
 
 open verified.merc_lts.lts (StateTag LabelTag)
 
-theorem push_transitions_loop_spec (transitions : Slice QElem) :
+private theorem push_transitions_loop_spec (transitions : Slice QElem) :
     ∀ (m : Nat) (iter : core.ops.range.Range Std.Usize)
       (lb : ByteCompressedVec (TagIndex Std.Usize LabelTag))
       (tb : ByteCompressedVec (TagIndex Std.Usize StateTag)),
@@ -504,7 +559,7 @@ theorem push_transitions_loop_spec (transitions : Slice QElem) :
         rw [List.drop_eq_getElem_cons hi, List.take_succ_cons, hel]
       rw [this]; simp
 
-theorem push_transitions_spec (transitions : Slice QElem)
+private theorem push_transitions_spec (transitions : Slice QElem)
     (lb : ByteCompressedVec (TagIndex Std.Usize LabelTag))
     (tb : ByteCompressedVec (TagIndex Std.Usize StateTag))
     (hl : (ByteCompressedVec.toList lb).length + transitions.val.length < Std.Usize.max)
@@ -543,24 +598,24 @@ structure BuildInv (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K i : Nat) (Ls 
   tbl : ByteCompressedVec.toList tb = Ls.flatten.map Prod.snd
   tlen : Ls.flatten.length ≤ tot out0 i
 
-theorem tot_succ (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (i : Nat) :
+private theorem tot_succ (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (i : Nat) :
     tot out0 (i + 1) = tot out0 i + (rowOf out0 i).length := by
   unfold tot; rw [List.range_succ]; simp
 
-theorem tot_mono (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) {i K : Nat} (h : i ≤ K) :
+private theorem tot_mono (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) {i K : Nat} (h : i ≤ K) :
     tot out0 i ≤ tot out0 K := by
   induction K, h using Nat.le_induction with
   | base => exact le_refl _
   | succ K _ ih => rw [tot_succ]; omega
 
-theorem qelem_ord_total' : core.cmp.Ord.IsTotalOrder
+private theorem qelem_ord_total' : core.cmp.Ord.IsTotalOrder
     (verified.Pair.Insts.CoreCmpOrd
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd StateTag core.cmp.OrdUsize)) :=
   q_ord_total
 
 open verified.merc_reduction.quotient in
-theorem build_body_step (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e i : Std.Usize)
+private theorem build_body_step (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e i : Std.Usize)
     (he : e.val = K) (hi : i.val < K)
     (hBig : tot out0 K < Std.Usize.max)
     (out : alloc.vec.Vec (alloc.vec.Vec QElem))

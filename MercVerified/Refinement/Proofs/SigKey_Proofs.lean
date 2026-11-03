@@ -1,6 +1,16 @@
-import MercVerified.Lts.Proofs.Foundation_Proofs
-import MercVerified.Code.FunsExternal
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Lts.Proofs.Foundation_Proofs
+public import MercVerified.Code.FunsExternal
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Signature keys: equality and ordering of `(label, block)` entries
@@ -29,13 +39,13 @@ abbrev SigEntry := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag
 def entLt (a b : SigEntry) : Prop :=
   a.1.index.val < b.1.index.val ∨ (a.1.index.val = b.1.index.val ∧ a.2.index.val < b.2.index.val)
 
-instance : Std.Irrefl entLt := ⟨by intro a h; unfold entLt at h; omega⟩
+private instance : Std.Irrefl entLt := ⟨by intro a h; unfold entLt at h; omega⟩
 
-instance : Std.Antisymm entLt := ⟨by intro a b h1 h2; unfold entLt at h1 h2; omega⟩
+private instance : Std.Antisymm entLt := ⟨by intro a b h1 h2; unfold entLt at h1 h2; omega⟩
 
-instance : Trans entLt entLt entLt := ⟨by intro a b c h1 h2; unfold entLt at *; omega⟩
+private instance : Trans entLt entLt entLt := ⟨by intro a b c h1 h2; unfold entLt at *; omega⟩
 
-theorem entry_ext {a b : SigEntry} (h1 : a.1.index.val = b.1.index.val)
+private theorem entry_ext {a b : SigEntry} (h1 : a.1.index.val = b.1.index.val)
     (h2 : a.2.index.val = b.2.index.val) : a = b := by
   obtain ⟨⟨a1, ma1⟩, ⟨a2, ma2⟩⟩ := a
   obtain ⟨⟨b1, mb1⟩, ⟨b2, mb2⟩⟩ := b
@@ -46,13 +56,13 @@ theorem entry_ext {a b : SigEntry} (h1 : a.1.index.val = b.1.index.val)
   subst e1; subst e2; rfl
 
 /-- The `PartialEq` instance on `usize` never fails and is equality. -/
-theorem usize_partialEq_lawful : core.cmp.PartialEq.IsLawfulEq core.cmp.PartialEqUsize := by
+private theorem usize_partialEq_lawful : core.cmp.PartialEq.IsLawfulEq core.cmp.PartialEqUsize := by
   intro a b
   refine ⟨decide (a = b), ?_, by simp⟩
   rfl
 
 /-- `TagIndex`'s `PartialEq` is lawful when the payload's is. -/
-theorem tagIndex_partialEq_lawful {Tag : Type} {T : Type} (I : core.cmp.PartialEq T T)
+private theorem tagIndex_partialEq_lawful {Tag : Type} {T : Type} (I : core.cmp.PartialEq T T)
     (hI : core.cmp.PartialEq.IsLawfulEq I) :
     core.cmp.PartialEq.IsLawfulEq
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex (T := T) Tag I) := by
@@ -67,7 +77,7 @@ theorem tagIndex_partialEq_lawful {Tag : Type} {T : Type} (I : core.cmp.PartialE
     · intro h; rw [h]
 
 /-- Tuple `PartialEq` is lawful when both components' are. -/
-theorem pair_partialEq_lawful {U T : Type} (iU : core.cmp.PartialEq U U) (iT : core.cmp.PartialEq T T)
+private theorem pair_partialEq_lawful {U T : Type} (iU : core.cmp.PartialEq U U) (iT : core.cmp.PartialEq T T)
     (hU : core.cmp.PartialEq.IsLawfulEq iU) (hT : core.cmp.PartialEq.IsLawfulEq iT) :
     core.cmp.PartialEq.IsLawfulEq (verified.Pair.Insts.CoreCmpPartialEqPair iU iT) := by
   intro a b
@@ -87,7 +97,7 @@ theorem pair_partialEq_lawful {U T : Type} (iU : core.cmp.PartialEq U U) (iT : c
     exact ⟨fun h => ⟨i1.mp rfl, h⟩, fun h => h.2⟩
 
 /-- The signature entries' equality instance is lawful. -/
-theorem entry_partialEq_lawful :
+private theorem entry_partialEq_lawful :
     core.cmp.PartialEq.IsLawfulEq
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag
@@ -98,17 +108,17 @@ theorem entry_partialEq_lawful :
     (tagIndex_partialEq_lawful _ usize_partialEq_lawful)
 
 /-- The `Ord` instance of signature entries. -/
-noncomputable abbrev entryOrd : core.cmp.Ord SigEntry :=
+private noncomputable abbrev entryOrd : core.cmp.Ord SigEntry :=
   verified.Pair.Insts.CoreCmpOrd
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize)
 
 /-- The lexicographic comparison of signature entries. -/
-def entCmp (a b : SigEntry) : Ordering :=
+private def entCmp (a b : SigEntry) : Ordering :=
   if compare a.1.index.val b.1.index.val = Ordering.eq then compare a.2.index.val b.2.index.val
   else compare a.1.index.val b.1.index.val
 
-theorem entry_cmp_eq (a b : SigEntry) : entryOrd.cmp a b = ok (entCmp a b) := by
+private theorem entry_cmp_eq (a b : SigEntry) : entryOrd.cmp a b = ok (entCmp a b) := by
   obtain ⟨a1, b1⟩ := a
   obtain ⟨a2, b2⟩ := b
   show Pair.Insts.CoreCmpOrd.cmp _ _ (a1, b1) (a2, b2) = _
@@ -123,7 +133,7 @@ theorem entry_cmp_eq (a b : SigEntry) : entryOrd.cmp a b = ok (entCmp a b) := by
   · exact h2
   · rfl
 
-theorem entCmp_gt_iff (a b : SigEntry) : entCmp a b = Ordering.gt ↔ entLt b a := by
+private theorem entCmp_gt_iff (a b : SigEntry) : entCmp a b = Ordering.gt ↔ entLt b a := by
   unfold entCmp entLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
   · rw [ite_eq_left h]
@@ -135,7 +145,7 @@ theorem entCmp_gt_iff (a b : SigEntry) : entCmp a b = Ordering.gt ↔ entLt b a 
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
 
-theorem entCmp_lt_iff (a b : SigEntry) : entCmp a b = Ordering.lt ↔ entLt a b := by
+private theorem entCmp_lt_iff (a b : SigEntry) : entCmp a b = Ordering.lt ↔ entLt a b := by
   unfold entCmp entLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
   · rw [ite_eq_left h]
@@ -147,7 +157,7 @@ theorem entCmp_lt_iff (a b : SigEntry) : entCmp a b = Ordering.lt ↔ entLt a b 
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
 
-theorem entCmp_eq_iff (a b : SigEntry) : entCmp a b = Ordering.eq ↔ a = b := by
+private theorem entCmp_eq_iff (a b : SigEntry) : entCmp a b = Ordering.eq ↔ a = b := by
   unfold entCmp
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
   · rw [ite_eq_left h]
@@ -164,7 +174,7 @@ theorem entCmp_eq_iff (a b : SigEntry) : entCmp a b = Ordering.eq ↔ a = b := b
 
 /-- The `Ord` instance of `TagIndex`-of-`usize` (compared on the underlying index) is a lawful
     total order. -/
-theorem tagIndex_ord_total (Tag : Type) :
+private theorem tagIndex_ord_total (Tag : Type) :
     core.cmp.Ord.IsTotalOrder
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd Tag core.cmp.OrdUsize) := by
   have hc : ∀ a b : TagIndex Std.Usize Tag,
@@ -178,7 +188,7 @@ theorem tagIndex_ord_total (Tag : Type) :
     intro h1 h2
     omega
 
-theorem entry_ord_total : core.cmp.Ord.IsTotalOrder entryOrd := by
+private theorem entry_ord_total : core.cmp.Ord.IsTotalOrder entryOrd := by
   refine ⟨fun a b => ⟨_, entry_cmp_eq a b⟩, fun a b => ?_, fun a b c => ?_⟩
   · rw [entry_cmp_eq, entry_cmp_eq]
     simp only [ok.injEq]
@@ -190,11 +200,11 @@ theorem entry_ord_total : core.cmp.Ord.IsTotalOrder entryOrd := by
     omega
 
 /-- A strictly sorted list of entries is determined by its members. -/
-theorem sigKey_unique {l l' : List SigEntry} (h : List.Pairwise entLt l) (h' : List.Pairwise entLt l')
+private theorem sigKey_unique {l l' : List SigEntry} (h : List.Pairwise entLt l) (h' : List.Pairwise entLt l')
     (hmem : ∀ x, x ∈ l ↔ x ∈ l') : l = l' :=
   List.Pairwise.eq_of_mem_iff h h' hmem
 
-theorem entLt_trichotomy (a b : SigEntry) : entLt a b ∨ entLt b a ∨ a = b := by
+private theorem entLt_trichotomy (a b : SigEntry) : entLt a b ∨ entLt b a ∨ a = b := by
   unfold entLt
   by_cases h1 : a.1.index.val = b.1.index.val
   · by_cases h2 : a.2.index.val = b.2.index.val
@@ -203,7 +213,7 @@ theorem entLt_trichotomy (a b : SigEntry) : entLt a b ∨ entLt b a ∨ a = b :=
   · omega
 
 /-- A sorted (`≤`) list without equal neighbours is strictly sorted. -/
-theorem sorted_chain_strict : ∀ {l : List SigEntry},
+private theorem sorted_chain_strict : ∀ {l : List SigEntry},
     List.Pairwise (fun a b => entryOrd.cmp a b ≠ ok Ordering.gt) l →
     List.IsChain (fun a b => a ≠ b) l → List.Pairwise entLt l
   | [], _, _ => List.Pairwise.nil

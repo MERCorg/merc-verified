@@ -1,7 +1,39 @@
-import MercVerified.Refinement.Proofs.WorklistStep_Proofs
-import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
-import MercLib.Signatures.Proofs.Signature_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.WorklistStep_Proofs
+public import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+public import MercLib.Signatures.Proofs.Signature_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.WorklistStep_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # The completeness/soundness invariant for `strong_run_worklist_loop`
@@ -37,13 +69,13 @@ set_option maxRecDepth 10000
     at the algorithm's own partition, treats `Q`-equivalent states identically). Maintained as a
     loop invariant for an arbitrary `Q`, this specializes at the very end to the `StrongFixPoint`
     witness, giving `WorklistLoopCorrect`'s completeness conjunct. -/
-def RefinesQ {Block : Type} (Q : ST → Block) (n : Nat) (p : BlockPartition) : Prop :=
+private def RefinesQ {Block : Type} (Q : ST → Block) (n : Nat) (p : BlockPartition) : Prop :=
   ∀ s s', s.index.val < n → s'.index.val < n → Q s = Q s' →
     blockFn p s = blockFn p s' ∧ (IsMarked p s.index.val ↔ IsMarked p s'.index.val)
 
 /-- `RefinesQ` holds trivially for the initial partition: one block covers every state, and every
     state starts out uniformly marked (`marked_split = begin = 0`, see `initial_loopInv`). -/
-theorem RefinesQ.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (n : Sz)
+private theorem RefinesQ.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (n : Sz)
     (hn : 0 < n.val) (ctx0 : WorklistContextStrong)
     (hinit : InitialWorklistContext LTSInst n ctx0)
     {Block : Type} (Q : ST → Block) :
@@ -84,7 +116,7 @@ theorem RefinesQ.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L
     trivially still matches marking status there; states of an untouched block keep their old block
     record and offset (`hother`/`hmk.2`), so the fact carries over from the hypothesis `hRQ` about
     the pre-split partition. -/
-theorem RefinesQ.split_preserved {L Label : Type}
+private theorem RefinesQ.split_preserved {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
@@ -206,7 +238,7 @@ theorem RefinesQ.split_preserved {L Label : Type}
     states do or don't share together, because `hQstable` gives them matching transitions (same
     label, `Q`-equal target) and `hRQ` (on the *targets*) then puts those matching targets in the
     same new block too. -/
-theorem RefinesQ.fold_preserved {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private theorem RefinesQ.fold_preserved {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (incoming : IncomingTransitions)
     (hIC : MercVerified.Lts.IncomingTransitionsCorrect LTSInst sys incoming)
     (nU : Sz) (hns : LTSInst.num_of_states sys = ok nU) (hnmax : nU.val ≤ Usize.max)
@@ -314,7 +346,7 @@ theorem RefinesQ.fold_preserved {L Label : Type} (LTSInst : verified.merc_lts.lt
     current partition. This is the missing invariant for conjunct 3 (stability/soundness) of
     `WorklistLoopCorrect`: at loop exit every state is unmarked (`LoopInv`'s marking conjunct with an
     empty worklist), so `SettledStable` specializes there to exactly that conjunct. -/
-def SettledStable {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private def SettledStable {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (n : Nat) (p : BlockPartition) : Prop :=
   ∀ s s' : ST, s.index.val < n → s'.index.val < n → blockFn p s = blockFn p s' →
     ¬ IsMarked p s.index.val → ¬ IsMarked p s'.index.val →
@@ -323,7 +355,7 @@ def SettledStable {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
 /-- `SettledStable` holds vacuously for the initial partition: every state starts out uniformly
     marked (`marked_split = begin = 0`, see `initial_loopInv`), so there is no unmarked pair to
     satisfy the conclusion for. -/
-theorem SettledStable.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private theorem SettledStable.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (n : Sz) (hn : 0 < n.val) (ctx0 : WorklistContextStrong)
     (hinit : InitialWorklistContext LTSInst n ctx0) :
     SettledStable LTSInst sys n.val ctx0.partition := by
@@ -362,7 +394,7 @@ theorem SettledStable.initial {L Label : Type} (LTSInst : verified.merc_lts.lts.
     *source* state a `D`-predecessor of that new block (`hpred_of_tr`, mirroring
     `RefinesQ.fold_preserved`'s own use of it) — so `SigOf` relative to the post-split partition
     literally equals `SigOf` relative to the pre-split one. -/
-theorem SettledStable.step_preserved {L Label : Type}
+private theorem SettledStable.step_preserved {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
@@ -502,7 +534,7 @@ theorem SettledStable.step_preserved {L Label : Type}
     `RefinesQ.split_preserved`/`RefinesQ.fold_preserved` to the very same `strong_partition_marked`/
     `markDirtyAcc` calls that proof already makes, so there is no separate derivation of `p1`/`p2` to
     reconcile against the executable computation. -/
-theorem strong_process_worklist_block_step_RQ {L Label : Type}
+private theorem strong_process_worklist_block_step_RQ {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU) (incoming : IncomingTransitions)

@@ -1,5 +1,31 @@
-import MercVerified.Refinement.Proofs.Split_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.Split_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `mark_dirty_states` / `mark_dirty_new_blocks` (non-branching): the worklist invariant
@@ -31,7 +57,7 @@ def DirtyInv (n : Nat) (p : BlockPartition) (w : VecTy BT) : Prop :=
   ∀ x ∈ w.val, x.index.val < p.blocks.val.length ∧
     (blkAt p x.index.val).marked_split.val < (blkAt p x.index.val).«end».val
 
-theorem e2bAt_eq {n : Nat} {p : BlockPartition} (hp : PartInv n p) (s : Nat) (hs : s < n) :
+private theorem e2bAt_eq {n : Nat} {p : BlockPartition} (hp : PartInv n p) (s : Nat) (hs : s < n) :
     (p.element_to_block.val.getD s zBT).index.val = e2bAt p s := by
   have h : s < p.element_to_block.val.length := by rw [hp.len_e2b]; exact hs
   simp [e2bAt]
@@ -39,18 +65,18 @@ theorem e2bAt_eq {n : Nat} {p : BlockPartition} (hp : PartInv n p) (s : Nat) (hs
 /-- Marks and worklist of a partition `p` derived from `p1` by marking states: the block map is
     unchanged, the marked states are those marked in `p1` together with the set `D`, and the block of
     every marked state is queued. -/
-def DirtySem (n : Nat) (p1 p : BlockPartition) (w : VecTy BT) (D : ST → Prop) : Prop :=
+private def DirtySem (n : Nat) (p1 p : BlockPartition) (w : VecTy BT) (D : ST → Prop) : Prop :=
   p.element_to_block = p1.element_to_block ∧
   (∀ t : ST, t.index.val < n → (IsMarked p t.index.val ↔ IsMarked p1 t.index.val ∨ D t)) ∧
   (∀ t : ST, t.index.val < n → IsMarked p t.index.val → ∃ x ∈ w.val, x.index.val = e2bAt p t.index.val)
 
-theorem DirtySem.congr {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D D' : ST → Prop}
+private theorem DirtySem.congr {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D D' : ST → Prop}
     (h : DirtySem n p1 p w D) (hD : ∀ t : ST, t.index.val < n → (D t ↔ D' t)) :
     DirtySem n p1 p w D' :=
   ⟨h.1, fun t ht => by rw [h.2.1 t ht, hD t ht], h.2.2⟩
 
 /-- A block that has a marked suffix is queued. -/
-theorem queued_of_has_marked {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D : ST → Prop}
+private theorem queued_of_has_marked {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D : ST → Prop}
     (hp : PartInv n p) (hs : DirtySem n p1 p w D) {o : Nat} (ho : o < p.blocks.val.length)
     (hm : (blkAt p o).marked_split.val < (blkAt p o).«end».val) : ∃ x ∈ w.val, x.index.val = o := by
   obtain ⟨hb1, hb2, hb3, hb4⟩ := hp.blk o ho
@@ -65,7 +91,7 @@ theorem queued_of_has_marked {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D
   exact ⟨x, hx, by rw [hxe, hzo]⟩
 
 /-- Marking one more state `f`: the semantics extends by `f`, provided the queue contains its block. -/
-theorem DirtySem.mark {n : Nat} {p1 p p' : BlockPartition} {w w1 : VecTy BT} {D : ST → Prop}
+private theorem DirtySem.mark {n : Nat} {p1 p p' : BlockPartition} {w w1 : VecTy BT} {D : ST → Prop}
     (hsem : DirtySem n p1 p w D) (f : ST)
     (he2b' : p'.element_to_block = p.element_to_block)
     (hmk : ∀ t, t < n → (IsMarked p' t ↔ IsMarked p t ∨ t = f.index.val))
@@ -83,7 +109,7 @@ theorem DirtySem.mark {n : Nat} {p1 p p' : BlockPartition} {w w1 : VecTy BT} {D 
 /-- One incoming transition processed by `mark_dirty_states` (non-branching): the source state's
     block is queued unless it is already marked, and the source state is marked. The conclusion
     lists the results of the successive calls of the loop body. -/
-theorem dirty_transition_step {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D : ST → Prop}
+private theorem dirty_transition_step {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {D : ST → Prop}
     (h : DirtyInv n p w) (hsem : DirtySem n p1 p w D) (hn : n ≤ Usize.max) (f : ST)
     (hf : f.index.val < n) :
     ∃ (oB : BT) (bm : Bool) (p' : BlockPartition) (w1 : VecTy BT),
@@ -161,7 +187,7 @@ theorem dirty_transition_step {n : Nat} {p1 p : BlockPartition} {w : VecTy BT} {
     · refine DirtySem.mark hsem f he2b' hmk (fun x hx => by rw [hw1]; exact List.mem_append_left _ hx) ?_
       exact ⟨oB, by rw [hw1]; simp, hoBv⟩
 
-theorem into_iter_next_some' {T : Type} (it : alloc.vec.into_iter.IntoIter T) (v : T) (tl : List T)
+private theorem into_iter_next_some' {T : Type} (it : alloc.vec.into_iter.IntoIter T) (v : T) (tl : List T)
     (h : it.val = v :: tl) :
     ∃ it1 : alloc.vec.into_iter.IntoIter T,
       alloc.vec.into_iter.IteratorIntoIter.next it = ok (some v, it1) ∧ it1.val = tl := by
@@ -178,7 +204,7 @@ theorem into_iter_next_some' {T : Type} (it : alloc.vec.into_iter.IntoIter T) (v
     · congr
     · simp [alloc.vec.Vec.from, alloc.vec.Vec.val]
 
-theorem into_iter_next_none' {T : Type} (it : alloc.vec.into_iter.IntoIter T) (h : it.val = []) :
+private theorem into_iter_next_none' {T : Type} (it : alloc.vec.into_iter.IntoIter T) (h : it.val = []) :
     alloc.vec.into_iter.IteratorIntoIter.next it = ok (none, it) := by
   unfold alloc.vec.into_iter.IteratorIntoIter.next
   split
@@ -189,20 +215,20 @@ theorem into_iter_next_none' {T : Type} (it : alloc.vec.into_iter.IntoIter T) (h
 
 /-- The states that have an incoming transition recorded in `incoming` from a state of `S`'s
     successors: `t` is a source of a transition into some state of `S`. -/
-def PredOf (incoming : IncomingTransitions) (S : List ST) (t : ST) : Prop :=
+private def PredOf (incoming : IncomingTransitions) (S : List ST) (t : ST) : Prop :=
   ∃ s ∈ S, ∃ res : alloc.vec.Vec FromTransition,
     IncomingTransitions.incoming_transitions incoming s = ok res ∧
       ∃ i ∈ res.val, i.«from».index.val = t.index.val
 
 /-- The states with a transition into block `bl` of `p`. -/
-def PredBlk (incoming : IncomingTransitions) (n : Nat) (p : BlockPartition) (bl : Nat) (t : ST) : Prop :=
+private def PredBlk (incoming : IncomingTransitions) (n : Nat) (p : BlockPartition) (bl : Nat) (t : ST) : Prop :=
   ∃ s : ST, s.index.val < n ∧ e2bAt p s.index.val = bl ∧
     ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
         ∃ i ∈ res.val, i.«from».index.val = t.index.val
 
 /-- The inner loop of `mark_dirty_states` (non-branching): all incoming transitions of one state. -/
-theorem dirty_inner_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem dirty_inner_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (num_blocks : Sz) {n : Nat} (hn : n ≤ Usize.max)
     (iter : alloc.vec.into_iter.IntoIter FromTransition) (l : List FromTransition)
     (hl : iter.val = l) (hf : ∀ i ∈ l, i.«from».index.val < n)
@@ -273,7 +299,7 @@ theorem dirty_inner_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L
 
 /-- The outer loop of `mark_dirty_states` (non-branching): all states of the new block, each with
     all its incoming transitions. -/
-theorem dirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem dirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : IncomingTransitions) (num_blocks : Sz) {n : Nat} (hn : n ≤ Usize.max)
     (hinc : ∀ s : ST, s.index.val < n → ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
@@ -368,7 +394,7 @@ theorem dirty_outer_loop {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L
 
 
 /-- The states of block `nb`: exactly the members of the window `regionElems` of its range. -/
-theorem regionElems_mem_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p) {nb : Nat}
+private theorem regionElems_mem_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p) {nb : Nat}
     (hnb : nb < p.blocks.val.length) (x : ST) :
     x ∈ regionElems p (blkAt p nb).begin.val ((blkAt p nb).«end».val - (blkAt p nb).begin.val) ↔
       (x.index.val < n ∧ e2bAt p x.index.val = nb) := by
@@ -391,7 +417,7 @@ theorem regionElems_mem_iff {n : Nat} {p : BlockPartition} (hp : PartInv n p) {n
 
 /-- `mark_dirty_states` (non-branching) on a valid block keeps the worklist invariant and marks
     exactly the sources of transitions into the block. -/
-theorem dirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem dirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : IncomingTransitions) (num_blocks : Sz) {n : Nat} (hn : n ≤ Usize.max)
     (hinc : ∀ s : ST, s.index.val < n → ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
@@ -455,7 +481,7 @@ theorem dirty_states_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS 
 
 /-- `mark_dirty_new_blocks` (the `markDirtyAcc` fold, non-branching) keeps the worklist invariant and
     marks exactly the sources of transitions into the scanned blocks. -/
-theorem markDirtyAcc_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
+private theorem markDirtyAcc_spec {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (lts : L)
     (incoming : IncomingTransitions) (block_index : BT) (num_blocks : Sz) {n : Nat}
     (hn : n ≤ Usize.max)
     (hinc : ∀ s : ST, s.index.val < n → ∃ res : alloc.vec.Vec FromTransition,

@@ -1,7 +1,49 @@
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
-import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+public import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `incoming_silent_transitions` returns exactly the silent incoming transitions
@@ -26,7 +68,7 @@ namespace MercVerified.Refinement.Proofs
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
-theorem label_ne_zero (l : TagIndex Std.Usize LabelTag) :
+private theorem label_ne_zero (l : TagIndex Std.Usize LabelTag) :
     core.cmp.PartialEq.ne.trait_default
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag
         core.cmp.PartialEqUsize) l ({ index := 0#usize, marker := () } : TagIndex Std.Usize LabelTag)
@@ -38,7 +80,7 @@ theorem label_ne_zero (l : TagIndex Std.Usize LabelTag) :
   · intro h; exact UScalar.eq_of_val_eq (by simpa using h)
 
 /-- The postcondition of the silent loop, once it stops at position `k`. -/
-theorem silent_post (transitions : alloc.vec.Vec FromTransition)
+private theorem silent_post (transitions : alloc.vec.Vec FromTransition)
     (hz : ∀ (p q : Nat) (h1 : p < q) (h2 : q < transitions.val.length),
       (transitions.val[q]'h2).label.index.val = 0 →
         (transitions.val[p]'(lt_trans h1 h2)).label.index.val = 0)
@@ -67,11 +109,11 @@ theorem silent_post (transitions : alloc.vec.Vec FromTransition)
     refine List.mem_iff_getElem.mpr ⟨q, by simp; omega, ?_⟩
     simp
 
-abbrev SilSt := core.ops.range.Range Std.Usize × alloc.vec.Vec FromTransition
+private abbrev SilSt := core.ops.range.Range Std.Usize × alloc.vec.Vec FromTransition
 
 /-- The loop of `incoming_silent_transitions` on silent-first transitions collects exactly the
 silent ones. -/
-theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
+private theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
     (hlen : transitions.val.length ≤ Usize.max)
     (hz : ∀ (p q : Nat) (h1 : p < q) (h2 : q < transitions.val.length),
       (transitions.val[q]'h2).label.index.val = 0 →
@@ -164,7 +206,7 @@ theorem incoming_silent_loop_spec (transitions : alloc.vec.Vec FromTransition)
 
 /-- **`IncomingTransitions::new` produces silent-first ranges**: `incoming_silent_transitions`
 returns exactly the silent incoming transitions of every state. -/
-theorem incoming_silent_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem incoming_silent_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (incoming : IncomingTransitions)

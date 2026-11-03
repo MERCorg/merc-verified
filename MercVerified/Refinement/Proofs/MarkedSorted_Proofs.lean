@@ -1,10 +1,29 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
-import MercVerified.Refinement.Proofs.SigKey_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+public import MercVerified.Refinement.Proofs.SigKey_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `BlockPartition::marked_elements_sorted`
@@ -29,7 +48,7 @@ namespace MercVerified.Refinement.Proofs
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
-theorem region_eq_window {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len : Nat)
+private theorem region_eq_window {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms len : Nat)
     (hle : ms + len ≤ n) :
     regionElems p ms len = (p.elements.val.drop ms).take len := by
   apply List.ext_getElem
@@ -42,7 +61,7 @@ theorem region_eq_window {n : Nat} {p : BlockPartition} (hp : PartInv n p) (ms l
       have := hp.len_e; simp [regionElems] at h1; omega)]
 
 /-- Contract of `BlockPartition::marked_elements_sorted`. -/
-theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem marked_elements_sorted_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (b : TagIndex Std.Usize BlockTag) (hb : b.index.val < p.blocks.val.length)
     (sb : verified.merc_reduction.block_partition.BlockPartitionBuilder) :
     ∃ sb' : verified.merc_reduction.block_partition.BlockPartitionBuilder,

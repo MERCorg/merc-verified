@@ -1,4 +1,8 @@
-import MercVerified.Code.Funs
+module
+
+public import MercVerified.Code.Funs
+
+@[expose] public section
 
 /-!
 Hand-written boundary specs for the opaque externals of `MercVerified/Code/FunsExternal.lean`

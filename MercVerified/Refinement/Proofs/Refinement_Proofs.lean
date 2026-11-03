@@ -1,7 +1,41 @@
-import MercVerified.Refinement.Refinement
-import MercLib.Signatures.Proofs.Signature_Proofs
-import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
-import MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercLib.Signatures.Proofs.Signature_Proofs
+public import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+public import MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoopCorrect_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.WorklistStep_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 /-!
 # Proofs for the `strong_bisim_sigref` correctness contract
 
@@ -60,18 +94,18 @@ set_option maxRecDepth 10000
 
 /-- The translated `FnMut` instance used by `strong_signature_refinement`'s
     `resize_with` call. -/
-noncomputable abbrev resizeFnMut {L Label : Type} (LTSInst : LTS L Label) :=
+private noncomputable abbrev resizeFnMut {L Label : Type} (LTSInst : LTS L Label) :=
   verified.merc_reduction.signature_refinement.strong_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
     LTSInst
 
 /-- The `resize_with` closure never fails. -/
-theorem resizeFnMut_total {L Label : Type} (LTSInst : LTS L Label) :
+private theorem resizeFnMut_total {L Label : Type} (LTSInst : LTS L Label) :
     core.ops.function.FnMut.IsTotal (resizeFnMut LTSInst) :=
   resize_closure_total LTSInst
 
 /-- The translated `FnOnce` instance whose `call_once` runs
     `signature_refinement`. -/
-noncomputable abbrev fnOnceInst {L Label : Type} (LTSInst : LTS L Label) :=
+private noncomputable abbrev fnOnceInst {L Label : Type} (LTSInst : LTS L Label) :=
   verified.merc_reduction.signature_refinement.strong_bisim_sigref.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
     LTSInst
 
@@ -160,7 +194,7 @@ private theorem signature_refinement_spec
 
 /-- Kernel-checked length bound for the `"reduction"` timing label, so the proof below does not
     pick up `toStr`'s default `decide +native` axiom. -/
-theorem reduction_str_bound : "reduction".toByteArray.size ≤ U32.max := by
+private theorem reduction_str_bound : "reduction".toByteArray.size ≤ U32.max := by
   rw [show "reduction".toByteArray.size = 9 from rfl]; simp [U32.max, U32.numBits]
 
 /-- Contract pin theorem: for any `LTS` trait implementor `L`/`LTSInst` with a
@@ -219,7 +253,7 @@ theorem strong_bisim_sigref_correct
     strong-bisimulation fixpoint related. The witness is `blockOf` on the in-range states and the
     identity (in a disjoint summand) on the phantom states, which `WellFormed` does not constrain;
     in-range states only have in-range successors, so their signatures are unaffected. -/
-theorem stable_implies_strong_fixpoint
+private theorem stable_implies_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n)
@@ -275,7 +309,7 @@ theorem stable_implies_strong_fixpoint
 
 /-- States (in range) that the `strong_bisim_sigref` refinement places in the same block are
     related by the strong-bisimulation `StrongFixPoint` semantics. -/
-theorem strong_bisim_sigref_same_block_strong_fixpoint
+private theorem strong_bisim_sigref_same_block_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),
@@ -298,7 +332,7 @@ theorem strong_bisim_sigref_same_block_strong_fixpoint
     `MercLib.Signatures.strongFixPoint`, the bisimilar) in-range states in the same
     block: soundness from `stable_implies_strong_fixpoint`, completeness from
     the spec's own completeness conjunct. -/
-theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
+private theorem strong_bisim_sigref_same_block_iff_strong_fixpoint
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
     ∃ (partition : BlockPartition) (blockOf : TagIndex Std.Usize StateTag → TagIndex Std.Usize BlockTag),

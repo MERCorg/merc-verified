@@ -1,4 +1,15 @@
-import MercVerified.Refinement.Proofs.SigKey_Proofs
+module
+
+public import MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Quotient entries: equality and ordering of `(label, target state)` pairs
@@ -22,13 +33,13 @@ abbrev QElem' := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize StateTag)
 def qLt (a b : QElem') : Prop :=
   a.1.index.val < b.1.index.val ∨ (a.1.index.val = b.1.index.val ∧ a.2.index.val < b.2.index.val)
 
-instance : Std.Irrefl qLt := ⟨by intro a h; unfold qLt at h; omega⟩
+private instance : Std.Irrefl qLt := ⟨by intro a h; unfold qLt at h; omega⟩
 
-instance : Std.Antisymm qLt := ⟨by intro a b h1 h2; unfold qLt at h1 h2; omega⟩
+private instance : Std.Antisymm qLt := ⟨by intro a b h1 h2; unfold qLt at h1 h2; omega⟩
 
-instance : Trans qLt qLt qLt := ⟨by intro a b c h1 h2; unfold qLt at *; omega⟩
+private instance : Trans qLt qLt qLt := ⟨by intro a b c h1 h2; unfold qLt at *; omega⟩
 
-theorem qelem_ext {a b : QElem'} (h1 : a.1.index.val = b.1.index.val)
+private theorem qelem_ext {a b : QElem'} (h1 : a.1.index.val = b.1.index.val)
     (h2 : a.2.index.val = b.2.index.val) : a = b := by
   obtain ⟨⟨a1, ma1⟩, ⟨a2, ma2⟩⟩ := a
   obtain ⟨⟨b1, mb1⟩, ⟨b2, mb2⟩⟩ := b
@@ -39,7 +50,7 @@ theorem qelem_ext {a b : QElem'} (h1 : a.1.index.val = b.1.index.val)
   subst e1; subst e2; rfl
 
 /-- The signature entries' equality instance is lawful. -/
-theorem q_partialEq_lawful :
+private theorem q_partialEq_lawful :
     core.cmp.PartialEq.IsLawfulEq
       (verified.Pair.Insts.CoreCmpPartialEqPair
         (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag
@@ -50,17 +61,17 @@ theorem q_partialEq_lawful :
     (tagIndex_partialEq_lawful _ usize_partialEq_lawful)
 
 /-- The `Ord` instance of signature entries. -/
-noncomputable abbrev qOrd : core.cmp.Ord QElem' :=
+private noncomputable abbrev qOrd : core.cmp.Ord QElem' :=
   verified.Pair.Insts.CoreCmpOrd
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd StateTag core.cmp.OrdUsize)
 
 /-- The lexicographic comparison of signature entries. -/
-def qCmp (a b : QElem') : Ordering :=
+private def qCmp (a b : QElem') : Ordering :=
   if compare a.1.index.val b.1.index.val = Ordering.eq then compare a.2.index.val b.2.index.val
   else compare a.1.index.val b.1.index.val
 
-theorem q_cmp_eq (a b : QElem') : qOrd.cmp a b = ok (qCmp a b) := by
+private theorem q_cmp_eq (a b : QElem') : qOrd.cmp a b = ok (qCmp a b) := by
   obtain ⟨a1, b1⟩ := a
   obtain ⟨a2, b2⟩ := b
   show Pair.Insts.CoreCmpOrd.cmp _ _ (a1, b1) (a2, b2) = _
@@ -75,7 +86,7 @@ theorem q_cmp_eq (a b : QElem') : qOrd.cmp a b = ok (qCmp a b) := by
   · exact h2
   · rfl
 
-theorem qCmp_gt_iff (a b : QElem') : qCmp a b = Ordering.gt ↔ qLt b a := by
+private theorem qCmp_gt_iff (a b : QElem') : qCmp a b = Ordering.gt ↔ qLt b a := by
   unfold qCmp qLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
   · rw [ite_eq_left h]
@@ -87,7 +98,7 @@ theorem qCmp_gt_iff (a b : QElem') : qCmp a b = Ordering.gt ↔ qLt b a := by
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
 
-theorem qCmp_lt_iff (a b : QElem') : qCmp a b = Ordering.lt ↔ qLt a b := by
+private theorem qCmp_lt_iff (a b : QElem') : qCmp a b = Ordering.lt ↔ qLt a b := by
   unfold qCmp qLt
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
   · rw [ite_eq_left h]
@@ -99,7 +110,7 @@ theorem qCmp_lt_iff (a b : QElem') : qCmp a b = Ordering.lt ↔ qLt a b := by
     have : ¬ a.1.index.val = b.1.index.val := fun e => h (compare_eq_iff_eq.mpr e)
     omega
 
-theorem qCmp_eq_iff (a b : QElem') : qCmp a b = Ordering.eq ↔ a = b := by
+private theorem qCmp_eq_iff (a b : QElem') : qCmp a b = Ordering.eq ↔ a = b := by
   unfold qCmp
   by_cases h : compare a.1.index.val b.1.index.val = Ordering.eq
   · rw [ite_eq_left h]
@@ -114,7 +125,7 @@ theorem qCmp_eq_iff (a b : QElem') : qCmp a b = Ordering.eq ↔ a = b := by
     · intro h2; exact absurd h2 h
     · intro h2; subst h2; exact absurd rfl this
 
-theorem q_ord_total : core.cmp.Ord.IsTotalOrder qOrd := by
+private theorem q_ord_total : core.cmp.Ord.IsTotalOrder qOrd := by
   refine ⟨fun a b => ⟨_, q_cmp_eq a b⟩, fun a b => ?_, fun a b c => ?_⟩
   · rw [q_cmp_eq, q_cmp_eq]
     simp only [ok.injEq]
@@ -126,11 +137,11 @@ theorem q_ord_total : core.cmp.Ord.IsTotalOrder qOrd := by
     omega
 
 /-- A strictly sorted list of entries is determined by its members. -/
-theorem qSorted_unique {l l' : List QElem'} (h : List.Pairwise qLt l) (h' : List.Pairwise qLt l')
+private theorem qSorted_unique {l l' : List QElem'} (h : List.Pairwise qLt l) (h' : List.Pairwise qLt l')
     (hmem : ∀ x, x ∈ l ↔ x ∈ l') : l = l' :=
   List.Pairwise.eq_of_mem_iff h h' hmem
 
-theorem qLt_trichotomy (a b : QElem') : qLt a b ∨ qLt b a ∨ a = b := by
+private theorem qLt_trichotomy (a b : QElem') : qLt a b ∨ qLt b a ∨ a = b := by
   unfold qLt
   by_cases h1 : a.1.index.val = b.1.index.val
   · by_cases h2 : a.2.index.val = b.2.index.val
@@ -139,7 +150,7 @@ theorem qLt_trichotomy (a b : QElem') : qLt a b ∨ qLt b a ∨ a = b := by
   · omega
 
 /-- A sorted (`≤`) list without equal neighbours is strictly sorted. -/
-theorem q_sorted_chain_strict : ∀ {l : List QElem'},
+private theorem q_sorted_chain_strict : ∀ {l : List QElem'},
     List.Pairwise (fun a b => qOrd.cmp a b ≠ ok Ordering.gt) l →
     List.IsChain (fun a b => a ≠ b) l → List.Pairwise qLt l
   | [], _, _ => List.Pairwise.nil

@@ -1,7 +1,17 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Lts.Proofs.Foundation_Proofs
-import MercVerified.Code.FunsExternalSpecs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Lts.Proofs.Foundation_Proofs
+public import MercVerified.Code.FunsExternalSpecs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Partition data-model foundation
@@ -30,7 +40,7 @@ set_option maxRecDepth 10000
 
 private abbrev BlockIndex := TagIndex Std.Usize BlockTag
 
-theorem blocks_index_mut_contract
+private theorem blocks_index_mut_contract
     (p : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : TagIndex Std.Usize
       verified.merc_collections.indexed_partition.BlockTag)
@@ -56,7 +66,7 @@ theorem blocks_index_mut_contract
   simp [hxe]
 
 /-- `BlockPartition::block` accesses `blocks` by the tag's payload. -/
-theorem block_partition_block_val
+private theorem block_partition_block_val
     (p : verified.merc_reduction.block_partition.BlockPartition)
     (b : BlockIndex) (h : b.index.val < p.blocks.val.length) :
     verified.merc_reduction.block_partition.BlockPartition.block p b =
@@ -65,7 +75,7 @@ theorem block_partition_block_val
   rw [vec_tagged_index_val p.blocks b h]
 
 /-- A block of a consistent partition is well-formed. -/
-theorem partInv_blockWF {n : Nat} {p : verified.merc_reduction.block_partition.BlockPartition}
+private theorem partInv_blockWF {n : Nat} {p : verified.merc_reduction.block_partition.BlockPartition}
     (hp : MercVerified.Refinement.PartInv n p) {k : Nat} (hk : k < p.blocks.val.length) :
     merc_reduction.block_partition.Block.WellFormed (MercVerified.Refinement.blkAt p k) := by
   obtain ⟨h1, -, h3, h4⟩ := hp.blk k hk
@@ -74,7 +84,7 @@ theorem partInv_blockWF {n : Nat} {p : verified.merc_reduction.block_partition.B
 /-- `Block::len` is the derived length `end - begin`: the `assert_consistent`
     integrity check completes on a well-formed block (vetted boundary axiom), so the result is
     the scalar subtraction (which may itself fail on underflow). -/
-theorem block_len_contract
+private theorem block_len_contract
     (b : verified.merc_reduction.block_partition.Block)
     (hb : merc_reduction.block_partition.Block.WellFormed b) :
     verified.merc_reduction.block_partition.Block.len b = b.end - b.begin := by
@@ -86,7 +96,7 @@ theorem block_len_contract
 /-- `Block::has_marked` probes whether the marked suffix is non-empty: the
     `assert_consistent` integrity check always completes and the predicate is
     `marked_split < end` (decided into `Bool`). -/
-theorem block_has_marked_contract
+private theorem block_has_marked_contract
     (b : verified.merc_reduction.block_partition.Block)
     (hb : merc_reduction.block_partition.Block.WellFormed b) :
     verified.merc_reduction.block_partition.Block.has_marked b =
@@ -97,7 +107,7 @@ theorem block_has_marked_contract
   simp
 
 /-- `BlockPartition::num_of_blocks` is just the length of `blocks`. -/
-theorem num_of_blocks_contract
+private theorem num_of_blocks_contract
     (p : verified.merc_reduction.block_partition.BlockPartition) :
     verified.merc_reduction.block_partition.BlockPartition.num_of_blocks p =
       ok (alloc.vec.Vec.len p.blocks) := by
@@ -106,7 +116,7 @@ theorem num_of_blocks_contract
 
 /-- `BlockPartition::is_trivially_partitioned` reads `blocks[block_index]` and
     reports whether its derived length is exactly `1`: the do-mirror equation. -/
-theorem is_trivially_partitioned_contract
+private theorem is_trivially_partitioned_contract
     (self : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : BlockIndex) :
     verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned self block_index =
@@ -121,7 +131,7 @@ theorem is_trivially_partitioned_contract
 
 /-- Value form of `is_trivially_partitioned` once the read of `blocks[block_index]`
     is resolved: the pending `Block::len` call on the indexed block. -/
-theorem is_trivially_partitioned_after_ok
+private theorem is_trivially_partitioned_after_ok
     (self : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : BlockIndex) (h : block_index.index.val < self.blocks.val.length) :
     verified.merc_reduction.block_partition.BlockPartition.is_trivially_partitioned self block_index =
@@ -157,7 +167,6 @@ worklist-loop proof's base case, and it doubles as the template for every
 `mark_dirty_new_blocks`).
 -/
 
-private abbrev Sz := Std.Usize
 private abbrev StateTag := verified.merc_lts.lts.StateTag
 private abbrev BlockTagIdx := verified.merc_collections.indexed_partition.BlockTag
 
@@ -175,7 +184,7 @@ private lemma one_le_max : (1 : Nat) ≤ Usize.max := by
 /-- `BlockPartition::trivial_partition_marked` returns the singleton marked list
     `[block_index]` and updates `blocks[block_index]` to be unconditionally
     marked (`unmark_all`: its `marked_split` suffix is pulled up to `end`). -/
-theorem trivial_partition_marked_contract
+private theorem trivial_partition_marked_contract
     (self : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : BlockIndex) (h : block_index.index.val < self.blocks.val.length) :
     ∃ (v : alloc.vec.Vec BlockIndex)
@@ -222,7 +231,7 @@ branch stays a do-mirror (its three calls are contracted away by the worklist
 loop proof that consumes them).
 -/
 
-theorem strong_partition_marked_trivial_contract {L : Type} {Label : Type}
+private theorem strong_partition_marked_trivial_contract {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (partition : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : BlockIndex) (id : PartitionInternMap)
@@ -242,7 +251,7 @@ theorem strong_partition_marked_trivial_contract {L : Type} {Label : Type}
 
 /-- The singleton partition case closes fully: the fresh index list is
     `[block_index]` and `blocks[block_index]` becomes unconditionally marked. -/
-theorem strong_partition_marked_trivial {L : Type} {Label : Type}
+private theorem strong_partition_marked_trivial {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (partition : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : BlockIndex) (id : PartitionInternMap)
@@ -270,7 +279,7 @@ theorem strong_partition_marked_trivial {L : Type} {Label : Type}
 
 /-- The non-singleton path: `strong_partition_marked` chains the three
     refinement helpers; this do-mirror defers their individual contracts. -/
-theorem strong_partition_marked_nontrivial_contract {L : Type} {Label : Type}
+private theorem strong_partition_marked_nontrivial_contract {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (partition : verified.merc_reduction.block_partition.BlockPartition)
     (block_index : BlockIndex) (id : PartitionInternMap)
@@ -427,7 +436,7 @@ private theorem new_loop_body_done (num : Sz) (st : NewLoopState)
       · simpa [hstart_eq_end] using hos
 
 /-- `new_loop` over `[0, num)` produces the three enumerating lists. -/
-theorem new_loop_spec (num : Sz) :
+private theorem new_loop_spec (num : Sz) :
     ∃ res,
       verified.merc_reduction.block_partition.BlockPartition.new_loop
         { start := 0#usize, «end» := num }
@@ -471,7 +480,7 @@ theorem new_loop_spec (num : Sz) :
 /-- `BlockPartition::new` builds the initial partition over `[0, num)`: one
     block `[0, num)`, `elements`/`element_offset` enumerating the range,
     `element_to_block` constantly the initial block (`0`). -/
-theorem block_partition_new_spec (num : Sz) (hpos : 0 < num.val) :
+private theorem block_partition_new_spec (num : Sz) (hpos : 0 < num.val) :
     ∃ p : verified.merc_reduction.block_partition.BlockPartition,
       verified.merc_reduction.block_partition.BlockPartition.new num = ok p ∧
       p.blocks.val = [ { begin := 0#usize, marked_split := 0#usize, «end» := num } ] ∧
@@ -541,7 +550,7 @@ private def PartWF (p : BP) : Prop :=
 /-- `swap_elements` exchanges two entries of `elements`, repairs their
     `element_offset` entries, and leaves `blocks` and `element_to_block`
     completely alone (`block_partition.rs:265`). -/
-theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
+private theorem swap_elements_spec (p : BP) (a b : Std.Usize) (hwf : PartWF p)
     (ha : a.val < p.elements.val.length) (hb : b.val < p.elements.val.length) :
     ∃ p' : BP,
       verified.merc_reduction.block_partition.BlockPartition.swap_elements p a b = ok p' ∧
@@ -661,7 +670,7 @@ private abbrev FT := verified.merc_lts.incoming_transitions.FromTransition
     plain inductive, but `Result.cases` (registered as its `cases_eliminator`)
     still lets `cases` split it into `ok`/`vis`/`div`, and the `bind_*` simp
     set disposes of the two impossible branches. -/
-theorem ok_bind_elim {α β : Type} {e : Result α} {f : α → Result β} {y : β}
+private theorem ok_bind_elim {α β : Type} {e : Result α} {f : α → Result β} {y : β}
     (h : (do let x ← e; f x) = ok y) : ∃ x, e = ok x ∧ f x = ok y := by
   cases e with
   | ret x => exact ⟨x, rfl, by simpa using h⟩
@@ -711,7 +720,7 @@ private theorem intoIterNextNone {T : Type} (it : alloc.vec.into_iter.IntoIter T
     is literally `{ self with elements := v, element_offset := v2 }`, so
     `blocks` is untouched - derived from a bare success hypothesis alone,
     with no bound side conditions. -/
-theorem swap_elements_blocks_eq
+private theorem swap_elements_blocks_eq
     (self : BP) (a b : Std.Usize) (self' : BP)
     (h : verified.merc_reduction.block_partition.BlockPartition.swap_elements self a b = ok self') :
     self'.blocks = self.blocks := by
@@ -730,7 +739,7 @@ theorem swap_elements_blocks_eq
     the read that produced it was in bounds (`Slice.index_mut_usize`'s own
     back-function is `Slice.set v i`, full stop; the *read* may fail out of
     bounds, but if the whole call is `ok`, the back-function has this shape). -/
-theorem tagIndex_index_mut_back_eq {U : Type} {Tag : Type}
+private theorem tagIndex_index_mut_back_eq {U : Type} {Tag : Type}
     (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag) (x : U)
     (back : U → alloc.vec.Vec U)
     (h : verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
@@ -751,7 +760,7 @@ theorem tagIndex_index_mut_back_eq {U : Type} {Tag : Type}
     untouched entirely); the `else` branch doesn't touch `blocks` at all.
     Proved from a bare success hypothesis, with no `PartWF`/bound
     side-conditions. -/
-theorem mark_element_blocks_length
+private theorem mark_element_blocks_length
     (self : BP) (element : TagIndex Sz StateTag) (self' : BP)
     (h : verified.merc_reduction.block_partition.BlockPartition.mark_element self element = ok self') :
     self'.blocks.val.length = self.blocks.val.length := by
@@ -787,7 +796,7 @@ theorem mark_element_blocks_length
     loop reached when the main scan is exhausted without an early break) is a
     read-only pass: `self` is closed over, not part of the loop state, so on
     success it always returns exactly the `self` it was given. -/
-theorem mark_backward_closure_loop0_loop0_eq
+private theorem mark_backward_closure_loop0_loop0_eq
     (self : BP) (block_index : BlockIndex) (incoming_transitions : IT) :
     ∀ n (iter : core.ops.range.Range Sz) (self' : BP),
       iter.«end».val - iter.start.val = n →
@@ -835,7 +844,7 @@ theorem mark_backward_closure_loop0_loop0_eq
     number of blocks: its only state-changing step is `mark_element`, whose
     own `blocks.length`-preservation (`mark_element_blocks_length`) is
     likewise proved from a bare success hypothesis. -/
-theorem mark_backward_closure_loop0_loop1_blocks_length
+private theorem mark_backward_closure_loop0_loop1_blocks_length
     (self : BP) (block_index : BlockIndex) (iter : alloc.vec.into_iter.IntoIter FT) (self' : BP)
     (h : verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0_loop1
         iter self block_index = ok self') :
@@ -910,7 +919,7 @@ theorem mark_backward_closure_loop0_loop1_blocks_length
     `mark_backward_closure_loop0_loop0_eq`) or updates it through
     `mark_backward_closure_loop0_loop1`, whose own length-preservation is
     `mark_backward_closure_loop0_loop1_blocks_length`. -/
-theorem mark_backward_closure_loop0_blocks_length
+private theorem mark_backward_closure_loop0_blocks_length
     (block_index : BlockIndex) (incoming_transitions : IT) (i i1 : Sz)
     (iter : core.ops.range.Range Sz) (self self' : BP)
     (h : verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure_loop0
@@ -999,7 +1008,7 @@ theorem mark_backward_closure_loop0_blocks_length
 /-- `mark_backward_closure` preserves the number of blocks: it just reads the
     target block's `marked_split`/`end` once, then delegates entirely to
     `mark_backward_closure_loop0`. -/
-theorem mark_backward_closure_blocks_length
+private theorem mark_backward_closure_blocks_length
     (self : BP) (block_index : BlockIndex) (incoming_transitions : IT) (self' : BP)
     (h : verified.merc_reduction.block_partition.BlockPartition.mark_backward_closure
         self block_index incoming_transitions = ok self') :
@@ -1013,7 +1022,7 @@ theorem mark_backward_closure_blocks_length
 /-- `maybe_mark_backward_closure` preserves the number of blocks in both the
     `BRANCHING` and non-`BRANCHING` cases: the latter is the identity, and
     the former is exactly `mark_backward_closure_blocks_length`. -/
-theorem maybe_mark_backward_closure_blocks_length
+private theorem maybe_mark_backward_closure_blocks_length
     (BRANCHING : Bool) (self : BP) (block_index : BlockIndex) (incoming_transitions : IT) (self' : BP)
     (h : verified.merc_reduction.signature_refinement.maybe_mark_backward_closure
         BRANCHING self block_index incoming_transitions = ok self') :

@@ -1,5 +1,33 @@
-import MercVerified.Refinement.Proofs.BranchingSignature_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `is_subset_excluding`
@@ -24,7 +52,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The equality instance of signature entries. -/
-noncomputable abbrev entryEqInst : core.cmp.PartialEq SigEntry SigEntry :=
+private noncomputable abbrev entryEqInst : core.cmp.PartialEq SigEntry SigEntry :=
   verified.Pair.Insts.CoreCmpPartialEqPair
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag
       core.cmp.PartialEqUsize)
@@ -32,7 +60,7 @@ noncomputable abbrev entryEqInst : core.cmp.PartialEq SigEntry SigEntry :=
       core.cmp.PartialEqUsize)
 
 /-- Equality of signature entries never fails and is decidable equality. -/
-theorem entEq_ok (a b : SigEntry) :
+private theorem entEq_ok (a b : SigEntry) :
     Pair.Insts.CoreCmpPartialEqPair.eq
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex LabelTag
         core.cmp.PartialEqUsize)
@@ -50,7 +78,7 @@ theorem entEq_ok (a b : SigEntry) :
   · simp [h] at hiff ⊢; exact hiff
   · simp [h] at hiff ⊢; exact hiff
 
-theorem slice_index_ok {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
+private theorem slice_index_ok {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
     Slice.index_usize s i = ok (s.val[i.val]'h) := by
   have hs := Slice.index_usize_spec s i h
   obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hs⟩
@@ -58,7 +86,7 @@ theorem slice_index_ok {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s
   rename_i x
   rw [hx, hxe]
 
-theorem entCmp_ok (a b : SigEntry) :
+private theorem entCmp_ok (a b : SigEntry) :
     Pair.Insts.CoreCmpOrd.cmp
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd LabelTag core.cmp.OrdUsize)
       (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpOrd BlockTag core.cmp.OrdUsize)
@@ -66,7 +94,7 @@ theorem entCmp_ok (a b : SigEntry) :
 
 open verified.merc_reduction.signature_refinement in
 /-- One step of the two-pointer loop while `result = true`. -/
-theorem iss_body {sup sub : Slice SigEntry} {ex : SigEntry} {i j : Std.Usize}
+private theorem iss_body {sup sub : Slice SigEntry} {ex : SigEntry} {i j : Std.Usize}
     (hi : i.val ≤ sup.val.length) (hj : j.val < sub.val.length) :
     (sub.val[j.val]'hj = ex → ∃ j', j'.val = j.val + 1 ∧
       is_subset_excluding_loop.body sup sub ex i j true = ok (cont (i, j', true))) ∧
@@ -119,7 +147,7 @@ theorem iss_body {sup sub : Slice SigEntry} {ex : SigEntry} {i j : Std.Usize}
 
 open verified.merc_reduction.signature_refinement in
 /-- **`is_subset_excluding`** on strictly sorted slices decides `subset ∖ {exclude} ⊆ superset`. -/
-theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
+private theorem is_subset_excluding_spec (sup sub : Slice SigEntry) (ex : SigEntry)
     (hsup : List.Pairwise entLt sup.val) (hsub : List.Pairwise entLt sub.val) :
     ∃ r, is_subset_excluding sup sub ex = ok r ∧
       (r = true ↔ ∀ e ∈ sub.val, e ≠ ex → e ∈ sup.val) := by

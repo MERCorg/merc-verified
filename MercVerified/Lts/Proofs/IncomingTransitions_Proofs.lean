@@ -1,6 +1,16 @@
-import MercVerified.Lts.Lts
-import MercVerified.Lts.Proofs.Foundation_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Lts.Lts
+public import MercVerified.Lts.Proofs.Foundation_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Proofs for the `IncomingTransitions::new` correctness contract
@@ -93,7 +103,7 @@ namespace MercVerified.Lts
     sort), but the only consumers - `mark_dirty_new_blocks` / `mark_dirty_states` in
     `signature_refinement.rs` - ask whether *some* predecessor of `s` lies in a given block, so
     the order carries no information they rely on. -/
-def IncomingTransitionsCorrect {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def IncomingTransitionsCorrect {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions) : Prop :=
   ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
     ∀ s : TagIndex Std.Usize StateTag, s.index.val < n.val →
@@ -114,16 +124,15 @@ set_option maxRecDepth 10000
 set_option allowUnsafeReducibility true
 attribute [local reducible] Aeneas.Std.WP.Post
 
-abbrev Sz := Std.Usize
-abbrev ItSz := core.ops.range.Range Sz
+private abbrev ItSz := core.ops.range.Range Sz
 
 /-- The zeroed `TagIndex` a freshly allocated label slot holds. An `abbrev`, not a `def`:
     `alloc.vec.Vec.push` is `@[irreducible]`, so a `def`d name could not be unified with the
     structure literal the translated body pushes. -/
-abbrev zeroLabel : TagIndex Sz LabelTag := { index := 0#usize, marker := () }
+private abbrev zeroLabel : TagIndex Sz LabelTag := { index := 0#usize, marker := () }
 
 /-- The zeroed `TagIndex` a freshly allocated state slot holds. -/
-abbrev zeroState : TagIndex Sz StateTag := { index := 0#usize, marker := () }
+private abbrev zeroState : TagIndex Sz StateTag := { index := 0#usize, marker := () }
 
 /-! ## A generic "for `i` in `[0, n)`, push `x`" loop
 
@@ -132,16 +141,16 @@ element types, so the loop induction is done once here and instantiated three ti
 
 /-- Invariant of the const-push loop: the range's end is pinned to `n`, `start` has not
     overrun it, and the accumulator holds exactly the processed prefix. -/
-def constPushInv {α : Type} (n : Sz) (x : α) : ItSz × alloc.vec.Vec α → Prop :=
+private def constPushInv {α : Type} (n : Sz) (x : α) : ItSz × alloc.vec.Vec α → Prop :=
   fun st =>
     st.1.end = n ∧ st.1.start.val ≤ n.val ∧ st.2.val = List.replicate st.1.start.val x
 
-def constPushMeasure {α : Type} (st : ItSz × alloc.vec.Vec α) : Nat :=
+private def constPushMeasure {α : Type} (st : ItSz × alloc.vec.Vec α) : Nat :=
   st.1.end.val - st.1.start.val
 
 /-- A loop whose body is "advance the range, or stop; push `x` and continue" fills the
     accumulator with `n` copies of `x`, starting from the empty vector. -/
-theorem constPush_loop_spec {α : Type} (x : α)
+private theorem constPush_loop_spec {α : Type} (x : α)
     (body : ItSz → alloc.vec.Vec α → Result (ControlFlow (ItSz × alloc.vec.Vec α) (alloc.vec.Vec α)))
     (hstep : ∀ (it : ItSz) (v : alloc.vec.Vec α), v.val.length < Usize.max →
       it.start.val < it.end.val →
@@ -193,7 +202,7 @@ theorem constPush_loop_spec {α : Type} (x : α)
 
 /-! ## Stages 1 and 2: the zeroed arrays -/
 
-theorem new_labels_step (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz LabelTag))
+private theorem new_labels_step (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz LabelTag))
     (hlen : v.val.length < Usize.max) (h : it.start.val < it.end.val) :
     ∃ (it1 : ItSz) (v1 : alloc.vec.Vec (TagIndex Sz LabelTag)),
       verified.merc_lts.incoming_transitions.new_labels_loop.body it v = ok (cont (it1, v1)) ∧
@@ -206,7 +215,7 @@ theorem new_labels_step (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz LabelTag))
   rw [hnext, hopt]
   simp [merc_utilities.tagged_index.TagIndex.new_eq, hpush]
 
-theorem new_labels_done (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz LabelTag))
+private theorem new_labels_done (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz LabelTag))
     (h : it.end.val ≤ it.start.val) :
     verified.merc_lts.incoming_transitions.new_labels_loop.body it v = ok (done v) := by
   rcases next_range_none it h with ⟨o, it1, hnext, hopt, hident⟩
@@ -215,7 +224,7 @@ theorem new_labels_done (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz LabelTag))
   simp
 
 /-- `new_labels n` is the flat label array of `n` zeroed slots. -/
-theorem new_labels_spec (n : Sz) :
+private theorem new_labels_spec (n : Sz) :
     ∃ v : alloc.vec.Vec (TagIndex Sz LabelTag),
       verified.merc_lts.incoming_transitions.new_labels n = ok v ∧
       v.val = List.replicate n.val zeroLabel := by
@@ -229,7 +238,7 @@ theorem new_labels_spec (n : Sz) :
     verified.merc_lts.incoming_transitions.new_labels_loop]
   rw [hloop]
 
-theorem new_states_step (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz StateTag))
+private theorem new_states_step (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz StateTag))
     (hlen : v.val.length < Usize.max) (h : it.start.val < it.end.val) :
     ∃ (it1 : ItSz) (v1 : alloc.vec.Vec (TagIndex Sz StateTag)),
       verified.merc_lts.incoming_transitions.new_states_loop.body it v = ok (cont (it1, v1)) ∧
@@ -242,7 +251,7 @@ theorem new_states_step (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz StateTag))
   rw [hnext, hopt]
   simp [merc_utilities.tagged_index.TagIndex.new_eq, hpush]
 
-theorem new_states_done (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz StateTag))
+private theorem new_states_done (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz StateTag))
     (h : it.end.val ≤ it.start.val) :
     verified.merc_lts.incoming_transitions.new_states_loop.body it v = ok (done v) := by
   rcases next_range_none it h with ⟨o, it1, hnext, hopt, hident⟩
@@ -251,7 +260,7 @@ theorem new_states_done (it : ItSz) (v : alloc.vec.Vec (TagIndex Sz StateTag))
   simp
 
 /-- `new_states n` is the flat source-state array of `n` zeroed slots. -/
-theorem new_states_spec (n : Sz) :
+private theorem new_states_spec (n : Sz) :
     ∃ v : alloc.vec.Vec (TagIndex Sz StateTag),
       verified.merc_lts.incoming_transitions.new_states n = ok v ∧
       v.val = List.replicate n.val zeroState := by
@@ -265,7 +274,7 @@ theorem new_states_spec (n : Sz) :
     verified.merc_lts.incoming_transitions.new_states_loop]
   rw [hloop]
 
-theorem new_counts_step (it : ItSz) (v : alloc.vec.Vec Sz)
+private theorem new_counts_step (it : ItSz) (v : alloc.vec.Vec Sz)
     (hlen : v.val.length < Usize.max) (h : it.start.val < it.end.val) :
     ∃ (it1 : ItSz) (v1 : alloc.vec.Vec Sz),
       verified.merc_lts.incoming_transitions.new_counts_loop.body it v = ok (cont (it1, v1)) ∧
@@ -278,7 +287,7 @@ theorem new_counts_step (it : ItSz) (v : alloc.vec.Vec Sz)
   rw [hnext, hopt]
   simp [hpush]
 
-theorem new_counts_done (it : ItSz) (v : alloc.vec.Vec Sz) (h : it.end.val ≤ it.start.val) :
+private theorem new_counts_done (it : ItSz) (v : alloc.vec.Vec Sz) (h : it.end.val ≤ it.start.val) :
     verified.merc_lts.incoming_transitions.new_counts_loop.body it v = ok (done v) := by
   rcases next_range_none it h with ⟨o, it1, hnext, hopt, hident⟩
   unfold verified.merc_lts.incoming_transitions.new_counts_loop.body
@@ -287,7 +296,7 @@ theorem new_counts_done (it : ItSz) (v : alloc.vec.Vec Sz) (h : it.end.val ≤ i
 
 /-- `new_counts n` is `n` zeroed counters. `IncomingTransitions::new` calls it with
     `num_of_states + 1`, the extra slot being the sentinel the Rust comment mentions. -/
-theorem new_counts_spec (n : Sz) :
+private theorem new_counts_spec (n : Sz) :
     ∃ v : alloc.vec.Vec Sz,
       verified.merc_lts.incoming_transitions.new_counts n = ok v ∧
       v.val = List.replicate n.val (0#usize) := by
@@ -326,19 +335,19 @@ outgoing arrays. -/
     `prefix_sum` is always `uTotal (natSum c k)`: `uTotal` inverts `.val` on naturals
     below `2^numBits`, and `uTotal_val_of_lt` / `sz_eq_from_val` turn that back into an
     equation of `usize`s. -/
-def natSum (c : List Sz) (k : Nat) : Nat := ((c.take k).map (fun x => x.val)).sum
+private def natSum (c : List Sz) (k : Nat) : Nat := ((c.take k).map (fun x => x.val)).sum
 
-lemma natSum_zero (c : List Sz) : natSum c 0 = 0 := by simp [natSum]
+private lemma natSum_zero (c : List Sz) : natSum c 0 = 0 := by simp [natSum]
 
 /-- `Usize.max` is one below `2^numBits`, so a total bounded by it fits. -/
-lemma lt_two_pow_of_le_max {k : Nat} (h : k ≤ Usize.max) :
+private lemma lt_two_pow_of_le_max {k : Nat} (h : k ≤ Usize.max) :
     k < 2 ^ UScalarTy.Usize.numBits := by
   have h2 : Usize.max + 1 = 2 ^ UScalarTy.Usize.numBits := by
     simp [Usize.max, Usize.numBits]
   omega
 
 /-- Extending the prefix by one slot adds exactly that slot's value. -/
-lemma natSum_succ (c : List Sz) (i : Nat) (h : i < c.length) :
+private lemma natSum_succ (c : List Sz) (i : Nat) (h : i < c.length) :
     natSum c (i + 1) = natSum c i + c[i].val := by
   have htake : c.take (i + 1) = c.take i ++ [c[i]] := by
     rw [List.take_add_one, List.getElem?_eq_getElem h]
@@ -378,7 +387,7 @@ private lemma getD_set {α : Type} (l : List α) (i k : Nat) (x d : α) (hk : k 
 
 
 /-- State of the `prefix_sum` scan: a range, the mutated counts and the running offset. -/
-abbrev PsSt := ItSz × alloc.vec.Vec Sz × Sz
+private abbrev PsSt := ItSz × alloc.vec.Vec Sz × Sz
 
 /-- Invariant of the scan at range position `start`:
     * the range's end is pinned to `n` and `start` has not overrun it;
@@ -386,7 +395,7 @@ abbrev PsSt := ItSz × alloc.vec.Vec Sz × Sz
     * the accumulator is as long as `c`, its first `start` slots hold those running
       totals, and every remaining slot still holds `c`'s original value;
     * the checked add will not overflow at any slot this loop still has to visit. -/
-def prefixSumInv (c : alloc.vec.Vec Sz) (n : Sz) : PsSt → Prop :=
+private def prefixSumInv (c : alloc.vec.Vec Sz) (n : Sz) : PsSt → Prop :=
   fun st =>
     st.1.end = n ∧ st.1.start.val ≤ n.val ∧
     st.2.2 = uTotal (natSum c.val st.1.start.val) ∧
@@ -399,7 +408,7 @@ def prefixSumInv (c : alloc.vec.Vec Sz) (n : Sz) : PsSt → Prop :=
 
 /-- On return, the offset is the grand total and the visited slots hold the running
     totals; slots from `n` on are still `c`'s original values. -/
-def prefixSumPost (c : alloc.vec.Vec Sz) (n : Sz) : (alloc.vec.Vec Sz × Sz) → Prop :=
+private def prefixSumPost (c : alloc.vec.Vec Sz) (n : Sz) : (alloc.vec.Vec Sz × Sz) → Prop :=
   fun p =>
     p.2 = uTotal (natSum c.val n.val) ∧
     p.1.val.length = c.val.length ∧
@@ -409,7 +418,7 @@ def prefixSumPost (c : alloc.vec.Vec Sz) (n : Sz) : (alloc.vec.Vec Sz × Sz) →
 
 /-- One iteration of `prefix_sum_loop.body`: write the *current* offset into slot
     `start`, then add that slot's old value into the offset. -/
-theorem prefix_sum_step (it : ItSz) (v : alloc.vec.Vec Sz)
+private theorem prefix_sum_step (it : ItSz) (v : alloc.vec.Vec Sz)
     (off : Sz) (hidx : it.start.val < v.val.length) (h : it.start.val < it.end.val)
     (hmax : off.val + v.val[it.start.val].val ≤ Usize.max) :
     ∃ (it1 : ItSz) (v1 : alloc.vec.Vec Sz) (off1 : Sz),
@@ -441,7 +450,7 @@ theorem prefix_sum_step (it : ItSz) (v : alloc.vec.Vec Sz)
   · rw [hzval]
 
 /-- The `end ≤ start` case: the range is exhausted, counts and offset are returned. -/
-theorem prefix_sum_done (it : ItSz) (v : alloc.vec.Vec Sz) (off : Sz)
+private theorem prefix_sum_done (it : ItSz) (v : alloc.vec.Vec Sz) (off : Sz)
     (hge : it.end.val ≤ it.start.val) :
     verified.merc_lts.incoming_transitions.prefix_sum_loop.body it v off
       = ok (done (v, off)) := by
@@ -452,7 +461,7 @@ theorem prefix_sum_done (it : ItSz) (v : alloc.vec.Vec Sz) (off : Sz)
 
 /-- The `prefix_sum` scan, run from a fresh offset over `[0, n)`, returns the grand total
     together with the counts vector updated in place. -/
-theorem prefix_sum_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
+private theorem prefix_sum_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
     (hc : n.val < c.val.length)
     (hnoovf : ∀ k, k ≤ n.val → natSum c.val k ≤ Usize.max) :
     Aeneas.Std.WP.spec
@@ -553,7 +562,7 @@ theorem prefix_sum_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
 
 /-- `prefix_sum c n` turns the counts into the CSR offset array: slot `j ≤ n` holds the
     total of `c`'s first `j` entries, and the length is unchanged. -/
-theorem prefix_sum_spec (c : alloc.vec.Vec Sz) (n : Sz)
+private theorem prefix_sum_spec (c : alloc.vec.Vec Sz) (n : Sz)
     (hc : n.val < c.val.length)
     (hnoovf : ∀ k, k ≤ n.val → natSum c.val k ≤ Usize.max) :
     ∃ r : alloc.vec.Vec Sz,
@@ -610,23 +619,23 @@ stated under two hypotheses that the caller discharges from the LTS's own contra
   still coming is representable. -/
 
 /-- The number of transitions of `ts` whose target index is `j`. -/
-def toCount (ts : List Transition) (j : Nat) : Nat :=
+private def toCount (ts : List Transition) (j : Nat) : Nat :=
   (ts.filter (fun t => t.to.index.val = j)).length
 
 /-- What visiting `t` once adds to slot `j`. -/
-def tick (t : Transition) (j : Nat) : Nat :=
+private def tick (t : Transition) (j : Nat) : Nat :=
   if t.to.index.val = j then 1 else 0
 
-theorem toCount_nil (j : Nat) : toCount [] j = 0 := by simp [toCount]
+private theorem toCount_nil (j : Nat) : toCount [] j = 0 := by simp [toCount]
 
-theorem toCount_cons (t : Transition) (ts : List Transition)
+private theorem toCount_cons (t : Transition) (ts : List Transition)
     (j : Nat) : toCount (t :: ts) j = tick t j + toCount ts j := by
   simp [toCount, tick, List.filter_cons]
   split <;> simp
   omega
 
 /-- A transition that is in the list contributes at least one to its own slot. -/
-theorem toCount_pos_of_mem {t : Transition} {l : List Transition} (hmem : t ∈ l) :
+private theorem toCount_pos_of_mem {t : Transition} {l : List Transition} (hmem : t ∈ l) :
     1 ≤ toCount l t.to.index.val := by
   have h1 : t ∈ l.filter (fun x => decide (x.to.index.val = t.to.index.val)) :=
     List.mem_filter.mpr ⟨hmem, by simp⟩
@@ -682,7 +691,7 @@ private theorem vec_next_eq {α : Type} (v : alloc.vec.Vec α)
 
     The new slot value is existentially quantified with its `Nat` value pinned down, so
     that the caller never has to re-analyse the checked addition. -/
-theorem count_incoming_step
+private theorem count_incoming_step
     (iter : alloc.vec.Vec Transition) (counts : alloc.vec.Vec Sz)
     (t : Transition) (tl : List Transition)
     (hiter : iter.val = t :: tl)
@@ -730,12 +739,12 @@ theorem count_incoming_step
     norm_num
 
 /-- `toCount` splits over `++`. -/
-theorem toCount_append (a b : List Transition) (j : Nat) :
+private theorem toCount_append (a b : List Transition) (j : Nat) :
     toCount (a ++ b) j = toCount a j + toCount b j := by
   simp [toCount, List.filter_append, List.length_append]
 
 /-- `toCount` of a singleton is that transition's tick. -/
-theorem toCount_single (t : Transition) (j : Nat) : toCount [t] j = tick t j := by
+private theorem toCount_single (t : Transition) (j : Nat) : toCount [t] j = tick t j := by
   simpa [toCount_nil] using toCount_cons t [] j
 
 /-- `IteratorIntoIter.next` on an exhausted vector reports `none` and hands the vector
@@ -748,7 +757,7 @@ private theorem vec_next_none {α : Type} (v : alloc.vec.Vec α) (h : v.val = []
   rfl
 
 /-- State of the `count_incoming` scan: the transitions still to visit and the counters. -/
-abbrev CiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
+private abbrev CiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
 
 /-- Invariant of the scan after `trans.val.length - st.1.val.length` transitions have been
     visited:
@@ -758,7 +767,7 @@ abbrev CiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
     * those visited ticks and the not-yet-visited ones add up to the total, so the
       checked addition cannot overflow in the remaining steps either;
     * no slot can overflow. -/
-def CiInv (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz) : CiSt → Prop :=
+private def CiInv (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz) : CiSt → Prop :=
   fun st =>
     st.1.val = trans.val.drop (trans.val.length - st.1.val.length) ∧
     st.2.val.length = c0.val.length ∧
@@ -773,14 +782,14 @@ def CiInv (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz) : CiSt → 
 
 /-- On return, slot `j` of the counters holds `c0`'s slot `j` plus the number of
     transitions of `trans` whose target is `j`. -/
-def CiPost (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz)
+private def CiPost (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz)
     (counts : alloc.vec.Vec Sz) : Prop :=
   counts.val.length = c0.val.length ∧
   ∀ j, j < counts.val.length →
     (counts.val.getD j 0#usize).val = (c0.val.getD j 0#usize).val + toCount trans.val j
 
 /-- The exhausted case of the inner counting loop: the counters are returned as they are. -/
-theorem count_incoming_done (st : CiSt) (h : st.1.val = []) :
+private theorem count_incoming_done (st : CiSt) (h : st.1.val = []) :
     verified.merc_lts.incoming_transitions.count_incoming_loop.body st.1 st.2
       = ok (done st.2) := by
   have hn : alloc.vec.into_iter.IteratorIntoIter.next
@@ -799,7 +808,7 @@ theorem count_incoming_done (st : CiSt) (h : st.1.val = []) :
 
 /-- The `count_incoming` scan, run over a whole transition vector, returns the counters
     with slot `j` raised by the number of transitions of `trans` whose target is `j`. -/
-theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz)
+private theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz)
     (hin : ∀ t, t ∈ trans.val → t.to.index.val < c0.val.length)
     (hovf : ∀ j, j < c0.val.length →
       (c0.val.getD j 0#usize).val + toCount trans.val j ≤ Usize.max) :
@@ -941,7 +950,7 @@ theorem count_incoming_loop_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.
   exact ⟨p, hloop, hpost⟩
 
 /-- `count_incoming_loop` in equation form. -/
-theorem count_incoming_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz)
+private theorem count_incoming_spec (trans : alloc.vec.Vec Transition) (c0 : alloc.vec.Vec Sz)
     (hin : ∀ t, t ∈ trans.val → t.to.index.val < c0.val.length)
     (hovf : ∀ j, j < c0.val.length →
       (c0.val.getD j 0#usize).val + toCount trans.val j ≤ Usize.max) :
@@ -975,7 +984,7 @@ def outVec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (alloc.vec.Vec.new Transition)
 
 /-- A successful `outgoing_transitions` call reports exactly the state's contribution. -/
-theorem outVec_of_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem outVec_of_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (h : LTSInst.outgoing_transitions sys s = ok ts) :
     outVec LTSInst sys s = ts := by
@@ -987,7 +996,7 @@ theorem outVec_of_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   rfl
 
 /-- Hence, for a successful call, the call reports `outVec` itself. -/
-theorem outVec_eq_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem outVec_eq_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (h : LTSInst.outgoing_transitions sys s = ok ts) :
     LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s) := by
@@ -996,17 +1005,17 @@ theorem outVec_eq_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- The number of transitions towards slot `j` that the first `k` states of `states`
     contribute. -/
-def seenCount {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def seenCount {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k j : Nat) : Nat :=
   ((states.take k).map (fun s => toCount (outVec LTSInst sys s).val j)).sum
 
 /-- Before any state is visited nothing has been counted. -/
-theorem seenCount_zero {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem seenCount_zero {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (j : Nat) : seenCount LTSInst sys states 0 j = 0 := by
   simp [seenCount]
 
 /-- Visiting one state more adds exactly that state's transitions towards `j`. -/
-theorem seenCount_succ {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem seenCount_succ {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k : Nat) (s : TagIndex Sz StateTag)
     (tl : List (TagIndex Sz StateTag)) (j : Nat) (h : states = states.take k ++ s :: tl) :
     seenCount LTSInst sys states (k + 1) j
@@ -1032,7 +1041,7 @@ theorem seenCount_succ {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   omega
 
 /-- Counting more states can only add ticks. -/
-theorem seenCount_mono {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem seenCount_mono {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k m j : Nat) (h : k ≤ m) :
     seenCount LTSInst sys states k j ≤ seenCount LTSInst sys states m j := by
   have h1 : seenCount LTSInst sys states m j
@@ -1059,7 +1068,7 @@ theorem seenCount_mono {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   omega
 
 /-- State of the outer counting loop: the states still to visit and the counters. -/
-abbrev CaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.Vec Sz
+private abbrev CaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.Vec Sz
 
 /-- Invariant of the outer scan after `states.length - st.1.val.length` states have been
     visited:
@@ -1067,7 +1076,7 @@ abbrev CaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.
     * the counters are as long as `c0`, and slot `j` holds `c0`'s slot `j` plus the number
       of transitions towards `j` that the visited states contribute;
     * no slot can overflow, because the total over all of `states` is representable. -/
-def CaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def CaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz) : CaSt → Prop :=
   fun st =>
     st.1.val = states.drop (states.length - st.1.val.length) ∧
@@ -1080,7 +1089,7 @@ def CaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- On return, slot `j` of the counters holds `c0`'s slot `j` plus the number of transitions
     towards `j` that *all* of `states` contribute. -/
-def CaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def CaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (c0 counts : alloc.vec.Vec Sz) : Prop :=
   counts.val.length = c0.val.length ∧
   ∀ j, j < counts.val.length →
@@ -1089,7 +1098,7 @@ def CaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- The exhausted case of the outer loop: the counters are returned as they are, and by the
     invariant they already hold every state's contribution. -/
-theorem count_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem count_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz) (st : CaSt)
     (h : st.1.val = []) (hinv : CaInv LTSInst sys states c0 st) :
     verified.merc_lts.incoming_transitions.count_all_incoming_loop.body
@@ -1123,7 +1132,7 @@ theorem count_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : 
 /-- One state of the outer scan: `count_incoming` runs on the state just read, and the
     counters come back with that state's transitions added, so the new counters satisfy
     `CiPost` for that state on top of the old ones. -/
-theorem count_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem count_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (v : alloc.vec.Vec (TagIndex Sz StateTag)) (counts : alloc.vec.Vec Sz)
     (s : TagIndex Sz StateTag) (tl : List (TagIndex Sz StateTag))
     (hiter : v.val = s :: tl)
@@ -1154,7 +1163,7 @@ theorem count_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : 
 /-- `count_all_incoming_loop`, run over a whole state vector: on return, slot `j` of the
     counters holds `c0`'s slot `j` plus the number of transitions towards `j` that the
     enumerated states report. -/
-theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz)
     (hout : ∀ s, s ∈ sv.val → LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
     (hin : ∀ s, s ∈ sv.val → ∀ t, t ∈ (outVec LTSInst sys s).val → t.to.index.val < c0.val.length)
@@ -1277,7 +1286,7 @@ theorem count_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
   exact ⟨p, hloop, hpost⟩
 
 /-- `count_all_incoming_loop` in equation form. -/
-theorem count_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem count_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz)
     (hout : ∀ s, s ∈ sv.val → LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
     (hin : ∀ s, s ∈ sv.val → ∀ t, t ∈ (outVec LTSInst sys s).val → t.to.index.val < c0.val.length)
@@ -1293,7 +1302,7 @@ theorem count_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : 
   rw [hloop]
 
 /-- `count_all_incoming` over the states the LTS reports. -/
-theorem count_all_incoming_state_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem count_all_incoming_state_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (c0 : alloc.vec.Vec Sz)
     (hiter : LTSInst.iter_states sys = ok sv)
     (hout : ∀ s, s ∈ sv.val → LTSInst.outgoing_transitions sys s = ok (outVec LTSInst sys s))
@@ -1321,7 +1330,7 @@ shape (a range plus a mutable accumulator), so the induction is done once here. 
     `f` is a total `Nat → α`, and the accumulator is read through the total `List.getD`
     with fallback `d`, so no index needs a bound proof anywhere in the statement; the
     caller discharges the bounds once, turning the post back into `getElem`. -/
-def gatherInv {α : Type} (n : Sz) (f : Nat → α) (d : α) :
+private def gatherInv {α : Type} (n : Sz) (f : Nat → α) (d : α) :
     ItSz × alloc.vec.Vec α → Prop :=
   fun st =>
     st.1.end = n ∧ st.1.start.val ≤ n.val ∧ st.2.val.length = st.1.start.val ∧
@@ -1329,7 +1338,7 @@ def gatherInv {α : Type} (n : Sz) (f : Nat → α) (d : α) :
 
 /-- A loop whose body is "advance the range, or stop; append `f start` and continue"
     copies `f 0, …, f (n-1)` into the accumulator. -/
-theorem gather_loop_spec {α : Type} (n : Sz) (f : Nat → α) (d : α) (hn : n.val < Usize.max)
+private theorem gather_loop_spec {α : Type} (n : Sz) (f : Nat → α) (d : α) (hn : n.val < Usize.max)
     (body : ItSz → alloc.vec.Vec α → Result (ControlFlow (ItSz × alloc.vec.Vec α) (alloc.vec.Vec α)))
     (hstep : ∀ (it : ItSz) (v : alloc.vec.Vec α), it.end = n →
       v.val.length < Usize.max → it.start.val < it.end.val →
@@ -1394,7 +1403,7 @@ theorem gather_loop_spec {α : Type} (n : Sz) (f : Nat → α) (d : α) (hn : n.
       exact absurd hk (by simp)
 
 /-- One iteration of `copy_prefix_loop.body`. -/
-theorem copy_prefix_step (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.Vec Sz)
+private theorem copy_prefix_step (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.Vec Sz)
     (hidx : it.start.val < source.val.length) (hlen : r.val.length < Usize.max)
     (h : it.start.val < it.end.val) :
     ∃ (it1 : ItSz) (r1 : alloc.vec.Vec Sz),
@@ -1420,7 +1429,7 @@ theorem copy_prefix_step (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.
   simp [hopt, hidx_u, hpush]
 
 /-- The `end ≤ start` case: the range is exhausted and the accumulator is returned. -/
-theorem copy_prefix_done (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.Vec Sz)
+private theorem copy_prefix_done (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.Vec Sz)
     (hge : it.end.val ≤ it.start.val) :
     verified.merc_lts.incoming_transitions.copy_prefix_loop.body source it r
       = ok (done r) := by
@@ -1431,7 +1440,7 @@ theorem copy_prefix_done (source : alloc.vec.Vec Sz) (it : ItSz) (r : alloc.vec.
   simp [hopt, hident]
 
 /-- `copy_prefix_loop source [0, n)` copies `source`'s first `n` slots, in order. -/
-theorem copy_prefix_spec (n : Sz) (source : alloc.vec.Vec Sz)
+private theorem copy_prefix_spec (n : Sz) (source : alloc.vec.Vec Sz)
     (hn : n.val < Usize.max) (hsrc : n.val ≤ source.val.length) :
     Aeneas.Std.WP.spec
       (verified.merc_lts.incoming_transitions.copy_prefix_loop
@@ -1454,7 +1463,7 @@ theorem copy_prefix_spec (n : Sz) (source : alloc.vec.Vec Sz)
 /-- The `getElem` reading of `copy_prefix_spec`: for every in-range index, the copy
     agrees with the source. Both bounds are hypotheses, so the statement needs no
     length side conditions. -/
-theorem copy_prefix_getElem (n : Sz) (source : alloc.vec.Vec Sz) (r : alloc.vec.Vec Sz)
+private theorem copy_prefix_getElem (n : Sz) (source : alloc.vec.Vec Sz) (r : alloc.vec.Vec Sz)
     (hlen : r.val.length = n.val)
     (hpt : ∀ k, k < n.val → r.val.getD k 0#usize = source.val.getD k 0#usize) :
     ∀ k (hk : k < r.val.length) (hs : k < source.val.length),
@@ -1487,14 +1496,14 @@ The invariant is therefore stated as an exact list equality per CSR slot, which 
 The first building blocks below are pure list lemmas about that reading. -/
 
 /-- The two flat arrays, read as one list of pairs: the pair stored at position `p`. -/
-def pairAt (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
+private def pairAt (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
     (p : Nat) : (TagIndex Sz LabelTag × TagIndex Sz StateTag) :=
   (labels.getD p zeroLabel, src.getD p zeroState)
 
 /-- The pairs stored at the positions `[a, b)`. Empty when `b ≤ a`, which is what makes
     the read total: an out-of-range position reads back as the zeroed `TagIndex` that a
     freshly allocated slot holds. -/
-def slotEntries (labels : List (TagIndex Sz LabelTag))
+private def slotEntries (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (a b : Nat) : List (TagIndex Sz LabelTag × TagIndex Sz StateTag) :=
   (List.range' a (b - a)).map (fun p => pairAt labels src p)
 
@@ -1516,7 +1525,7 @@ private lemma gds_ne {α : Type} (l : List α) (i k : Nat) (x d : α) (hne : k �
   rw [List.getElem?_set, ite_eq_right (Ne.symm hne)]
 
 /-- `List.range'` loses no element when one position is appended. -/
-theorem range'_append_succ (a m : Nat) : List.range' a (m + 1) = List.range' a m ++ [a + m] := by
+private theorem range'_append_succ (a m : Nat) : List.range' a (m + 1) = List.range' a m ++ [a + m] := by
   induction m generalizing a with
   | zero => simp
   | succ m ih =>
@@ -1527,7 +1536,7 @@ theorem range'_append_succ (a m : Nat) : List.range' a (m + 1) = List.range' a m
       simp [Nat.add_comm, Nat.add_left_comm]
 
 /-- A slot whose end does not pass its start holds nothing. -/
-theorem slotEntries_of_le (labels : List (TagIndex Sz LabelTag))
+private theorem slotEntries_of_le (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (a b : Nat) (hba : b ≤ a) :
     slotEntries labels src a b = [] := by
   unfold slotEntries
@@ -1535,7 +1544,7 @@ theorem slotEntries_of_le (labels : List (TagIndex Sz LabelTag))
 
 /-- One more position in a slot. The bound is what makes the statement hold: without
     `a ≤ b` the new position can fall outside `[a, b+1)` altogether. -/
-theorem slotEntries_succ (labels : List (TagIndex Sz LabelTag))
+private theorem slotEntries_succ (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (a b : Nat) (hab : a ≤ b) :
     slotEntries labels src a (b + 1) = slotEntries labels src a b ++ [pairAt labels src b] := by
   unfold slotEntries
@@ -1545,7 +1554,7 @@ theorem slotEntries_succ (labels : List (TagIndex Sz LabelTag))
   simp
 
 /-- A pair read off a written array at an untouched position is the old pair. -/
-theorem pairAt_set_ne (labels : List (TagIndex Sz LabelTag))
+private theorem pairAt_set_ne (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (p q : Nat) (x : TagIndex Sz LabelTag)
     (y : TagIndex Sz StateTag) (hpq : p ≠ q) :
     pairAt (labels.set q x) (src.set q y) p = pairAt labels src p := by
@@ -1553,7 +1562,7 @@ theorem pairAt_set_ne (labels : List (TagIndex Sz LabelTag))
   rw [gds_ne labels q p x zeroLabel hpq, gds_ne src q p y zeroState hpq]
 
 /-- A pair read off a written array at the written position is the new pair. -/
-theorem pairAt_set_self (labels : List (TagIndex Sz LabelTag))
+private theorem pairAt_set_self (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (p : Nat) (x : TagIndex Sz LabelTag)
     (y : TagIndex Sz StateTag) (hp : p < labels.length) (hp' : p < src.length) :
     pairAt (labels.set p x) (src.set p y) p = (x, y) := by
@@ -1561,7 +1570,7 @@ theorem pairAt_set_self (labels : List (TagIndex Sz LabelTag))
   rw [gds_self labels p x zeroLabel, gds_self src p y zeroState, ite_eq_left hp, ite_eq_left hp']
 
 /-- A write outside a slot's range leaves the slot alone. -/
-theorem slotEntries_set_of_lt_or_ge (labels : List (TagIndex Sz LabelTag))
+private theorem slotEntries_set_of_lt_or_ge (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (p a b : Nat) (x : TagIndex Sz LabelTag)
     (y : TagIndex Sz StateTag) (hnot : ¬(a ≤ p ∧ p < b)) :
     slotEntries (labels.set p x) (src.set p y) a b = slotEntries labels src a b := by
@@ -1573,7 +1582,7 @@ theorem slotEntries_set_of_lt_or_ge (labels : List (TagIndex Sz LabelTag))
 
 /-- A write at the position just past a slot extends it by exactly that pair: the old
     entries are untouched and the new last entry is the pair read off the written arrays. -/
-theorem slotEntries_set_succ (labels : List (TagIndex Sz LabelTag))
+private theorem slotEntries_set_succ (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (p a b : Nat) (x : TagIndex Sz LabelTag)
     (y : TagIndex Sz StateTag) (hp : p = b) (hab : a ≤ b) :
     slotEntries (labels.set p x) (src.set p y) a (b + 1)
@@ -1585,7 +1594,7 @@ theorem slotEntries_set_succ (labels : List (TagIndex Sz LabelTag))
 /-- The `(label, source)` pairs that the first `k` states of `states` contribute to slot `j`,
     in the order `place_all_incoming` writes them: state by state, and inside a state in the
     order `outgoing_transitions` reports. -/
-def towards {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def towards {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k j : Nat) :
     List (TagIndex Sz LabelTag × TagIndex Sz StateTag) :=
   (states.take k).flatMap (fun s =>
@@ -1593,12 +1602,12 @@ def towards {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       (fun t => (t.label, s)))
 
 /-- Before any state is visited nothing has been written. -/
-theorem towards_zero {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem towards_zero {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (j : Nat) : towards LTSInst sys states 0 j = [] := by
   simp [towards]
 
 /-- Visiting one state more appends exactly that state's transitions towards `j`. -/
-theorem towards_succ {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem towards_succ {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k : Nat) (s : TagIndex Sz StateTag)
     (tl : List (TagIndex Sz StateTag)) (j : Nat) (h : states = states.take k ++ s :: tl) :
     towards LTSInst sys states (k + 1) j
@@ -1627,7 +1636,7 @@ theorem towards_succ {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- Every pair in `towards` is a reported transition: the "no spurious entries" half of
     `IncomingTransitionsCorrect`, read off the definition. -/
-theorem mem_towards {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem mem_towards {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k j : Nat) (l : TagIndex Sz LabelTag)
     (s : TagIndex Sz StateTag) (h : (l, s) ∈ towards LTSInst sys states k j) :
     ∃ t, t ∈ (outVec LTSInst sys s).val ∧ t.label = l ∧ t.to.index.val = j := by
@@ -1646,7 +1655,7 @@ theorem mem_towards {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
     The new cursor value is existentially quantified with its `Nat` value pinned down, as in
     `count_incoming_step`, so that the caller never has to re-analyse the checked addition. -/
-theorem place_incoming_step
+private theorem place_incoming_step
     (state_index : TagIndex Sz StateTag) (iter : alloc.vec.Vec Transition)
     (cursor : alloc.vec.Vec Sz) (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src : alloc.vec.Vec (TagIndex Sz StateTag))
@@ -1729,12 +1738,12 @@ theorem place_incoming_step
 /-- The pairs towards `j` that the first `k` transitions of `ts` contribute, in placement
     order: the transitions of the prefix, filtered by target, each tagged with the source
     state. -/
-def towards1 (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) (k j : Nat) :
+private def towards1 (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) (k j : Nat) :
     List (TagIndex Sz LabelTag × TagIndex Sz StateTag) :=
   ((ts.val.take k).filter (fun t => t.to.index.val = j)).map (fun t => (t.label, s))
 
 /-- Before any transition is placed nothing has been written. -/
-theorem towards1_zero (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) (j : Nat) :
+private theorem towards1_zero (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) (j : Nat) :
     towards1 s ts 0 j = [] := by
   simp [towards1]
 
@@ -1744,7 +1753,7 @@ private theorem filter_singleton (t : Transition) (j : Nat) :
   by_cases h : t.to.index.val = j <;> simp [h]
 
 /-- Placing one transition that targets the slot appends its pair. -/
-theorem towards1_succ_self (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
+private theorem towards1_succ_self (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (k : Nat) (t : Transition) (tl : List Transition) (j : Nat)
     (h : ts.val = ts.val.take k ++ t :: tl) (hjt : t.to.index.val = j) :
     towards1 s ts (k + 1) j = towards1 s ts k j ++ [(t.label, s)] := by
@@ -1754,7 +1763,7 @@ theorem towards1_succ_self (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transi
   simp
 
 /-- Placing one transition that targets another slot leaves the slot alone. -/
-theorem towards1_succ_ne (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
+private theorem towards1_succ_ne (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (k : Nat) (t : Transition) (tl : List Transition) (j : Nat)
     (h : ts.val = ts.val.take k ++ t :: tl) (hjt : t.to.index.val ≠ j) :
     towards1 s ts (k + 1) j = towards1 s ts k j := by
@@ -1764,7 +1773,7 @@ theorem towards1_succ_ne (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transiti
   simp
 
 /-- Placing one transition more appends its pair exactly when it targets the slot. -/
-theorem towards1_succ (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
+private theorem towards1_succ (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (k : Nat) (t : Transition) (tl : List Transition) (j : Nat)
     (h : ts.val = ts.val.take k ++ t :: tl) :
     towards1 s ts (k + 1) j
@@ -1776,7 +1785,7 @@ theorem towards1_succ (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
 
 /-- Once the whole vector has been placed, the slot holds the pairs of *all* of the
     state's transitions towards it. -/
-theorem towards1_all (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) (j : Nat) :
+private theorem towards1_all (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) (j : Nat) :
     towards1 s ts ts.val.length j
       = (ts.val.filter (fun t => t.to.index.val = j)).map (fun t => (t.label, s)) := by
   unfold towards1
@@ -1802,7 +1811,7 @@ theorem towards1_all (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition) 
     across `ti` and `j`, so the pair `(k, t)` has to be pinned down for the statement to be
     true; the separation argument below uses the fact that a transition towards `ti` is still
     unplaced at position `k`. -/
-def SepInv (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat) (ts : alloc.vec.Vec Transition) : Prop :=
+private def SepInv (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat) (ts : alloc.vec.Vec Transition) : Prop :=
   ∀ (k : Nat) (t : Transition) (j : Nat), k < ts.val.length → ts.val[k]? = some t →
     j < cursor0.val.length → t.to.index.val < cursor0.val.length →
     (¬((lb j) ≤ (cursor0.val.getD t.to.index.val 0#usize).val
@@ -1820,7 +1829,7 @@ def SepInv (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat) (ts : alloc.vec.Vec T
 
 /-- State of the inner placement loop: the transitions still to visit, and the three
     arrays that are written. -/
-abbrev PiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
+private abbrev PiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
   × alloc.vec.Vec (TagIndex Sz LabelTag) × alloc.vec.Vec (TagIndex Sz StateTag)
 
 /-- Invariant of the inner scan after `ts.val.length - st.1.val.length` of the state's
@@ -1830,7 +1839,7 @@ abbrev PiSt := alloc.vec.into_iter.IntoIter Transition × alloc.vec.Vec Sz
       number of placed transitions towards `j`, and slot `j`'s range holds exactly the
       pairs of those transitions;
     * nothing below the starting cursor `cursor0[j]` has been touched. -/
-def PiInv (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
+private def PiInv (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) : PiSt → Prop :=
@@ -1853,7 +1862,7 @@ def PiInv (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
 /-- On return, every transition of `ts` has been placed: the cursor of `j` has advanced by
     the number of `ts`'s transitions towards `j`, the range `[cursor0[j], cursor[j])` holds
     exactly their pairs, and everything below `cursor0[j]` is as it was. -/
-def PiPost (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
+private def PiPost (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
@@ -1873,7 +1882,7 @@ def PiPost (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
 
 /-- The exhausted case of the inner placement loop: the three arrays are returned as they
     are. -/
-theorem place_incoming_done (s : TagIndex Sz StateTag) (st : PiSt) (h : st.1.val = []) :
+private theorem place_incoming_done (s : TagIndex Sz StateTag) (st : PiSt) (h : st.1.val = []) :
     verified.merc_lts.incoming_transitions.place_incoming_loop.body s st.1 st.2.1 st.2.2.1
         st.2.2.2
       = ok (done (st.2.1, st.2.2.1, st.2.2.2)) := by
@@ -1892,7 +1901,7 @@ theorem place_incoming_done (s : TagIndex Sz StateTag) (st : PiSt) (h : st.1.val
     simp
 
 /-- The carried result of the placement loop: the three arrays, with the iterator dropped. -/
-abbrev PiRes := alloc.vec.Vec Sz × alloc.vec.Vec (TagIndex Sz LabelTag)
+private abbrev PiRes := alloc.vec.Vec Sz × alloc.vec.Vec (TagIndex Sz LabelTag)
   × alloc.vec.Vec (TagIndex Sz StateTag)
 
 /-- The transition a scan is about to place, read off the state's own list. -/
@@ -1919,7 +1928,7 @@ private theorem getElem_eq_getD {α : Type} (l : List α) (i : Nat) (d : α) (h 
     holds exactly the pairs of `ts`'s transitions towards `j`, in order, and slot `j`'s cursor
     is `cursor0[j] +` their number. `hsep` is what keeps the writes inside the range they
     extend, so nothing below `cursor0[j]` changes. -/
-theorem place_incoming_loop_spec
+private theorem place_incoming_loop_spec
     (s : TagIndex Sz StateTag) (ts : alloc.vec.Vec Transition)
     (cursor0 : alloc.vec.Vec Sz) (lb : Nat → Nat)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
@@ -2189,25 +2198,25 @@ The slot's content then concatenates: `[r[j], cursor[j])` is what the visited st
 and this state's contribution is appended to it. -/
 
 /-- Counting more states cannot subtract ticks. -/
-theorem seenCount_nonneg {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem seenCount_nonneg {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (k j : Nat) : 0 ≤ seenCount LTSInst sys states k j := by
   unfold seenCount
   exact List.sum_nonneg (fun s _ => Nat.zero_le _)
 
 /-- `toCount` splits over `take`/`drop`. -/
-theorem toCount_take_drop (ts : List Transition) (k j : Nat) :
+private theorem toCount_take_drop (ts : List Transition) (k j : Nat) :
     toCount (ts.take k) j + toCount (ts.drop k) j = toCount ts j := by
   have h := congrArg (fun l => toCount l j) (List.take_append_drop k ts)
   rwa [toCount_append] at h
 
 /-- A prefix of a transition list holds no more ticks towards a slot than the whole list. -/
-theorem toCount_take_le (ts : List Transition) (k j : Nat) :
+private theorem toCount_take_le (ts : List Transition) (k j : Nat) :
     toCount (ts.take k) j ≤ toCount ts j := by
   have h := toCount_take_drop ts k j
   omega
 
 /-- Two adjacent ranges of a slot read as one range. -/
-theorem slotEntries_append (labels : List (TagIndex Sz LabelTag))
+private theorem slotEntries_append (labels : List (TagIndex Sz LabelTag))
     (src : List (TagIndex Sz StateTag)) (a b c : Nat) (hab : a ≤ b) (hbc : b ≤ c) :
     slotEntries labels src a c = slotEntries labels src a b ++ slotEntries labels src b c := by
   have h1 : c - a = (b - a) + (c - b) := by omega
@@ -2241,7 +2250,7 @@ private theorem mem_drop_of_getElem? {α : Type} (l : List α) (k : Nat) (a : α
     being placed is itself still unplaced. So for a slot `j` that is not the write's own
     target, the write is either below `r[j]` or at or past `r[j+1]`, and hence outside both
     `[lb j, cursor[j])` and `[cursor[j], cursor[j] + seen j)` with `lb j = r[j]`. -/
-theorem sepInv_of_csr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem sepInv_of_csr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (states : List (TagIndex Sz StateTag)) (kout : Nat) (tl : List (TagIndex Sz StateTag))
     (s : TagIndex Sz StateTag) (r cursor0 : alloc.vec.Vec Sz)
     (hshape : states = states.take kout ++ s :: tl)
@@ -2350,7 +2359,7 @@ theorem sepInv_of_csr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       omega
 
 /-- `place_incoming` for one state, in equation form. -/
-theorem place_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem place_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (s : TagIndex Sz StateTag) (cursor : alloc.vec.Vec Sz)
     (labels : alloc.vec.Vec (TagIndex Sz LabelTag)) (src : alloc.vec.Vec (TagIndex Sz StateTag))
     (lb : Nat → Nat)
@@ -2376,7 +2385,7 @@ theorem place_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   exact (bind_ok _ _).trans ((bind_ok _ _).trans hloop)
 
 /-- State of the outer placement loop: the states still to visit and the three arrays. -/
-abbrev PaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.Vec Sz
+private abbrev PaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.Vec Sz
   × alloc.vec.Vec (TagIndex Sz LabelTag) × alloc.vec.Vec (TagIndex Sz StateTag)
 
 /-- Invariant of the outer placement loop after `sv.val.length - st.1.val.length` states have
@@ -2387,7 +2396,7 @@ abbrev PaSt := alloc.vec.into_iter.IntoIter (TagIndex Sz StateTag) × alloc.vec.
       visited states contribute;
     * the range `[r[j], cursor[j])` holds exactly those transitions' pairs, in the order
       `place_all_incoming` writes them. -/
-def PaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def PaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) : PaSt → Prop :=
@@ -2407,7 +2416,7 @@ def PaInv {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 /-- On return, the cursor of slot `j` is `r[j] +` the number of transitions towards `j` that
     *all* of the enumerated states contribute, and `[r[j], cursor[j])` holds exactly their
     pairs. -/
-def PaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def PaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
@@ -2424,7 +2433,7 @@ def PaPost {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       = towards LTSInst sys sv.val sv.val.length j)
 
 /-- The exhausted case of the outer placement loop: the arrays are returned as they are. -/
-theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (st : PaSt) (h : st.1.val = [])
@@ -2471,7 +2480,7 @@ theorem place_all_incoming_done {L Label : Type} (LTSInst : LTS L Label) (sys : 
     enumeration, whose transitions `ts` are the ones `stage 5`'s cursor already makes room
     for. The loop invariant carries the new cursor and the new range contents: the range of
     slot `j` is the concatenation of what the visited states wrote to it. -/
-theorem place_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem place_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (st : PaSt)
@@ -2618,7 +2627,7 @@ theorem place_all_incoming_step {L Label : Type} (LTSInst : LTS L Label) (sys : 
     written into the arrays, in enumeration order, and on return the cursor of slot `j` has
     advanced by the number of transitions towards `j` that the whole enumeration
     contributes, with exactly their pairs in `[r[j], cursor[j])`. -/
-theorem place_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem place_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (st : PaSt)
@@ -2676,7 +2685,7 @@ theorem place_all_incoming_loop_spec {L Label : Type} (LTSInst : LTS L Label) (s
 
 /-- `place_all_incoming` (`:193`): with the state enumeration coming from `iter_states`, the
     whole placement of every state's outgoing transitions is `PaPost`. -/
-theorem place_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem place_all_incoming_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : alloc.vec.Vec (TagIndex Sz StateTag)) (r : alloc.vec.Vec Sz)
     (cursor0 : alloc.vec.Vec Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
@@ -2736,22 +2745,22 @@ that the range it handed over still holds the same pairs afterwards.
 -/
 
 /-- Two flat arrays carry the same pairs in the window `[a, b)`. -/
-def sameWindow (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
+private def sameWindow (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
     (labels0 : List (TagIndex Sz LabelTag)) (src0 : List (TagIndex Sz StateTag))
     (a b : Nat) : Prop :=
   ∀ x, x ∈ slotEntries labels src a b ↔ x ∈ slotEntries labels0 src0 a b
 
 /-- The labels of the window `[a, b)` are silent-first: once a position holds label `0`, so do
 all the positions before it (in the window). -/
-def Zp (labels : List (TagIndex Sz LabelTag)) (a b : Nat) : Prop :=
+private def Zp (labels : List (TagIndex Sz LabelTag)) (a b : Nat) : Prop :=
   ∀ p q, a ≤ p → p < q → q < b → (labels.getD q zeroLabel).index.val = 0 →
     (labels.getD p zeroLabel).index.val = 0
 
-theorem Zp_mono {labels : List (TagIndex Sz LabelTag)} {a b b' : Nat} (h : Zp labels a b)
+private theorem Zp_mono {labels : List (TagIndex Sz LabelTag)} {a b b' : Nat} (h : Zp labels a b)
     (hb : b' ≤ b) : Zp labels a b' :=
   fun p q h1 h2 h3 h4 => h p q h1 h2 (by omega) h4
 
-theorem Zp_congr {l1 l2 : List (TagIndex Sz LabelTag)} {a b : Nat}
+private theorem Zp_congr {l1 l2 : List (TagIndex Sz LabelTag)} {a b : Nat}
     (h : ∀ p, a ≤ p → p < b → l1.getD p zeroLabel = l2.getD p zeroLabel) (hz : Zp l1 a b) :
     Zp l2 a b := fun p q h1 h2 h3 h4 => by
   rw [← h p h1 (by omega)]
@@ -2759,7 +2768,7 @@ theorem Zp_congr {l1 l2 : List (TagIndex Sz LabelTag)} {a b : Nat}
   rw [h q (by omega) h3]
   exact h4
 
-theorem Zp_single (labels : List (TagIndex Sz LabelTag)) (a : Nat) : Zp labels a (a + 1) :=
+private theorem Zp_single (labels : List (TagIndex Sz LabelTag)) (a : Nat) : Zp labels a (a + 1) :=
   fun p q h1 h2 h3 _ => by omega
 
 /-- Every position of `[a, b)` is one of the positions a window runs over. -/
@@ -2863,7 +2872,7 @@ private theorem sameWindow_succ (labels : List (TagIndex Sz LabelTag))
 
 /-- State of the insertion loop: the two arrays, and how far left the pair held aside at `i`
     still has to travel. -/
-abbrev IsSt := alloc.vec.Vec (TagIndex Sz LabelTag)
+private abbrev IsSt := alloc.vec.Vec (TagIndex Sz LabelTag)
   × alloc.vec.Vec (TagIndex Sz StateTag) × Sz
 
 /-- Invariant of the insertion: with `j` the position the held pair has reached so far,
@@ -2871,7 +2880,7 @@ abbrev IsSt := alloc.vec.Vec (TagIndex Sz LabelTag)
     * everything between `j` and `i` has been shifted up by one position, so position `p`
       holds what position `p - 1` held;
     * nothing above `i` has been touched, and both arrays keep their lengths. -/
-def IsInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def IsInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start i j : Nat) : IsSt → Prop :=
   fun st =>
     start ≤ j ∧ j ≤ i ∧
@@ -2887,11 +2896,11 @@ def IsInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
 
 /-- The scalar carried by `1#usize`; `omega` treats `UScalar.val` of a literal as an opaque
     atom, so the generated `j - 1#usize` has to be opened up explicitly. -/
-theorem one_val : (1#usize : Sz).val = 1 := rfl
+private theorem one_val : (1#usize : Sz).val = 1 := rfl
 
 /-- `j ≤ start`: there is nothing left of `j` to compare against, so the held pair is already
     in place. -/
-theorem insert_sorted_done_start (start : Sz) (label : TagIndex Sz LabelTag)
+private theorem insert_sorted_done_start (start : Sz) (label : TagIndex Sz LabelTag)
     (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src : alloc.vec.Vec (TagIndex Sz StateTag)) (j : Sz) (hle : j.val ≤ start.val) :
     verified.merc_lts.incoming_transitions.insert_sorted_loop.body start label labels src j
@@ -2902,7 +2911,7 @@ theorem insert_sorted_done_start (start : Sz) (label : TagIndex Sz LabelTag)
 
 /-- The pair left of `j` does not sort after the held pair, so the held pair is already in
     place. -/
-theorem insert_sorted_done_cmp (start : Sz) (label : TagIndex Sz LabelTag)
+private theorem insert_sorted_done_cmp (start : Sz) (label : TagIndex Sz LabelTag)
     (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src : alloc.vec.Vec (TagIndex Sz StateTag)) (j : Sz)
     (hlen : labels.val.length = src.val.length) (hj : j.val < labels.val.length)
@@ -2944,7 +2953,7 @@ theorem insert_sorted_done_cmp (start : Sz) (label : TagIndex Sz LabelTag)
 
 /-- The pair left of `j` sorts after the held pair: it moves up to `j`, and the scan
     continues one position further left. -/
-theorem insert_sorted_step
+private theorem insert_sorted_step
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (start : Sz) (label : TagIndex Sz LabelTag) (i : Sz) (j : Sz)
@@ -3070,14 +3079,14 @@ theorem insert_sorted_step
 /-- Loop invariant of the insertion scan, at whatever position the scan has reached: the
     pairs seen so far are only the ones of the range it walks over, and the position is
     still inside the two arrays. -/
-def IsLoop (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def IsLoop (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start i : Nat) : IsSt → Prop :=
   fun st => IsInv labels0 src0 start i st.2.2.val st ∧ st.2.2.val < labels0.val.length
 
 /-- What the insertion scan leaves behind, at the position it came to rest at: everything
     left of it is as it was, everything right of it up to `i` has been shifted up by one
     position, and both arrays keep their length. -/
-def IsPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def IsPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start i : Nat) : IsSt → Prop :=
   fun st =>
     start ≤ st.2.2.val ∧
@@ -3095,7 +3104,7 @@ def IsPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
         (labels0.val.getD i zeroLabel).index.val)
 
 /-- The pair arrays have equally long, and the position the scan reaches is inside them. -/
-theorem isPost_of_inv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private theorem isPost_of_inv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start i : Nat) (st : IsSt)
     (hinv : IsInv labels0 src0 start i st.2.2.val st)
     (hstop : st.2.2.val ≤ start ∨
@@ -3105,7 +3114,7 @@ theorem isPost_of_inv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
   rcases hinv with ⟨hstart, hjle, hlenL, hlenS, _, hA, hB, hC, hD⟩
   exact ⟨hstart, hjle, hlenL, hlenS, hA, hB, hC, hD, hstop⟩
 
-theorem insert_sorted_loop_spec
+private theorem insert_sorted_loop_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (start : Sz) (label : TagIndex Sz LabelTag) (i : Sz) (j : Sz)
@@ -3170,7 +3179,7 @@ theorem insert_sorted_loop_spec
 /-- What `insert_sorted` leaves behind: the window `[start, i + 1)` holds the pairs it held
     before - the one that was held aside only moves inside that window - everything above `i`
     is untouched, and both arrays keep their length. -/
-def IsIns (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def IsIns (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start i : Nat)
     (labels1 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src1 : alloc.vec.Vec (TagIndex Sz StateTag)) : Prop :=
@@ -3181,7 +3190,7 @@ def IsIns (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
   (∀ p, p < start → pairAt labels1.val src1.val p = pairAt labels0.val src0.val p) ∧
   (Zp labels0.val start i → Zp labels1.val start (i + 1))
 
-theorem insert_sorted_spec
+private theorem insert_sorted_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (start : Sz) (i : Sz) (hstart : start.val ≤ i.val) (hi : i.val < labels0.val.length)
@@ -3360,7 +3369,7 @@ private theorem sameWindow_trans (labels : List (TagIndex Sz LabelTag))
   exact (h1 x).trans (h2 x)
 
 /-- State of the insertion-sort scan: the positions left to insert, and the two arrays. -/
-abbrev SorSt := (core.ops.range.Range Std.Usize)
+private abbrev SorSt := (core.ops.range.Range Std.Usize)
   × alloc.vec.Vec (TagIndex Sz LabelTag) × alloc.vec.Vec (TagIndex Sz StateTag)
 
 /-- Invariant of the scan, where `it.start` is the next position to be inserted and `stop` the
@@ -3370,7 +3379,7 @@ abbrev SorSt := (core.ops.range.Range Std.Usize)
     * the range `[start, it.start)` holds the pairs it held before, and nothing from `it.start`
       on has been touched;
     * both arrays keep their length. -/
-def SorInvD (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def SorInvD (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start stop : Sz) : SorSt → Prop :=
   fun st =>
     (st.1.start.val = start.val + 1 ∧
@@ -3393,14 +3402,14 @@ def SorInvD (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
        = pairAt labels0.val src0.val p))
 
 /-- The scan invariant, together with silent-first order of the sorted prefix. -/
-def SorInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def SorInv (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start stop : Sz) : SorSt → Prop :=
   fun st => SorInvD labels0 src0 start stop st ∧ Zp st.2.1.val start.val st.1.start.val
 
 /-- What the scan leaves behind: the range `[start, stop)` holds the pairs it held before, both
     arrays keep their length, and the points outside that range are untouched - below `start`
     because the scan never writes there, and from `stop` on because the scan never reaches there. -/
-def SorPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
+private def SorPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start stop : Sz)
     (r : alloc.vec.Vec (TagIndex Sz LabelTag) × alloc.vec.Vec (TagIndex Sz StateTag)) : Prop :=
   sameWindow r.1.val r.2.val labels0.val src0.val start.val stop.val ∧
@@ -3410,7 +3419,7 @@ def SorPost (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
   (∀ p, stop.val ≤ p → pairAt r.1.val r.2.val p = pairAt labels0.val src0.val p) ∧
   Zp r.1.val start.val stop.val
 
-theorem sort_incoming_loop_spec
+private theorem sort_incoming_loop_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (iter : core.ops.range.Range Std.Usize) (start : Sz)
@@ -3602,7 +3611,7 @@ theorem sort_incoming_loop_spec
     carries the corresponding no-overflow hypothesis; this is supplied by
     `IncomingTransitions::new`, where every start offset is bounded by the number of
     transitions. -/
-theorem sort_incoming_spec
+private theorem sort_incoming_spec
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (start stop : Sz)
     (hlen0 : labels0.val.length = src0.val.length)
@@ -3725,14 +3734,14 @@ private theorem getD_mono {c : alloc.vec.Vec Sz} {a b : Nat}
       exact Nat.le_refl _
 
 /-- State of the outer sorting loop: the states still to visit, and the two flat arrays. -/
-abbrev SaSt := core.ops.range.Range Sz × alloc.vec.Vec (TagIndex Sz LabelTag)
+private abbrev SaSt := core.ops.range.Range Sz × alloc.vec.Vec (TagIndex Sz LabelTag)
   × alloc.vec.Vec (TagIndex Sz StateTag)
 
 /-- Invariant of `sort_all_incoming_loop` after the states below `it.start` have been
     visited: the walk has not overrun `n`, both arrays keep their length, and every state's
     range `[c[j], c[j+1])` still holds the pairs of `labels0`/`src0` - unorderedly if the
     state has been visited, pointwise if it has not. -/
-def SaInv (c : alloc.vec.Vec Sz) (n : Sz)
+private def SaInv (c : alloc.vec.Vec Sz) (n : Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) : SaSt → Prop :=
   fun st =>
@@ -3751,7 +3760,7 @@ def SaInv (c : alloc.vec.Vec Sz) (n : Sz)
 
 /-- On return, every state's range holds the pairs of `labels0`/`src0` it held on entry,
     and both arrays keep their length. -/
-def SaPost (c : alloc.vec.Vec Sz) (n : Sz)
+private def SaPost (c : alloc.vec.Vec Sz) (n : Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
     (r : alloc.vec.Vec (TagIndex Sz LabelTag) × alloc.vec.Vec (TagIndex Sz StateTag)) : Prop :=
@@ -3920,7 +3929,7 @@ private theorem sort_all_incoming_step (c : alloc.vec.Vec Sz) (n : Sz)
             ((hwin j hj).2 (by omega) p hp1 hp2)
 
 /-- `sort_all_incoming` over the states `0, …, n-1`. -/
-theorem sort_all_incoming_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
+private theorem sort_all_incoming_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag)) (st : SaSt)
     (hinv : SaInv c n labels0 src0 st)
@@ -3966,7 +3975,7 @@ theorem sort_all_incoming_loop_spec (c : alloc.vec.Vec Sz) (n : Sz)
   exact ⟨r.1, r.2, hloop, hpost⟩
 
 /-- `sort_all_incoming` walks the states `0, …, n-1`. -/
-theorem sort_all_incoming_spec
+private theorem sort_all_incoming_spec
     (c : alloc.vec.Vec Sz) (n : Sz)
     (labels0 : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src0 : alloc.vec.Vec (TagIndex Sz StateTag))
@@ -4014,7 +4023,7 @@ private theorem getD_append_push_end {α : Type} (l : List α) (a d : α) :
 
 /-- The shifted form of `gatherInv`: the walk starts at `s`, so the accumulator holds
     `f (s+0), …, f (s+k-1)` and its length is `start - s`. -/
-def gatherFromInv {α : Type} (n s : Sz) (f : Nat → α) (d : α) :
+private def gatherFromInv {α : Type} (n s : Sz) (f : Nat → α) (d : α) :
     ItSz × alloc.vec.Vec α → Prop :=
   fun st =>
     st.1.end = n ∧ s.val ≤ st.1.start.val ∧ st.1.start.val ≤ n.val ∧
@@ -4023,7 +4032,7 @@ def gatherFromInv {α : Type} (n s : Sz) (f : Nat → α) (d : α) :
 
 /-- A loop whose body is "advance the range, or stop; append `f start` and continue",
     started at `s` instead of at `0`, copies `f s, …, f (n-1)` into the accumulator. -/
-theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (hsn : s.val ≤ n.val)
+private theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (hsn : s.val ≤ n.val)
     (hn : n.val ≤ Usize.max)
     (body : ItSz → alloc.vec.Vec α →
       Result (ControlFlow (ItSz × alloc.vec.Vec α) (alloc.vec.Vec α)))
@@ -4099,16 +4108,16 @@ theorem gather_from_loop_spec {α : Type} (n s : Sz) (f : Nat → α) (d : α) (
       exact absurd hk (by simp)
 
 /-- The empty `FromTransition`, read by `getD` at an out-of-range position. -/
-abbrev zeroFT : FromTransition := ⟨zeroLabel, zeroState⟩
+private abbrev zeroFT : FromTransition := ⟨zeroLabel, zeroState⟩
 
 /-- The `FromTransition` stored at position `p` of the two flat arrays. -/
-def ftAt (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
+private def ftAt (labels : List (TagIndex Sz LabelTag)) (src : List (TagIndex Sz StateTag))
     (p : Nat) : FromTransition :=
   ⟨(pairAt labels src p).1, (pairAt labels src p).2⟩
 
 /-- One iteration of `incoming_transitions_loop.body`: the pair at the range's start is
     pushed and the range advances. -/
-theorem incoming_transitions_loop_step
+private theorem incoming_transitions_loop_step
     (labels : alloc.vec.Vec (TagIndex Sz LabelTag))
     (src : alloc.vec.Vec (TagIndex Sz StateTag))
     (it : ItSz) (res : alloc.vec.Vec FromTransition)

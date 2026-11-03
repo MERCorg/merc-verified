@@ -1,6 +1,17 @@
-import MercVerified.Lts.Lts
-import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Lts.Lts
+public import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `lts_wellFormed`: `LabelledTransitionSystem` satisfies `LTS.WellFormed`
@@ -40,7 +51,7 @@ open verified.merc_lts.labelled_transition_system (LabelledTransitionSystem)
     an axiom: it holds for every value built by a safe constructor (`from_raw_parts` runs
     `assert_valid`), which is to be proved once those constructors are translated
     (see `docs/axiom-audit-plan.md`). -/
-def LabelledTransitionSystemValid {Label : Type}
+private def LabelledTransitionSystemValid {Label : Type}
     (sys : LabelledTransitionSystem Label) : Prop :=
   ∃ (numStates numTransitions : Nat) (statesAt : Nat → Nat),
     (∃ statesLen : Std.Usize,
@@ -206,7 +217,7 @@ private theorem outgoing_transitions_loop_bounded
     external type with no invariant of its own connecting `index` and `len`; only a value
     actually produced by a safe constructor - `from_raw_parts`, `new`, `relabel`, ..., none of
     which Charon translates - is trusted to satisfy it). -/
-theorem lts_wellFormed {Label : Type}
+private theorem lts_wellFormed {Label : Type}
     (TLInst : verified.merc_lts.lts.TransitionLabel Label)
     (sys : LabelledTransitionSystem Label)
     (hvalid : LabelledTransitionSystemValid sys) :

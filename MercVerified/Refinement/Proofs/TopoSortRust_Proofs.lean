@@ -1,8 +1,51 @@
-import MercVerified.Refinement.Proofs.RustTools_Proofs
-import MercVerified.Refinement.Proofs.MarkDirty_Proofs
-import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
-import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
-import MercLib.Sigref.Proofs.TopoSort_Proofs
+module
+
+public import MercVerified.Refinement.Proofs.RustTools_Proofs
+public import MercVerified.Refinement.Proofs.MarkDirty_Proofs
+public import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+public import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+public import MercLib.Sigref.Proofs.TopoSort_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.TopoSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.RustTools_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `sort_topological_hidden` is the abstract topological sort
@@ -22,10 +65,10 @@ open MercLib.Sigref.Topo
 abbrev RMark := verified.merc_reduction.sort_topological.Mark
 
 /-- The Rust mark `Temporary`. -/
-abbrev rTemp : RMark := verified.merc_reduction.sort_topological.Mark.Temporary
+private abbrev rTemp : RMark := verified.merc_reduction.sort_topological.Mark.Temporary
 
 /-- The Rust mark `Permanent`. -/
-abbrev rPerm : RMark := verified.merc_reduction.sort_topological.Mark.Permanent
+private abbrev rPerm : RMark := verified.merc_reduction.sort_topological.Mark.Permanent
 
 /-- The model mark of a Rust mark. -/
 def mOf : Option RMark → Option MercLib.Sigref.Topo.Mark
@@ -38,11 +81,11 @@ def mkOf {n : Nat} (ms : List (Option RMark)) : Fin n → Option MercLib.Sigref.
   fun i => mOf (ms.getD i.val none)
 
 /-- The targets of the hidden transitions that are not self-loops, in order. -/
-def hsucc {n : Nat} (hn0 : 0 < n) (s : Nat) (l : List Transition) : List (Fin n) :=
+private def hsucc {n : Nat} (hn0 : 0 < n) (s : Nat) (l : List Transition) : List (Fin n) :=
   l.filterMap fun t =>
     if t.to.index.val ≠ s ∧ t.label.index.val = 0 then some (toFin hn0 t.to) else none
 
-theorem hsucc_cons {n : Nat} (hn0 : 0 < n) (s : Nat) (t : Transition) (l : List Transition) :
+private theorem hsucc_cons {n : Nat} (hn0 : 0 < n) (s : Nat) (t : Transition) (l : List Transition) :
     hsucc hn0 s (t :: l) =
       if t.to.index.val ≠ s ∧ t.label.index.val = 0 then toFin hn0 t.to :: hsucc hn0 s l
       else hsucc hn0 s l := by
@@ -50,11 +93,11 @@ theorem hsucc_cons {n : Nat} (hn0 : 0 < n) (s : Nat) (t : Transition) (l : List 
   simp only [List.filterMap_cons]
   split_ifs <;> rfl
 
-theorem toFin_val {n : Nat} (hn0 : 0 < n) (t : ST) (h : t.index.val < n) :
+private theorem toFin_val {n : Nat} (hn0 : 0 < n) (t : ST) (h : t.index.val < n) :
     (toFin hn0 t).val = t.index.val := Nat.mod_eq_of_lt h
 
 open verified.merc_reduction.sort_topological in
-theorem psl_unfold {L Label : Type} (LTSInst : LTS L Label) (sys : L) (state : ST)
+private theorem psl_unfold {L Label : Type} (LTSInst : LTS L Label) (sys : L) (state : ST)
     (marks : Slice (Option RMark)) (iter : alloc.vec.into_iter.IntoIter Transition)
     (D : alloc.vec.Vec ST) (a : Bool) :
     push_unvisited_successors_loop LTSInst iter sys state marks D a =
@@ -73,7 +116,7 @@ theorem psl_unfold {L Label : Type} (LTSInst : LTS L Label) (sys : L) (state : S
   | done y => rfl
 
 open verified.merc_reduction.sort_topological in
-theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat} (hn0 : 0 < n)
+private theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat} (hn0 : 0 < n)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
     (state : ST) (marks : Slice (Option RMark)) (hm : marks.val.length = n) :
@@ -187,11 +230,11 @@ theorem push_succ_loop {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : N
       · rw [hb, hsucc_cons, ite_eq_right hsc]
 
 /-- The model graph of the LTS: the hidden non-self targets of a state. -/
-noncomputable def tsucc {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat} (hn0 : 0 < n)
+private noncomputable def tsucc {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat} (hn0 : 0 < n)
     (s : Fin n) : List (Fin n) :=
   hsucc hn0 s.val (outVec LTSInst sys (stOf s)).val
 
-theorem mkOf_set {n : Nat} (ms : List (Option RMark)) (hlen : ms.length = n) (x : Fin n)
+private theorem mkOf_set {n : Nat} (ms : List (Option RMark)) (hlen : ms.length = n) (x : Fin n)
     (v : Option RMark) :
     (mkOf (n := n) (ms.set x.val v)) = Function.update (mkOf (n := n) ms) x (mOf v) := by
   funext i
@@ -205,7 +248,7 @@ theorem mkOf_set {n : Nat} (ms : List (Option RMark)) (hlen : ms.length = n) (x 
 
 open verified.merc_reduction.sort_topological in
 /-- `push_unvisited_successors` is the model's `pushSuccs` along the hidden non-self transitions. -/
-theorem push_succ_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem push_succ_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
@@ -239,7 +282,7 @@ theorem push_succ_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   have hsx : (stOf x).index.val = x.val := stOf_index x hnmax
   exact ⟨D', b, hl, by rw [hv, hsx]; rfl, by rw [hb, hsx]; rfl⟩
 
-theorem pushSuccs_fst_acyc {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
+private theorem pushSuccs_fst_acyc {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
     ∀ (ts D : List (Fin n)) (a : Bool),
       (pushSuccs m ts D a).1 = (pushSuccs m ts D true).1 ∧
       (pushSuccs m ts D a).2 = (a && (pushSuccs m ts D true).2) := by
@@ -272,7 +315,7 @@ noncomputable def Eout (n : Nat) : Nat := ∑ u : Fin n, outLen LTSInst sys u
 noncomputable def potSum {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) : Nat :=
   ∑ u : Fin n, if m u = none then outLen LTSInst sys u else 0
 
-theorem potSum_le {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
+private theorem potSum_le {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
     potSum LTSInst sys m ≤ Eout LTSInst sys n := by
   unfold potSum Eout
   apply Finset.sum_le_sum
@@ -295,7 +338,7 @@ theorem potSum_update_none {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.M
   simp [hx]
   omega
 
-theorem potSum_update_ne {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) (x : Fin n)
+private theorem potSum_update_ne {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) (x : Fin n)
     (hx : m x ≠ none) (mk : MercLib.Sigref.Topo.Mark) :
     potSum LTSInst sys (Function.update m x (some mk)) = potSum LTSInst sys m := by
   unfold potSum
@@ -307,7 +350,7 @@ theorem potSum_update_ne {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mar
 
 end Visit
 
-theorem fin_list_eq {n : Nat} (hn0 : 0 < n) :
+private theorem fin_list_eq {n : Nat} (hn0 : 0 < n) :
     ∀ (D : List ST) (L : List (Fin n)), D.map (fun t => t.index.val) = L.map Fin.val →
       D.map (toFin hn0) = L := by
   intro D
@@ -330,7 +373,7 @@ section Visit2
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- The model configuration of the Rust state. -/
-noncomputable def toCfg {n : Nat} (hn0 : 0 < n) (D : alloc.vec.Vec ST)
+private noncomputable def toCfg {n : Nat} (hn0 : 0 < n) (D : alloc.vec.Vec ST)
     (marks : alloc.vec.Vec (Option RMark)) (stack : alloc.vec.Vec ST) (acyc : Bool) (idx : Nat) :
     Cfg n where
   marks := mkOf marks.val
@@ -351,7 +394,7 @@ structure RI {n : Nat} (D : alloc.vec.Vec ST) (marks : alloc.vec.Vec (Option RMa
 
 
 open verified.merc_reduction.sort_topological in
-theorem visit_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem visit_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (D : alloc.vec.Vec ST) (marks : alloc.vec.Vec (Option RMark)) (stack : alloc.vec.Vec ST)
     (acyclic : Bool) (hD : D.val = []) :
     sort_topological_visit_hidden_loop.body LTSInst sys D marks stack acyclic =
@@ -361,7 +404,7 @@ theorem visit_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   simp
 
 open verified.merc_reduction.sort_topological in
-theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
@@ -591,7 +634,7 @@ theorem visit_body_cont {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 
 open verified.merc_reduction.sort_topological in
-theorem visit_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem visit_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
@@ -645,7 +688,7 @@ theorem visit_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 
 open verified.merc_reduction.sort_topological in
-theorem visit_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem visit_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
@@ -679,7 +722,7 @@ theorem visit_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 
 open verified.merc_reduction.sort_topological in
-theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
@@ -834,7 +877,7 @@ theorem visit_all_loop_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 
 open verified.merc_reduction.sort_topological in
-theorem marks_init_spec (n0 : Std.Usize) (hnlt : n0.val < Usize.max) :
+private theorem marks_init_spec (n0 : Std.Usize) (hnlt : n0.val < Usize.max) :
     ∃ marks, sort_topological_hidden_loop { start := 0#usize, «end» := n0 }
         (alloc.vec.Vec.new (Option RMark)) = ok marks ∧
       marks.val = List.replicate n0.val none := by
@@ -874,7 +917,7 @@ theorem marks_init_spec (n0 : Std.Usize) (hnlt : n0.val < Usize.max) :
 
 
 open verified.merc_reduction.sort_topological in
-theorem order_to_permutation_spec (order : Slice ST) (n : Nat) (hlen : order.val.length = n)
+private theorem order_to_permutation_spec (order : Slice ST) (n : Nat) (hlen : order.val.length = n)
     (_hnlt : n < Usize.max) (hlt : ∀ t ∈ order.val, t.index.val < n)
     (hnd : (order.val.map (fun t => t.index.val)).Nodup) :
     ∃ perm : alloc.vec.Vec ST, order_to_permutation order = ok perm ∧ perm.val.length = n ∧
@@ -992,7 +1035,7 @@ theorem order_to_permutation_spec (order : Slice ST) (n : Nat) (hlen : order.val
 open verified.merc_reduction.sort_topological in
 /-- **`sort_topological_hidden` returns a reverse topological permutation** of the states along the
 hidden transitions, when these have no cycle (self-loops are ignored). -/
-theorem sort_topological_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem sort_topological_hidden_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,

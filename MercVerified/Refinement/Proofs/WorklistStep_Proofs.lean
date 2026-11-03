@@ -1,5 +1,32 @@
-import MercVerified.Refinement.Proofs.MarkDirty_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.MarkDirty_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # One iteration of `strong_run_worklist_loop` (non-branching)
@@ -27,12 +54,12 @@ set_option maxRecDepth 10000
 
 /-- The loop invariant of the termination proof: the worklist bookkeeping (`DirtyInv`), the key
     table's length, and every currently marked state's block is on the worklist. -/
-def LoopInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
+private def LoopInv (n : Nat) (ctx : WorklistContextStrong) : Prop :=
   DirtyInv n ctx.partition ctx.worklist ∧ ctx.state_to_key.val.length = n ∧
   ∀ t : ST, t.index.val < n → IsMarked ctx.partition t.index.val →
     ∃ x ∈ ctx.worklist.val, x.index.val = e2bAt ctx.partition t.index.val
 
-theorem strong_process_worklist_block_step {L Label : Type}
+private theorem strong_process_worklist_block_step {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU) (incoming : IncomingTransitions)

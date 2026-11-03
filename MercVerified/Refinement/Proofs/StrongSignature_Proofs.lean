@@ -1,7 +1,19 @@
-import MercVerified.Basic
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import MercVerified.Refinement.Proofs.SigKey_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Basic
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import MercVerified.Refinement.Proofs.SigKey_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Proofs for the `strong_bisim_signature` correctness contract
@@ -30,7 +42,7 @@ open MercLib.Signatures
 namespace MercVerified.Refinement.Proofs
 
 /-- Contract: the translated `strong_bisim_signature` computes `StrongSignature`. -/
-def StrongBisimSignatureSpec
+private def StrongBisimSignatureSpec
     {L Label P : Type}
     (LTSInst : LTS L Label)
     (PInst : Partition P)
@@ -252,7 +264,7 @@ private theorem sigEntry_mem_iff
     `strong_bisim_signature` computes exactly the mathematical
     `StrongSignature`, given that `outgoing_transitions s` and every
     `block_number` lookup it needs succeed. -/
-theorem strong_bisim_signature_spec_general
+private theorem strong_bisim_signature_spec_general
     {L Label P : Type}
     (LTSInst : LTS L Label)
     (PInst : Partition P)
@@ -312,7 +324,7 @@ theorem strong_bisim_signature_spec_general
 
 /-- `strong_bisim_signature` succeeds as soon as `outgoing_transitions s` does and the
     `block_number` lookups of the actual transition targets do (no assumption about other states). -/
-theorem strong_bisim_signature_total
+private theorem strong_bisim_signature_total
     {L Label P : Type}
     (LTSInst : LTS L Label)
     (PInst : Partition P)
@@ -359,7 +371,7 @@ theorem strong_bisim_signature_total
     `outgoing_transitions s` and the `block_number` lookups of the actual targets do, its members are
     exactly the `StrongSignature` of `s` under `blockNumber`, and it is strictly sorted. Hence the
     key is a canonical form of the signature set (`sigKey_unique`). -/
-theorem strong_bisim_signature_key
+private theorem strong_bisim_signature_key
     {L Label P : Type}
     (LTSInst : LTS L Label)
     (PInst : Partition P)
@@ -425,7 +437,7 @@ theorem strong_bisim_signature_key
 /-- `LabelledTransitionSystem`'s `LTS` instance is a specific `LTS`
     implementor, so its correctness result is a corollary of the generic
     `strong_bisim_signature_spec_general`. -/
-theorem strong_bisim_signature_spec
+private theorem strong_bisim_signature_spec
     {Label P : Type}
     (TLInst : TransitionLabel Label)
     (PInst : Partition P)

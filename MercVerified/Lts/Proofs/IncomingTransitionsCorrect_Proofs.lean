@@ -1,4 +1,15 @@
-import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+module
+
+public import MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `IncomingTransitions::new` is correct
@@ -22,7 +33,7 @@ set_option maxRecDepth 10000
 
 /-! ## Stage 9: the reader `incoming_transitions` -/
 
-theorem vec_index_sz (v : alloc.vec.Vec Sz) (i : Sz) (h : i.val < v.val.length) :
+private theorem vec_index_sz (v : alloc.vec.Vec Sz) (i : Sz) (h : i.val < v.val.length) :
     alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Sz) v i = ok (v.val[i.val]'h) := by
   have hidx' := Aeneas.Std.alloc.vec.Vec.index_usize_spec v i h
   obtain ⟨x, hx, hxv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hidx'⟩
@@ -32,7 +43,7 @@ theorem vec_index_sz (v : alloc.vec.Vec Sz) (i : Sz) (h : i.val < v.val.length) 
   simpa [alloc.vec.Vec.index_slice_index] using hidx_u
 
 /-- `incoming_transitions` reads the flat arrays over the state's CSR range. -/
-theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz StateTag)
+private theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz StateTag)
     (hs : s.index.val + 1 < self.state2incoming.val.length)
     (hle : (self.state2incoming.val.getD s.index.val 0#usize).val
       ≤ (self.state2incoming.val.getD (s.index.val + 1) 0#usize).val)
@@ -124,7 +135,7 @@ theorem incoming_transitions_spec (self : IncomingTransitions) (s : TagIndex Sz 
 
 /-! ## Counting facts -/
 
-theorem sum_map_le_sum_map {α : Type} (l : List α) (f g : α → Nat) (h : ∀ x ∈ l, f x ≤ g x) :
+private theorem sum_map_le_sum_map {α : Type} (l : List α) (f g : α → Nat) (h : ∀ x ∈ l, f x ≤ g x) :
     (l.map f).sum ≤ (l.map g).sum := by
   induction l with
   | nil => simp
@@ -134,7 +145,7 @@ theorem sum_map_le_sum_map {α : Type} (l : List α) (f g : α → Nat) (h : ∀
     have := ih (fun x hx => h x (List.mem_cons_of_mem _ hx))
     omega
 
-theorem sum_tick_range_le (t : Transition) (k : Nat) :
+private theorem sum_tick_range_le (t : Transition) (k : Nat) :
     ((List.range k).map (fun j => tick t j)).sum ≤ 1 := by
   induction k with
   | zero => simp
@@ -153,7 +164,7 @@ theorem sum_tick_range_le (t : Transition) (k : Nat) :
     · have h1 : tick t k = 0 := by simp [tick, h]
       omega
 
-theorem sum_toCount_range_le (ts : List Transition) (k : Nat) :
+private theorem sum_toCount_range_le (ts : List Transition) (k : Nat) :
     ((List.range k).map (fun j => toCount ts j)).sum ≤ ts.length := by
   induction ts with
   | nil => simp [toCount_nil]
@@ -166,7 +177,7 @@ theorem sum_toCount_range_le (ts : List Transition) (k : Nat) :
 
 /-- Summing the per-state counts over the slots `< k` never exceeds the total number of
     transitions of the states. -/
-theorem sum_seen_range_le {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem sum_seen_range_le {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (l : List (TagIndex Sz StateTag)) (k : Nat) :
     ((List.range k).map (fun j =>
         (l.map (fun s => toCount (outVec LTSInst sys s).val j)).sum)).sum
@@ -179,7 +190,7 @@ theorem sum_seen_range_le {L Label : Type} (LTSInst : LTS L Label) (sys : L)
         ≤ (outVec LTSInst sys s).val.length := sum_toCount_range_le _ k
     omega
 
-theorem natSum_eq_range_sum (c : List Sz) (k : Nat) (hk : k ≤ c.length) :
+private theorem natSum_eq_range_sum (c : List Sz) (k : Nat) (hk : k ≤ c.length) :
     natSum c k = ((List.range k).map (fun j => (c.getD j 0#usize).val)).sum := by
   induction k with
   | zero => simp [natSum]
@@ -189,7 +200,7 @@ theorem natSum_eq_range_sum (c : List Sz) (k : Nat) (hk : k ≤ c.length) :
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero]
     rw [List.getD_eq_getElem c 0#usize (show k < c.length by omega)]
 
-theorem natSum_mono (c : List Sz) {a b : Nat} (hab : a ≤ b) (hb : b ≤ c.length) :
+private theorem natSum_mono (c : List Sz) {a b : Nat} (hab : a ≤ b) (hb : b ≤ c.length) :
     natSum c a ≤ natSum c b := by
   induction b, hab using Nat.le_induction with
   | base => exact Nat.le_refl _
@@ -198,7 +209,7 @@ theorem natSum_mono (c : List Sz) {a b : Nat} (hab : a ≤ b) (hb : b ≤ c.leng
     have := ih (by omega)
     omega
 
-theorem seenCount_full {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem seenCount_full {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (sv : List (TagIndex Sz StateTag)) (j : Nat) :
     seenCount LTSInst sys sv sv.length j
       = (sv.map (fun s => toCount (outVec LTSInst sys s).val j)).sum := by
@@ -207,7 +218,7 @@ theorem seenCount_full {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-! ## Assembly of `IncomingTransitions::new` -/
 
-theorem states_length (sv : List (TagIndex Sz StateTag)) (N : Nat)
+private theorem states_length (sv : List (TagIndex Sz StateTag)) (N : Nat)
     (hN : N < 2 ^ UScalarTy.Usize.numBits) (hnd : sv.Nodup)
     (hmem : ∀ s, s ∈ sv ↔ s.index.val < N) : sv.length = N := by
   have h1 : (sv.map (fun s => s.index.val)).Nodup := by
@@ -227,7 +238,7 @@ theorem states_length (sv : List (TagIndex Sz StateTag)) (N : Nat)
   have := hp.length_eq
   simpa using this
 
-theorem copy_prefix_ok (source : alloc.vec.Vec Sz) (n : Sz) (hn : n.val < Usize.max)
+private theorem copy_prefix_ok (source : alloc.vec.Vec Sz) (n : Sz) (hn : n.val < Usize.max)
     (hsrc : n.val ≤ source.val.length) :
     ∃ r : alloc.vec.Vec Sz,
       verified.merc_lts.incoming_transitions.copy_prefix source n = ok r ∧
@@ -239,7 +250,7 @@ theorem copy_prefix_ok (source : alloc.vec.Vec Sz) (n : Sz) (hn : n.val < Usize.
   exact ⟨r, hr, hp⟩
 
 /-- `IncomingTransitions::new` succeeds on a well-formed LTS, and the structure it leaves behind. -/
-theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : WellFormed LTSInst sys) (hfit : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
       n.val * (n.val + 2) ≤ Std.Usize.max)
     (n : Std.Usize) (hns : LTSInst.num_of_states sys = ok n) :
@@ -392,7 +403,7 @@ theorem incoming_new_structure {L Label : Type} (LTSInst : LTS L Label) (sys : L
 
 
 /-- `IncomingTransitions::new` builds a correct index of the incoming transitions. -/
-theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : WellFormed LTSInst sys) (hfit : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
       n.val * (n.val + 2) ≤ Std.Usize.max) (incoming : IncomingTransitions)
     (hinc : IncomingTransitions.new LTSInst sys = ok incoming) :
@@ -457,7 +468,7 @@ theorem incoming_transitions_correct {L Label : Type} (LTSInst : LTS L Label) (s
   rw [this]; exact hs'
 
 /-- `IncomingTransitions::new` never fails on a well-formed LTS. -/
-theorem incoming_new_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem incoming_new_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : WellFormed LTSInst sys) (hfit : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
       n.val * (n.val + 2) ≤ Std.Usize.max) :
     ∃ incoming, IncomingTransitions.new LTSInst sys = ok incoming := by

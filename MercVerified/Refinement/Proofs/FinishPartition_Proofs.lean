@@ -1,9 +1,23 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `BlockPartition::finish_partition_marked` and its helpers
@@ -32,7 +46,7 @@ set_option maxRecDepth 10000
 
 /-- The inner (max-search) loop of `new_block_to_swap` succeeds and returns one of the candidate
     block indices. -/
-theorem nbts_inner_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem nbts_inner_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (nbi : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (hall : ∀ x ∈ nbi.val, x.index.val < p.blocks.val.length)
     (hne : 1 ≤ nbi.val.length) (mx : TagIndex Std.Usize BlockTag) (ml : Std.Usize)
@@ -101,7 +115,7 @@ theorem nbts_inner_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
   · simp [alloc.vec.Vec.len]; omega
 
 /-- The tagged index of a `usize` in range, in `uTag` form. -/
-theorem tag_new_eq_uTag {Tag : Type} (i : Std.Usize) :
+private theorem tag_new_eq_uTag {Tag : Type} (i : Std.Usize) :
     (({ index := i, marker := () } : TagIndex Std.Usize Tag)) = uTag i.val := by
   unfold uTag
   congr 1
@@ -109,7 +123,7 @@ theorem tag_new_eq_uTag {Tag : Type} (i : Std.Usize) :
   rw [uTotal_val_of_lt (sz_val_lt_two_pow i)]
 
 /-- Reading `blocks[c]` through a partition literal. -/
-theorem block_lit_ok (p : BlockPartition) (c : TagIndex Std.Usize BlockTag)
+private theorem block_lit_ok (p : BlockPartition) (c : TagIndex Std.Usize BlockTag)
     (hc : c.index.val < p.blocks.val.length) :
     verified.merc_reduction.block_partition.BlockPartition.block
       { elements := p.elements, blocks := p.blocks, element_to_block := p.element_to_block,
@@ -121,7 +135,7 @@ theorem block_lit_ok (p : BlockPartition) (c : TagIndex Std.Usize BlockTag)
 
 /-- The outer loop of `new_block_to_swap`: pushes the new block indices `[es, ee)` after the
     ones in `nbi0` and then picks the largest block. -/
-theorem nbts_outer_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem nbts_outer_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (es ee : Std.Usize) (nbi0 : alloc.vec.Vec (TagIndex Std.Usize BlockTag))
     (hle : es.val ≤ ee.val) (hee : ee.val ≤ p.blocks.val.length)
     (hne : nbi0.val ≠ []) (hall : ∀ x ∈ nbi0.val, x.index.val < p.blocks.val.length)
@@ -213,7 +227,7 @@ theorem nbts_outer_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
 
 /-- Contract of `BlockPartition::new_block_to_swap`: it collects `block_index` followed by the
     freshly created block indices `[end_of_blocks, blocks.len)` and returns one of them. -/
-theorem new_block_to_swap_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem new_block_to_swap_spec {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (b : TagIndex Std.Usize BlockTag) (hb : b.index.val < p.blocks.val.length)
     (eb : Std.Usize) (heb1 : 1 ≤ eb.val) (hebN : eb.val ≤ p.blocks.val.length) :
     ∃ mx nbi, verified.merc_reduction.block_partition.BlockPartition.new_block_to_swap p b eb

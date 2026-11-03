@@ -1,6 +1,45 @@
-import MercVerified.Refinement.Proofs.BranchingDirty_Proofs
-import MercVerified.Refinement.Proofs.BranchingProcess_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+public import MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `BlockPartition::mark_backward_closure`
@@ -38,21 +77,21 @@ structure Mono (n : Nat) (q0 q : BlockPartition) (b : Nat) : Prop where
   ms_le : (blkAt q b).marked_split.val ≤ (blkAt q0 b).marked_split.val
   pos : ∀ i, (blkAt q0 b).marked_split.val ≤ i → eAt q i = eAt q0 i
 
-theorem Mono.refl {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : Nat) : Mono n p p b :=
+private theorem Mono.refl {n : Nat} {p : BlockPartition} (hp : PartInv n p) (b : Nat) : Mono n p p b :=
   ⟨hp, rfl, rfl, fun _ _ => rfl, rfl, rfl, le_rfl, fun _ _ => rfl⟩
 
-theorem Mono.trans {n : Nat} {q0 q1 q2 : BlockPartition} {b : Nat} (h1 : Mono n q0 q1 b)
+private theorem Mono.trans {n : Nat} {q0 q1 q2 : BlockPartition} {b : Nat} (h1 : Mono n q0 q1 b)
     (h2 : Mono n q1 q2 b) : Mono n q0 q2 b :=
   ⟨h2.inv, h2.e2b.trans h1.e2b, h2.nblocks.trans h1.nblocks,
     fun j hj => (h2.other j hj).trans (h1.other j hj),
     h2.begin_eq.trans h1.begin_eq, h2.end_eq.trans h1.end_eq, le_trans h2.ms_le h1.ms_le,
     fun i hi => (h2.pos i (le_trans h1.ms_le hi)).trans (h1.pos i hi)⟩
 
-theorem Mono.e2bAt_eq {n : Nat} {q0 q : BlockPartition} {b : Nat} (h : Mono n q0 q b) (s : Nat) :
+private theorem Mono.e2bAt_eq {n : Nat} {q0 q : BlockPartition} {b : Nat} (h : Mono n q0 q b) (s : Nat) :
     e2bAt q s = e2bAt q0 s := by simp [e2bAt, h.e2b]
 
 /-- Marking one state of block `b` extends `Mono` and marks exactly that state. -/
-theorem mono_mark {n : Nat} {q0 q : BlockPartition} {b : Nat} (_hb : b < q0.blocks.val.length)
+private theorem mono_mark {n : Nat} {q0 q : BlockPartition} {b : Nat} (_hb : b < q0.blocks.val.length)
     (h : Mono n q0 q b) (s : ST) (hs : s.index.val < n) (hsb : e2bAt q0 s.index.val = b) :
     ∃ q', verified.merc_reduction.block_partition.BlockPartition.mark_element q s = ok q' ∧
       Mono n q0 q' b ∧ (∀ t, t < n → (IsMarked q' t ↔ IsMarked q t ∨ t = s.index.val)) := by
@@ -71,7 +110,7 @@ theorem mono_mark {n : Nat} {q0 q : BlockPartition} {b : Nat} (_hb : b < q0.bloc
 
 open verified.merc_reduction.block_partition in
 /-- The marking loop of `mark_backward_closure`: marks every listed state of block `b`. -/
-theorem bc_mark_loop {n : Nat} {q0 q : BlockPartition} (bT : BT) (hb : bT.index.val < q0.blocks.val.length)
+private theorem bc_mark_loop {n : Nat} {q0 q : BlockPartition} (bT : BT) (hb : bT.index.val < q0.blocks.val.length)
     (hq : Mono n q0 q bT.index.val)
     (iter : alloc.vec.into_iter.IntoIter FromTransition) (l : List FromTransition)
     (hl : iter.val = l) (hf : ∀ i ∈ l, i.«from».index.val < n) :
@@ -161,21 +200,21 @@ theorem bc_mark_loop {n : Nat} {q0 q : BlockPartition} (bT : BT) (hb : bT.index.
   exact ⟨y, hy, hmono, hmk⟩
 
 open verified.merc_reduction.block_partition in
-theorem chk_body_eq2 : @BlockPartition.mark_backward_closure_loop0_loop2_loop0.body =
+private theorem chk_body_eq2 : @BlockPartition.mark_backward_closure_loop0_loop2_loop0.body =
     @BlockPartition.mark_backward_closure_loop0_loop0_loop0.body := rfl
 
 open verified.merc_reduction.block_partition in
-theorem chk_body_eq3 : @BlockPartition.mark_backward_closure_loop0_loop3_loop0.body =
+private theorem chk_body_eq3 : @BlockPartition.mark_backward_closure_loop0_loop3_loop0.body =
     @BlockPartition.mark_backward_closure_loop0_loop0_loop0.body := rfl
 
-theorem partition_eta (q : BlockPartition) :
+private theorem partition_eta (q : BlockPartition) :
     ({ elements := q.elements, blocks := q.blocks, element_to_block := q.element_to_block,
        element_offset := q.element_offset } : BlockPartition) = q := rfl
 
 open verified.merc_reduction.block_partition in
 /-- The debug-assertion loop of `mark_backward_closure` succeeds when every in-block source is
 marked. -/
-theorem bc_chk_loop {n : Nat} {q : BlockPartition} (hq : PartInv n q) (bT : BT)
+private theorem bc_chk_loop {n : Nat} {q : BlockPartition} (hq : PartInv n q) (bT : BT)
     (iter : alloc.vec.into_iter.IntoIter FromTransition) (l : List FromTransition)
     (hl : iter.val = l)
     (hok : ∀ i ∈ l, i.«from».index.val < n ∧
@@ -233,7 +272,7 @@ theorem bc_chk_loop {n : Nat} {q : BlockPartition} (hq : PartInv n q) (bT : BT)
 
 /-- `incoming_silent_transitions` returns exactly the silent incoming transitions of every in-range
 state (this needs `IncomingTransitions::new` to sort the silent transitions first). -/
-def IncSilent {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
+private def IncSilent {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
     (incoming : IncomingTransitions) : Prop :=
   ∀ x : ST, x.index.val < n → ∃ sil : alloc.vec.Vec FromTransition,
     IncomingTransitions.incoming_silent_transitions incoming x = ok sil ∧
@@ -241,18 +280,18 @@ def IncSilent {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
       (i.label.index.val = 0 ∧ i.«from».index.val < n ∧ MercVerified.Lts.tr LTSInst sys i.«from» i.label x)
 
 /-- The silent predecessors `y` of `x`. -/
-def SilPred {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (y x : ST) : Prop :=
+private def SilPred {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (y x : ST) : Prop :=
   y.index.val < n ∧ ∃ μ : TagIndex Std.Usize LabelTag, μ.index.val = 0 ∧
     MercVerified.Lts.tr LTSInst sys y μ x
 
 /-- Every in-block silent predecessor of `x` is marked. -/
-def PredsMarked {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (q : BlockPartition)
+private def PredsMarked {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (q : BlockPartition)
     (b : Nat) (x : ST) : Prop :=
   ∀ y, SilPred LTSInst sys n y x → e2bAt q y.index.val = b → IsMarked q y.index.val
 
 open verified.merc_reduction.block_partition in
 /-- The assertion pass of `mark_backward_closure` for one element. -/
-theorem bc_chk_elem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem bc_chk_elem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {incoming : IncomingTransitions} (hs : IncSilent LTSInst sys n incoming)
     {q : BlockPartition} (hq : PartInv n q) (bT : BT) (x : ST) (hx : x.index.val < n)
     (hP : PredsMarked LTSInst sys n q bT.index.val x) :
@@ -267,12 +306,12 @@ theorem bc_chk_elem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
   exact ⟨hf, fun hb => hP i.«from» ⟨hf, i.label, h0, htr⟩ hb⟩
 
 open verified.merc_reduction.block_partition in
-theorem chk2_body_eq : @BlockPartition.mark_backward_closure_loop0_loop3.body =
+private theorem chk2_body_eq : @BlockPartition.mark_backward_closure_loop0_loop3.body =
     @BlockPartition.mark_backward_closure_loop0_loop2.body := rfl
 
 open verified.merc_reduction.block_partition in
 /-- The assertion pass over a range of positions (variant returning the partition). -/
-theorem bc_chk_range_a {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem bc_chk_range_a {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {incoming : IncomingTransitions} (hs : IncSilent LTSInst sys n incoming)
     {q : BlockPartition} (hq : PartInv n q) (bT : BT) (iter : core.ops.range.Range Std.Usize)
     (hrange : ∀ pos, iter.start.val ≤ pos → pos < iter.«end».val →
@@ -324,7 +363,7 @@ theorem bc_chk_range_a {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : N
 
 open verified.merc_reduction.block_partition in
 /-- The assertion pass over a range of positions (variant returning `()`). -/
-theorem bc_chk_range_b {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem bc_chk_range_b {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {incoming : IncomingTransitions} (hs : IncSilent LTSInst sys n incoming)
     {q : BlockPartition} (hq : PartInv n q) (bT : BT) (iter : core.ops.range.Range Std.Usize)
     (hrange : ∀ pos, iter.start.val ≤ pos → pos < iter.«end».val →
@@ -384,39 +423,39 @@ section Outer
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (p : BlockPartition) (b : Nat)
 
 /-- A silent step inside block `b` of `p`. -/
-def BStep (u v : ST) : Prop :=
+private def BStep (u v : ST) : Prop :=
   SilPred LTSInst sys n u v ∧ v.index.val < n ∧ e2bAt p u.index.val = b ∧ e2bAt p v.index.val = b
 
 /-- States of block `b` that reach `d` by silent steps inside the block. -/
-abbrev BReach : ST → ST → Prop := Relation.ReflTransGen (BStep LTSInst sys n p b)
+private abbrev BReach : ST → ST → Prop := Relation.ReflTransGen (BStep LTSInst sys n p b)
 
 /-- Soundness of the marks of `q`: every marked state of block `b` reaches a state that was marked
 in `p`. -/
-def CSound (q : BlockPartition) : Prop :=
+private def CSound (q : BlockPartition) : Prop :=
   ∀ t : ST, t.index.val < n → e2bAt p t.index.val = b → IsMarked q t.index.val →
     ∃ d : ST, d.index.val < n ∧ e2bAt p d.index.val = b ∧ IsMarked p d.index.val ∧
       BReach LTSInst sys n p b t d
 
 /-- The marks of `q` only extend those of `p`, and only inside block `b`. -/
-def CMarks (q : BlockPartition) : Prop :=
+private def CMarks (q : BlockPartition) : Prop :=
   (∀ t : ST, t.index.val < n → IsMarked p t.index.val → IsMarked q t.index.val) ∧
   (∀ t : ST, t.index.val < n → e2bAt p t.index.val ≠ b → (IsMarked q t.index.val ↔ IsMarked p t.index.val))
 
 /-- The marked states of block `b` are closed under silent predecessors in the block. -/
-def CClosed (q : BlockPartition) : Prop :=
+private def CClosed (q : BlockPartition) : Prop :=
   ∀ x : ST, x.index.val < n → e2bAt p x.index.val = b → IsMarked q x.index.val →
     PredsMarked LTSInst sys n q b x
 
 /-- The positions `[E - m, E)` hold marked elements whose silent predecessors in the block are
 all marked. -/
-def CScan (q : BlockPartition) (E m : Nat) : Prop :=
+private def CScan (q : BlockPartition) (E m : Nat) : Prop :=
   ∀ pos, E - m ≤ pos → pos < E →
     (blkAt q b).marked_split.val ≤ pos ∧ PredsMarked LTSInst sys n q b (eAt q pos)
 
 end Outer
 
 /-- The element at a position of block `b` belongs to block `b` and sits at that position. -/
-theorem pos_in_block {n : Nat} {q : BlockPartition} (hq : PartInv n q) {b : Nat}
+private theorem pos_in_block {n : Nat} {q : BlockPartition} (hq : PartInv n q) {b : Nat}
     (hb : b < q.blocks.val.length) {pos : Nat}
     (h1 : (blkAt q b).begin.val ≤ pos) (h2 : pos < (blkAt q b).«end».val) :
     (eAt q pos).index.val < n ∧ e2bAt q (eAt q pos).index.val = b ∧
@@ -429,21 +468,21 @@ theorem pos_in_block {n : Nat} {q : BlockPartition} (hq : PartInv n q) {b : Nat}
   exact ⟨hx1, hq.pos_block_unique o1 hb ⟨o2, o3⟩ ⟨h1, h2⟩, hx2⟩
 
 /-- A state of block `b` lies in the position window of the block. -/
-theorem state_pos {n : Nat} {q : BlockPartition} (hq : PartInv n q) {b : Nat} {x : ST}
+private theorem state_pos {n : Nat} {q : BlockPartition} (hq : PartInv n q) {b : Nat} {x : ST}
     (hx : x.index.val < n) (hxb : e2bAt q x.index.val = b) :
     (blkAt q b).begin.val ≤ offAt q x.index.val ∧ offAt q x.index.val < (blkAt q b).«end».val := by
   obtain ⟨h1, h2, h3⟩ := hq.own x.index.val hx
   rw [hxb] at h2 h3
   exact ⟨h2, h3⟩
 
-theorem isMarked_iff_ms {q : BlockPartition} {b : Nat} {x : ST} (hxb : e2bAt q x.index.val = b) :
+private theorem isMarked_iff_ms {q : BlockPartition} {b : Nat} {x : ST} (hxb : e2bAt q x.index.val = b) :
     IsMarked q x.index.val ↔ (blkAt q b).marked_split.val ≤ offAt q x.index.val := by
   unfold IsMarked; rw [hxb]
 
 open verified.merc_reduction.block_partition in
 /-- One scan step of the closure: the silent predecessors of the element at position `it` that lie
 in block `b` get marked, and the invariants of the scan are maintained. -/
-theorem bc_scan_step {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem bc_scan_step {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {incoming : IncomingTransitions} (hs : IncSilent LTSInst sys n incoming)
     {p : BlockPartition} (_hp : PartInv n p) (bT : BT) (hb : bT.index.val < p.blocks.val.length)
     {q : BlockPartition} (hmono : Mono n p q bT.index.val)
@@ -508,11 +547,11 @@ theorem bc_scan_step {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat
       have hyq : e2bAt q y.index.val = b := by rw [he2bq, ← he2b]; exact hyb
       exact (hmk' y.index.val hy.1).2 (Or.inl (hpm y hy hyq))
 
-theorem eAt_off {n : Nat} {q : BlockPartition} (hq : PartInv n q) {x : ST} (hx : x.index.val < n) :
+private theorem eAt_off {n : Nat} {q : BlockPartition} (hq : PartInv n q) {x : ST} (hx : x.index.val < n) :
     eAt q (offAt q x.index.val) = x :=
   merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq (hq.inv _ hx))
 
-theorem cclosed_of_all {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem cclosed_of_all {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {p q : BlockPartition} (hq : PartInv n q) {b : Nat} (_hb : b < q.blocks.val.length)
     (_hpq : ∀ s, e2bAt q s = e2bAt p s)
     (hall : (blkAt q b).marked_split.val = (blkAt q b).begin.val) :
@@ -523,7 +562,7 @@ theorem cclosed_of_all {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : N
   rw [isMarked_iff_ms hxq]
   omega
 
-theorem cclosed_of_scan {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem cclosed_of_scan {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {p q : BlockPartition} (hq : PartInv n q) {b E m : Nat}
     (hpq : ∀ s, e2bAt q s = e2bAt p s) (hE : E = (blkAt q b).«end».val)
     (hscan : CScan LTSInst sys n b q E m) (hm : m < E)
@@ -541,7 +580,7 @@ theorem cclosed_of_scan {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : 
 open verified.merc_reduction.block_partition in
 /-- **`mark_backward_closure`**: the marked states of block `b` afterwards are exactly those that
 reach a previously marked state of the block along silent steps inside the block. -/
-theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {incoming : IncomingTransitions} (hs : IncSilent LTSInst sys n incoming)
     {p : BlockPartition} (hp : PartInv n p) (bT : BT) (hb : bT.index.val < p.blocks.val.length) :
     ∃ q, BlockPartition.mark_backward_closure p bT incoming = ok q ∧
@@ -720,16 +759,16 @@ theorem bc_outer {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
   rename_i y
   exact ⟨y, hy, hpost⟩
 
-theorem tr_tau_iff {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (_hn : n ≤ Usize.max)
+private theorem tr_tau_iff {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) (_hn : n ≤ Usize.max)
     (u v : Fin n) :
     (aLTS LTSInst sys n).Tr u Cslib.HasTau.τ v ↔
       MercVerified.Lts.tr LTSInst sys (stOf u) MercVerified.Lts.tauLabelIndex (stOf v) := Iff.rfl
 
-theorem stOf_lt {n : Nat} (x : Fin n) (hn : n ≤ Usize.max) : (stOf x).index.val < n := by
+private theorem stOf_lt {n : Nat} (x : Fin n) (hn : n ≤ Usize.max) : (stOf x).index.val < n := by
   rw [stOf_index _ hn]; exact x.2
 
 /-- Reachability inside block `b` is the abstract inert reachability. -/
-theorem breach_iff_inert {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat}
+private theorem breach_iff_inert {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n : Nat}
     (hn : n ≤ Usize.max) (p : BlockPartition) (b : Nat) (x d : Fin n)
     (hxb : e2bAt p x.val = b) :
     BReach LTSInst sys n p b (stOf x) (stOf d) ↔
@@ -781,7 +820,7 @@ theorem breach_iff_inert {L Label : Type} (LTSInst : LTS L Label) (sys : L) {n :
       · rw [hstv]; exact hxb'
       · rw [hstv]; exact hyb
 
-theorem breach_marked {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem breach_marked {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     {p q : BlockPartition} {b : Nat} (hpq : ∀ s, e2bAt q s = e2bAt p s)
     (hcl : CClosed LTSInst sys n p b q) {u w : ST}
     (h : BReach LTSInst sys n p b u w) (hw : IsMarked q w.index.val) (_hwn : w.index.val < n)
@@ -795,7 +834,7 @@ theorem breach_marked {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Na
 
 open verified.merc_reduction.block_partition in
 /-- **`mark_backward_closure`** (abstract statement). -/
-theorem mark_backward_closure_spec {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem mark_backward_closure_spec {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     (hn : n ≤ Usize.max) {incoming : IncomingTransitions} (hs : IncSilent LTSInst sys n incoming)
     {p : BlockPartition} (hp : PartInv n p) (bT : BT) (hb : bT.index.val < p.blocks.val.length) :
     ∃ q, BlockPartition.mark_backward_closure p bT incoming = ok q ∧

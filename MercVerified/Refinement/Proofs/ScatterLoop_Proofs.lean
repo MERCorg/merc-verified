@@ -1,11 +1,27 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-import MercLib.Sigref.Proofs.CountingSort_Proofs
-import MercVerified.Refinement.Proofs.FinishPartition_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+public import MercLib.Sigref.Proofs.CountingSort_Proofs
+public import MercVerified.Refinement.Proofs.FinishPartition_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # The scatter loop of `finish_partition_marked`
@@ -36,7 +52,7 @@ set_option maxRecDepth 10000
 
 /-- One overwrite `F[g m] := v m` extends a pointwise "written so far" description
     (`g` injective on the written prefix). -/
-theorem write_step {α : Type} (F F0 : List α) (d : α) (g : Nat → Nat) (v : Nat → α) (m : Nat)
+private theorem write_step {α : Type} (F F0 : List α) (d : α) (g : Nat → Nat) (v : Nat → α) (m : Nat)
     (hlen : g m < F.length) (hinj : ∀ t, t < m → g t ≠ g m)
     (h1 : ∀ t, t < m → F.getD (g t) d = v t)
     (h2 : ∀ i, (∀ t, t < m → g t ≠ i) → F.getD i d = F0.getD i d) :
@@ -59,12 +75,12 @@ theorem write_step {α : Type} (F F0 : List α) (d : α) (g : Nat → Nat) (v : 
 
 /-- The label `finish_partition_marked` gives to class `j`: the original block for class `0` when
     there is no unmarked part, and `new_block_index + j` otherwise. -/
-def scatterLabel (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (_nbi j : Std.Usize)
+private def scatterLabel (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (_nbi j : Std.Usize)
     (z : Std.Usize) : TagIndex Std.Usize BlockTag :=
   if j.val = 0 ∧ u = false then block_index else ({ index := z, marker := () } : TagIndex Std.Usize BlockTag)
 
 /-- `Block::has_unmarked` is the comparison `begin < marked_split`. -/
-theorem block_has_unmarked_contract (b : Block)
+private theorem block_has_unmarked_contract (b : Block)
     (hb : merc_reduction.block_partition.Block.WellFormed b) :
     verified.merc_reduction.block_partition.Block.has_unmarked b
       = ok (decide (b.begin.val < b.marked_split.val)) := by
@@ -73,7 +89,7 @@ theorem block_has_unmarked_contract (b : Block)
   rw [hu]; simp
 
 /-- One iteration of the scatter loop on a live element. -/
-theorem scatter_body_step
+private theorem scatter_body_step
     (block_index : TagIndex Std.Usize BlockTag)
     (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (block : Block)
     (hblock : merc_reduction.block_partition.Block.WellFormed block)
@@ -212,7 +228,7 @@ def labelNat (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.U
     TagIndex Std.Usize BlockTag :=
   if j = 0 ∧ u = false then block_index else uTag (nbi.val + j)
 
-theorem scatterLabel_eq (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi j z : Std.Usize)
+private theorem scatterLabel_eq (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi j z : Std.Usize)
     (hz : z.val = nbi.val + j.val) :
     scatterLabel block_index u nbi j z = labelNat block_index u nbi j.val := by
   unfold scatterLabel labelNat
@@ -220,12 +236,12 @@ theorem scatterLabel_eq (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (
   · simp [h]
   · rw [ite_eq_right h, ite_eq_right h, tag_new_eq_uTag, hz]
 
-theorem count_take_succ_ne (l : List Nat) (m j : Nat) (hm : m < l.length) (h : l[m] ≠ j) :
+private theorem count_take_succ_ne (l : List Nat) (m j : Nat) (hm : m < l.length) (h : l[m] ≠ j) :
     (l.take (m + 1)).count j = (l.take m).count j := by
   rw [List.take_succ_eq_append_getElem hm, List.count_append]
   simp [h]
 
-theorem posOf_eq_cursor (ms : Nat) (szs cls : List Nat) (m : Nat) (hm : m < cls.length) :
+private theorem posOf_eq_cursor (ms : Nat) (szs cls : List Nat) (m : Nat) (hm : m < cls.length) :
     posOf ms szs cls m = cumS ms szs cls[m] + (cls.take m).count cls[m] := by
   unfold posOf rankOf
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hm]
@@ -252,7 +268,7 @@ structure ScInv (ms : Nat) (szs cls : List Nat) (K : Nat)
   hB2 : ∀ s, (∀ t, t < m → (old.getD t zST).index.val ≠ s) → B.getD s zBT = B0.getD s zBT
   hbo : ∀ j, j < K → (bo.getD j 0#usize).val = cumS ms szs j + (cls.take m).count j
 
-theorem old_idx_inj (old : List (TagIndex Std.Usize StateTag)) (hnd : old.Nodup) {t m : Nat}
+private theorem old_idx_inj (old : List (TagIndex Std.Usize StateTag)) (hnd : old.Nodup) {t m : Nat}
     (ht : t < old.length) (hm : m < old.length) (hne : t ≠ m)
     (h : (old.getD t zST).index.val = (old.getD m zST).index.val) : False := by
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem ht,
@@ -262,7 +278,7 @@ theorem old_idx_inj (old : List (TagIndex Std.Usize StateTag)) (hnd : old.Nodup)
   have : old[t] = old[m] := merc_utilities.tagged_index.TagIndex.ext hidx
   exact hne ((List.Nodup.getElem_inj_iff hnd).mp this)
 
-theorem ScInv.step {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = K)
+private theorem ScInv.step {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     {old : List (TagIndex Std.Usize StateTag)}
     {block_index : TagIndex Std.Usize BlockTag} {u : Bool} {nbi : Std.Usize} {n m : Nat}
@@ -377,18 +393,18 @@ theorem ScInv.step {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = 
       rw [this, count_take_succ_ne cls m j hm hjc]
 
 /-- The state of the scatter loop. -/
-abbrev ScState := core.iter.adapters.enumerate.Enumerate (core.slice.iter.Iter (TagIndex Std.Usize BlockTag)) ×
+private abbrev ScState := core.iter.adapters.enumerate.Enumerate (core.slice.iter.Iter (TagIndex Std.Usize BlockTag)) ×
   alloc.vec.Vec (TagIndex Std.Usize StateTag) × alloc.vec.Vec (TagIndex Std.Usize BlockTag) ×
   alloc.vec.Vec Std.Usize × alloc.vec.Vec Std.Usize
 
 /-- The result of the scatter loop. -/
-abbrev ScResult := alloc.vec.Vec (TagIndex Std.Usize StateTag) × alloc.vec.Vec (TagIndex Std.Usize BlockTag) ×
+private abbrev ScResult := alloc.vec.Vec (TagIndex Std.Usize StateTag) × alloc.vec.Vec (TagIndex Std.Usize BlockTag) ×
   alloc.vec.Vec Std.Usize × alloc.vec.Vec Std.Usize
 
 /-- The scatter loop, pointwise: after processing every marked element, `elements`, `element_offset`
     and `element_to_block` are as described by `ScInv` for the full prefix, and the class cursors
     have moved to the end of their classes. -/
-theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = K)
+private theorem scatter_loop_spec {ms : Nat} {szs cls : List Nat} {K : Nat} (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     (block_index : TagIndex Std.Usize BlockTag)
     (old : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (block : Block)

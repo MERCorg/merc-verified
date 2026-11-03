@@ -1,8 +1,81 @@
-import MercVerified.Refinement.Proofs.QuotientRust_Proofs
-import MercVerified.Refinement.Proofs.BranchingTop_Proofs
-import MercVerified.Refinement.Refinement
-import MercLib.Sigref.Proofs.TarjanBridge_Proofs
-import MercLib.Sigref.Proofs.Scc_Proofs
+module
+
+public import MercVerified.Refinement.Proofs.QuotientRust_Proofs
+public import MercVerified.Refinement.Proofs.BranchingTop_Proofs
+public import MercVerified.Refinement.Refinement
+public import MercLib.Sigref.Proofs.TarjanBridge_Proofs
+public import MercLib.Sigref.Proofs.Scc_Proofs
+import all MercLib.Graph.Proofs.TarjanBounds_Proofs
+import all MercLib.Graph.Proofs.TarjanFinish_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanMain_Proofs
+import all MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.Branching_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.Scc_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
+import all MercLib.Sigref.Proofs.TarjanBridge_Proofs
+import all MercLib.Sigref.Proofs.TopoSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Lts.Proofs.LabelledTransitionSystem_Proofs
+import all MercVerified.Lts.Proofs.LtsData_Proofs
+import all MercVerified.Refinement.Proofs.BranchingBridge_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingIncoming_Proofs
+import all MercVerified.Refinement.Proofs.BranchingPartition_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRun_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingStep_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.BranchingTop_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.QuotientRust_Proofs
+import all MercVerified.Refinement.Proofs.QuotientSort_Proofs
+import all MercVerified.Refinement.Proofs.Refinement_Proofs
+import all MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.RustTools_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SccRust_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.TopoSortRust_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoopCorrect_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.WorklistStep_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `tau_cycle_elimination_and_reorder` and `branching_bisim_sigref`
@@ -29,7 +102,7 @@ open MercVerified.Lts.Proofs MercVerified.Refinement
 namespace MercVerified.Refinement.Proofs
 
 /-- The `(label, target)` pairs stored for the block `b` of a raw LTS, in order. -/
-def segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private def segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat) : List QElem :=
   List.zip ((labs.drop (off.getD b 0)).take (off.getD (b + 1) 0 - off.getD b 0))
     ((tos.drop (off.getD b 0)).take (off.getD (b + 1) 0 - off.getD b 0))
@@ -40,7 +113,7 @@ open verified.merc_reduction.quotient
 
 /-- Loop-induction helper for `build_loop_spec`: reduces all `K` blocks while keeping the invariant
     `BuildInv`, and returns the accumulated rows satisfying the goal conditions. -/
-theorem build_loop_ind (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e : Std.Usize)
+private theorem build_loop_ind (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e : Std.Usize)
     (he : e.val = K) (hBig : tot out0 K < Std.Usize.max) :
     ∀ (m : Nat) (i : Std.Usize) (out : alloc.vec.Vec (alloc.vec.Vec QElem))
       (st : ByteCompressedVec Std.Usize) (lb : ByteCompressedVec (TagIndex Std.Usize LabelTag))
@@ -105,7 +178,7 @@ theorem build_loop_ind (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e
     exact hloop
 
 /-- The block loop of `quotient_build` sorts and deduplicates every row. -/
-theorem build_loop_spec (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e : Std.Usize)
+private theorem build_loop_spec (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (e : Std.Usize)
     (he : e.val = K) (hBig : tot out0 K < Std.Usize.max)
     (st0 : ByteCompressedVec Std.Usize) (lb0 : ByteCompressedVec (TagIndex Std.Usize LabelTag))
     (tb0 : ByteCompressedVec (TagIndex Std.Usize StateTag))
@@ -143,17 +216,17 @@ theorem build_loop_spec (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K : Nat) (
 
 /-! ## Offset lemmas for `quotient_build_spec` -/
 
-theorem offs_length (Ls : List (List QElem)) (K : Nat) : (offs Ls K).length = K := by
+private theorem offs_length (Ls : List (List QElem)) (K : Nat) : (offs Ls K).length = K := by
   simp [offs]
 
-theorem offD_offs (Ls : List (List QElem)) {K b : Nat} (hb : b < K) :
+private theorem offD_offs (Ls : List (List QElem)) {K b : Nat} (hb : b < K) :
     (offs Ls K ++ [Ls.flatten.length]).getD b 0 = ((Ls.take b).flatten).length := by
   unfold offs
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by simpa using hb),
     List.getElem?_map, List.getElem?_eq_getElem (by simpa using hb)]
   simp
 
-theorem offD_succ (Ls : List (List QElem)) {K b : Nat} (hb : b < K) (hLs : Ls.length = K) :
+private theorem offD_succ (Ls : List (List QElem)) {K b : Nat} (hb : b < K) (hLs : Ls.length = K) :
     (offs Ls K ++ [Ls.flatten.length]).getD (b + 1) 0 = ((Ls.take (b + 1)).flatten).length := by
   rcases Nat.lt_or_eq_of_le (Nat.succ_le_of_lt hb) with h | h
   · exact offD_offs Ls h
@@ -163,17 +236,17 @@ theorem offD_succ (Ls : List (List QElem)) {K b : Nat} (hb : b < K) (hLs : Ls.le
     rw [List.getD_eq_getElem?_getD, List.getElem?_append_right (by rw [offs_length])]
     simp [ht, offs_length]
 
-theorem take_succ_flatten_length (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
+private theorem take_succ_flatten_length (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
     ((Ls.take (b + 1)).flatten).length = ((Ls.take b).flatten).length + (Ls[b]'hb).length := by
   rw [← List.take_append_getElem hb, List.flatten_append]
   simp
 
-theorem take_succ_sub (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
+private theorem take_succ_sub (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
     ((Ls.take (b + 1)).flatten).length - ((Ls.take b).flatten).length = (Ls[b]'hb).length := by
   rw [take_succ_flatten_length Ls hb]
   omega
 
-theorem flatten_split (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
+private theorem flatten_split (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
     Ls.flatten = (Ls.take b).flatten ++ (Ls[b]'hb ++ (Ls.drop (b + 1)).flatten) := by
   induction b generalizing Ls with
   | zero =>
@@ -190,21 +263,21 @@ theorem flatten_split (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
       rw [List.take_succ_cons, List.drop_succ_cons, List.getElem_cons_succ, List.flatten_cons, hih]
       simp [List.append_assoc]
 
-theorem flatten_take_drop (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
+private theorem flatten_take_drop (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
     (Ls.flatten.drop ((Ls.take b).flatten).length).take (Ls[b]'hb).length = Ls[b]'hb := by
   rw [flatten_split Ls hb, List.drop_left, List.take_left]
 
-theorem labs_take_drop (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
+private theorem labs_take_drop (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
     ((Ls.flatten.map Prod.fst).drop ((Ls.take b).flatten).length).take (Ls[b]'hb).length
       = (Ls[b]'hb).map Prod.fst := by
   rw [← List.map_drop, ← List.map_take, flatten_take_drop Ls hb]
 
-theorem tos_take_drop (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
+private theorem tos_take_drop (Ls : List (List QElem)) {b : Nat} (hb : b < Ls.length) :
     ((Ls.flatten.map Prod.snd).drop ((Ls.take b).flatten).length).take (Ls[b]'hb).length
       = (Ls[b]'hb).map Prod.snd := by
   rw [← List.map_drop, ← List.map_take, flatten_take_drop Ls hb]
 
-theorem segPairs_of_offs (Ls : List (List QElem)) {K : Nat} (hLs : Ls.length = K)
+private theorem segPairs_of_offs (Ls : List (List QElem)) {K : Nat} (hLs : Ls.length = K)
     {b : Nat} (hb : b < K) :
     segPairs (offs Ls K ++ [Ls.flatten.length]) (Ls.flatten.map Prod.fst) (Ls.flatten.map Prod.snd) b
       = Ls[b]'(by omega) := by
@@ -214,7 +287,7 @@ theorem segPairs_of_offs (Ls : List (List QElem)) {K : Nat} (hLs : Ls.length = K
     labs_take_drop Ls hbl, tos_take_drop Ls hbl, List.zip_map']
   simp [Prod.mk.eta]
 
-theorem segPairs_getElem? (Ls : List (List QElem)) {K : Nat} (hLs : Ls.length = K)
+private theorem segPairs_getElem? (Ls : List (List QElem)) {K : Nat} (hLs : Ls.length = K)
     {b k : Nat} (hb : b < K) (hk : k < (Ls[b]'(by omega)).length)
     (hkf : ((Ls.take b).flatten).length + k < (Ls.flatten.map Prod.fst).length)
     (hks : ((Ls.take b).flatten).length + k < (Ls.flatten.map Prod.snd).length) :
@@ -231,12 +304,12 @@ theorem segPairs_getElem? (Ls : List (List QElem)) {K : Nat} (hLs : Ls.length = 
 
 /-! ## Helpers for `quotient_build_spec` -/
 
-theorem qLt_irrefl (a : QElem) : ¬ qLt a a := by unfold qLt; omega
+private theorem qLt_irrefl (a : QElem) : ¬ qLt a a := by unfold qLt; omega
 
-theorem pairwise_qLt_nodup {l : List QElem} (h : List.Pairwise qLt l) : l.Nodup :=
+private theorem pairwise_qLt_nodup {l : List QElem} (h : List.Pairwise qLt l) : l.Nodup :=
   h.nodup
 
-theorem mem_outVec_iff_tr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem mem_outVec_iff_tr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (s : TagIndex Std.Usize StateTag)
     (hs : ∃ ts : alloc.vec.Vec Transition, LTSInst.outgoing_transitions sys s = ok ts)
     (μ : TagIndex Std.Usize LabelTag) (t : TagIndex Std.Usize StateTag) :
@@ -249,7 +322,7 @@ theorem mem_outVec_iff_tr {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     rw [outVec_of_ok LTSInst sys s ts hts]
     exact hmem
 
-theorem mem_keptList {ip : IndexedPartition} (s : TagIndex Std.Usize StateTag)
+private theorem mem_keptList {ip : IndexedPartition} (s : TagIndex Std.Usize StateTag)
     (l : List Transition) (x : QElem) :
     x ∈ keptList ip s l ↔ ∃ t ∈ l, keepB ip s t = true ∧ x = elemD ip t := by
   unfold keptList
@@ -262,7 +335,7 @@ theorem mem_keptList {ip : IndexedPartition} (s : TagIndex Std.Usize StateTag)
   · rintro ⟨t, ht, hk, rfl⟩
     exact ⟨t, ht, by simp [hk]⟩
 
-theorem mem_rowAcc {ip : IndexedPartition}
+private theorem mem_rowAcc {ip : IndexedPartition}
     (tsOf : TagIndex Std.Usize StateTag → List Transition)
     (ps : List (TagIndex Std.Usize StateTag)) (c : Nat) (x : QElem) :
     x ∈ rowAcc ip tsOf ps c ↔
@@ -277,7 +350,7 @@ theorem mem_rowAcc {ip : IndexedPartition}
   · rintro ⟨s, hs, hc, hx⟩
     exact ⟨s, hs, by simp [hc, hx]⟩
 
-theorem mem_rowAcc_snd_lt {ip : IndexedPartition}
+private theorem mem_rowAcc_snd_lt {ip : IndexedPartition}
     {tsOf : TagIndex Std.Usize StateTag → List Transition}
     {ps : List (TagIndex Std.Usize StateTag)} {c : Nat} {x : QElem}
     (hx : x ∈ rowAcc ip tsOf ps c)
@@ -293,7 +366,7 @@ theorem mem_rowAcc_snd_lt {ip : IndexedPartition}
   unfold elemD
   exact hbK t.to (hbound s hs t ht)
 
-theorem mem_rowAcc_fst_lt {ip : IndexedPartition}
+private theorem mem_rowAcc_fst_lt {ip : IndexedPartition}
     {tsOf : TagIndex Std.Usize StateTag → List Transition}
     {ps : List (TagIndex Std.Usize StateTag)} {c : Nat} {x : QElem} {L : Nat}
     (hx : x ∈ rowAcc ip tsOf ps c)
@@ -307,13 +380,13 @@ theorem mem_rowAcc_fst_lt {ip : IndexedPartition}
   unfold elemD
   exact hbound s hs t ht
 
-theorem offs_getD_take (Ls : List (List QElem)) (K : Nat) {b : Nat} (hb : b < K) :
+private theorem offs_getD_take (Ls : List (List QElem)) (K : Nat) {b : Nat} (hb : b < K) :
     (offs Ls K).getD b 0 = ((Ls.take b).flatten).length := by
   unfold offs
   rw [List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_eq_getElem (by simpa using hb)]
   simp
 
-theorem offs_pairwise (Ls : List (List QElem)) (K : Nat) :
+private theorem offs_pairwise (Ls : List (List QElem)) (K : Nat) :
     (offs Ls K ++ [Ls.flatten.length]).Pairwise (· ≤ ·) := by
   rw [List.pairwise_append]
   refine ⟨?_, List.pairwise_singleton _ _, ?_⟩
@@ -337,7 +410,7 @@ theorem offs_pairwise (Ls : List (List QElem)) (K : Nat) :
 
 /-- The `i`-th element of `Ls.flatten` in a block `s < Ls.length` is the corresponding element of
     `Ls[s]`. -/
-theorem flatten_getElem_row (Ls : List (List QElem)) {s i : Nat} (hs : s < Ls.length)
+private theorem flatten_getElem_row (Ls : List (List QElem)) {s i : Nat} (hs : s < Ls.length)
     (hi : i < Ls.flatten.length)
     (hlo : ((Ls.take s).flatten).length ≤ i)
     (hhi : i < ((Ls.take s).flatten).length + (Ls[s]'hs).length) :
@@ -355,7 +428,7 @@ theorem flatten_getElem_row (Ls : List (List QElem)) {s i : Nat} (hs : s < Ls.le
 
 /-- `quotient_build` produces a valid raw LTS whose block `b` holds the sorted, deduplicated pairs of
     row `b`, with the labels of `lts` and the block of the initial state as initial state. -/
-theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hass : PreprocessAssumptions LTSInst sys)
     (n0 : Std.Usize) (hns : LTSInst.num_of_states sys = ok n0)
     (ip : IndexedPartition) (hip : ip.partition.val.length = n0.val)
@@ -577,19 +650,19 @@ theorem quotient_build_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
       have := (hsortmem b hb).2 x
       rwa [hgetdb] at this
 
-theorem sum_map_add_nat {α : Type} (l : List α) (f g : α → Nat) :
+private theorem sum_map_add_nat {α : Type} (l : List α) (f g : α → Nat) :
     (l.map (fun a => f a + g a)).sum = (l.map f).sum + (l.map g).sum := by
   induction l with
   | nil => simp
   | cons a l ih => simp only [List.map_cons, List.sum_cons, ih]; omega
 
-theorem map_sum_le {α : Type} (l : List α) (f g : α → Nat) (h : ∀ a, f a ≤ g a) :
+private theorem map_sum_le {α : Type} (l : List α) (f g : α → Nat) (h : ∀ a, f a ≤ g a) :
     (l.map f).sum ≤ (l.map g).sum := by
   induction l with
   | nil => simp
   | cons a l ih => simp only [List.map_cons, List.sum_cons]; have := h a; omega
 
-theorem keepB_eq_true_iff (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition) :
+private theorem keepB_eq_true_iff (ip : IndexedPartition) (s : TagIndex Std.Usize StateTag) (t : Transition) :
     keepB ip s t = true ↔
       ¬(t.label.index.val = 0 ∧
         (bk ip s.index.val).index.val = (bk ip t.to.index.val).index.val) := by
@@ -600,7 +673,7 @@ theorem keepB_eq_true_iff (ip : IndexedPartition) (s : TagIndex Std.Usize StateT
   · by_cases hB : (bk ip s.index.val).index.val = (bk ip t.to.index.val).index.val <;>
       simp [hA, hB]
 
-theorem nodup_sum_ite_eq_le (l : List Nat) (c L : Nat) (h : l.Nodup) :
+private theorem nodup_sum_ite_eq_le (l : List Nat) (c L : Nat) (h : l.Nodup) :
     (l.map (fun b => if c = b then L else 0)).sum ≤ L := by
   have key : (l.map (fun b => if c = b then L else 0)).sum = if c ∈ l then L else 0 := by
     induction l with
@@ -626,7 +699,7 @@ theorem nodup_sum_ite_eq_le (l : List Nat) (c L : Nat) (h : l.Nodup) :
   rw [key]
   split_ifs <;> omega
 
-theorem sum_rowAcc_le (ip : IndexedPartition)
+private theorem sum_rowAcc_le (ip : IndexedPartition)
     (tsOf : TagIndex Std.Usize StateTag → List Transition)
     (ps : List (TagIndex Std.Usize StateTag)) (K : Nat) :
     ((List.range K).map (fun b => (rowAcc ip tsOf ps b).length)).sum ≤
@@ -659,7 +732,7 @@ theorem sum_rowAcc_le (ip : IndexedPartition)
 
 /-- **`quotient_lts_naive` (both elimination flags set) computes the τ-SCC quotient.**
     `ip` numbers the states by their τ-SCC (as returned by `tau_scc_decomposition_iterative`). -/
-theorem quotient_lts_naive_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem quotient_lts_naive_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hass : PreprocessAssumptions LTSInst sys)
     (n0 : Std.Usize) (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hnlt : n0.val < Usize.max)
@@ -803,7 +876,7 @@ end Build
 section Permute
 
 /-- `invert_permutation` inverts a bijection of `0..n`. -/
-theorem invert_permutation_spec (perm : Slice (TagIndex Std.Usize StateTag)) (n : Nat)
+private theorem invert_permutation_spec (perm : Slice (TagIndex Std.Usize StateTag)) (n : Nat)
     (hlen : perm.val.length = n) (hlt : ∀ p ∈ perm.val, p.index.val < n)
     (hinj : (perm.val.map (fun p => p.index.val)).Nodup) :
     ∃ inv : alloc.vec.Vec (TagIndex Std.Usize StateTag),
@@ -924,11 +997,11 @@ theorem invert_permutation_spec (perm : Slice (TagIndex Std.Usize StateTag)) (n 
   exact ⟨r, hr, hp.1, hp.2⟩
 
 /-- Renaming a target state by the permutation slice (default when out of range). -/
-def prename (perm : Slice (TagIndex Std.Usize StateTag)) (t : TagIndex Std.Usize StateTag) :
+private def prename (perm : Slice (TagIndex Std.Usize StateTag)) (t : TagIndex Std.Usize StateTag) :
     TagIndex Std.Usize StateTag :=
   perm.val.getD t.index.val default
 
-theorem slice_index_ok' {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
+private theorem slice_index_ok' {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
     Slice.index_usize s i = ok (s.val[i.val]'h) := by
   have hs := Slice.index_usize_spec s i h
   obtain ⟨x, hx, hxe⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ := ⟨_, rfl, hs⟩
@@ -937,22 +1010,22 @@ theorem slice_index_ok' {α : Type} (s : Slice α) (i : Std.Usize) (h : i.val < 
   rw [hx, hxe]
 
 /-- The old block index assigned to the new position `j` by the inverse permutation. -/
-def invAt (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (j : Nat) : Nat :=
+private def invAt (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (j : Nat) : Nat :=
   (inverse.val.getD j default).index.val
 
 /-- The renamed block (list of `(label, renamed target)` pairs) placed at new position `j`. -/
-def renamedBlock (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private def renamedBlock (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (j : Nat) : List QElem :=
   (segPairs off labs tos (invAt inverse j)).map (fun x => (x.1, prename perm x.2))
 
 /-- The first `N` renamed blocks. -/
-def blocksList (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private def blocksList (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) : List (List QElem) :=
   (List.range N).map (renamedBlock inverse off labs tos perm)
 
-theorem segPairs_fst (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem segPairs_fst (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat)
     (_h1 : off.getD (b + 1) 0 ≤ labs.length) (h0 : off.getD b 0 ≤ off.getD (b + 1) 0)
     (h1' : off.getD (b + 1) 0 ≤ tos.length) :
@@ -963,7 +1036,7 @@ theorem segPairs_fst (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)
   simp only [List.length_take, List.length_drop]
   omega
 
-theorem segPairs_snd (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem segPairs_snd (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat)
     (h1 : off.getD (b + 1) 0 ≤ labs.length) (h0 : off.getD b 0 ≤ off.getD (b + 1) 0)
     (_h1' : off.getD (b + 1) 0 ≤ tos.length) :
@@ -974,7 +1047,7 @@ theorem segPairs_snd (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)
   simp only [List.length_take, List.length_drop]
   omega
 
-theorem renamedBlock_fst (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private theorem renamedBlock_fst (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (j : Nat)
     (h1 : off.getD (invAt inverse j + 1) 0 ≤ labs.length)
@@ -987,7 +1060,7 @@ theorem renamedBlock_fst (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
   rw [List.map_map]
   exact segPairs_fst off labs tos (invAt inverse j) h1 h0 h1'
 
-theorem renamedBlock_snd (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private theorem renamedBlock_snd (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (j : Nat)
     (h1 : off.getD (invAt inverse j + 1) 0 ≤ labs.length)
@@ -1001,13 +1074,13 @@ theorem renamedBlock_snd (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
   rw [show (fun x : QElem => prename perm x.2) = (prename perm) ∘ Prod.snd from rfl]
   rw [← List.map_map, segPairs_snd off labs tos (invAt inverse j) h1 h0 h1']
 
-theorem blocksList_length (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private theorem blocksList_length (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) :
     (blocksList inverse off labs tos perm N).length = N := by
   unfold blocksList; simp
 
-theorem blocksList_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private theorem blocksList_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) :
     blocksList inverse off labs tos perm (N + 1) =
@@ -1016,7 +1089,7 @@ theorem blocksList_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) 
   rw [List.range_succ, List.map_append]
   simp
 
-theorem blocksList_flatten_fst_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem blocksList_flatten_fst_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) :
     (blocksList inverse off labs tos perm (N + 1)).flatten.map Prod.fst =
@@ -1025,7 +1098,7 @@ theorem blocksList_flatten_fst_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize
   rw [blocksList_succ, List.flatten_append, List.map_append]
   simp
 
-theorem blocksList_flatten_snd_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem blocksList_flatten_snd_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) :
     (blocksList inverse off labs tos perm (N + 1)).flatten.map Prod.snd =
@@ -1034,7 +1107,7 @@ theorem blocksList_flatten_snd_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize
   rw [blocksList_succ, List.flatten_append, List.map_append]
   simp
 
-theorem offs_blocksList_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
+private theorem offs_blocksList_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) :
     offs (blocksList inverse off labs tos perm (N + 1)) (N + 1) =
@@ -1051,11 +1124,11 @@ theorem offs_blocksList_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateT
       List.take_append_of_le_length (by rw [blocksList_length]; exact Nat.le_of_lt hj)]
   · simp [blocksList_succ, blocksList_length]
 
-theorem prename_getD (perm : Slice (TagIndex Std.Usize StateTag)) (t : TagIndex Std.Usize StateTag) :
+private theorem prename_getD (perm : Slice (TagIndex Std.Usize StateTag)) (t : TagIndex Std.Usize StateTag) :
     perm.val.getD t.index.val default = prename perm t := rfl
 
 /-- A `Nodup` list of naturals all below `n` and of length `n` contains every `j < n`. -/
-theorem mem_of_nodup_length {l : List Nat} {n : Nat} (hnd : l.Nodup) (hlen : l.length = n)
+private theorem mem_of_nodup_length {l : List Nat} {n : Nat} (hnd : l.Nodup) (hlen : l.length = n)
     (hlt : ∀ x ∈ l, x < n) : ∀ j < n, j ∈ l := by
   have hsub : l.toFinset ⊆ Finset.range n := by
     intro x hx
@@ -1070,7 +1143,7 @@ theorem mem_of_nodup_length {l : List Nat} {n : Nat} (hnd : l.Nodup) (hlen : l.l
   exact hj
 
 /-- An injective `perm` (given by the `.index` values) into `[0, n)` is onto. -/
-theorem perm_surj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
+private theorem perm_surj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
     (hlen : perm.val.length = n) (hlt : ∀ p ∈ perm.val, p.index.val < n)
     (hinj : (perm.val.map (fun p => p.index.val)).Nodup) :
     ∀ j < n, ∃ b < n, (perm.val.getD b default).index.val = j := by
@@ -1091,7 +1164,7 @@ theorem perm_surj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
   exact hpj
 
 /-- `invAt inverse` inverts `perm` on `.index` values. -/
-theorem invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
+private theorem invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
     {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (_hinvlen : inverse.val.length = n)
     (hlen : perm.val.length = n)
     (hinv : ∀ q (hq : q < n),
@@ -1107,7 +1180,7 @@ theorem invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
   exact hh
 
 /-- The offset at the last position is `B`. -/
-theorem off_getD_last_idx {off : List Nat} {B : Nat} (hlast : off.getLast? = some B) :
+private theorem off_getD_last_idx {off : List Nat} {B : Nat} (hlast : off.getLast? = some B) :
     off.getD (off.length - 1) 0 = B := by
   have hne : off ≠ [] := by intro h; rw [h] at hlast; simp at hlast
   have h1 : off.length - 1 < off.length := by
@@ -1118,7 +1191,7 @@ theorem off_getD_last_idx {off : List Nat} {B : Nat} (hlast : off.getLast? = som
   exact (Option.some.inj h2).symm
 
 /-- The offset function is monotone. -/
-theorem off_getD_mono {off : List Nat} (hmono : off.Pairwise (· ≤ ·)) {a b : Nat}
+private theorem off_getD_mono {off : List Nat} (hmono : off.Pairwise (· ≤ ·)) {a b : Nat}
     (ha : a < off.length) (hb : b < off.length) (hab : a ≤ b) :
     off.getD a 0 ≤ off.getD b 0 := by
   rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
@@ -1128,7 +1201,7 @@ theorem off_getD_mono {off : List Nat} (hmono : off.Pairwise (· ≤ ·)) {a b :
   · subst h; rfl
 
 /-- The offset at `b` never exceeds the last offset. -/
-theorem off_getD_le_last {off : List Nat} {B : Nat} (hmono : off.Pairwise (· ≤ ·))
+private theorem off_getD_le_last {off : List Nat} {B : Nat} (hmono : off.Pairwise (· ≤ ·))
     (hlast : off.getLast? = some B) {b : Nat} (hb : b < off.length) :
     off.getD b 0 ≤ B := by
   have hne : off ≠ [] := by intro h; rw [h] at hb; simp at hb
@@ -1138,7 +1211,7 @@ theorem off_getD_le_last {off : List Nat} {B : Nat} (hmono : off.Pairwise (· �
     (le_of_eq (off_getD_last_idx hlast))
 
 /-- `invAt` maps `[0, n)` into `[0, n)`. -/
-theorem invAt_lt {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
+private theorem invAt_lt {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
     {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (hinvlen : inverse.val.length = n)
     (hlen : perm.val.length = n)
     (hinv : ∀ q (hq : q < n),
@@ -1151,7 +1224,7 @@ theorem invAt_lt {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
   exact hb
 
 /-- `invAt` is injective on `[0, n)`. -/
-theorem invAt_inj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
+private theorem invAt_inj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
     {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (hinvlen : inverse.val.length = n)
     (hlen : perm.val.length = n)
     (hinv : ∀ q (hq : q < n),
@@ -1166,7 +1239,7 @@ theorem invAt_inj {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
   rw [← hb1j, ← hb2j, heq]
 
 /-- `invAt` is onto `[0, n)`. -/
-theorem invAt_range_mem {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
+private theorem invAt_range_mem {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
     {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (hinvlen : inverse.val.length = n)
     (hlen : perm.val.length = n)
     (hinv : ∀ q (hq : q < n),
@@ -1188,7 +1261,7 @@ theorem invAt_range_mem {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
   exact mem_of_nodup_length hnd hlen' hlt
 
 /-- Two `Nodup` lists with the same elements are permutations. -/
-theorem perm_of_nodup_iff {l₁ l₂ : List Nat} (h1 : l₁.Nodup) (h2 : l₂.Nodup)
+private theorem perm_of_nodup_iff {l₁ l₂ : List Nat} (h1 : l₁.Nodup) (h2 : l₂.Nodup)
     (hmem : ∀ a, a ∈ l₁ ↔ a ∈ l₂) : List.Perm l₁ l₂ := by
   rw [List.perm_iff_count]
   intro a
@@ -1196,7 +1269,7 @@ theorem perm_of_nodup_iff {l₁ l₂ : List Nat} (h1 : l₁.Nodup) (h2 : l₂.No
   simp only [hmem a]
 
 /-- The list of inverse indices is a permutation of `List.range n`. -/
-theorem map_invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
+private theorem map_invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
     {inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag)} (hinvlen : inverse.val.length = n)
     (hlen : perm.val.length = n)
     (hinv : ∀ q (hq : q < n),
@@ -1220,12 +1293,12 @@ theorem map_invAt_perm {n : Nat} {perm : Slice (TagIndex Std.Usize StateTag)}
       exact invAt_range_mem hinvlen hlen hinv hsurj a (List.mem_range.mp ha)
 
 /-- The labels of block `b`, as a contiguous slice of `labs`. -/
-def segAt (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)) (b : Nat) :
+private def segAt (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)) (b : Nat) :
     List (TagIndex Std.Usize LabelTag) :=
   (labs.drop (off.getD b 0)).take (off.getD (b + 1) 0 - off.getD b 0)
 
 /-- `renamedBlock`'s labels are exactly the contiguous slice `segAt`. -/
-theorem renamedBlock_fst' {n : Nat} (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem renamedBlock_fst' {n : Nat} (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag))
     (hmono : off.Pairwise (· ≤ ·)) (hlast : off.getLast? = some labs.length)
@@ -1240,7 +1313,7 @@ theorem renamedBlock_fst' {n : Nat} (inverse : alloc.vec.Vec (TagIndex Std.Usize
   exact renamedBlock_fst inverse off labs tos perm j h1 h0 h1'
 
 /-- The length of the `segAt` slice is the offset difference. -/
-theorem segAt_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem segAt_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (hmono : off.Pairwise (· ≤ ·)) (hlast : off.getLast? = some labs.length)
     {b : Nat} (hb : b + 1 < off.length) :
     (segAt off labs b).length = off.getD (b + 1) 0 - off.getD b 0 := by
@@ -1252,7 +1325,7 @@ theorem segAt_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)
   omega
 
 /-- `(blocksList n).flatten.map Prod.fst` is a flattening of the slices `segAt (invAt j)`. -/
-theorem blocksList_flatten_fst_eq (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem blocksList_flatten_fst_eq (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag))
     {n : Nat} (hmono : off.Pairwise (· ≤ ·)) (hlast : off.getLast? = some labs.length)
@@ -1276,7 +1349,7 @@ theorem blocksList_flatten_fst_eq (inverse : alloc.vec.Vec (TagIndex Std.Usize S
     (invAt_lt hinvlen hlen hinv hsurj (by omega))
 
 /-- The total length of the renamed blocks is the sum of the corresponding offset differences. -/
-theorem blocksList_flatten_length_eq (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem blocksList_flatten_length_eq (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag))
     {n : Nat} (hmono : off.Pairwise (· ≤ ·)) (hlast : off.getLast? = some labs.length)
@@ -1303,13 +1376,13 @@ theorem blocksList_flatten_length_eq (inverse : alloc.vec.Vec (TagIndex Std.Usiz
     omega)
 
 /-- Sum of a prefix is at most the whole sum (for naturals). -/
-theorem sum_take_le (l : List Nat) (c : Nat) : (l.take c).sum ≤ l.sum := by
+private theorem sum_take_le (l : List Nat) (c : Nat) : (l.take c).sum ≤ l.sum := by
   have := List.sum_append (l₁ := l.take c) (l₂ := l.drop c)
   rw [List.take_append_drop] at this
   rw [this]; omega
 
 /-- The offset differences telescope. -/
-theorem sum_off_sub (off : List Nat) (hmono : off.Pairwise (· ≤ ·)) :
+private theorem sum_off_sub (off : List Nat) (hmono : off.Pairwise (· ≤ ·)) :
     ∀ N, N + 1 ≤ off.length →
       ((List.range N).map (fun b => off.getD (b + 1) 0 - off.getD b 0)).sum =
         off.getD N 0 - off.getD 0 0 := by
@@ -1327,14 +1400,14 @@ theorem sum_off_sub (off : List Nat) (hmono : off.Pairwise (· ≤ ·)) :
     omega
 
 /-- The last offset is `labs.length`. -/
-theorem off_getD_last {off : List Nat} {B : Nat} (hlast : off.getLast? = some B)
+private theorem off_getD_last {off : List Nat} {B : Nat} (hlast : off.getLast? = some B)
     {N : Nat} (hoff : off.length = N + 1) : off.getD N 0 = B := by
   have h := off_getD_last_idx (off := off) hlast
   rw [hoff, show N + 1 - 1 = N by omega] at h
   exact h
 
 /-- The total length of the renamed blocks is bounded by `labs.length`. -/
-theorem blocksList_flatten_length_le (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem blocksList_flatten_length_le (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag))
     {n : Nat} (hmono : off.Pairwise (· ≤ ·)) (hlast : off.getLast? = some labs.length)
@@ -1376,7 +1449,7 @@ theorem blocksList_flatten_length_le (inverse : alloc.vec.Vec (TagIndex Std.Usiz
 
 /-- The inner loop of `new_from_permutation_vec`: it replays a run `[start, end)` of the input
     `transition_labels`/`transition_to` into the accumulators, renaming targets by `perm`. -/
-theorem nfp_inner_spec (bcv : ByteCompressedVec (TagIndex Std.Usize LabelTag))
+private theorem nfp_inner_spec (bcv : ByteCompressedVec (TagIndex Std.Usize LabelTag))
     (bcv1 : ByteCompressedVec (TagIndex Std.Usize StateTag))
     (perm : Slice (TagIndex Std.Usize StateTag))
     (hperm : ∀ t ∈ ByteCompressedVec.toList bcv1, t.index.val < perm.val.length) :
@@ -1455,7 +1528,7 @@ theorem nfp_inner_spec (bcv : ByteCompressedVec (TagIndex Std.Usize LabelTag))
       rw [htake, List.map_cons, hpre]
       simp
 
-theorem renamedBlock_length {n : Nat} (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem renamedBlock_length {n : Nat} (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag))
     (hmono : off.Pairwise (· ≤ ·)) (hlast : off.getLast? = some labs.length)
@@ -1467,7 +1540,7 @@ theorem renamedBlock_length {n : Nat} (inverse : alloc.vec.Vec (TagIndex Std.Usi
     renamedBlock_fst' inverse off labs tos perm hmono hlast hle hoff hj]
   exact segAt_length off labs hmono hlast (by omega)
 
-theorem blocksList_flatten_length_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private theorem blocksList_flatten_length_succ (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag)) (N : Nat) :
     (blocksList inverse off labs tos perm (N + 1)).flatten.length =
@@ -1477,7 +1550,7 @@ theorem blocksList_flatten_length_succ (inverse : alloc.vec.Vec (TagIndex Std.Us
   simpa only [List.length_append, List.length_map] using h
 
 /-- Invariant for the outer loop of `new_from_permutation_vec`. -/
-def NfpInv (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
+private def NfpInv (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (perm : Slice (TagIndex Std.Usize StateTag))
     (c : Nat) (states : ByteCompressedVec Std.Usize)
@@ -1490,7 +1563,7 @@ def NfpInv (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
 
 /-- The outer loop of `new_from_permutation_vec`: walks the permutation, recording offsets in
     `states` and concatenating the renamed blocks into the transition vectors. -/
-theorem nfp_outer_spec {Label : Type} (lts : LabelledTransitionSystem Label)
+private theorem nfp_outer_spec {Label : Type} (lts : LabelledTransitionSystem Label)
     (perm : Slice (TagIndex Std.Usize StateTag))
     (inverse : alloc.vec.Vec (TagIndex Std.Usize StateTag))
     {n : Nat} {off : List Nat} {labs : List (TagIndex Std.Usize LabelTag)}
@@ -1666,7 +1739,7 @@ theorem nfp_outer_spec {Label : Type} (lts : LabelledTransitionSystem Label)
       exact hloop
     · rw [← hend']; exact hinv'
 
-theorem segPairs_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem segPairs_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat)
     (h1 : off.getD (b + 1) 0 ≤ labs.length) (hle : labs.length = tos.length) :
     (segPairs off labs tos b).length = off.getD (b + 1) 0 - off.getD b 0 := by
@@ -1674,7 +1747,7 @@ theorem segPairs_length (off : List Nat) (labs : List (TagIndex Std.Usize LabelT
   simp only [List.length_zip, List.length_take, List.length_drop]
   omega
 
-theorem segPairs_getElem (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem segPairs_getElem (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b i : Nat)
     (hi : i < (segPairs off labs tos b).length) :
     ∃ (h1 : off.getD b 0 + i < labs.length) (h2 : off.getD b 0 + i < tos.length),
@@ -1684,7 +1757,7 @@ theorem segPairs_getElem (off : List Nat) (labs : List (TagIndex Std.Usize Label
   refine ⟨by omega, by omega, ?_⟩
   simp [List.getElem_zip]
 
-theorem mem_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem mem_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat) (x : QElem)
     (hx : x ∈ segPairs off labs tos b) : x.1 ∈ labs ∧ x.2 ∈ tos := by
   unfold segPairs at hx
@@ -1693,7 +1766,7 @@ theorem mem_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag)
     List.mem_of_mem_drop (List.mem_of_mem_take h.2)⟩
 
 /-- The `nodup` side condition of `RawGood` says exactly that every block is duplicate-free. -/
-theorem rawGood_nodup_iff {n : Nat} {off : List Nat} {labs : List (TagIndex Std.Usize LabelTag)}
+private theorem rawGood_nodup_iff {n : Nat} {off : List Nat} {labs : List (TagIndex Std.Usize LabelTag)}
     {tos : List (TagIndex Std.Usize StateTag)} (hmono : off.Pairwise (· ≤ ·))
     (hlast : off.getLast? = some labs.length) (hle : labs.length = tos.length)
     (hoff : off.length = n + 1) :
@@ -1728,7 +1801,7 @@ theorem rawGood_nodup_iff {n : Nat} {off : List Nat} {labs : List (TagIndex Std.
 
 /-- **`new_from_permutation_vec` renames the states by the permutation**: the block `b` of the
     result at position `perm b` holds the transitions of `b` with renamed targets. -/
-theorem new_from_permutation_vec_spec {Label : Type} (TLInst : TransitionLabel Label)
+private theorem new_from_permutation_vec_spec {Label : Type} (TLInst : TransitionLabel Label)
     {Q : LabelledTransitionSystem Label} {n : Nat} {off : List Nat}
     {labs : List (TagIndex Std.Usize LabelTag)} {tos : List (TagIndex Std.Usize StateTag)}
     (hR : RawOf Q n off labs tos) (hG : RawGood Q n off labs tos)
@@ -1901,7 +1974,7 @@ section Raw
 
 variable {Label : Type} (TLInst : TransitionLabel Label)
 
-theorem raw_num_of_states {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
+private theorem raw_num_of_states {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
     (h : RawOf X m off labs tos) :
     ∃ mU : Std.Usize,
       (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).num_of_states X = ok mU ∧ mU.val = m := by
@@ -1919,7 +1992,7 @@ theorem raw_num_of_states {X : LabelledTransitionSystem Label} {m : Nat} {off la
     i - 1#usize) = ok mU
   rw [hls, bind_ok, hmU]
 
-theorem lts_is_hidden (X : LabelledTransitionSystem Label) (l : TagIndex Std.Usize LabelTag) :
+private theorem lts_is_hidden (X : LabelledTransitionSystem Label) (l : TagIndex Std.Usize LabelTag) :
     (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst).is_hidden_label X l =
       ok (decide (l.index.val = 0)) := by
   show (do
@@ -1932,14 +2005,14 @@ theorem lts_is_hidden (X : LabelledTransitionSystem Label) (l : TagIndex Std.Usi
   · intro h; rw [h]; rfl
   · intro h; exact UScalar.eq_of_val_eq (by simpa using h)
 
-theorem segment_eq_map_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
+private theorem segment_eq_map_segPairs (off : List Nat) (labs : List (TagIndex Std.Usize LabelTag))
     (tos : List (TagIndex Std.Usize StateTag)) (b : Nat) :
     segment labs tos (off.getD b 0) (off.getD (b + 1) 0 - off.getD b 0) =
       (segPairs off labs tos b).map (fun x => ({ label := x.1, «to» := x.2 } : Transition)) := by
   unfold segment segPairs
   simp [List.zip, List.map_zipWith]
 
-theorem raw_tr_iff {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
+private theorem raw_tr_iff {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
     (h : RawOf X m off labs tos) (s : TagIndex Std.Usize StateTag) (hs : s.index.val < m)
     (μ : TagIndex Std.Usize LabelTag) (t : TagIndex Std.Usize StateTag) :
     MercVerified.Lts.tr (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) X s μ t ↔
@@ -1954,7 +2027,7 @@ theorem raw_tr_iff {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
   · intro hx
     exact ⟨_, hx, rfl⟩
 
-theorem raw_Eout_le {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
+private theorem raw_Eout_le {X : LabelledTransitionSystem Label} {m : Nat} {off labs tos}
     (h : RawOf X m off labs tos) :
     Eout (LabelledTransitionSystem.Insts.Merc_ltsLtsLTS TLInst) X m ≤ labs.length := by
   have hmax := h.off_le
@@ -1991,14 +2064,14 @@ section Graph
 
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
-theorem stOf_mk {n : Nat} (t : TagIndex Std.Usize StateTag) (ht : t.index.val < n) (hn : n ≤ Usize.max) :
+private theorem stOf_mk {n : Nat} (t : TagIndex Std.Usize StateTag) (ht : t.index.val < n) (hn : n ≤ Usize.max) :
     stOf (⟨t.index.val, ht⟩ : Fin n) = t := by
   apply merc_utilities.tagged_index.TagIndex.ext
   apply UScalar.eq_of_val_eq
   rw [stOf_index _ hn]
 
 /-- The hidden edges of the SCC graph are the τ-steps of the `Fin n` view. -/
-theorem edge_gOf_iff (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem edge_gOf_iff (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val) (hnlt : n0.val < Usize.max)
     (u v : Fin n0.val) :
     MercLib.Tarjan.Edge (gOf LTSInst sys hn0 hnlt) u v ↔
@@ -2025,7 +2098,7 @@ theorem edge_gOf_iff (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.U
     rw [toFin_val hn0 _ (stOf_lt v hn), stOf_index v hn]
 
 /-- A successor in the topological-sort graph is a τ-step to a different state. -/
-theorem mem_tsucc {n : Nat} (hn0 : 0 < n) (hn : n ≤ Usize.max)
+private theorem mem_tsucc {n : Nat} (hn0 : 0 < n) (hn : n ≤ Usize.max)
     (htlt : ∀ u : Fin n, ∀ t ∈ (outVec LTSInst sys (stOf u)).val, t.to.index.val < n)
     (a b : Fin n) (h : b ∈ tsucc LTSInst sys hn0 a) :
     a ≠ b ∧ ({ label := Cslib.HasTau.τ, «to» := stOf b } : Transition) ∈ (outVec LTSInst sys (stOf a)).val := by
@@ -2044,7 +2117,7 @@ theorem mem_tsucc {n : Nat} (hn0 : 0 < n) (hn : n ≤ Usize.max)
   · have hlab : t.label = Cslib.HasTau.τ := (label_eq_tau_iff _).2 hc.2
     rw [← hto, ← hlab]; exact ht
 
-theorem view_bk (ip : IndexedPartition) {n : Nat} (i : Nat) (hi : i < n)
+private theorem view_bk (ip : IndexedPartition) {n : Nat} (i : Nat) (hi : i < n)
     (hl : ip.partition.val.length = n) :
     view n (fun t : TagIndex Std.Usize BlockTag => t.index.val) 0 ip.partition.val ⟨i, hi⟩ =
       (bk ip i).index.val := by
@@ -2052,14 +2125,14 @@ theorem view_bk (ip : IndexedPartition) {n : Nat} (i : Nat) (hi : i < n)
   rw [List.getElem?_eq_getElem (by omega), List.getD_eq_getElem _ _ (by omega)]
   rfl
 
-theorem tr_target_lt (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem tr_target_lt (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) {s : TagIndex Std.Usize StateTag}
     {μ : TagIndex Std.Usize LabelTag} {t : TagIndex Std.Usize StateTag}
     (h : MercVerified.Lts.tr LTSInst sys s μ t) (hs : s.index.val < n0.val) : t.index.val < n0.val := by
   obtain ⟨ts, hts, htlt⟩ := hwf.2.1 n0 hns s hs
   exact htlt _ ((tr_iff_mem hts μ t).1 h)
 
-theorem tsucc_of_tr {n : Nat} (hn0 : 0 < n) (a : Fin n) (t : TagIndex Std.Usize StateTag)
+private theorem tsucc_of_tr {n : Nat} (hn0 : 0 < n) (a : Fin n) (t : TagIndex Std.Usize StateTag)
     (htr : MercVerified.Lts.tr LTSInst sys (stOf a) Cslib.HasTau.τ t) (htl : t.index.val < n)
     (hne : t.index.val ≠ a.val) :
     (⟨t.index.val, htl⟩ : Fin n) ∈ tsucc LTSInst sys hn0 a := by
@@ -2073,7 +2146,7 @@ theorem tsucc_of_tr {n : Nat} (hn0 : 0 < n) (a : Fin n) (t : TagIndex Std.Usize 
   · exact absurd ⟨hne, (label_eq_tau_iff _).1 rfl⟩ hc
 
 /-- States in the same τ-SCC block reach each other by τ-steps. -/
-theorem sameBlock_tauSTr (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem sameBlock_tauSTr (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val) (hnlt : n0.val < Usize.max)
     (ip : IndexedPartition) (k : Nat) (hlen : ip.partition.val.length = n0.val)
     (hscc : MercLib.Tarjan.IsSccPartition (gOf LTSInst sys hn0 hnlt)
@@ -2103,7 +2176,7 @@ section Top
 /-- **`tau_cycle_elimination_and_reorder` (with `eliminate_tau_selfloops = true`)**: the result is a
     well-formed, topologically ordered LTS (`BranchingLtsAssumptions`) that is branching bisimilar
     to the input via the state map `f`, which sends `state` to the returned state. -/
-theorem tau_cycle_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem tau_cycle_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hass : PreprocessAssumptions LTSInst sys)
     (state : TagIndex Std.Usize StateTag) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hstate : state.index.val < n0.val) :

@@ -1,5 +1,9 @@
+module
 
-import MercVerified.Basic
+
+public import MercVerified.Basic
+
+@[expose] public section
 
 /-!
 # Bridge: an `LTS` trait implementor as a cslib `LTS`

@@ -1,5 +1,9 @@
-import MercVerified.Lts.Lts
-import MercLib.Sigref.Scc
+module
+
+public import MercVerified.Lts.Lts
+public import MercLib.Sigref.Scc
+
+@[expose] public section
 
 open Aeneas Aeneas.Std Result
 open merc_utilities.timing (Timing)

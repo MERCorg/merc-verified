@@ -1,6 +1,43 @@
-import MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
-import MercLib.Sigref.Proofs.KeyComp_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+public import MercLib.Sigref.Proofs.KeyComp_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `branching_process_marked_elements`: the concrete key computation is `MercLib.Sigref.RP.kcRun`
@@ -30,7 +67,7 @@ open Classical
 /-- The state with index `a`. -/
 def stOf {n : Nat} (a : Fin n) : ST := uTag a.val
 
-theorem stOf_index {n : Nat} (a : Fin n) (hn : n ≤ Usize.max) : (stOf a).index.val = a.val := by
+private theorem stOf_index {n : Nat} (a : Fin n) (hn : n ≤ Usize.max) : (stOf a).index.val = a.val := by
   unfold stOf uTag
   show (uTotal a.val).val = _
   exact uTotal_val_of_lt (by have := usize_max_succ; have := a.2; omega)
@@ -66,7 +103,7 @@ structure CEnv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usiz
   lab : ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
     ∀ s μ s', s.index.val < n.val → MercVerified.Lts.tr LTSInst sys s μ s' → μ.index.val < nl.val
 
-theorem tr_iff_mem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {s : ST}
+private theorem tr_iff_mem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {s : ST}
     {ts : alloc.vec.Vec Transition} (h : LTSInst.outgoing_transitions sys s = ok ts)
     (μ : TagIndex Std.Usize LabelTag) (s' : ST) :
     MercVerified.Lts.tr LTSInst sys s μ s' ↔ ({ label := μ, «to» := s' } : Transition) ∈ ts.val := by
@@ -76,7 +113,7 @@ theorem tr_iff_mem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {s : ST}
     subst this; exact hmem
   · intro hmem; exact ⟨ts, h, hmem⟩
 
-theorem label_eq_tau_iff (l : TagIndex Std.Usize LabelTag) :
+private theorem label_eq_tau_iff (l : TagIndex Std.Usize LabelTag) :
     l = (Cslib.HasTau.τ : TagIndex Std.Usize LabelTag) ↔ l.index.val = 0 := by
   constructor
   · intro h; rw [h]; rfl
@@ -84,11 +121,11 @@ theorem label_eq_tau_iff (l : TagIndex Std.Usize LabelTag) :
     apply merc_utilities.tagged_index.TagIndex.ext
     exact UScalar.eq_of_val_eq h
 
-theorem bt_eq_iff (a b : BT) : a = b ↔ a.index.val = b.index.val :=
+private theorem bt_eq_iff (a b : BT) : a = b ↔ a.index.val = b.index.val :=
   ⟨fun h => by rw [h], fun h => merc_utilities.tagged_index.TagIndex.ext (UScalar.eq_of_val_eq h)⟩
 
 /-- **The concrete flat signature is `MercLib.Sigref.RP.flatSig`.** -/
-theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usize}
+private theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usize}
     (hE : CEnv LTSInst sys nl) {n : Nat} (hn : n ≤ Usize.max) (s : Fin n)
     (ts : alloc.vec.Vec Transition) (hout : LTSInst.outgoing_transitions sys (stOf s) = ok ts)
     {nU : Std.Usize} (hns : LTSInst.num_of_states sys = ok nU) (hsn : (stOf s).index.val < nU.val)
@@ -194,12 +231,12 @@ theorem decode_brEntries {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl 
         rw [hk, ← hf]; rfl
 
 /-- The acceptance test of `renumber_branching` on the hat entry `e`. -/
-def RnTest (_nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) (e : SigEntry) : Prop :=
+private def RnTest (_nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) (e : SigEntry) : Prop :=
   ∀ x ∈ L, x ≠ e → x ∈ kts.getD e.2.index.val []
 
 /-- The scan returns the key of the hat entry with the largest key passing the test, and none if
 no hat entry passes. -/
-theorem rnScan_char (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) :
+private theorem rnScan_char (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) :
     ∀ R : List SigEntry, (∀ e ∈ R, e.1.index.val ≤ nl) → (R.Pairwise (fun a b => entLt b a)) →
       (∀ c, rnScan nl kts L R = some c →
         (∃ e ∈ R, e.2 = c ∧ e.1.index.val = nl ∧ RnTest nl kts L e) ∧
@@ -253,11 +290,11 @@ theorem rnScan_char (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) 
         unfold entLt at this
         omega
 
-theorem entry_ext' {a b : SigEntry} (h1 : a.1 = b.1) (h2 : a.2.index.val = b.2.index.val) : a = b :=
+private theorem entry_ext' {a b : SigEntry} (h1 : a.1 = b.1) (h2 : a.2.index.val = b.2.index.val) : a = b :=
   entry_ext (by rw [h1]) h2
 
 /-- The acceptance test of the scan is `is_subset_excluding` of the abstract signatures. -/
-theorem rnTest_iff (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) (e : SigEntry)
+private theorem rnTest_iff (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) (e : SigEntry)
     (_heL : e ∈ L) (hhat : e.1.index.val = nl) (hk : e.2.index.val < kts.length) :
     RnTest nl kts L e ↔
       MercLib.Sigref.RP.SubsetExcl ((kts.map (decodeSig nl))[e.2.index.val]'(by simpa using hk))
@@ -295,7 +332,7 @@ theorem rnTest_iff (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry) (
       rwa [this] at hy
 
 /-- **The backwards scan is the abstract `renumber`.** -/
-theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry)
+private theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEntry)
     (hL : List.Pairwise entLt L) (hle : ∀ e ∈ L, e.1.index.val ≤ nl)
     (hkeys : ∀ e ∈ L, e.1.index.val = nl → e.2.index.val < kts.length) :
     (rnScan nl kts L L.reverse).map (fun c => c.index.val) =
@@ -346,7 +383,7 @@ theorem rnScan_renumber (nl : Nat) (kts : List (List SigEntry)) (L : List SigEnt
 
 open verified.merc_reduction.signature_refinement in
 /-- **`branching_signature_index`**: the backwards scan, falling back to interning. -/
-theorem bsi_eq {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usize}
+private theorem bsi_eq {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usize}
     (hnl : LTSInst.num_of_labels sys = ok nl) (id : InternMap) (kts : VecTy SigKey)
     (sigb : SigKey) (hsig : List.Pairwise entLt sigb.val)
     (hkts : ∀ v ∈ kts.val, List.Pairwise entLt v.val)
@@ -371,7 +408,7 @@ theorem bsi_eq {L Label : Type} (LTSInst : LTS L Label) (sys : L) {nl : Std.Usiz
   rw [← hr2]
   cases r <;> simp
 
-theorem kcRun_snoc {n : Nat} {Label : Type} [Cslib.HasTau Label] (lts : Cslib.LTS (Fin n) Label)
+private theorem kcRun_snoc {n : Nat} {Label : Type} [Cslib.HasTau Label] (lts : Cslib.LTS (Fin n) Label)
     (blk : Fin n → ℕ) (dirty : Fin n → Prop) (l : List (Fin n)) (z : Fin n) (st : MercLib.Sigref.KC n Label) :
     MercLib.Sigref.RP.kcRun lts blk dirty (l ++ [z]) st =
       MercLib.Sigref.RP.kcStep lts blk dirty (MercLib.Sigref.RP.kcRun lts blk dirty l st) z := by
@@ -379,7 +416,7 @@ theorem kcRun_snoc {n : Nat} {Label : Type} [Cslib.HasTau Label] (lts : Cslib.LT
   rw [List.foldl_append]; rfl
 
 /-- Writing `idx` into `state_to_key[i]` updates `keyOf` at `z = i`. -/
-theorem keyOf_set {n : Nat} (stk : VecTy BT) (z : Fin n) (i : Std.Usize) (idx : BT)
+private theorem keyOf_set {n : Nat} (stk : VecTy BT) (z : Fin n) (i : Std.Usize) (idx : BT)
     (hzi : z.val = i.val) (hz : i.val < stk.val.length) :
     keyOf (n := n) ({ slice := stk.slice.set i idx } : VecTy BT) =
       Function.update (keyOf stk) z idx.index.val := by
@@ -399,7 +436,7 @@ theorem keyOf_set {n : Nat} (stk : VecTy BT) (z : Fin n) (i : Std.Usize) (idx : 
     exact haz (Fin.ext (by rw [← h, hzi]))
 
 /-- Indexing a slice by a tagged `usize`. -/
-theorem slice_tagged_index_ok {U Tag : Type} (s : Slice U) (t : TagIndex Std.Usize Tag)
+private theorem slice_tagged_index_ok {U Tag : Type} (s : Slice U) (t : TagIndex Std.Usize Tag)
     (h : t.index.val < s.val.length) :
     verified.Slice.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
       (core.slice.index.SliceIndexUsizeSlice U) s t = ok (s.val[t.index.val]'h) := by
@@ -409,7 +446,7 @@ theorem slice_tagged_index_ok {U Tag : Type} (s : Slice U) (t : TagIndex Std.Usi
   simpa [core.slice.index.Slice.index, core.slice.index.Usize.index] using this
 
 open verified.merc_reduction.signature_refinement in
-theorem bpme_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
+private theorem bpme_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
     (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey) (spb : BlockPartitionBuilder)
     (stk : VecTy BT) (ei : Sz) (hge : spb.old_elements.val.length ≤ ei.val) :
     branching_process_marked_elements_loop.body LTSInst sys partition id kts sigb spb stk ei
@@ -418,7 +455,7 @@ theorem bpme_body_done {L Label : Type} (LTSInst : LTS L Label) (sys : L) (parti
   simp [hge]
 
 open verified.merc_reduction.signature_refinement in
-theorem bpme_body_some {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem bpme_body_some {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (partition : BlockPartition) (id : InternMap) (kts : VecTy SigKey) (sigb : SigKey)
     (spb : BlockPartitionBuilder) (stk : VecTy BT) (ei : Sz)
     (hlt : ei.val < spb.old_elements.val.length) (state_index : ST)
@@ -458,7 +495,7 @@ theorem bpme_body_some {L Label : Type} (LTSInst : LTS L Label) (sys : L)
   rw [hadd]
   simp
 
-theorem decodeSig_congr (nl : Nat) {l l' : List SigEntry} (h : ∀ e, e ∈ l ↔ e ∈ l') :
+private theorem decodeSig_congr (nl : Nat) {l l' : List SigEntry} (h : ∀ e, e ∈ l ↔ e ∈ l') :
     decodeSig nl l = decodeSig nl l' := by
   unfold decodeSig
   congr 1
@@ -471,7 +508,7 @@ theorem decodeSig_congr (nl : Nat) {l l' : List SigEntry} (h : ∀ e, e ∈ l �
     · rintro ⟨x, hx, h1, h2⟩; exact ⟨x, (h x).1 hx, h1, h2⟩
     · rintro ⟨x, hx, h1, h2⟩; exact ⟨x, (h x).2 hx, h1, h2⟩
 
-theorem mem_of_decode_eq (nl : Nat) {l l' : List SigEntry} (h : decodeSig nl l = decodeSig nl l') :
+private theorem mem_of_decode_eq (nl : Nat) {l l' : List SigEntry} (h : decodeSig nl l = decodeSig nl l') :
     ∀ e ∈ l, e ∈ l' := by
   intro e he
   by_cases hl : e.1.index.val = nl
@@ -489,12 +526,12 @@ theorem mem_of_decode_eq (nl : Nat) {l l' : List SigEntry} (h : decodeSig nl l =
     rwa [this] at hy
 
 /-- The abstract signature determines a sorted entry list. -/
-theorem decodeSig_inj (nl : Nat) {l l' : List SigEntry} (hl : List.Pairwise entLt l)
+private theorem decodeSig_inj (nl : Nat) {l l' : List SigEntry} (hl : List.Pairwise entLt l)
     (hl' : List.Pairwise entLt l') (h : decodeSig nl l = decodeSig nl l') : l = l' :=
   sigKey_unique hl hl' (fun e => ⟨mem_of_decode_eq nl h e, mem_of_decode_eq nl h.symm e⟩)
 
 /-- Interning a signature that is stored at `i` in a duplicate-free table returns `i`. -/
-theorem intern_found {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg : MercLib.Sigref.KSig Label)
+private theorem intern_found {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg : MercLib.Sigref.KSig Label)
     (hnd : tbl.Nodup) (i : Nat) (hi : i < tbl.length) (hs : tbl[i] = sg) :
     MercLib.Sigref.RP.intern tbl sg = (i, tbl) := by
   unfold MercLib.Sigref.RP.intern
@@ -507,7 +544,7 @@ theorem intern_found {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg
     exact this
   rw [this]
 
-theorem intern_new {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg : MercLib.Sigref.KSig Label)
+private theorem intern_new {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg : MercLib.Sigref.KSig Label)
     (hnew : ∀ i, ∀ hi : i < tbl.length, tbl[i] ≠ sg) :
     MercLib.Sigref.RP.intern tbl sg = (tbl.length, tbl ++ [sg]) := by
   unfold MercLib.Sigref.RP.intern
@@ -515,7 +552,7 @@ theorem intern_new {Label : Type} (tbl : List (MercLib.Sigref.KSig Label)) (sg :
   rw [dite_eq_right hex]
 
 /-- In a strictly sorted list, an element smaller than `l[m]` occurs before position `m`. -/
-theorem before_of_lt {α : Type} (f : α → Nat) {l : List α} (hl : List.Pairwise (fun a c => f a < f c) l)
+private theorem before_of_lt {α : Type} (f : α → Nat) {l : List α} (hl : List.Pairwise (fun a c => f a < f c) l)
     {m : Nat} (hm : m < l.length) {x : α} (hx : x ∈ l) (hlt : f x < f (l[m]'hm)) :
     ∃ j, ∃ hj : j < m, l[j]'(by omega) = x := by
   obtain ⟨j, hj, rfl⟩ := List.mem_iff_getElem.1 hx
@@ -527,7 +564,7 @@ theorem before_of_lt {α : Type} (f : α → Nat) {l : List α} (hl : List.Pairw
     · have := (List.pairwise_iff_getElem.1 hl) m j hm hj h
       omega
 
-theorem stk_set_getD (stk : VecTy BT) (i : Std.Usize) (idx : BT) (hi : i.val < stk.val.length) (a : Nat) :
+private theorem stk_set_getD (stk : VecTy BT) (i : Std.Usize) (idx : BT) (hi : i.val < stk.val.length) (a : Nat) :
     (({ slice := stk.slice.set i idx } : VecTy BT).val.getD a zBT) =
       if a = i.val then idx else stk.val.getD a zBT := by
   have hval : ({ slice := stk.slice.set i idx } : VecTy BT).val = stk.val.set i.val idx := by
@@ -541,7 +578,7 @@ theorem stk_set_getD (stk : VecTy BT) (i : Std.Usize) (idx : BT) (hi : i.val < s
       ← List.getD_eq_getElem?_getD]
 
 /-- Concrete topological order: inert τ-steps go to a state with a smaller index. -/
-def ConcTopo {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
+private def ConcTopo {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :=
   ∀ n : Std.Usize, LTSInst.num_of_states sys = ok n →
     ∀ s μ t, s.index.val < n.val → MercVerified.Lts.tr LTSInst sys s μ t → μ.index.val = 0 →
       t.index.val < s.index.val
@@ -568,7 +605,7 @@ structure BrSem {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usi
 
 open verified.merc_reduction.signature_refinement in
 /-- One iteration of the key-computation loop. -/
-theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (nU : Sz) (hns : LTSInst.num_of_states sys = ok nU) (hn0 : 0 < nU.val)
     {nl : Std.Usize} (hE : CEnv LTSInst sys nl) (htopo : ConcTopo LTSInst sys)
@@ -932,7 +969,7 @@ theorem bpme_step {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 open verified.merc_reduction.signature_refinement in
 /-- `branching_process_marked_elements` on the builder left by `marked_elements_sorted` succeeds,
 leaves dense classes, and computes the abstract key computation `kcRun` on `old_elements`. -/
-theorem branching_process_marked_elements_dense {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem branching_process_marked_elements_dense {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (nU : Sz) (hns : LTSInst.num_of_states sys = ok nU) (hn0 : 0 < nU.val)
     {nl : Std.Usize} (hE : CEnv LTSInst sys nl) (htopo : ConcTopo LTSInst sys)

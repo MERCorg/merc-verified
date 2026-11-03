@@ -1,4 +1,16 @@
-import MercVerified.Lts.Proofs.LabelledTransitionSystem_Proofs
+module
+
+public import MercVerified.Lts.Proofs.LabelledTransitionSystem_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Lts.Proofs.LabelledTransitionSystem_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # The logical content of a `LabelledTransitionSystem`
@@ -19,13 +31,13 @@ open merc_collections.compressed_vec (ByteCompressedVec)
 
 namespace MercVerified.Lts.Proofs
 
-noncomputable abbrev UIdx := verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry
+private noncomputable abbrev UIdx := verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry
 
-noncomputable abbrev LIdx :=
+private noncomputable abbrev LIdx :=
   verified.merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry
     LabelTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize
 
-noncomputable abbrev SIdx :=
+private noncomputable abbrev SIdx :=
   verified.merc_utilities.tagged_index.TagIndex.Insts.Merc_collectionsCompressed_vecCompressedEntry
     StateTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize
 
@@ -44,17 +56,17 @@ structure RawOf {Label : Type} (sys : LabelledTransitionSystem Label) (n : Nat) 
   small : n * (n + 2) ≤ Std.Usize.max
   tmax : labs.length < Std.Usize.max
 
-theorem RawOf.n_pos {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem RawOf.n_pos {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) : 0 < n := by
   have := h.init; omega
 
-theorem RawOf.off_le {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem RawOf.off_le {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) : n + 1 ≤ Std.Usize.max := by
   have := h.small
   have := h.n_pos
   nlinarith
 
-theorem le_last_of_pairwise {l : List Nat} {L : Nat} (hp : l.Pairwise (· ≤ ·))
+private theorem le_last_of_pairwise {l : List Nat} {L : Nat} (hp : l.Pairwise (· ≤ ·))
     (hl : l.getLast? = some L) : ∀ x ∈ l, x ≤ L := by
   intro x hx
   obtain ⟨l', hl'⟩ := List.getLast?_eq_some_iff.mp hl
@@ -64,18 +76,18 @@ theorem le_last_of_pairwise {l : List Nat} {L : Nat} (hp : l.Pairwise (· ≤ ·
   · exact hp.2.2 x h L (by simp)
   · simp at h; omega
 
-theorem RawOf.st_length {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem RawOf.st_length {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) : (ByteCompressedVec.toList sys.states).length = n + 1 := by
   have := congrArg List.length h.st
   simpa [h.offlen] using this
 
-theorem RawOf.st_get {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem RawOf.st_get {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (i : Nat) (hi : i < (ByteCompressedVec.toList sys.states).length) :
     ((ByteCompressedVec.toList sys.states)[i]).val = off.getD i 0 := by
   rw [← h.st]
   simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi]
 
-theorem raw_valid {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem raw_valid {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) : LabelledTransitionSystemValid sys := by
   have hn := h.n_pos
   have hmax := h.off_le
@@ -115,7 +127,7 @@ theorem raw_valid {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat
       sys.transition_labels hl
     exact ⟨l, hl', by rw [hlv, h.lab]⟩
 
-theorem loop_unfold_step {α β : Type} (body : α → Result (ControlFlow α β)) (x : α) :
+private theorem loop_unfold_step {α β : Type} (body : α → Result (ControlFlow α β)) (x : α) :
     Aeneas.Std.loop body x
       = (do
           let r ← body x
@@ -126,12 +138,12 @@ theorem loop_unfold_step {α β : Type} (body : α → Result (ControlFlow α β
   rfl
 
 /-- The transitions stored between two offsets. -/
-def segment (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
+private def segment (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (a m : Nat) : List Transition :=
   List.zipWith (fun l t => ({ label := l, «to» := t } : Transition)) ((labs.drop a).take m)
     ((tos.drop a).take m)
 
-theorem segment_succ (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
+private theorem segment_succ (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (a m : Nat) (hl : a < labs.length) (ht : a < tos.length) :
     segment labs tos a (m + 1) = ({ label := labs[a], «to» := tos[a] } : Transition) ::
       segment labs tos (a + 1) m := by
@@ -139,7 +151,7 @@ theorem segment_succ (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (Ta
   rw [List.drop_eq_getElem_cons hl, List.drop_eq_getElem_cons ht, List.take_succ_cons,
     List.take_succ_cons, List.zipWith_cons_cons]
 
-theorem outgoing_loop_content (bcv : ByteCompressedVec (TagIndex Std.Usize LabelTag))
+private theorem outgoing_loop_content (bcv : ByteCompressedVec (TagIndex Std.Usize LabelTag))
     (bcv1 : ByteCompressedVec (TagIndex Std.Usize StateTag))
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag))
     (hl : ByteCompressedVec.toList bcv = labs) (ht : ByteCompressedVec.toList bcv1 = tos)
@@ -212,7 +224,7 @@ theorem outgoing_loop_content (bcv : ByteCompressedVec (TagIndex Std.Usize Label
     · rw [hv', hpushv, segment_succ labs tos _ m hk1 hk2, hstart']
       simp
 
-theorem RawOf.off_mono {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem RawOf.off_mono {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) {i j : Nat} (hij : i ≤ j) (hj : j < n + 1) :
     off.getD i 0 ≤ off.getD j 0 := by
   have hoff := h.offlen
@@ -222,14 +234,14 @@ theorem RawOf.off_mono {Label : Type} {sys : LabelledTransitionSystem Label} {n 
     simpa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (show i < off.length by omega),
       List.getElem?_eq_getElem (show j < off.length by omega)] using this
 
-theorem RawOf.off_le_labs {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem RawOf.off_le_labs {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) {i : Nat} (hi : i < n + 1) : off.getD i 0 ≤ labs.length := by
   have hoff := h.offlen
   apply le_last_of_pairwise h.mono h.last
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (show i < off.length by omega)]
   simp
 
-theorem raw_outgoing {Label : Type} (TLInst : TransitionLabel Label)
+private theorem raw_outgoing {Label : Type} (TLInst : TransitionLabel Label)
     {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (s : TagIndex Std.Usize StateTag) (hs : s.index.val < n) :
     ∃ ts : alloc.vec.Vec Transition,
@@ -279,12 +291,12 @@ theorem raw_outgoing {Label : Type} (TLInst : TransitionLabel Label)
   · rw [hresv, hwc]
     simp [hsv, hev]
 
-theorem massert_of (b : Prop) [Decidable b] (h : b) : massert b = ok () := by
+private theorem massert_of (b : Prop) [Decidable b] (h : b) : massert b = ok () := by
   unfold massert; simp [h]
 
 /-- A `loop` over a `Range` whose body only checks: every step with index in `[lo, e)` advances by one,
     and the exhausted range finishes. -/
-theorem range_check_loop
+private theorem range_check_loop
     (body : core.ops.range.Range Std.Usize → Result (ControlFlow (core.ops.range.Range Std.Usize) Unit))
     (e : Std.Usize) (lo : Nat)
     (hsome : ∀ i : Std.Usize, lo ≤ i.val → i.val < e.val →
@@ -317,7 +329,7 @@ theorem range_check_loop
   cases r
   exact hr
 
-theorem offsets_valid_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem offsets_valid_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (nU : Std.Usize) (hnU : nU.val = n) :
     verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.assert_offsets_valid_loop
       { start := 0#usize, «end» := nU } sys = ok () := by
@@ -360,10 +372,10 @@ theorem offsets_valid_ok {Label : Type} {sys : LabelledTransitionSystem Label} {
   · simp
   · simp [hnU]
 
-theorem vec_len_val' {α : Type} (v : alloc.vec.Vec α) : (alloc.vec.Vec.len v).val = v.val.length := by
+private theorem vec_len_val' {α : Type} (v : alloc.vec.Vec α) : (alloc.vec.Vec.len v).val = v.val.length := by
   simp [alloc.vec.Vec.len]
 
-theorem vec_index_ok' {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
+private theorem vec_index_ok' {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
     (h : i.val < v.val.length) :
     alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice U) v i = ok (v.val[i.val]'h) := by
   have hs := Slice.index_usize_spec v.slice i (by simpa [alloc.vec.Vec.length, alloc.vec.Vec.val] using h)
@@ -374,7 +386,7 @@ theorem vec_index_ok' {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
   rw [hx, hxe]
   rfl
 
-theorem tag_eq_ok {Tag : Type} (a b : TagIndex Std.Usize Tag) :
+private theorem tag_eq_ok {Tag : Type} (a b : TagIndex Std.Usize Tag) :
     verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
       core.cmp.PartialEqUsize a b = ok (decide (a.index.val = b.index.val)) := by
   rw [tag_partial_eq_inst]
@@ -392,7 +404,7 @@ structure RawGood {Label : Type} (sys : LabelledTransitionSystem Label) (n : Nat
     ∀ (hi : i < labs.length) (hj : j < labs.length) (hi' : i < tos.length) (hj' : j < tos.length),
       labs[i] = labs[j] → tos[i] = tos[j] → False
 
-theorem transitions_valid_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem transitions_valid_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (g : RawGood sys n off labs tos) (nU tU : Std.Usize)
     (hnU : nU.val = n) (htU : tU.val = labs.length) :
     verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.assert_transitions_valid_loop
@@ -432,7 +444,7 @@ theorem transitions_valid_ok {Label : Type} {sys : LabelledTransitionSystem Labe
   · simp
   · simp
 
-theorem unique_inner_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
+private theorem unique_inner_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (i end_ : Std.Usize) (hend : end_.val ≤ labs.length)
     (hdup : ∀ j, i.val < j → j < end_.val →
       ∀ (hi : i.val < labs.length) (hj : j < labs.length) (hi' : i.val < tos.length) (hj' : j < tos.length),
@@ -491,7 +503,7 @@ theorem unique_inner_ok {Label : Type} {sys : LabelledTransitionSystem Label} {n
   · omega
   · omega
 
-theorem unique_ok {Label : Type} (TLInst : TransitionLabel Label)
+private theorem unique_ok {Label : Type} (TLInst : TransitionLabel Label)
     {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (i end_ : Std.Usize) (hend : end_.val ≤ labs.length)
     (hdup : ∀ j, i.val < j → j < end_.val →
@@ -511,7 +523,7 @@ theorem unique_ok {Label : Type} (TLInst : TransitionLabel Label)
   simp only [bind_ok]
   exact unique_inner_ok h i end_ hend hdup hi i1 hi1v'
 
-theorem loop00_ok {Label : Type} (TLInst : TransitionLabel Label)
+private theorem loop00_ok {Label : Type} (TLInst : TransitionLabel Label)
     {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (a b : Std.Usize) (hab : a.val ≤ b.val) (hb : b.val ≤ labs.length)
     (hdup : ∀ i j, a.val ≤ i → i < j → j < b.val →
@@ -543,7 +555,7 @@ theorem loop00_ok {Label : Type} (TLInst : TransitionLabel Label)
   · simp
   · simpa using hab
 
-theorem no_dup_ok {Label : Type} (TLInst : TransitionLabel Label)
+private theorem no_dup_ok {Label : Type} (TLInst : TransitionLabel Label)
     {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (g : RawGood sys n off labs tos) (nU : Std.Usize) (hnU : nU.val = n) :
     verified.merc_lts.labelled_transition_system.LabelledTransitionSystem.assert_no_duplicate_transitions
@@ -592,7 +604,7 @@ theorem no_dup_ok {Label : Type} (TLInst : TransitionLabel Label)
   · simp
   · simp
 
-theorem assert_valid_ok {Label : Type} (TLInst : TransitionLabel Label)
+private theorem assert_valid_ok {Label : Type} (TLInst : TransitionLabel Label)
     {sys : LabelledTransitionSystem Label} {n : Nat} {off labs tos}
     (h : RawOf sys n off labs tos) (g : RawGood sys n off labs tos)
     (hlab : 1 ≤ sys.labels.val.length)

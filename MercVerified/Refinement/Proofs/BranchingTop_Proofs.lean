@@ -1,9 +1,64 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Refinement_Proofs
-import MercVerified.Refinement.Proofs.BranchingRun_Proofs
-import MercVerified.Refinement.Proofs.BranchingIncoming_Proofs
-import MercVerified.Refinement.Proofs.BranchingBridge_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Refinement_Proofs
+public import MercVerified.Refinement.Proofs.BranchingRun_Proofs
+public import MercVerified.Refinement.Proofs.BranchingIncoming_Proofs
+public import MercVerified.Refinement.Proofs.BranchingBridge_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.Branching_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.BranchingBridge_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingIncoming_Proofs
+import all MercVerified.Refinement.Proofs.BranchingPartition_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRun_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingStep_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.Refinement_Proofs
+import all MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoopCorrect_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.WorklistStep_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Proofs for the `branching_bisim_sigref_impl` correctness contract
@@ -37,7 +92,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The `resize_with` closure of `branching_signature_refinement` never fails. -/
-theorem branching_resize_closure_total {L Label : Type} (LTSInst : LTS L Label) :
+private theorem branching_resize_closure_total {L Label : Type} (LTSInst : LTS L Label) :
     core.ops.function.FnMut.IsTotal
       (verified.merc_reduction.signature_refinement.branching_signature_refinement.closure.Insts.CoreOpsFunctionFnMutTupleTagIndexUsizeBlockTag
         LTSInst) := by
@@ -66,7 +121,7 @@ private theorem BlockPartitionBuilder_default_ok' :
 
 /-- The `Fin n` view of a branching-bisimulation-quotient: the sub-LTS of real states embeds into
 `toLTS`. -/
-theorem branching_bb_toLTS {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem branching_bb_toLTS {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n) (hnmax : n.val ≤ Usize.max) (a b : Fin n.val) :
     BranchingBisimilarity (aLTS LTSInst sys n.val) a b ↔
@@ -85,7 +140,7 @@ theorem branching_bb_toLTS {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- `branching_signature_refinement` succeeds and its partition is the branching-bisimilarity
 partition of the `Fin n` view. -/
-theorem branching_signature_refinement_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private theorem branching_signature_refinement_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (hfit : MercVerified.Refinement.StateCountFits LTSInst sys)
     (hasm : BranchingLtsAssumptions LTSInst sys)
@@ -139,6 +194,12 @@ theorem branching_signature_refinement_spec {L Label : Type} (LTSInst : LTS L La
   rw [hloop]
   simp
 
+/-- Kernel-checked length bound for the `"reduction"` timing label, so the proof below does not
+    elaborate `toStr`'s default argument (whose `decide +kernel` auxiliary the comparator cannot
+    export). -/
+private theorem reduction_str_bound : "reduction".toByteArray.size ≤ U32.max := by
+  rw [show "reduction".toByteArray.size = 9 from rfl]; simp [U32.max, U32.numBits]
+
 /-- **Contract**: `branching_bisim_sigref_impl` returns a partition whose blocks are exactly the
 branching bisimilarity classes of the real states. -/
 theorem branching_bisim_sigref_impl_correct
@@ -150,7 +211,7 @@ theorem branching_bisim_sigref_impl_correct
   unfold BranchingBisimSigrefImplCorrectSpec
   obtain ⟨n, hns, hnpos⟩ := hwf.1
   have hn2 := hfit n hns
-  have hnmax : n.val ≤ Usize.max := by scalar_tac
+  have hnmax : n.val ≤ Usize.max := Nat.le_trans (Nat.le_mul_of_pos_right _ (by omega)) hn2
   rcases (MercVerified.Lts.Proofs.incoming_new_ok LTSInst sys hwf hfit)
     with ⟨incoming, hincoming⟩
   obtain ⟨partition', hsr, hPI, hiff⟩ := branching_signature_refinement_spec LTSInst sys hwf hfit
@@ -163,11 +224,11 @@ theorem branching_bisim_sigref_impl_correct
     simpa using hsr
   have hmeasure := merc_utilities.timing.Timing.measure_spec
     (verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
-      LTSInst) timing (toStr "reduction") (sys, incoming)
+      LTSInst) timing (toStr "reduction" reduction_str_bound) (sys, incoming)
   rw [hcall0] at hmeasure
   obtain ⟨partition, hmeasure', hcall⟩ : ∃ partition, merc_utilities.timing.Timing.measure
       (verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
-        LTSInst) timing (toStr "reduction") (sys, incoming) = ok partition ∧
+        LTSInst) timing (toStr "reduction" reduction_str_bound) (sys, incoming) = ok partition ∧
       (verified.merc_reduction.signature_refinement.branching_bisim_sigref_impl.closure.Insts.CoreOpsFunctionFnOnceTupleBlockPartition
         LTSInst).call_once (sys, incoming) () = ok partition :=
     ⟨partition', hmeasure, hcall0⟩

@@ -1,6 +1,17 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # The public partition invariant `PartInv`
@@ -32,7 +43,7 @@ set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
 
 /-- `N ≤ n`: `k ↦ begin_k` is an injection of the blocks into `range n`. -/
-theorem _root_.MercVerified.Refinement.PartInv.blocks_le_n {n : Nat} {p : BlockPartition} (h : PartInv n p) :
+private theorem _root_.MercVerified.Refinement.PartInv.blocks_le_n {n : Nat} {p : BlockPartition} (h : PartInv n p) :
     p.blocks.val.length ≤ n := by
   have hmaps : ∀ k ∈ Finset.range p.blocks.val.length,
       (blkAt p k).begin.val ∈ Finset.range n := by
@@ -52,7 +63,7 @@ theorem _root_.MercVerified.Refinement.PartInv.blocks_le_n {n : Nat} {p : BlockP
   simpa using Finset.card_le_card_of_injOn _ hmaps hinj
 
 /-- A position lying in two blocks' ranges forces the blocks to be equal. -/
-theorem _root_.MercVerified.Refinement.PartInv.pos_block_unique {n : Nat} {p : BlockPartition} (h : PartInv n p) {j k q : Nat}
+private theorem _root_.MercVerified.Refinement.PartInv.pos_block_unique {n : Nat} {p : BlockPartition} (h : PartInv n p) {j k q : Nat}
     (hj : j < p.blocks.val.length) (hk : k < p.blocks.val.length)
     (hqj : (blkAt p j).begin.val ≤ q ∧ q < (blkAt p j).«end».val)
     (hqk : (blkAt p k).begin.val ≤ q ∧ q < (blkAt p k).«end».val) : j = k := by
@@ -63,7 +74,7 @@ theorem _root_.MercVerified.Refinement.PartInv.pos_block_unique {n : Nat} {p : B
     the two (old) elements' offsets repaired (the later write wins), and `blocks` and
     `element_to_block` are untouched. Unlike `swap_elements_spec` this pins down *where* things
     end up, which `PartInv` preservation needs. -/
-theorem swap_elements_content (p : BlockPartition) (a b : Std.Usize)
+private theorem swap_elements_content (p : BlockPartition) (a b : Std.Usize)
     (h3 : ∀ x ∈ p.elements.val, x.index.val < p.element_offset.val.length)
     (ha : a.val < p.elements.val.length) (hb : b.val < p.elements.val.length) :
     ∃ p' : BlockPartition,
@@ -163,11 +174,11 @@ theorem swap_elements_content (p : BlockPartition) (a b : Std.Usize)
     rw [Slice.set_val_eq, Slice.set_val_eq]
     rfl
 
-theorem eAt_eq_getElem {p : BlockPartition} {i : Nat} (h : i < p.elements.val.length) :
+private theorem eAt_eq_getElem {p : BlockPartition} {i : Nat} (h : i < p.elements.val.length) :
     eAt p i = p.elements.val[i] := by
   simp [eAt, List.getD_eq_getElem?_getD, h]
 
-theorem _root_.MercVerified.Refinement.PartInv.elem_idx_lt {n : Nat} {p : BlockPartition} (h : PartInv n p)
+private theorem _root_.MercVerified.Refinement.PartInv.elem_idx_lt {n : Nat} {p : BlockPartition} (h : PartInv n p)
     {x : TagIndex Std.Usize StateTag} (hx : x ∈ p.elements.val) : x.index.val < n := by
   obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hx
   have hi' : i < n := h.len_e ▸ hi
@@ -176,7 +187,7 @@ theorem _root_.MercVerified.Refinement.PartInv.elem_idx_lt {n : Nat} {p : BlockP
 
 /-- Swapping two positions of the same block preserves `PartInv` (and `blocks`,
     `element_to_block`). -/
-theorem swap_elements_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
+private theorem swap_elements_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (a b : Std.Usize) (ha : a.val < n) (hb : b.val < n) {k : Nat}
     (hk : k < p.blocks.val.length)
     (hak : (blkAt p k).begin.val ≤ a.val ∧ a.val < (blkAt p k).«end».val)
@@ -295,13 +306,13 @@ theorem swap_elements_partInv {n : Nat} {p : BlockPartition} (hp : PartInv n p)
       exact hp.disj j j' (hN ▸ hj) (hN ▸ hj') hne
   exact ⟨hPI, hbl, he2b, fun s => by rw [hO s, hxA, hyB]⟩
 
-theorem blkAt_eq_getElem {p : BlockPartition} {i : Nat} (h : i < p.blocks.val.length) :
+private theorem blkAt_eq_getElem {p : BlockPartition} {i : Nat} (h : i < p.blocks.val.length) :
     blkAt p i = p.blocks.val[i] := by
   simp [blkAt, List.getD_eq_getElem?_getD, h]
 
 /-- Overwriting one block's `marked_split` (within `[begin, end]`) preserves `PartInv`;
     `begin`, `end`, the other blocks and all the per-state vectors are unchanged. -/
-theorem _root_.MercVerified.Refinement.PartInv.set_marked_split {n : Nat} {q : BlockPartition} (hq : PartInv n q)
+private theorem _root_.MercVerified.Refinement.PartInv.set_marked_split {n : Nat} {q : BlockPartition} (hq : PartInv n q)
     (kk : Std.Usize) (hK : kk.val < q.blocks.val.length) (m : Std.Usize)
     (h1 : (blkAt q kk.val).begin.val ≤ m.val) (h2 : m.val ≤ (blkAt q kk.val).«end».val) :
     PartInv n { q with blocks :=
@@ -350,10 +361,10 @@ theorem _root_.MercVerified.Refinement.PartInv.set_marked_split {n : Nat} {q : B
     rw [(hbe j).1, (hbe j).2, (hbe j').1, (hbe j').2]
     exact hq.disj j j' (hN ▸ hj) (hN ▸ hj') hne
 
-theorem usize_one_val : (1#usize : Std.Usize).val = 1 := rfl
+private theorem usize_one_val : (1#usize : Std.Usize).val = 1 := rfl
 
 /-- Reading a block after `Slice.set` on the block vector. -/
-theorem blkAt_set {q : BlockPartition} (kk : Std.Usize) (hK : kk.val < q.blocks.val.length)
+private theorem blkAt_set {q : BlockPartition} (kk : Std.Usize) (hK : kk.val < q.blocks.val.length)
     (nb : Block) (j : Nat) :
     blkAt { q with blocks := ({ slice := q.blocks.slice.set kk nb } : alloc.vec.Vec Block) } j
       = if kk.val = j then nb else blkAt q j := by
@@ -372,7 +383,7 @@ def IsMarked (p : BlockPartition) (s : Nat) : Prop :=
 
 /-- Marking an unmarked state `f` (swap it with the last unmarked element and shrink the unmarked
     prefix) marks exactly `f`. -/
-theorem isMarked_after_mark {n : Nat} {p p' : BlockPartition} (hp : PartInv n p) (f : Nat) (hf : f < n)
+private theorem isMarked_after_mark {n : Nat} {p p' : BlockPartition} (hp : PartInv n p) (f : Nat) (hf : f < n)
     (hlt : offAt p f < (blkAt p (e2bAt p f)).marked_split.val)
     (he2b : ∀ t, e2bAt p' t = e2bAt p t)
     (hms : ∀ j, (blkAt p' j).marked_split.val =
@@ -441,7 +452,7 @@ theorem isMarked_after_mark {n : Nat} {p p' : BlockPartition} (hp : PartInv n p)
       · exact h
       · exact absurd h htf
 
-theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
+private theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
     (s : TagIndex Std.Usize StateTag) (hs : s.index.val < n) :
     ∃ p', verified.merc_reduction.block_partition.BlockPartition.mark_element p s = ok p' ∧
       PartInv n p' ∧ p'.element_to_block = p.element_to_block ∧
@@ -625,7 +636,7 @@ theorem mark_element_spec {n : Nat} {p : BlockPartition} (h : PartInv n p)
           omega
 
 /-- The initial partition `BlockPartition::new n` satisfies `PartInv`. -/
-theorem init_partInv (num : Std.Usize) (hpos : 0 < num.val) :
+private theorem init_partInv (num : Std.Usize) (hpos : 0 < num.val) :
     ∃ p : BlockPartition,
       verified.merc_reduction.block_partition.BlockPartition.new num = ok p ∧
       PartInv num.val p ∧ p.blocks.val.length = 1 := by

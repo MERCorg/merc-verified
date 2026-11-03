@@ -2,6 +2,11 @@ module
 
 public import MercLib.LTS.BranchingBisimilarity
 public import Mathlib.Logic.Relation
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
 
 @[expose] public section
 
@@ -20,7 +25,7 @@ open MercLib.LTS
 
 namespace MercVerified.Refinement.Proofs
 
-theorem bb_embed {S T Label : Type} [HasTau Label] (l1 : LTS S Label) (l2 : LTS T Label)
+private theorem bb_embed {S T Label : Type} [HasTau Label] (l1 : LTS S Label) (l2 : LTS T Label)
     (f : S → T) (hf : ∀ a μ b, l1.Tr a μ b ↔ l2.Tr (f a) μ (f b))
     (hcl : ∀ a μ t, l2.Tr (f a) μ t → ∃ b, t = f b) (a a' : S) :
     BranchingBisimilarity l1 a a' ↔ BranchingBisimilarity l2 (f a) (f a') := by

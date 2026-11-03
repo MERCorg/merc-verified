@@ -1,8 +1,54 @@
-import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
-import MercVerified.Refinement.Proofs.BranchingPartition_Proofs
-import MercVerified.Refinement.Proofs.WorklistStep_Proofs
-import MercLib.Sigref.Proofs.Branching_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+public import MercVerified.Refinement.Proofs.BranchingPartition_Proofs
+public import MercVerified.Refinement.Proofs.WorklistStep_Proofs
+public import MercLib.Sigref.Proofs.Branching_Proofs
+public import Aeneas.Std.WP
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.Branching_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingPartition_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all MercVerified.Refinement.Proofs.WorklistStep_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # One iteration of `branching_run_worklist_loop`
@@ -31,7 +77,7 @@ set_option maxRecDepth 10000
 
 open verified.merc_reduction.signature_refinement in
 /-- `branching_process_worklist_block` with the leaf contracts rewritten in. -/
-theorem branching_process_worklist_block_contract {L : Type} {Label : Type}
+private theorem branching_process_worklist_block_contract {L : Type} {Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (incoming : verified.merc_lts.incoming_transitions.IncomingTransitions)
     (ctx : WorklistContextBranching) (b : BT)
@@ -68,14 +114,14 @@ theorem branching_process_worklist_block_contract {L : Type} {Label : Type}
 def cfgOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.Config (Fin n) :=
   ⟨(bdOf p n).setoid, {x | IsMarked p x.val}⟩
 
-theorem bdOf_setoid_eq {n : Nat} {p q : BlockPartition} (h : ∀ s, e2bAt q s = e2bAt p s) :
+private theorem bdOf_setoid_eq {n : Nat} {p q : BlockPartition} (h : ∀ s, e2bAt q s = e2bAt p s) :
     (bdOf q n).setoid = (bdOf p n).setoid :=
   Setoid.ext fun x y => by
     show e2bAt q x.val = e2bAt q y.val ↔ e2bAt p x.val = e2bAt p y.val
     rw [h, h]
 
 /-- The termination measure of the branching worklist loop. -/
-def bworklistMeasure (n : Nat) (ctx : WorklistContextBranching) : Nat :=
+private def bworklistMeasure (n : Nat) (ctx : WorklistContextBranching) : Nat :=
   (n - ctx.partition.blocks.val.length) * (n + 1) + ctx.worklist.val.length
 
 /-- The abstract invariant of the loop. -/
@@ -88,7 +134,7 @@ structure BrLoopInv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
   sem : MercLib.Sigref.BranchingInv (aLTS LTSInst sys n) (cfgOf ctx.partition n)
 
 /-- The block data after the backward closure satisfies the hypotheses of the key computation. -/
-theorem blockInv_of_closure {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem blockInv_of_closure {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     (_hn : n ≤ Usize.max) {p q : BlockPartition} {b : Nat}
     (he2b : ∀ s, e2bAt q s = e2bAt p s)
     (_hout : ∀ x : Fin n, e2bAt p x.val ≠ b → (IsMarked q x.val ↔ IsMarked p x.val))
@@ -141,7 +187,7 @@ theorem blockInv_of_closure {L Label : Type} {LTSInst : LTS L Label} {sys : L} {
 /-- **The set-level effect of one iteration is a step of the abstract algorithm.** All the facts
 about the partitions before (`p`), after the closure (`bp`), after the split (`p1`) and after the
 marking (`p2`) that the concrete proofs establish. -/
-theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
+private theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n : Nat}
     (hn : n ≤ Usize.max) {X : Type} (sg : ST → X) {incoming : IncomingTransitions}
     (hmemc : ∀ s : ST, s.index.val < n → ∃ res : alloc.vec.Vec FromTransition,
       IncomingTransitions.incoming_transitions incoming s = ok res ∧
@@ -410,7 +456,7 @@ theorem branching_step_sem {L Label : Type} {LTSInst : LTS L Label} {sys : L} {n
 
 open verified.merc_reduction.signature_refinement in
 /-- **One iteration of the worklist loop** (structural part): the worklist invariant is preserved. -/
-theorem branching_worklist_step_struct {L Label : Type}
+private theorem branching_worklist_step_struct {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys)
     (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)

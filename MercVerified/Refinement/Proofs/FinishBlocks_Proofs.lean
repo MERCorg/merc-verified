@@ -1,13 +1,31 @@
-import MercVerified.Refinement.Refinement
-import MercVerified.Refinement.Proofs.Partition_Proofs
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-import MercLib.Sigref.Proofs.CountingSort_Proofs
-import MercVerified.Refinement.Proofs.FinishPartition_Proofs
-import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
-import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Refinement
+public import MercVerified.Refinement.Proofs.Partition_Proofs
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+public import MercLib.Sigref.Proofs.CountingSort_Proofs
+public import MercVerified.Refinement.Proofs.FinishPartition_Proofs
+public import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+public import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # The block-creation loop of `finish_partition_marked`
@@ -36,7 +54,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- `Block::new_unmarked begin end` on a non-empty range. -/
-theorem new_unmarked_ok (bg e : Std.Usize) (h : bg.val < e.val) :
+private theorem new_unmarked_ok (bg e : Std.Usize) (h : bg.val < e.val) :
     verified.merc_reduction.block_partition.Block.new_unmarked bg e = ok (unmRec bg e) := by
   unfold verified.merc_reduction.block_partition.Block.new_unmarked
   simp [h, unmRec]
@@ -44,7 +62,7 @@ theorem new_unmarked_ok (bg e : Std.Usize) (h : bg.val < e.val) :
 /-- One iteration of `finish_partition_marked_loop0` when the current class is the first one and
     the block has an unmarked part: the old block keeps the unmarked part, class `0` becomes a new
     block. -/
-theorem finish0_step_first_unmarked
+private theorem finish0_step_first_unmarked
     (deref_mut_back : Slice Std.Usize → alloc.vec.Vec Std.Usize)
     (iter_mut_back : core.slice.iter.IterMut Std.Usize → Slice Std.Usize)
     (E : alloc.vec.Vec (TagIndex Std.Usize StateTag))
@@ -108,7 +126,7 @@ theorem finish0_step_first_unmarked
     hi1, hpush9]
 
 /-- First class, block without an unmarked part: the old block itself becomes class `0`'s block. -/
-theorem finish0_step_first_plain
+private theorem finish0_step_first_plain
     (deref_mut_back : Slice Std.Usize → alloc.vec.Vec Std.Usize)
     (iter_mut_back : core.slice.iter.IterMut Std.Usize → Slice Std.Usize)
     (E : alloc.vec.Vec (TagIndex Std.Usize StateTag))
@@ -162,7 +180,7 @@ theorem finish0_step_first_plain
   simp [hnext, massert, hpos, hhas, hnu1, vec_tagged_index_mut_ok v5 block_index hb, hi1]
 
 /-- Later classes: a fresh block `[current, current + size)` is appended. -/
-theorem finish0_step_later
+private theorem finish0_step_later
     (deref_mut_back : Slice Std.Usize → alloc.vec.Vec Std.Usize)
     (iter_mut_back : core.slice.iter.IterMut Std.Usize → Slice Std.Usize)
     (E : alloc.vec.Vec (TagIndex Std.Usize StateTag))
@@ -212,24 +230,24 @@ theorem finish0_step_later
 
 /-- The first record: the unmarked part keeps the old block when there is one, otherwise class `0`
     takes it. -/
-def firstRec (u : Bool) (block : Block) (ms : Nat) (szs : List Nat) : Block :=
+private def firstRec (u : Bool) (block : Block) (ms : Nat) (szs : List Nat) : Block :=
   if u then unmRec block.begin block.marked_split else pieceRec ms szs 0
 
 /-- The block list after the first `m` classes have been processed. -/
-def blkSeq (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat) (szs : List Nat)
+private def blkSeq (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat) (szs : List Nat)
     (m : Nat) : List Block :=
   if m = 0 then blocks
   else blocks.set b (firstRec u block ms szs) ++
     (List.range' (firstNew u) (m - firstNew u)).map (pieceRec ms szs)
 
-theorem blkSeq_length (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
+private theorem blkSeq_length (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
     (szs : List Nat) (m : Nat) :
     (blkSeq blocks b u block ms szs m).length =
       if m = 0 then blocks.length else blocks.length + (m - firstNew u) := by
   unfold blkSeq; split_ifs <;> simp
 
 /-- `blkSeq K` has exactly the shape `split_partInv` asks of the new block list. -/
-theorem blkSeq_getD_new (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
+private theorem blkSeq_getD_new (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
     (szs : List Nat) (K : Nat) (hK : 0 < K) (_hb : b < blocks.length) (c : Nat)
     (hc1 : firstNew u ≤ c) (hc2 : c < K) :
     (blkSeq blocks b u block ms szs K).getD (blocks.length + (c - firstNew u)) blk0 =
@@ -243,7 +261,7 @@ theorem blkSeq_getD_new (blocks : List Block) (b : Nat) (u : Bool) (block : Bloc
   congr 1
   omega
 
-theorem blkSeq_getD_first (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
+private theorem blkSeq_getD_first (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
     (szs : List Nat) (K : Nat) (hK : 0 < K) (hb : b < blocks.length) :
     (blkSeq blocks b u block ms szs K).getD b blk0 = firstRec u block ms szs := by
   unfold blkSeq
@@ -251,7 +269,7 @@ theorem blkSeq_getD_first (blocks : List Block) (b : Nat) (u : Bool) (block : Bl
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by simp; omega)]
   simp [hb]
 
-theorem blkSeq_getD_old (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
+private theorem blkSeq_getD_old (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
     (szs : List Nat) (K : Nat) (hK : 0 < K) (j : Nat) (hj : j < blocks.length) (hjb : j ≠ b) :
     (blkSeq blocks b u block ms szs K).getD j blk0 = blocks.getD j blk0 := by
   unfold blkSeq
@@ -259,12 +277,12 @@ theorem blkSeq_getD_old (blocks : List Block) (b : Nat) (u : Bool) (block : Bloc
   rw [List.getD_eq_getElem?_getD, List.getElem?_append_left (by simp; omega)]
   simp [hjb.symm, List.getD_eq_getElem?_getD]
 
-theorem drop_set_self {α : Type} (l : List α) (m : Nat) (x : α) (h : m < l.length) :
+private theorem drop_set_self {α : Type} (l : List α) (m : Nat) (x : α) (h : m < l.length) :
     (l.set m x).drop m = x :: l.drop (m + 1) := by
   rw [List.set_eq_take_append_cons_drop, ite_eq_left h]
   simp [List.length_take, Nat.min_eq_left h.le]
 
-theorem unmRec_eq_pieceRec (ms : Nat) (szs : List Nat) (K : Nat) (a e : Std.Usize) (c : Nat)
+private theorem unmRec_eq_pieceRec (ms : Nat) (szs : List Nat) (K : Nat) (a e : Std.Usize) (c : Nat)
     (hc : c < K) (hbnd : ∀ c', c' ≤ K → cumS ms szs c' < 2 ^ UScalarTy.Usize.numBits)
     (ha : a.val = cumS ms szs c) (he : e.val = cumS ms szs (c + 1)) :
     unmRec a e = pieceRec ms szs c := by
@@ -276,12 +294,12 @@ theorem unmRec_eq_pieceRec (ms : Nat) (szs : List Nat) (K : Nat) (a e : Std.Usiz
   rw [← h1, ← h2]
 
 /-- The iterator-mut loop state of `finish_partition_marked_loop0`. -/
-abbrev Lp0State := core.slice.iter.IterMut Std.Usize ×
+private abbrev Lp0State := core.slice.iter.IterMut Std.Usize ×
   (core.slice.iter.IterMut Std.Usize → core.slice.iter.IterMut Std.Usize) ×
   alloc.vec.Vec Block × Block × Std.Usize
 
 /-- Invariant of the block-creation loop after `m` classes. -/
-def Loop0Inv (S : Slice Std.Usize) (block : Block) (ms : Nat) (szs : List Nat)
+private def Loop0Inv (S : Slice Std.Usize) (block : Block) (ms : Nat) (szs : List Nat)
     (blocks : List Block) (b : Nat) (u : Bool) (K : Nat) (m : Nat) (x : Lp0State) : Prop :=
   ∃ vals : List Std.Usize,
     x.1 = ({ slice := S, i := m } : core.slice.iter.IterMut Std.Usize) ∧ m ≤ K ∧
@@ -291,7 +309,7 @@ def Loop0Inv (S : Slice Std.Usize) (block : Block) (ms : Nat) (szs : List Nat)
     ∀ im : core.slice.iter.IterMut Std.Usize, m ≤ im.slice.val.length →
       (x.2.1 im).slice.val = vals ++ im.slice.val.drop m ∧ (x.2.1 im).i = im.i
 
-theorem back_step (back : core.slice.iter.IterMut Std.Usize → core.slice.iter.IterMut Std.Usize)
+private theorem back_step (back : core.slice.iter.IterMut Std.Usize → core.slice.iter.IterMut Std.Usize)
     (vals : List Std.Usize) (m : Nat) (nc : Std.Usize) (_hlen : vals.length = m)
     (h8 : ∀ im : core.slice.iter.IterMut Std.Usize, m ≤ im.slice.val.length →
       (back im).slice.val = vals ++ im.slice.val.drop m ∧ (back im).i = im.i) :
@@ -314,14 +332,14 @@ theorem back_step (back : core.slice.iter.IterMut Std.Usize → core.slice.iter.
   rw [h1, hsl, drop_set_self _ _ _ (by omega)]
   simp
 
-theorem blkSeq_one (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
+private theorem blkSeq_one (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
     (szs : List Nat) :
     blkSeq blocks b u block ms szs 1 =
       blocks.set b (firstRec u block ms szs) ++ (if u then [pieceRec ms szs 0] else []) := by
   unfold blkSeq firstNew
   cases u <;> simp
 
-theorem blkSeq_succ (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
+private theorem blkSeq_succ (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (ms : Nat)
     (szs : List Nat) (m : Nat) (hm : 1 ≤ m) :
     blkSeq blocks b u block ms szs (m + 1) =
       blkSeq blocks b u block ms szs m ++ [pieceRec ms szs m] := by
@@ -334,7 +352,7 @@ theorem blkSeq_succ (blocks : List Block) (b : Nat) (u : Bool) (block : Block) (
   have : firstNew u + 1 * (m - firstNew u) = m := by omega
   rw [this]; simp
 
-theorem loop0_inv_step
+private theorem loop0_inv_step
     (deref_mut_back : Slice Std.Usize → alloc.vec.Vec Std.Usize)
     (iter_mut_back : core.slice.iter.IterMut Std.Usize → Slice Std.Usize)
     (E : alloc.vec.Vec (TagIndex Std.Usize StateTag))
@@ -464,10 +482,10 @@ theorem loop0_inv_step
 
 /-- The number of the block that class `c` gets: the old block for class `0` when the block has no
     unmarked part, and the fresh block `N + (c - firstNew u)` otherwise. -/
-def labelIdx (bi : Nat) (u : Bool) (N c : Nat) : Nat :=
+private def labelIdx (bi : Nat) (u : Bool) (N c : Nat) : Nat :=
   if c = 0 ∧ u = false then bi else N + (c - firstNew u)
 
-theorem labelNat_index (b : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.Usize) (N K c : Nat)
+private theorem labelNat_index (b : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.Usize) (N K c : Nat)
     (hN : 1 ≤ N) (hnbi : nbi.val = if u then N else N - 1) (hc : c < K)
     (hNK : N + K < 2 ^ UScalarTy.Usize.numBits) :
     (labelNat b u nbi c).index.val = labelIdx b.index.val u N c := by
@@ -491,7 +509,7 @@ theorem labelNat_index (b : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.U
 /-- The block of every state after `finish_partition_marked`: a marked state (one of `old`, in class
     `cls[t]`) lands in the piece of its class, all other states keep their block and offset; the
     pieces' indices are exchanged by `swap_blocks b mx` for some `mx` among the new indices. -/
-def FinishSem (n : Nat) (p : BlockPartition) (b : TagIndex Std.Usize BlockTag) (K : Nat) (u : Bool)
+private def FinishSem (n : Nat) (p : BlockPartition) (b : TagIndex Std.Usize BlockTag) (K : Nat) (u : Bool)
     (cls : List Nat) (old : List (TagIndex Std.Usize StateTag)) (p3 : BlockPartition) : Prop :=
   ∃ mx : Nat, (mx = b.index.val ∨ (p.blocks.val.length ≤ mx ∧ mx < p.blocks.val.length + (K - firstNew u))) ∧
     (∀ t, t < cls.length → e2bAt p3 (old.getD t zST).index.val =
@@ -501,7 +519,7 @@ def FinishSem (n : Nat) (p : BlockPartition) (b : TagIndex Std.Usize BlockTag) (
 
 /-- The exhausted-iterator branch of `finish_partition_marked_loop0.body`: scatter the marked
     elements, pick and swap the largest piece, and return the new block indices. -/
-theorem finish0_tail
+private theorem finish0_tail
     {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (b : TagIndex Std.Usize BlockTag) (hb : b.index.val < p.blocks.val.length)
     (hmark : (blkAt p b.index.val).marked_split.val < (blkAt p b.index.val).«end».val)
@@ -705,7 +723,7 @@ theorem finish0_tail
         rw [hO2]
 
 /-- Facts the step lemma consumes about the result of `finish_partition_marked`'s main loop. -/
-def FinishPost (n : Nat) (p : BlockPartition) (b : TagIndex Std.Usize BlockTag) (K : Nat) (u : Bool)
+private def FinishPost (n : Nat) (p : BlockPartition) (b : TagIndex Std.Usize BlockTag) (K : Nat) (u : Bool)
     (cls : List Nat) (old : List (TagIndex Std.Usize StateTag))
     (y : alloc.vec.Vec (TagIndex Std.Usize BlockTag) × BlockPartition × alloc.vec.Vec Std.Usize) : Prop :=
   PartInv n y.2.1 ∧ y.2.1.blocks.val.length = p.blocks.val.length + (K - firstNew u) ∧
@@ -716,7 +734,7 @@ def FinishPost (n : Nat) (p : BlockPartition) (b : TagIndex Std.Usize BlockTag) 
   FinishSem n p b K u cls old y.2.1
 
 /-- The block-creation loop of `finish_partition_marked` as a whole. -/
-theorem finish0_loop_spec
+private theorem finish0_loop_spec
     {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (b : TagIndex Std.Usize BlockTag) (hb : b.index.val < p.blocks.val.length)
     (hmark : (blkAt p b.index.val).marked_split.val < (blkAt p b.index.val).«end».val)
@@ -790,7 +808,7 @@ theorem finish0_loop_spec
   exact ⟨y, hy, hQ⟩
 
 /-- Unfolding of `finish_partition_marked` down to its main loop. -/
-theorem finish_unfold (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
+private theorem finish_unfold (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
     (sb : verified.merc_reduction.block_partition.BlockPartitionBuilder)
     (hb : b.index.val < p.blocks.val.length)
     (hblkWF : merc_reduction.block_partition.Block.WellFormed (blkAt p b.index.val)) :
@@ -829,7 +847,7 @@ theorem finish_unfold (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
 /-- What `strong_process_marked_elements` leaves in the builder before `finish_partition_marked`
     runs: `block_sizes` are the (positive) class sizes, `index_to_block` the class of each marked
     element, and `old_elements` is a permutation of the block's marked elements. -/
-def BuilderDense (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
+private def BuilderDense (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
     (sb : verified.merc_reduction.block_partition.BlockPartitionBuilder) (szs cls : List Nat) : Prop :=
   sb.block_sizes.val.map (fun z => z.val) = szs ∧
   sb.index_to_block.val.map (fun x => x.index.val) = cls ∧
@@ -840,7 +858,7 @@ def BuilderDense (p : BlockPartition) (b : TagIndex Std.Usize BlockTag)
   (∀ j, j < szs.length → 0 < szs.getD j 0)
 
 /-- Contract of `BlockPartition::finish_partition_marked`. -/
-theorem finish_partition_marked_spec
+private theorem finish_partition_marked_spec
     {n : Nat} {p : BlockPartition} (hp : PartInv n p)
     (b : TagIndex Std.Usize BlockTag) (hb : b.index.val < p.blocks.val.length)
     (hmark : (blkAt p b.index.val).marked_split.val < (blkAt p b.index.val).«end».val)

@@ -1,10 +1,34 @@
-import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
-import MercVerified.Refinement.Proofs.Intern_Proofs
-import MercVerified.Refinement.Proofs.PartitionInv_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import MercVerified.Refinement.Proofs.MarkedSorted_Proofs
-import MercVerified.Refinement.Proofs.FinishBlocks_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+public import MercVerified.Refinement.Proofs.Intern_Proofs
+public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+public import MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `strong_process_marked_elements`: totality and density of the classes
@@ -75,7 +99,7 @@ structure SpmeSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
   cls : ∀ t, t < m → clsAt spb t < kts.val.length ∧
     IsSigKey LTSInst sys bn (olds.val.getD t zST) (kts.val.getD (clsAt spb t) emptyKey)
 
-theorem list_take_succ_set {α : Type} (l : List α) (m : Nat) (c : α) (hm : m < l.length) :
+private theorem list_take_succ_set {α : Type} (l : List α) (m : Nat) (c : α) (hm : m < l.length) :
     (l.set m c).take (m + 1) = l.take m ++ [c] := by
   apply List.ext_getElem
   · simp; omega
@@ -88,7 +112,7 @@ theorem list_take_succ_set {α : Type} (l : List α) (m : Nat) (c : α) (hm : m 
     · have : i = m := by simp at h1 h2; omega
       subst this; simp
 
-theorem list_drop_succ_set {α : Type} (l : List α) (m : Nat) (c : α) :
+private theorem list_drop_succ_set {α : Type} (l : List α) (m : Nat) (c : α) :
     (l.set m c).drop (m + 1) = l.drop (m + 1) := by
   apply List.ext_getElem
   · simp
@@ -96,7 +120,7 @@ theorem list_drop_succ_set {α : Type} (l : List α) (m : Nat) (c : α) :
     simp only [List.getElem_drop, List.getElem_set]
     rw [ite_eq_right (by omega)]
 
-theorem list_take_set_lt {α : Type} (l : List α) (m : Nat) (c : α) :
+private theorem list_take_set_lt {α : Type} (l : List α) (m : Nat) (c : α) :
     (l.set m c).take m = l.take m := by
   apply List.ext_getElem
   · simp
@@ -107,7 +131,7 @@ theorem list_take_set_lt {α : Type} (l : List α) (m : Nat) (c : α) :
 
 
 /-- Commit step, the signature was already interned (class `idx < K`). -/
-theorem spme_commit_old {n : Nat} {olds : VecTy ST} {m : Nat} {id : InternMap} {kts : VecTy SigKey}
+private theorem spme_commit_old {n : Nat} {olds : VecTy ST} {m : Nat} {id : InternMap} {kts : VecTy SigKey}
     {spb : BlockPartitionBuilder} {stk stk1 : VecTy BT} {ei ei1 : Sz}
     (hinv : SpmeInv n olds m id kts spb stk ei) (hm : m < olds.val.length)
     (hnmax : n ≤ Usize.max) (idx : BT) (hc : idx.index.val < kts.val.length)
@@ -197,7 +221,7 @@ theorem spme_commit_old {n : Nat} {olds : VecTy ST} {m : Nat} {id : InternMap} {
 
 
 /-- Commit step, the signature is new (class `idx = K`, `kts` grows by one). -/
-theorem spme_commit_new {n : Nat} {olds : VecTy ST} {m : Nat} {id id1 : InternMap}
+private theorem spme_commit_new {n : Nat} {olds : VecTy ST} {m : Nat} {id id1 : InternMap}
     {kts kts1 : VecTy SigKey}
     {spb : BlockPartitionBuilder} {stk stk1 : VecTy BT} {ei ei1 : Sz}
     (hinv : SpmeInv n olds m id kts spb stk ei) (hm : m < olds.val.length)
@@ -276,7 +300,7 @@ theorem spme_commit_new {n : Nat} {olds : VecTy ST} {m : Nat} {id id1 : InternMa
 
 
 /-- `block_number` on a state of a consistent partition reads `element_to_block`. -/
-theorem block_number_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (t : ST)
+private theorem block_number_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (t : ST)
     (ht : t.index.val < n) :
     verified.merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number
       p t = ok (p.element_to_block.val.getD t.index.val zBT) := by
@@ -285,13 +309,13 @@ theorem block_number_ok {n : Nat} {p : BlockPartition} (hp : PartInv n p) (t : S
   simp only [tag_value_id, bind_ok]
   rw [vec_index_ok _ _ h, List.getD_eq_getElem _ _ h]
 
-theorem vec_index_mut_usize_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
+private theorem vec_index_mut_usize_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
     (h : i.val < v.val.length) :
     v.index_mut_usize i = ok (v.val[i.val]'h, fun u => ({ slice := v.slice.set i u } : alloc.vec.Vec U)) := by
   rw [← alloc.vec.Vec.index_mut_slice_index]
   exact vec_index_mut_ok v i h
 
-theorem clsAt_set (spb : BlockPartitionBuilder) (ei : Sz) (m : Nat) (hei : ei.val = m) (idx : BT)
+private theorem clsAt_set (spb : BlockPartitionBuilder) (ei : Sz) (m : Nat) (hei : ei.val = m) (idx : BT)
     (hm : m < spb.index_to_block.val.length) (v : VecTy Sz) (spb1 : BlockPartitionBuilder)
     (hspb1 : spb1 = { spb with index_to_block := { slice := spb.index_to_block.slice.set ei idx }, block_sizes := v }) (t : Nat) :
     clsAt spb1 t = if t = m then idx.index.val else clsAt spb t := by
@@ -313,7 +337,7 @@ theorem clsAt_set (spb : BlockPartitionBuilder) (ei : Sz) (m : Nat) (hei : ei.va
 
 /-- One iteration of `strong_process_marked_elements_loop` on a live element succeeds and keeps
     the invariant (structural and signature-key semantics). -/
-theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (_hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)
     {p : BlockPartition} (hp : PartInv nU.val p) {olds : VecTy ST} {m : Nat} {id : InternMap}
@@ -435,7 +459,7 @@ theorem spme_step {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
 
 /-- `strong_process_marked_elements` on the builder left by `marked_elements_sorted` (fresh `id`,
     empty `key_to_signature`) succeeds and leaves dense classes. -/
-theorem strong_process_marked_elements_dense {L Label : Type}
+private theorem strong_process_marked_elements_dense {L Label : Type}
     (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (nU : Sz)
     (hns : LTSInst.num_of_states sys = ok nU)

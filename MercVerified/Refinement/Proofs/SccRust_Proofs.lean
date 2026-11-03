@@ -1,5 +1,57 @@
-import MercVerified.Refinement.Proofs.TopoSortRust_Proofs
-import MercLib.Graph.Proofs.TarjanBounds_Proofs
+module
+
+public import MercVerified.Refinement.Proofs.TopoSortRust_Proofs
+public import MercLib.Graph.Proofs.TarjanBounds_Proofs
+import all MercLib.Graph.Proofs.TarjanBounds_Proofs
+import all MercLib.Graph.Proofs.TarjanFinish_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanMain_Proofs
+import all MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.TopoSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs
+import all MercVerified.Refinement.Proofs.BranchingClosure_Proofs
+import all MercVerified.Refinement.Proofs.BranchingDirty_Proofs
+import all MercVerified.Refinement.Proofs.BranchingProcess_Proofs
+import all MercVerified.Refinement.Proofs.BranchingRenumber_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.RustTools_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.TopoSortRust_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+import all Aeneas.Std.Scalar.EqOrd
+
+@[expose] public section
 
 /-!
 # `tau_scc_decomposition_iterative` is the abstract Tarjan search
@@ -20,7 +72,7 @@ abbrev SC := verified.merc_reduction.scc_decomposition.SccContext
 def view {α β : Type} (n : Nat) (f : α → β) (d : β) (l : List α) : Fin n → β :=
   fun i => (l[i.val]?.map f).getD d
 
-theorem view_set {α β : Type} {n : Nat} (f : α → β) (d : β) (l : List α) (i : Fin n)
+private theorem view_set {α β : Type} {n : Nat} (f : α → β) (d : β) (l : List α) (i : Fin n)
     (hi : i.val < l.length) (x : α) :
     view n f d (l.set i.val x) = Function.update (view n f d l) i (f x) := by
   funext j
@@ -31,7 +83,7 @@ theorem view_set {α β : Type} {n : Nat} (f : α → β) (d : β) (l : List α)
     rw [Function.update_of_ne hj]
     simp [this]
 
-theorem view_get {α β : Type} {n : Nat} (f : α → β) (d : β) (l : List α) (i : Fin n)
+private theorem view_get {α β : Type} {n : Nat} (f : α → β) (d : β) (l : List α) (i : Fin n)
     (hi : i.val < l.length) : view n f d l i = f (l[i.val]'hi) := by
   simp [view, hi]
 
@@ -54,10 +106,10 @@ structure SR (n : Nat) (ctx : SC) (c : MercLib.Tarjan.Ctx n) : Prop where
   eq : ctx.eq_class.val = c.eq
 
 /-- Writing a vector slot. -/
-def vset {α : Type} (v : alloc.vec.Vec α) (i : Std.Usize) (x : α) : alloc.vec.Vec α :=
+private def vset {α : Type} (v : alloc.vec.Vec α) (i : Std.Usize) (x : α) : alloc.vec.Vec α :=
   { slice := v.slice.set i x }
 
-theorem vset_val {α : Type} (v : alloc.vec.Vec α) (i : Std.Usize) (x : α) :
+private theorem vset_val {α : Type} (v : alloc.vec.Vec α) (i : Std.Usize) (x : α) :
     (vset v i x).val = v.val.set i.val x := by
   show (v.slice.set i x).val = _
   rw [Slice.set_val_eq]; rfl
@@ -66,7 +118,7 @@ namespace SR
 
 variable {n : Nat} {ctx : SC} {c : MercLib.Tarjan.Ctx n}
 
-theorem set_disc (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i.val) (x : Std.Usize) :
+private theorem set_disc (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i.val) (x : Std.Usize) :
     SR n { ctx with disc := vset ctx.disc iu x } { c with disc := Function.update c.disc i x.val } := by
   have hi : i.val < ctx.disc.val.length := by rw [h.dlen]; exact i.2
   refine ⟨h.llen, ?_, h.olen, h.plen, h.low, ?_, h.onSt, h.blk, h.nb, h.stk, h.work, h.time, h.eq⟩
@@ -74,7 +126,7 @@ theorem set_disc (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i
   · show view n _ 0 (vset ctx.disc iu x).val = _
     rw [vset_val, hiu, view_set _ _ _ i hi, h.disc]
 
-theorem set_low (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i.val) (x : Std.Usize) :
+private theorem set_low (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i.val) (x : Std.Usize) :
     SR n { ctx with low := vset ctx.low iu x } { c with low := Function.update c.low i x.val } := by
   have hi : i.val < ctx.low.val.length := by rw [h.llen]; exact i.2
   refine ⟨?_, h.dlen, h.olen, h.plen, ?_, h.disc, h.onSt, h.blk, h.nb, h.stk, h.work, h.time, h.eq⟩
@@ -84,10 +136,10 @@ theorem set_low (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i.
 
 end SR
 
-theorem unvisited_val : verified.merc_reduction.scc_decomposition.SCC_UNVISITED.val = Usize.max := by
+private theorem unvisited_val : verified.merc_reduction.scc_decomposition.SCC_UNVISITED.val = Usize.max := by
   simp [verified.merc_reduction.scc_decomposition.SCC_UNVISITED, core.num.Usize.MAX]
 
-theorem usize_add_one (a : Std.Usize) (h : a.val < Usize.max) :
+private theorem usize_add_one (a : Std.Usize) (h : a.val < Usize.max) :
     ∃ r : Std.Usize, a + 1#usize = ok r ∧ r.val = a.val + 1 := by
   obtain ⟨r, hr, hv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
     ⟨_, rfl, Usize.add_spec (x := a) (y := 1#usize) (by simp; omega)⟩
@@ -95,7 +147,7 @@ theorem usize_add_one (a : Std.Usize) (h : a.val < Usize.max) :
   rename_i r
   exact ⟨r, hr, by simpa using hv⟩
 
-theorem ordusize_max_val (a b : Std.Usize) :
+private theorem ordusize_max_val (a b : Std.Usize) :
     (core.cmp.impls.OrdUsize.max a b).val = max a.val b.val := by
   unfold core.cmp.impls.OrdUsize.max
   split_ifs with h
@@ -104,7 +156,7 @@ theorem ordusize_max_val (a b : Std.Usize) :
   · have h' : ¬ b.val < a.val := h
     omega
 
-theorem usize_sub_one (a : Std.Usize) (h : 0 < a.val) :
+private theorem usize_sub_one (a : Std.Usize) (h : 0 < a.val) :
     ∃ r : Std.Usize, a - 1#usize = ok r ∧ r.val = a.val - 1 := by
   obtain ⟨r, hr, hv⟩ : ∃ r, _ = r ∧ Std.WP.spec r _ :=
     ⟨_, rfl, Usize.sub_spec (x := a) (y := 1#usize) (by simp; omega)⟩
@@ -113,18 +165,18 @@ theorem usize_sub_one (a : Std.Usize) (h : 0 < a.val) :
   have h2 : r.val = a.val - 1 ∧ 1 ≤ a.val := by simpa using hv
   exact ⟨r, hr, h2.1⟩
 
-theorem vec_len_val {α : Type} (v : alloc.vec.Vec α) : (alloc.vec.Vec.len v).val = v.val.length := by
+private theorem vec_len_val {α : Type} (v : alloc.vec.Vec α) : (alloc.vec.Vec.len v).val = v.val.length := by
   simp [alloc.vec.Vec.len]
 
-theorem vec_index_usize_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
+private theorem vec_index_usize_ok {U : Type} (v : alloc.vec.Vec U) (i : Std.Usize)
     (h : i.val < v.val.length) : v.index_usize i = ok (v.val[i.val]'h) := by
   rw [← alloc.vec.Vec.index_slice_index]
   exact vec_index_ok v i h
 
-theorem massert_true_ok : massert (true = true) = ok () := by simp
+private theorem massert_true_ok : massert (true = true) = ok () := by simp
 
 open verified.merc_collections.indexed_partition in
-theorem set_block_spec (ip : IndexedPartition) (u : Std.Usize) (hu : u.val < ip.partition.val.length)
+private theorem set_block_spec (ip : IndexedPartition) (u : Std.Usize) (hu : u.val < ip.partition.val.length)
     (ti : TagIndex Std.Usize BlockTag) (hti : ti.index.val < Usize.max) :
     ∃ m : Std.Usize, IndexedPartition.set_block ip u ti =
       ok ({ partition := vset ip.partition u ti, num_of_blocks := m } : IndexedPartition) ∧
@@ -152,14 +204,14 @@ section Scan
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- The model graph of the LTS: all transitions with their hidden flag. -/
-noncomputable def gOf {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max) : MercLib.Tarjan.Graph n where
+private noncomputable def gOf {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max) : MercLib.Tarjan.Graph n where
   adj s := (outVec LTSInst sys (stOf s)).val.map
     (fun t => (decide (t.label.index.val = 0), toFin hn0 t.to))
   unv := Usize.max
   unv_gt := hnlt
 
 open verified.merc_reduction.scc_decomposition in
-theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
+private theorem next_child_loop_spec {n : Nat} (hn0 : 0 < n) (hnlt : n < Usize.max)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
     (s : Fin n) (su : Std.Usize) (hsu : su.val = s.val)
@@ -433,7 +485,7 @@ end Scan
 section Pop
 
 open verified.merc_reduction.scc_decomposition in
-theorem pop_loop_spec {n : Nat} (s : Fin n) (su : Std.Usize) (hsu : su.val = s.val) (e : Nat)
+private theorem pop_loop_spec {n : Nat} (s : Fin n) (su : Std.Usize) (hsu : su.val = s.val) (e : Nat)
     (he : e < Usize.max) :
     ∀ (stk : List (Fin n)) (onSt : Fin n → Bool) (blk : Fin n → ℕ) (ctx : SC)
       (rest : List (Fin n)) (onSt' : Fin n → Bool) (blk' : Fin n → ℕ),
@@ -553,7 +605,7 @@ end Pop
 section Finish
 
 open verified.merc_reduction.scc_decomposition in
-theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : MercLib.Tarjan.Ctx n) (hsr : SR n ctxM cM)
+private theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : MercLib.Tarjan.Ctx n) (hsr : SR n ctxM cM)
     (s : Fin n) (su : Std.Usize) (hsu : su.val = s.val) :
     ∃ ctx', (let work_len := alloc.vec.Vec.len ctxM.work
       if work_len > 0#usize then do
@@ -639,7 +691,7 @@ theorem finish_tail {n : Nat} (_hn0 : 0 < n) (ctxM : SC) (cM : MercLib.Tarjan.Ct
       exact hsr
 
 open verified.merc_reduction.scc_decomposition in
-theorem finish_spec {n : Nat} (hn0 : 0 < n) (ctx : SC) (c : MercLib.Tarjan.Ctx n) (hsr : SR n ctx c)
+private theorem finish_spec {n : Nat} (hn0 : 0 < n) (ctx : SC) (c : MercLib.Tarjan.Ctx n) (hsr : SR n ctx c)
     (s : Fin n) (su : Std.Usize) (hsu : su.val = s.val) (hmax : c.eq < Usize.max)
     (c' : MercLib.Tarjan.Ctx n) (hfin : MercLib.Tarjan.finish s c = some c') :
     ∃ ctx', scc_finish ctx su = ok ctx' ∧ SR n ctx' c' := by
@@ -721,7 +773,7 @@ section Step
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 open verified.merc_reduction.scc_decomposition in
-theorem next_child_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem next_child_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -758,7 +810,7 @@ theorem next_child_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : St
   exact ⟨child, idx', ctx', by simp, h1, h2, h3⟩
 
 open verified.merc_reduction.scc_decomposition in
-theorem step_rest_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem step_rest_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -824,7 +876,7 @@ theorem step_rest_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std
       simp [h2, h3, toFin_val hn0 sv hsv]
 
 open verified.merc_reduction.scc_decomposition in
-theorem step_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem step_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -951,7 +1003,7 @@ theorem step_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usiz
     exact hct
 
 open verified.merc_reduction.scc_decomposition in
-theorem process_work_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem process_work_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -1015,7 +1067,7 @@ theorem process_work_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (
       exact hl
 
 open verified.merc_reduction.scc_decomposition in
-theorem process_work_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem process_work_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -1039,7 +1091,7 @@ section Roots
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 open verified.merc_reduction.scc_decomposition in
-theorem visit_roots_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem visit_roots_loop_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))
@@ -1146,14 +1198,14 @@ section Top
 
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
-theorem view_replicate {α β : Type} (n : Nat) (f : α → β) (d : β) (x : α) :
+private theorem view_replicate {α β : Type} (n : Nat) (f : α → β) (d : β) (x : α) :
     view n f d (List.replicate n x) = fun _ => f x := by
   funext i
   simp [view, i.2]
 
 open verified.merc_reduction.scc_decomposition in
 open verified.merc_collections.indexed_partition in
-theorem tau_scc_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
+private theorem tau_scc_spec (hwf : MercVerified.Lts.WellFormed LTSInst sys) (n0 : Std.Usize)
     (hns : LTSInst.num_of_states sys = ok n0) (hn0 : 0 < n0.val)
     (hid : ∀ l : TagIndex Std.Usize LabelTag,
       LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0)))

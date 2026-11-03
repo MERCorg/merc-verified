@@ -1,6 +1,15 @@
-import MercVerified.Lts.Lts
-import MercVerified.Code.FunsExternalSpecs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Lts.Lts
+public import MercVerified.Code.FunsExternalSpecs
+public import Aeneas.Std.WP
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Foundation lemmas for the `merc_lts` proofs
@@ -21,7 +30,7 @@ namespace MercVerified.Lts
 
 /-- `(toLTS LTSInst sys).Tr` unfolds to `tr LTSInst sys` - a real theorem (`Iff.rfl`), moved here
     (from `MercVerified/Lts/Lts.lean`) since it is a proof, not part of the trust boundary. -/
-@[simp] theorem toLTS_Tr {L Label : Type}
+@[simp] private theorem toLTS_Tr {L Label : Type}
     (LTSInst : LTS L Label)
     (sys : L)
     (s : TagIndex Std.Usize StateTag)
@@ -36,7 +45,7 @@ namespace MercVerified.Lts.Proofs
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
 
-private abbrev Sz := Std.Usize
+abbrev Sz := Std.Usize
 
 /-!
 ## `TagIndex` semantics
@@ -51,38 +60,38 @@ hand-vetted trust-boundary axioms.
 -/
 
 /-- `TagIndex` is determined by its payload (the phantom marker is `Unit`). -/
-theorem merc_utilities.tagged_index.TagIndex.ext {T Tag : Type}
+private theorem merc_utilities.tagged_index.TagIndex.ext {T Tag : Type}
     {a b : TagIndex T Tag} (h : a.index = b.index) : a = b := by
   cases a; cases b; simp_all
 
-instance {T Tag : Type} [DecidableEq T] :
+private instance {T Tag : Type} [DecidableEq T] :
     DecidableEq (TagIndex T Tag) := fun a b =>
   if h : a.index = b.index then isTrue (merc_utilities.tagged_index.TagIndex.ext h)
   else isFalse (fun e => h (congrArg (·.index) e))
 
-instance {T Tag : Type} [Inhabited T] :
+private instance {T Tag : Type} [Inhabited T] :
     Inhabited (TagIndex T Tag) := ⟨⟨default, ()⟩⟩
 
 /-- `TagIndex::new` never fails. -/
-theorem merc_utilities.tagged_index.TagIndex.new_spec
+private theorem merc_utilities.tagged_index.TagIndex.new_spec
     {T : Type} (Tag : Type) (i : T) :
     ∃ t, verified.merc_utilities.tagged_index.TagIndex.new Tag i = ok t :=
   ⟨_, rfl⟩
 
 /-- `TagIndex::new` wraps its argument. -/
-@[simp] theorem merc_utilities.tagged_index.TagIndex.new_eq {T : Type} (Tag : Type)
+@[simp] private theorem merc_utilities.tagged_index.TagIndex.new_eq {T : Type} (Tag : Type)
     (i : T) :
     verified.merc_utilities.tagged_index.TagIndex.new Tag i = ok { index := i, marker := () } :=
   rfl
 
 /-- `TagIndex::value` projects the payload. -/
-@[simp] theorem tag_value_id {T : Type} {Tag : Type} (CopyInst : core.marker.Copy T)
+@[simp] private theorem tag_value_id {T : Type} {Tag : Type} (CopyInst : core.marker.Copy T)
     (t : TagIndex T Tag) :
     verified.merc_utilities.tagged_index.TagIndex.value CopyInst t = ok t.index :=
   rfl
 
 /-- `TagIndex`'s `PartialEq` is the payload's `PartialEq`. -/
-@[simp] theorem tag_partial_eq_inst {T : Type} {Tag : Type}
+@[simp] private theorem tag_partial_eq_inst {T : Type} {Tag : Type}
     (peqInst : core.cmp.PartialEq T T)
     (a b : TagIndex T Tag) :
     verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpPartialEqTagIndex.eq
@@ -90,7 +99,7 @@ theorem merc_utilities.tagged_index.TagIndex.new_spec
   rfl
 
 /-- Indexing a `Vec` by a tagged `usize` is `Slice` indexing by the payload. -/
-theorem vec_tagged_index_eq {U : Type} {Tag : Type}
+private theorem vec_tagged_index_eq {U : Type} {Tag : Type}
     (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag) :
     verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
       (core.slice.index.SliceIndexUsizeSlice U) v t
@@ -99,7 +108,7 @@ theorem vec_tagged_index_eq {U : Type} {Tag : Type}
     core.slice.index.Usize.index]
 
 /-- Likewise for `IndexMut`. -/
-theorem vec_tagged_index_mut_eq {U : Type} {Tag : Type}
+private theorem vec_tagged_index_mut_eq {U : Type} {Tag : Type}
     (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag) :
     verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexMutTagIndexU.index_mut core.marker.CopyUsize
       (core.slice.index.SliceIndexUsizeSlice U) v t
@@ -110,7 +119,7 @@ theorem vec_tagged_index_mut_eq {U : Type} {Tag : Type}
     core.slice.index.Usize.index_mut]
   rfl
 
-theorem vec_tagged_index_val {U : Type} {Tag : Type}
+private theorem vec_tagged_index_val {U : Type} {Tag : Type}
     (v : alloc.vec.Vec U) (t : TagIndex Std.Usize Tag)
     (h : t.index.val < v.length) :
     verified.alloc.vec.Vec.Insts.CoreOpsIndexIndexTagIndexU.index core.marker.CopyUsize
@@ -126,7 +135,7 @@ theorem vec_tagged_index_val {U : Type} {Tag : Type}
 /-- `usize` with payload `k % 2^bits` (total construction). -/
 def uTotal (k : Nat) : Sz := { bv := BitVec.ofNat UScalarTy.Usize.numBits k }
 
-lemma uTotal_val_of_lt {k : Nat} (h : k < 2 ^ UScalarTy.Usize.numBits) :
+private lemma uTotal_val_of_lt {k : Nat} (h : k < 2 ^ UScalarTy.Usize.numBits) :
     (uTotal k).val = k := by
   unfold uTotal UScalar.val
   rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h]
@@ -134,43 +143,43 @@ lemma uTotal_val_of_lt {k : Nat} (h : k < 2 ^ UScalarTy.Usize.numBits) :
 /-- The tagged index with payload `k % 2^bits`. -/
 def uTag {Tag : Type} (k : Nat) : TagIndex Sz Tag := { index := uTotal k, marker := () }
 
-lemma uTotal_zero : uTotal 0 = 0#usize := by
+private lemma uTotal_zero : uTotal 0 = 0#usize := by
   apply UScalar.eq_of_val_eq
   rw [uTotal_val_of_lt (by exact pow_pos (by decide) UScalarTy.Usize.numBits)]
   simp
 
-lemma sz_eq_from_val {a b : Sz} (h : a.val = b.val) : a = b :=
+private lemma sz_eq_from_val {a b : Sz} (h : a.val = b.val) : a = b :=
   UScalar.eq_of_val_eq h
 
 /-- Every `usize` payload fits in `[0, 2^numBits)`. -/
-lemma sz_val_lt_two_pow (x : Sz) : x.val < 2 ^ UScalarTy.Usize.numBits := by
+private lemma sz_val_lt_two_pow (x : Sz) : x.val < 2 ^ UScalarTy.Usize.numBits := by
   change x.bv.toNat < 2 ^ UScalarTy.Usize.numBits
   exact x.bv.isLt
 
 /-- Every `usize` payload is at most `Usize.max`. -/
-lemma sz_val_le_max (x : Sz) : x.val ≤ Usize.max := by
+private lemma sz_val_le_max (x : Sz) : x.val ≤ Usize.max := by
   have h := sz_val_lt_two_pow x
   simp [Usize.max, Usize.numBits] at h ⊢
   omega
 
-lemma map_range_concat (s : Nat) :
+private lemma map_range_concat (s : Nat) :
     (List.range s).map uTotal ++ [uTotal s] = (List.range (s + 1)).map uTotal := by
   rw [List.range_succ, List.map_append]
   rfl
 
-lemma map_range_concat_tag {Tag : Type} (s : Nat) :
+private lemma map_range_concat_tag {Tag : Type} (s : Nat) :
     (List.range s).map (uTag (Tag := Tag)) ++ [uTag s] = (List.range (s + 1)).map uTag := by
   rw [List.range_succ, List.map_append]
   rfl
 
-lemma replicate_append_succ {α : Type} (m : Nat) (x : α) :
+private lemma replicate_append_succ {α : Type} (m : Nat) (x : α) :
     List.replicate m x ++ [x] = List.replicate (Nat.succ m) x := by
   induction m with
   | zero => simp
   | succ m ih =>
     rw [List.replicate_succ, List.replicate_succ, List.cons_append, ih]
 
-lemma next_range_some (it : core.ops.range.Range Sz)
+private lemma next_range_some (it : core.ops.range.Range Sz)
     (h : it.start.val < it.end.val) :
     ∃ (o : Option Sz) (it1 : core.ops.range.Range Sz),
       core.iter.range.IteratorRange.next core.iter.range.StepUsize it = ok (o, it1) ∧
@@ -188,7 +197,7 @@ lemma next_range_some (it : core.ops.range.Range Sz)
   rcases hnext with ⟨hopt, hstart, hend⟩
   exact ⟨opt, it1, hp, hopt, hstart, hend⟩
 
-lemma next_range_none (it : core.ops.range.Range Sz)
+private lemma next_range_none (it : core.ops.range.Range Sz)
     (h : it.start.val ≥ it.end.val) :
     ∃ (o : Option Sz) (it1 : core.ops.range.Range Sz),
       core.iter.range.IteratorRange.next core.iter.range.StepUsize it = ok (o, it1) ∧
@@ -205,7 +214,7 @@ lemma next_range_none (it : core.ops.range.Range Sz)
   rcases hnext with ⟨hopt, hident⟩
   exact ⟨opt, it1, hp, hopt, hident⟩
 
-lemma vec_push_val {U : Type} (v : alloc.vec.Vec U) (x : U)
+private lemma vec_push_val {U : Type} (v : alloc.vec.Vec U) (x : U)
     (hb : v.val.length < Usize.max) :
     ∃ v', v.push x = ok v' ∧ v'.val = v.val ++ [x] := by
   have h := alloc.vec.Vec.push_spec v x hb

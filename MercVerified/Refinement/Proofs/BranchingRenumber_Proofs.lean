@@ -1,5 +1,34 @@
-import MercVerified.Refinement.Proofs.BranchingSubset_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+public import Aeneas.Std.WP
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSignature_Proofs
+import all MercVerified.Refinement.Proofs.BranchingSubset_Proofs
+import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
+import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
+import all MercVerified.Refinement.Proofs.Intern_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.MarkDirty_Proofs
+import all MercVerified.Refinement.Proofs.MarkedSorted_Proofs
+import all MercVerified.Refinement.Proofs.PartitionInv_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.ScatterLoop_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.SplitPartInv_Proofs
+import all MercVerified.Refinement.Proofs.Split_Proofs
+import all MercVerified.Refinement.Proofs.Spme_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.SwapBlocks_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # `renumber_branching`
@@ -28,7 +57,7 @@ open Classical
 
 /-- The scan of `renumber_branching` over the entries `rest` (given largest first); `full` is the
 whole signature, `kts` the interned signatures and `nl` the number of labels (the hat label). -/
-noncomputable def rnScan (nl : Nat) (kts : List (List SigEntry)) (full : List SigEntry) :
+private noncomputable def rnScan (nl : Nat) (kts : List (List SigEntry)) (full : List SigEntry) :
     List SigEntry → Option BT
   | [] => none
   | e :: rest =>
@@ -37,7 +66,7 @@ noncomputable def rnScan (nl : Nat) (kts : List (List SigEntry)) (full : List Si
     else none
 
 /-- `is_tau_hat` compares the label index with `num_of_labels`. -/
-theorem isTauHat_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
+private theorem isTauHat_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
     (h : LTSInst.num_of_labels sys = ok nl) (label : TagIndex Std.Usize LabelTag) :
     verified.merc_reduction.signatures.is_tau_hat LTSInst label sys
       = ok (decide (label.index.val = nl.val)) := by
@@ -56,7 +85,7 @@ theorem isTauHat_ok {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std
   · have : ¬ label.index.val = nl.val := fun e => hh (UScalar.eq_of_val_eq e)
     simp [hh, this] at hiff ⊢; exact hiff
 
-theorem rn_take_succ (nl : Nat) (kts : List (List SigEntry)) (sig : List SigEntry) (m : Nat)
+private theorem rn_take_succ (nl : Nat) (kts : List (List SigEntry)) (sig : List SigEntry) (m : Nat)
     (hm : m < sig.length) :
     rnScan nl kts sig (sig.take (m + 1)).reverse =
       (if (sig[m]'hm).1.index.val = nl then
@@ -71,7 +100,7 @@ theorem rn_take_succ (nl : Nat) (kts : List (List SigEntry)) (sig : List SigEntr
 
 open verified.merc_reduction.signature_refinement in
 /-- One step of the loop of `renumber_branching` (not yet done, index positive). -/
-theorem rn_body {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
+private theorem rn_body {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
     (hnl : LTSInst.num_of_labels sys = ok nl) (sig : Slice SigEntry) (kts : alloc.vec.Vec (alloc.vec.Vec SigEntry))
     (hsig : List.Pairwise entLt sig.val) (hkts : ∀ v ∈ kts.val, List.Pairwise entLt v.val)
     (hkeys : ∀ e ∈ sig.val, e.1.index.val = nl.val → e.2.index.val < kts.val.length)
@@ -145,7 +174,7 @@ theorem rn_body {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usi
 
 open verified.merc_reduction.signature_refinement in
 /-- **`renumber_branching`** computes the backwards scan `rnScan`. -/
-theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
+private theorem renumber_branching_spec {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize)
     (hnl : LTSInst.num_of_labels sys = ok nl) (sig : Slice SigEntry)
     (kts : alloc.vec.Vec (alloc.vec.Vec SigEntry))
     (hsig : List.Pairwise entLt sig.val) (hkts : ∀ v ∈ kts.val, List.Pairwise entLt v.val)

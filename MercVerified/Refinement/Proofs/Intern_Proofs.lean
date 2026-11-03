@@ -1,7 +1,22 @@
-import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
-import MercVerified.Refinement.Proofs.SigKey_Proofs
-import MercVerified.Refinement.Proofs.LoopTools_Proofs
-import Aeneas.Std.WP
+module
+
+public import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+public import MercVerified.Refinement.Proofs.SigKey_Proofs
+public import MercVerified.Refinement.Proofs.LoopTools_Proofs
+public import Aeneas.Std.WP
+import all MercVerified.Lts.Proofs.Foundation_Proofs
+import all MercVerified.Refinement.Proofs.LoopTools_Proofs
+import all MercVerified.Refinement.Proofs.Partition_Proofs
+import all MercVerified.Refinement.Proofs.SigKey_Proofs
+import all MercVerified.Refinement.Proofs.StrongSignature_Proofs
+import all MercVerified.Refinement.Proofs.WorklistLoop_Proofs
+import all Aeneas.Std.Scalar.Ops.Add
+import all Aeneas.Std.Core.Core
+import all Aeneas.Std.Core.Cmp
+import all Aeneas.Data.List.List
+import all Init.Data.List.Control
+
+@[expose] public section
 
 /-!
 # Interning of signature keys
@@ -28,7 +43,7 @@ noncomputable abbrev internGet (id : InternMap) (q : SigKey) :=
   std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst internBuildHasher
     (verified.core.borrow.Borrow.Blanket SigKey) internHashInst internEqInst id q
 
-theorem sigKey_eq_false {a b : SigKey} (h : a ≠ b) :
+private theorem sigKey_eq_false {a b : SigKey} (h : a ≠ b) :
     internEqInst.partialEqInst.eq a b = ok false := by
   obtain ⟨r, hr, hiff⟩ := sigKey_eq_lawful a b
   rw [hr]
@@ -70,7 +85,7 @@ theorem IdInv.nodup {id : InternMap} {kts : VecTy SigKey} (h : IdInv id kts)
   rw [uTotal_val_of_lt hi2, uTotal_val_of_lt hj2] at h3
   exact Fin.ext h3
 
-theorem len_tag_eq (kts : VecTy SigKey) :
+private theorem len_tag_eq (kts : VecTy SigKey) :
     ({ index := alloc.vec.Vec.len kts, marker := () } : BT) = uTag kts.val.length := by
   apply merc_utilities.tagged_index.TagIndex.ext
   apply UScalar.eq_of_val_eq
