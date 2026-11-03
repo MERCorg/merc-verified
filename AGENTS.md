@@ -22,3 +22,4 @@ Task-specific instructions live in `.agents/skills/<name>/SKILL.md` (Agent Skill
 | `rust-conventions` | Rust coding conventions |
 | `prove` | lean-lsp MCP workflow, tools, and key definitions |
 | `ci` | CI workflow descriptions |
+| `hb-research` | H-B polynomial-bound research: paper proofs, reference, z3, website |

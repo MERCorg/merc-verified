@@ -9,7 +9,7 @@ description: Lean 4 coding and proof conventions used in this repository. Use wh
 - `camelCase` for definitions and theorems; `PascalCase` for types and structures.
 - Use `theorem` for propositions, `def` for computations. Prefer `structure` over nested `Sigma` types.
 - Import from `Cslib` (e.g. `Cslib.Foundations.Semantics.LTS.Basic`) rather than reimplementing standard LTS theory.
-- `Signatures/BranchingBisimilarity.lean` uses `public section ... end` and `public import` — follow this pattern.
+- Every file is a Lean `module` (`module` header, `public import`, `@[expose] public section`), in `MercLib` and in `MercVerified` alike.
 - Keep proofs self-contained within their modules; avoid circular imports between `MercVerified/` files.
 - Cite literature by adding an entry to `docs/references.bib` (key `AuthorYear`, e.g. `Friedmann2009`) and linking it from the doc comment as a Markdown reference link, e.g. `[O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009]` (Mathlib/doc-gen4 convention).
 - Prefer automatic tactics (`grind`, `simp`, `omega`, `aesop`, `decide`) over manual term-mode proofs. Try `grind` first for arithmetic/logical goals; fall back to `simp [...]` with targeted lemmas when `grind` is too slow or fails.
@@ -25,3 +25,24 @@ For a contract theorem (an externally-meaningful claim about translated code, es
 See `MercVerified/Refinement/Refinement.lean` / `MercVerified/Refinement/Proofs/Refinement_Proofs.lean` / `Challenges/MercVerified.lean` for a worked example.
 
 Only challenge the "headline" result(s) a file builds toward, not every intermediate/auxiliary lemma.
+
+### Challenge documentation
+
+Every theorem in a `Challenges/` file is the human-readable frontend of the library, so its doc comment says what it proves, in this format:
+
+```
+/-- **Short title.**
+    * Given: the hypotheses (including those inside the spec `def`).
+    * Then: the conclusion, in words.
+    * Caveat: what is not covered (optional).
+    * Spec: `SpecDef` (`Area/File.lean`). -/
+```
+
+### Exports
+
+Proof modules export only their headline theorems:
+* every other declaration in a `Proofs/` file is `private`; sibling proof files that need it `import all` the module that declares it;
+* notations in proof files are `local`;
+* exceptions are forced by Lean: proof-internal `structure`s and `inductive`s stay public (dot notation does not resolve on the fields of a `private structure`), together with definitions and instances their public types mention.
+
+`EXPORTS.md` (human-vetted) lists everything visible to an importer. `lake env lean --run scripts/CheckExports.lean` fails if the actual exports differ from it; `--write` regenerates it, and a human reviews the diff. A new export from a proof module therefore never goes in silently.
