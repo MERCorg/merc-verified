@@ -4,10 +4,7 @@ import MercLib.HybridSI.BestResponse
 import MercLib.HybridSI.AlgorithmPoly
 import MercLib.HybridSI.Potential
 import MercLib.HybridSI.Bounds
-import MercLib.HybridSI.SingleOdd
-import MercLib.HybridSI.SingleOddPoly
-import MercLib.HybridSI.SingleOddStretch
-import MercLib.HybridSI.SingleOddCore
+import MercLib.HybridSI.Counting
 
 /-!
 # Comparator challenge: hybrid strategy improvement (human-vetted)
@@ -16,260 +13,194 @@ The headline theorems of `MercLib/HybridSI/`, stated with `sorry` against the hu
 files only; `lake comparator` checks them against the solution module `MercLib`.
 
 Every statement must be written exactly as in the proof files (binder names and binder kinds
-included): the comparison is syntactic, not up to definitional unfolding.
+included): the comparison is syntactic, not up to definitional unfolding. Each theorem below is
+documented with what it proves, including the hypotheses hidden in its spec definition, and the
+spec definition it unfolds to.
+
+**Terms used below.**
+* *Game*: `G : Game V` on a finite, linearly ordered vertex type `V`, with `n = |V|` vertices,
+  `n_E` Even vertices (`numEven`) and `m` edges (`edgeCount`). *Relabelled* (`G.Relabelled`):
+  the priority is monotone in the vertex order, so the order is the relevance order used by the
+  keys. Every game can be relabelled by sorting its vertices.
+* *Profile*: `p : V → V`, one move per vertex for both players. It *follows edges* if
+  `G.edge v (p v)` for all `v`.
+* *Key*: `key G p v`, the Vöge–Jurdziński value of the play from `v` under `p` (the cycle maximum,
+  the more relevant vertices visited before it, the distance), encoded so that Even prefers
+  larger keys and Odd smaller ones. Its *winner* (`keyWinner`) is Even iff the cycle maximum has
+  even priority.
+* *H-B*: one iteration (`hbStep`) computes Odd's best response `ps` to Even's moves, Even's best
+  response `pstar` to Odd's moves of `ps`, and switches Even vertices along improving edges that
+  are optimal for the keys of `pstar` (the *filter*). `hbRun G bf fuel` runs at most `fuel`
+  iterations from the first-successor profile `initProfile G`; each best response (`respond`)
+  gets at most `bf` rounds. Either fuel can run out, in which case the result is `none`.
+* *Trace*: `RunTrace G bf L p ps` says that `p 0, …, p L` are the profiles of `L` consecutive
+  non-final H-B iterations from a profile that follows edges, and `ps k` is Odd's best response
+  computed in iteration `k`. The valuation of iteration `k` is `Ξ_k = key G (ps k)`, and `K*_k`
+  is the key of Even's best response to `ps k`.
+* *Cost*: the `…T` and `…Poly` functions run in the `TimeM` cost model; `.time` counts its steps.
 -/
 
 namespace MercLib.HybridSI
 
 open MercLib.ParityGame
 
-/-- Correctness of H-B: whenever it returns, the winners read off the returned valuation are the
-    winners of the game. -/
+/-- **Correctness of H-B.** Let `G` be a relabelled game and suppose the run
+`hbRun G bf fuel 0 (initProfile G)` returns `some (it, kt)` (for any fuel; a run that runs out of
+fuel is not constrained). Then for every vertex `v` and player `i`, the winner read off `v`'s key
+in the returned table `kt` is `i` iff `i` has a winning strategy from `v` in the whole game
+(`G.WinsFrom`). See `HBCorrect` (`HybridSI/Correctness.lean`). -/
 theorem hbCorrect {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf fuel : ℕ) : HBCorrect G bf fuel := sorry
 
-/-- With fuel `|V|^|V| + 1` H-B returns. -/
+/-- **Termination of H-B.** For a relabelled game and both fuels at least `hbFuel V = n^n + 1`,
+`hbRun G bf fuel 0 (initProfile G)` returns a result (is not `none`). The fuel is exponential; a
+polynomial bound is the open `HBPolyIterations`. See `HBTerminates`
+(`HybridSI/Correctness.lean`). -/
 theorem hbTerminates {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf fuel : ℕ) : HBTerminates G bf fuel := sorry
 
-/-- The filter is never empty while `σ` is not optimal. -/
+/-- **The filter is never empty while Even can still improve.** Let `G` be a relabelled game, `p`
+a profile that follows edges, `ps` Odd's best response to `p` and `pstar` Even's best response to
+`ps`, both computed with fuel `bf` without running out. If some Even vertex has an improving edge
+(a successor with a larger key under `ps`), then some Even vertex has a *filtered* edge: improving,
+and of maximal key under `pstar`. So H-B never needs its fallback to plain improving switches. See
+`FilterNonempty` (`HybridSI/Correctness.lean`). -/
 theorem filterNonempty {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) (p : V → V) : FilterNonempty G bf p := sorry
 
-/-- An epoch (constant Odd best response) has at most `n_E` iterations. -/
+/-- **An epoch has at most `n_E` iterations.** If `L` consecutive non-final H-B iterations from a
+profile that follows edges all have the same Odd best response at every Odd vertex, then
+`L ≤ n_E`. See `EpochBound` (`HybridSI/Epoch.lean`). -/
 theorem epochBound {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : EpochBound G bf := sorry
 
-/-- The polynomial best response is a best response: it changes only `pl`'s moves, follows edges,
-    and no `pl`-vertex has a strictly better successor. -/
+/-- **The polynomial best response is a best response.** Let `pl` be a player (`true` = Odd,
+`false` = Even), `p` a profile and `q = bestResponse G pl p`. Then (1) `q` keeps `p`'s moves at the
+vertices of the other player; (2) if `p` follows edges, so does `q`; and (3) no vertex of `pl` has
+a successor with a strictly better key under `q` (for Odd: smaller, for Even: larger). For
+one-player games, (3) means that `q` is optimal. See `BestResponseOptimal`
+(`HybridSI/BestResponse.lean`). -/
 theorem bestResponse_optimal {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (pl : Bool) (p : V → V) : BestResponseOptimal G pl p := sorry
 
-/-- The polynomial best response takes at most `4 (n + 1)² (m + 2n + 1)` steps. -/
+/-- **The polynomial best response takes polynomial time.** For every player `pl` and profile
+`p`, `bestResponseT G pl p` takes at most `4 (n + 1)² (m + 2n + 1)` steps. See `BestResponseCost`
+(`HybridSI/BestResponse.lean`). -/
 theorem bestResponse_cost {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (pl : Bool) (p : V → V) : BestResponseCost G pl p := sorry
 
-/-- One iteration of the polynomial H-B variant takes at most `hbStepBound n m` steps. -/
+/-- **One iteration of polynomial H-B takes polynomial time.** For every profile `p`,
+`hbStepPoly G p` takes at most `hbStepBound n m` steps: two best responses plus
+`2n (n + 1)³ + 5 (m + n)`. See `HBStepCost` (`HybridSI/AlgorithmPoly.lean`). -/
 theorem hbStepPoly_cost {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (p : V → V) : HBStepCost G p := sorry
 
-/-- A run of the polynomial H-B variant returning after `it` iterations costs at most
-    `(it + 1) · (hbStepBound n m + 1)`. -/
+/-- **A run of polynomial H-B costs polynomial time per iteration.** If the run
+`hbRunPoly G fuel 0 (initProfile G)` returns after `it` iterations, it takes at most
+`(it + 1) · (hbStepBound n m + 1)` steps. Together with a polynomial bound on `it` (open), this
+would put H-B in P. See `HBRunCost` (`HybridSI/AlgorithmPoly.lean`). -/
 theorem hbRunPoly_cost {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (fuel : ℕ) : HBRunCost G fuel := sorry
 
-/-- Correctness of the polynomial H-B variant. -/
+/-- **Correctness of polynomial H-B.** Let `G` be a relabelled game and suppose the run
+`hbRunPoly G fuel 0 (initProfile G)` returns `some (it, kt)`. Then, as in `hbCorrect`, for every
+`v` and `i` the winner read off `v`'s key in `kt` is `i` iff `i` has a winning strategy from `v`.
+See `HBPolyCorrect` (`HybridSI/AlgorithmPoly.lean`). -/
 theorem hbPolyCorrect {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (fuel : ℕ) : HBPolyCorrect G fuel := sorry
 
-/-- A returning run yields a trace of its iterations. -/
+/-- **A returning run has a trace.** If `p₀` follows edges and the run `hbRun G bf fuel it₀ p₀`
+returns `some (it, kt)`, then there is a trace `RunTrace G bf L p ps` with `p 0 = p₀` and
+`it = it₀ + L` whose last iteration (from `p L`) is final with result `kt`. This connects the run
+to the trace-based bounds below. See `RunTraceOfRun` (`HybridSI/Potential.lean`). -/
 theorem runTraceOfRun {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : RunTraceOfRun G bf := sorry
 
-/-- Along a run the valuation (keys of Odd's best responses) is pointwise non-decreasing. -/
+/-- **The valuation never decreases (F1).** Along a trace of length `L`, `Ξ_j(v) ≤ Ξ_k(v)` for
+all `j ≤ k ≤ L` and every vertex `v`. See `ValuationMonotone` (`HybridSI/Potential.lean`). -/
 theorem valuationMonotone {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : ValuationMonotone G bf := sorry
 
-/-- At most `n (n - 1)` iterations change some vertex's cycle maximum. -/
+/-- **Cycle maxima change at most `n (n − 1)` times in total.** Along a trace of length `L`, at
+most `n (n − 1)` of the iterations `k < L` change the cycle maximum of the play from some vertex
+under Odd's best response (`ps k` versus `ps (k + 1)`). See `CycleMaxChanges`
+(`HybridSI/Potential.lean`). -/
 theorem cycleMaxChanges {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : CycleMaxChanges G bf := sorry
 
-/-- Each vertex's cycle maximum changes at most `n - 1` times. -/
+/-- **The cycle maximum of one vertex changes at most `n − 1` times.** Along a trace of length
+`L`, at most `n − 1` iterations `k < L` change the cycle maximum of the play from a given vertex
+`v` under Odd's best response. See `VertexCycMaxChanges` (`HybridSI/Potential.lean`). -/
 theorem vertexCycMaxChanges {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : VertexCycMaxChanges G bf := sorry
 
-/-- At most `2 (n - 1)` crossings of a pair coincide with a change of either cycle maximum. -/
-theorem crossCycMaxChanges {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : CrossCycMaxChanges G bf := sorry
-
-/-- Epoch changes are bounded by tie rounds plus sibling-pair crossings. -/
-theorem epochCrossings {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : EpochCrossings G bf := sorry
-
-/-- Rounds changing some vertex's (cycle maximum, top membership) are at most `n (2n - 1)`. -/
+/-- **Changes at the top vertex are bounded (TOP).** Let `t` be the most relevant vertex of the
+game. Along a trace of length `L`, at most `n (2n − 1)` iterations `k < L` change, for some vertex
+`v`, the cycle maximum of its play under Odd's best response or whether that play visits `t` before
+its cycle maximum. This is the top-vertex split of the paper proof. See `TopChanges`
+(`HybridSI/Potential.lean`). -/
 theorem topChanges {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : TopChanges G bf := sorry
 
-/-- If every Even edge is switched into at most `c` times, a run has at most `c · m_E` iterations. -/
-theorem entryIterations {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) (p₀ : V → V) (c : ℕ) : EntryIterations G bf p₀ c := sorry
-
-/-- The open conjecture ENT (each Even edge entered at most `|V|` times) implies polynomially
-    many iterations. -/
-theorem entryPoly : EntryPoly := sorry
-
-/-- Any two saddle profiles have the same keys (the optimal valuation is unique). -/
+/-- **The optimal valuation is unique.** Any two *saddle* profiles `q`, `q'` (`Saddle`: they
+follow edges, and under their own keys no Odd vertex has a successor with a smaller key and no
+Even vertex one with a larger key) satisfy `key G q = key G q'`. See `SaddleUnique`
+(`HybridSI/Bounds.lean`). -/
 theorem saddleUnique {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge] :
     SaddleUnique G := sorry
 
-/-- Every relabelled game has a saddle profile. -/
+/-- **The optimal valuation exists.** Every relabelled game has a saddle profile. See
+`SaddleExists` (`HybridSI/Bounds.lean`). -/
 theorem saddleExists {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge] :
     SaddleExists G := sorry
 
-/-- Along a trace `Ξ_k ≤ K*_j`. -/
+/-- **`Ξ_k ≤ K*_j` along a trace.** Along a trace of length `L`, let `k, j ≤ L` and let `pstar`
+be Even's best response to `ps j` (computed with fuel `bf` without running out). Then
+`Ξ_k(v) ≤ key G pstar v` for every vertex `v`. See `LowerBelowUpper` (`HybridSI/Bounds.lean`). -/
 theorem lowerBelowUpper {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : LowerBelowUpper G bf := sorry
 
-/-- The sandwich `Ξ_k ≤ v* ≤ K*_j` (P2). -/
+/-- **The sandwich `Ξ_k ≤ K° ≤ K*_j` (F2).** Let `q` be a saddle profile (its keys are the
+optimal valuation `K°`). Along a trace of length `L`, `Ξ_k ≤ key G q` pointwise for all `k ≤ L`,
+and `key G q ≤ key G pstar` pointwise for Even's best response `pstar` to `ps j`, for all `j ≤ L`.
+See `Sandwich` (`HybridSI/Bounds.lean`). -/
 theorem sandwich {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : Sandwich G bf := sorry
 
-/-- Autonomy: on a closed subgame the trace restricts to a trace of the subgame. -/
+/-- **H-B runs independently on a closed subgame.** Let `G` be a relabelled game and `D` a set
+that no edge leaves (`Closed`). For a trace of length `L`, the restrictions of the profiles and of
+Odd's best responses to `D` form a trace of H-B on the subgame on `D`, of some length `LD ≤ L`. If
+`LD < L`, the subgame's iteration from `pD LD` is final, and the restriction to `D` stays the same
+until `L`. See `Autonomy` (`HybridSI/Bounds.lean`). -/
 theorem autonomy {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : Autonomy G bf := sorry
 
-/-- O1: a closed subgame adds at most the number of profiles outside it. -/
+/-- **A closed subgame adds at most the number of outside profiles (O1).** Let `G` be a
+relabelled game, `bf ≥ hbFuel V` the best-response fuel and `D` a closed set. Given a trace of
+length `L` on `G`, and a trace of length `LD` on the subgame on `D` that starts from the
+restriction of `p 0` and ends in a final iteration, `L ≤ LD + ∏_{v ∉ D} deg v`. See
+`ClosedIterations` (`HybridSI/Bounds.lean`). -/
 theorem closedIterations {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : ClosedIterations G bf := sorry
 
-/-- Lemma M: truncations of `B` are monotone while the cycle maximum is fixed. -/
-theorem truncationMonotone {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : TruncationMonotone G bf := sorry
-
-/-- P4: at most `n` iterations with decisive element `x` in a stable stretch. -/
-theorem decisiveRounds {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : DecisiveRounds G bf := sorry
-
-/-- EDEC2: inside an epoch and an `l`-interval the decisive bound propagates. -/
-theorem epochDecisive {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : EpochDecisive G bf := sorry
-
-/-- ESEP: no reset of the decisive element inside an epoch and an `l`-interval. -/
-theorem epochNoReset {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : EpochNoReset G bf := sorry
-
-/-- LOC: a jump of the decisive element is adjacent to a change of Odd's best response. -/
-theorem resetLocal {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : ResetLocal G bf := sorry
-
-/-- K2: a vertex and its successor have the same cycle maximum. -/
-theorem cycMaxSucc {V : Type*} [Fintype V] [LinearOrder V] : CycMaxSucc V := sorry
-
-/-- K1: Odd's move at every state is a successor of minimal key. -/
-theorem oddOptimal {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : OddOptimal G bf := sorry
-
-/-- K3: a cycle-maximum-stable Odd switch is between successors of equal cycle maximum. -/
-theorem stableOddChange {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : StableOddChange G bf := sorry
-
-/-- MMON: the key of Odd's chosen successor never decreases. -/
-theorem escapeMonotone {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : EscapeMonotone G bf := sorry
-
-/-- K4: with one Odd choice vertex, epoch changes are at most `deg u · (n - 1)` plus the local ones. -/
-theorem singleOddEpochs {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : SingleOddEpochs G bf := sorry
-
-/-- Local epoch changes switch `u` between successors with `u`'s cycle maximum. -/
-theorem locSameTop {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : LocSameTop G bf := sorry
-
-/-- A trace has at most `(E + 1) · n_E` iterations, `E` the number of epoch changes. -/
+/-- **Iterations are bounded by epochs.** For a trace of length `L`, let `E` be the number of
+iterations `k < L` after which Odd's best response changes at some Odd vertex
+(`oddChangeRounds`). Then `L ≤ (E + 1) · n_E`. See `EpochIterations`
+(`HybridSI/Counting.lean`). -/
 theorem epochIterations {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : EpochIterations G bf := sorry
 
-/-- Epoch changes raise the escape value of any Odd vertex to a new value or are escape ties. -/
-theorem escapeCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : EscapeCount G bf := sorry
-
-/-- The escape values split by the cycle maximum of the chosen successor. -/
-theorem escapeClasses {V : Type*} [Fintype V] [LinearOrder V] : EscapeClasses V := sorry
-
-/-- Per cycle maximum, at most `2n + 1` escape values have `B`-sum `0`. -/
-theorem escapeClassSplit {V : Type*} [Fintype V] [LinearOrder V] : EscapeClassSplit V := sorry
-
-/-- The escape of an Odd vertex has at most `n² - 1` cut rounds. -/
-theorem escapeCutCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : EscapeCutCount G bf := sorry
-
-/-- At most `c` non-final epoch changes per cut-free stretch give at most `(c + 1) n²` epoch
-    changes plus those reaching the final escape value. -/
-theorem segmentCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : SegmentCount G bf := sorry
-
-/-- `SegmentConjecture` implies `SingleOddPoly`. -/
-theorem segmentReduction : SegmentReduction := sorry
-
-/-- At most `c` iterations per stretch without a cycle-maximum change bound the iterations. -/
-theorem stretchCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : StretchCount G bf := sorry
-
-/-- At most `c` iterations per stretch without a downward move bound the iterations. -/
-theorem downCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : DownCount G bf := sorry
-
-/-- `DownConjecture` implies `SingleOddPoly`. -/
-theorem downReduction : DownReduction := sorry
-
-/-- `StretchConjecture` implies `SingleOddPoly`. -/
-theorem stretchReduction : StretchReduction := sorry
-
-/-- `SingleOddEscapeConjecture` implies `SingleOddPoly`. -/
-theorem singleOddReduction : SingleOddReduction := sorry
-
-/-- Lemma NT: in an `l`-stable iteration a switched non-top Even vertex strictly raises its key. -/
-theorem nonTopStrict {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : NonTopStrict G bf := sorry
-
-/-- Lemma SK: an iteration without key change, followed by a non-final one, is an escape tie. -/
-theorem sameKeysTie {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : SameKeysTie G bf := sorry
-
-/-- Theorem DR: a stretch has at most `(R + 1) · n(2n - 1) + Tie + 1` iterations. -/
-theorem decisiveStretch {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : DecisiveStretch G bf := sorry
-
-/-- Uniform DR: at most `r` rises per stretch and `t` escape ties bound every stretch. -/
-theorem decisiveStretchBound {V : Type*} [Fintype V] [LinearOrder V] (G : Game V)
-    [DecidableRel G.edge] (bf : ℕ) : DecisiveStretchBound G bf := sorry
-
-/-- At most `r` rises per stretch and `t` escape ties bound the iterations. -/
-theorem decisiveIterations {V : Type*} [Fintype V] [LinearOrder V] (G : Game V)
-    [DecidableRel G.edge] (bf : ℕ) : DecisiveIterations G bf := sorry
-
-/-- `RiseConjecture` implies `SingleOddRisePoly`. -/
-theorem riseReduction : RiseReduction := sorry
-
-/-- A stretch with constant keys `K*` has at most `n_E` iterations. -/
+/-- **A stretch with constant `K*` has at most `n_E` iterations (F6).** Along a trace of length
+`L`, if `j ≤ j' ≤ L` and the keys `K*_k` (`kstarOf`) are the same for all `j ≤ k < j'`, then
+`j' − j ≤ n_E`. See `KStarBlock` (`HybridSI/Counting.lean`). -/
 theorem kstarBlock {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : KStarBlock G bf := sorry
 
-/-- A trace has at most `C + n_E (C + 1)` iterations, `C` the number of changes of `K*`. -/
+/-- **Iterations are bounded by changes of `K*`.** For a trace of length `L`, let `C` be the
+number of iterations `k` with `k + 1 < L` at which `K*_{k+1} ≠ K*_k` (`kstarChangeRounds`). Then
+`L ≤ C + n_E · (C + 1)`. A polynomial bound on `C` is the Lean form of the open problem. See
+`KStarCount` (`HybridSI/Counting.lean`). -/
 theorem kstarCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : KStarCount G bf := sorry
-
-/-- `KChangeConjecture` implies `SingleOddPoly`. -/
-theorem kChangeReduction : KChangeReduction := sorry
-
-/-- R2: the profiles freeze on the vertices that cannot reach `u` within `numEvenIn` iterations. -/
-theorem unreachFreeze {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : UnreachFreeze G bf := sorry
-
-/-- At most `(#up + 1)(r - 1)` downward moves of the world value. -/
-theorem upDownCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : UpDownCount G bf := sorry
-
-/-- At most `deg u` distinct world values if `K*` depends only on Odd's choice at `u`. -/
-theorem worldsBound {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : WorldsBound G bf := sorry
-
-/-- If equal world values give equal `K*`, then `K*` changes only at up and down moves. -/
-theorem kstarUpDown {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : KStarUpDown G bf := sorry
-
-/-- `#K*-changes + 1 ≤ deg u · (#up + 1)`. -/
-theorem kstarUpCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
-    (bf : ℕ) : KStarUpCount G bf := sorry
-
-/-- `MonotoneWorlds` and `UpConjecture` imply `KChangeConjecture`. -/
-theorem upReduction : UpReduction := sorry
-
-/-- MW: with a single Odd choice vertex, `K*` depends only on Odd's choice at `u`, and world
-    values compare like the keys `K*`. -/
-theorem monotoneWorlds : MonotoneWorlds := sorry
-
-/-- `UpConjecture` alone implies `SingleOddPoly`. -/
-theorem upPoly : UpPoly := sorry
 
 end MercLib.HybridSI

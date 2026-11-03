@@ -26,15 +26,21 @@ open MercVerified.Refinement
 
 namespace MercVerified.Refinement.Proofs
 
-/-- `strong_bisim_sigref` is correct: its partition is stable and coarser than every strong
-    fixpoint (`StrongBisimSigrefCorrectSpec`). -/
+/-- **The Rust `strong_bisim_sigref` is correct.** Let `LTSInst` implement the Rust `LTS` trait
+and let `sys` be well-formed (`hwf`: a non-empty state space on which `outgoing_transitions`
+succeeds with in-range targets) with a state count that fits the loop counter (`hfit`). Then for
+any `timing` the call succeeds and returns a `BlockPartition` with a block map that is coherent
+with `element_to_block` on the real states, stable, and coarser than every strong fixpoint. See
+`StrongBisimSigrefCorrectSpec` (`MercVerified/Refinement/Refinement.lean`). -/
 theorem strong_bisim_sigref_correct
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
     StrongBisimSigrefCorrectSpec LTSInst sys hwf hfit timing := sorry
 
-/-- Usability: the block map of `strong_bisim_sigref` is exactly strong bisimilarity (in the
-    `toLTS` view) on the real states. -/
+/-- **The partition of `strong_bisim_sigref` is strong bisimilarity.** Under the hypotheses of
+`strong_bisim_sigref_correct` (`hwf`, `hfit`), the call returns `ok (sys, partition)` with a block
+map `blockOf` such that two real states (index below the state count) get the same block iff they
+are strongly bisimilar in the `toLTS` view of `sys`. -/
 theorem strong_bisim_sigref_same_block_iff_bisimilar
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hfit : MercVerified.Refinement.StateCountFits LTSInst sys) (timing : Timing) :
@@ -48,8 +54,14 @@ theorem strong_bisim_sigref_same_block_iff_bisimilar
             Cslib.LTS.Bisimilarity (toLTS LTSInst sys)
               (toLTS LTSInst sys) s s') := sorry
 
-/-- `branching_bisim_sigref_impl` is correct on a preprocessed LTS
-    (`BranchingBisimSigrefImplCorrectSpec`). -/
+/-- **The Rust `branching_bisim_sigref_impl` is correct on a preprocessed LTS.** Let `LTSInst`
+implement the Rust `LTS` trait and let `sys` be well-formed (`hwf`) with a state count that fits
+the loop counter (`hfit`), and assume `sys` already satisfies `BranchingLtsAssumptions` (the output
+of preprocessing). Then the call returns a `BlockPartition` covering all real states whose blocks
+are exactly the branching bisimilarity classes of the real states, in the `toLTS` view. That
+preprocessing establishes the assumptions is not covered here (see
+`branching_bisim_sigref_correct`). See `BranchingBisimSigrefImplCorrectSpec`
+(`MercVerified/Refinement/Refinement.lean`). -/
 theorem branching_bisim_sigref_impl_correct
     {L Label : Type} (LTSInst : LTS L Label)
     (sys : L) (hwf : MercVerified.Lts.WellFormed LTSInst sys)
@@ -57,8 +69,16 @@ theorem branching_bisim_sigref_impl_correct
     (hasm : BranchingLtsAssumptions LTSInst sys) (timing : Timing) :
     BranchingBisimSigrefImplCorrectSpec LTSInst sys hwf hfit hasm timing := sorry
 
-/-- `branching_bisim_sigref` (with preprocessing, `divergence_preserving = false`) is correct
-    (`BranchingBisimSigrefCorrectSpec`). -/
+/-- **The Rust `branching_bisim_sigref` (with preprocessing) is correct.** Let `sys` be a
+well-formed system of an `LTS` implementor that satisfies `PreprocessAssumptions`, and `state` a
+real state (`hstate`). With `divergence_preserving = false` and any `timing`, the call succeeds and
+returns the preprocessed LTS `R`, the image `state'` of `state` and a partition of `R`.
+
+The preprocessing is correct: `R` is well-formed, fits the counter and satisfies
+`BranchingLtsAssumptions`, and the map `f` to τ-SCCs is a branching bisimulation with
+`state' = f state`. The partition is exactly branching bisimilarity of `R`, so branching
+bisimilarity of the input can be read off the output. See `BranchingBisimSigrefCorrectSpec`
+(`MercVerified/Refinement/Refinement.lean`). -/
 theorem branching_bisim_sigref_correct {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (hwf : MercVerified.Lts.WellFormed LTSInst sys) (hass : PreprocessAssumptions LTSInst sys)
     (state : TagIndex Std.Usize StateTag)

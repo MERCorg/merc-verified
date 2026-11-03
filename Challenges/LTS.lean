@@ -17,15 +17,19 @@ namespace MercLib.LTS
 
 /-! ## Branching bisimilarity is an equivalence -/
 
-/-- Branching bisimilarity is reflexive. -/
+/-- **Branching bisimilarity is reflexive.** In an LTS `lts` with a silent action (`HasTau`),
+every state `s` satisfies `s ≈br[lts] s`. -/
 theorem BranchingBisimilarity.refl [HasTau Label] {lts : LTS State Label} (s : State) :
     s ≈br[lts] s := sorry
 
-/-- Branching bisimilarity is symmetric. -/
+/-- **Branching bisimilarity is symmetric.** In an LTS with a silent action, if `s ≈br[lts] s'`
+then `s' ≈br[lts] s`. -/
 theorem BranchingBisimilarity.symm [HasTau Label] {lts : LTS State Label}
     {s s' : State} (h : s ≈br[lts] s') : s' ≈br[lts] s := sorry
 
-/-- Branching bisimilarity is transitive (via semi-branching bisimilarity). -/
+/-- **Branching bisimilarity is transitive.** In an LTS with a silent action, if
+`s1 ≈br[lts] s2` and `s2 ≈br[lts] s3` then `s1 ≈br[lts] s3`. The proof goes through semi-branching
+bisimilarity. -/
 theorem BranchingBisimilarity.trans [HasTau Label] {lts : LTS State Label}
     {s1 s2 s3 : State} (h12 : s1 ≈br[lts] s2) (h23 : s2 ≈br[lts] s3) :
     s1 ≈br[lts] s3 := sorry

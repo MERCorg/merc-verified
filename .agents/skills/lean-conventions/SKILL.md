@@ -28,15 +28,23 @@ Only challenge the "headline" result(s) a file builds toward, not every intermed
 
 ### Challenge documentation
 
-Every theorem in a `Challenges/` file is the human-readable frontend of the library, so its doc comment says what it proves, in this format:
+Every theorem in a `Challenges/` file is the human-readable frontend of the library, so its doc comment says what it proves. Follow the Mathlib/CSLib docstring style (Mathlib's documentation guide; e.g. `Mathlib/Probability/CentralLimitTheorem.lean`, `Cslib/Foundations/Semantics/LTS/Bisimulation.lean`): a bold title for a named result, then the statement as plain prose, with continuation lines not indented. Do not use `* Given:` / `* Then:` bullet lists; neither library does.
 
 ```
-/-- **Short title.**
-    * Given: the hypotheses (including those inside the spec `def`).
-    * Then: the conclusion, in words.
-    * Caveat: what is not covered (optional).
-    * Spec: `SpecDef` (`Area/File.lean`). -/
+/-- **Short title.** If <the hypotheses, including those hidden inside the spec `def`>, then
+<the conclusion, in words>. <What is not covered, optional.> See `SpecDef` (`Area/File.lean`). -/
 ```
+
+For example:
+
+```
+/-- **Branching bisimilarity is transitive.** In an LTS with a silent action, if
+`s1 ≈br[lts] s2` and `s2 ≈br[lts] s3` then `s1 ≈br[lts] s3`. -/
+```
+
+Spell out every hypothesis that is not visible in the signature (those inside the spec `def`); hypotheses that are visible there may be summarised. A docstring may use more than one sentence or paragraph, but keep it as prose.
+
+Module docstrings follow the Mathlib layout: `# Title`, an introduction (with references), then `## Main definitions`, `## Main statements`, `## Notation` and `## References` as needed, each item written as `` - `name`: one-line description ``.
 
 ### Exports
 
