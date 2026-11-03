@@ -36,7 +36,7 @@ Algorithm 6 (`AlgorithmImpossibleFutures_Proofs.lean`) reuses it. -/
 
 open scoped Classical in
 /-- The specification set `spec'` reached from `spec` by the action `a` (lines 14-17). -/
-noncomputable def succSpec [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
+private noncomputable def succSpec [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
     (a : Label) : Set State1 :=
   if a = HasTau.τ then spec else { s' | ∃ s ∈ spec, WeakTr lts1 s [a] s' }
 
@@ -103,7 +103,7 @@ private theorem Antichain.mem_insert_self {A : Antichain (Set State1 × State2)}
 /-- What a successful run of a `for` loop over the transitions `l` (lines 13-22) guarantees:
     `w'`/`A'` extend `w`/`A` with non-empty successors only, and every successor is covered by
     `A'` or satisfies `extra` (for Algorithm 5: is covered by `antichain⁺`). -/
-structure SuccFacts [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
+private structure SuccFacts [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
     (extra : Set State1 × State2 → Prop) (l : List (Label × State2))
     (w : List (Set State1 × State2)) (A : Antichain (Set State1 × State2))
     (w' : List (Set State1 × State2)) (A' : Antichain (Set State1 × State2)) : Prop where
@@ -218,7 +218,7 @@ private theorem forSuccessors_some [HasTau Label] {lts1 : LTS State1 Label} {spe
     pairs satisfying `W`, where pairs whose specification set satisfies `Pr` are not expanded and
     successors satisfying `Ex` need not be covered by the antichain (for Algorithm 5: those covered
     by `antichain⁺`). -/
-structure ExploreInv [HasTau Label] (L1 : LTS (Set State1) Label) (lts2 : LTS State2 Label)
+private structure ExploreInv [HasTau Label] (L1 : LTS (Set State1) Label) (lts2 : LTS State2 Label)
     (W : Set State1 → State2 → Prop) (Pr : Set State1 → Prop)
     (Ex : Set State1 × State2 → Prop) (p0 : Set State1 × State2)
     (done : Set (Set State1 × State2)) (working : List (Set State1 × State2))

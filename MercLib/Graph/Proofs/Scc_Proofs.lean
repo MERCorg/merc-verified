@@ -17,18 +17,18 @@ namespace MercLib.Graph
 
 variable {V : Type*} {E : V → V → Prop}
 
-theorem Reach.trans {X : Set V} {a b c : V} (h1 : Reach E X a b) (h2 : Reach E X b c) :
+private theorem Reach.trans {X : Set V} {a b c : V} (h1 : Reach E X a b) (h2 : Reach E X b c) :
     Reach E X a c :=
   Relation.ReflTransGen.trans h1 h2
 
-theorem Reach.single {X : Set V} {a b : V} (ha : a ∈ X) (hb : b ∈ X) (he : E a b) :
+private theorem Reach.single {X : Set V} {a b : V} (ha : a ∈ X) (hb : b ∈ X) (he : E a b) :
     Reach E X a b :=
   Relation.ReflTransGen.single ⟨ha, hb, he⟩
 
-theorem Reach.refl {X : Set V} (a : V) : Reach E X a a :=
+private theorem Reach.refl {X : Set V} (a : V) : Reach E X a a :=
   Relation.ReflTransGen.refl
 
-theorem Reach.mem_of_ne {X : Set V} {a b : V} (h : Reach E X a b) (hne : a ≠ b) :
+private theorem Reach.mem_of_ne {X : Set V} {a b : V} (h : Reach E X a b) (hne : a ≠ b) :
     a ∈ X ∧ b ∈ X := by
   rcases Relation.ReflTransGen.cases_head h with rfl | ⟨c, hc, hr⟩
   · exact absurd rfl hne

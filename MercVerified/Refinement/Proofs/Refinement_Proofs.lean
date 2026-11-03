@@ -1,9 +1,6 @@
 module
 
 public import MercVerified.Refinement.Refinement
-public import MercLib.Signatures.Proofs.Signature_Proofs
-public import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
-public import MercVerified.Refinement.Proofs.RunWorklistLoop_Proofs
 import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
 import all MercLib.Signatures.Proofs.Signature_Proofs
 import all MercLib.Sigref.Proofs.CountingSort_Proofs

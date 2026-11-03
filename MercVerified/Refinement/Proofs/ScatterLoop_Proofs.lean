@@ -224,7 +224,7 @@ private theorem scatter_body_step
           core.iter.adapters.enumerate.IteratorEnumerate.next, hbs]
 
 /-- The label of class `j` as a `BlockIndex`. -/
-def labelNat (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.Usize) (j : Nat) :
+private def labelNat (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.Usize) (j : Nat) :
     TagIndex Std.Usize BlockTag :=
   if j = 0 ∧ u = false then block_index else uTag (nbi.val + j)
 
@@ -248,7 +248,7 @@ private theorem posOf_eq_cursor (ms : Nat) (szs cls : List Nat) (m : Nat) (hm : 
   simp
 
 /-- The pointwise description of the arrays after the scatter loop has processed `m` elements. -/
-structure ScInv (ms : Nat) (szs cls : List Nat) (K : Nat)
+private structure ScInv (ms : Nat) (szs cls : List Nat) (K : Nat)
     (old : List (TagIndex Std.Usize StateTag))
     (block_index : TagIndex Std.Usize BlockTag) (u : Bool) (nbi : Std.Usize) (n m : Nat)
     (E0 : List (TagIndex Std.Usize StateTag)) (B0 : List (TagIndex Std.Usize BlockTag))

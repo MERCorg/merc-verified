@@ -976,7 +976,7 @@ state's tick is one summand of `seenCount`. -/
 
 /-- The transitions a state contributes to the count: whatever `outgoing_transitions` reports
     for it, or nothing when that call fails. -/
-def outVec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
+private def outVec {L Label : Type} (LTSInst : LTS L Label) (sys : L)
     (s : TagIndex Sz StateTag) : alloc.vec.Vec Transition :=
   @Result.cases (alloc.vec.Vec Transition) (fun _ => alloc.vec.Vec Transition)
     (LTSInst.outgoing_transitions sys s)

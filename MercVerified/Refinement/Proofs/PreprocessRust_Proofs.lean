@@ -1,10 +1,6 @@
 module
 
-public import MercVerified.Refinement.Proofs.QuotientRust_Proofs
-public import MercVerified.Refinement.Proofs.BranchingTop_Proofs
 public import MercVerified.Refinement.Refinement
-public import MercLib.Sigref.Proofs.TarjanBridge_Proofs
-public import MercLib.Sigref.Proofs.Scc_Proofs
 import all MercLib.Graph.Proofs.TarjanBounds_Proofs
 import all MercLib.Graph.Proofs.TarjanFinish_Proofs
 import all MercLib.Graph.Proofs.TarjanInit_Proofs

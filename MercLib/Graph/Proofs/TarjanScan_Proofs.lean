@@ -18,7 +18,7 @@ variable {n : ℕ}
 
 /-- What `scan` does: it consumes a prefix `tc` of the transitions, stops at the first edge target
 that is unvisited (the child), and only lowers `low s` and marks the child. -/
-structure ScanRes (g : Graph n) (s : Fin n) (ts : List (Bool × Fin n)) (idx : ℕ) (c : Ctx n)
+private structure ScanRes (g : Graph n) (s : Fin n) (ts : List (Bool × Fin n)) (idx : ℕ) (c : Ctx n)
     (ch : Option (Fin n)) (idx' : ℕ) (c' : Ctx n) : Prop where
   consumed : ∃ tc tr : List (Bool × Fin n), ts = tc ++ tr ∧ idx' = idx + tc.length ∧
     (ch = none → tr = []) ∧

@@ -52,7 +52,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The invariant of the worklist `w` w.r.t. the partition `p`. -/
-def DirtyInv (n : Nat) (p : BlockPartition) (w : VecTy BT) : Prop :=
+private def DirtyInv (n : Nat) (p : BlockPartition) (w : VecTy BT) : Prop :=
   PartInv n p ∧ w.val.Nodup ∧
   ∀ x ∈ w.val, x.index.val < p.blocks.val.length ∧
     (blkAt p x.index.val).marked_split.val < (blkAt p x.index.val).«end».val

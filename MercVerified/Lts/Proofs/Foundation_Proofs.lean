@@ -45,7 +45,7 @@ namespace MercVerified.Lts.Proofs
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
 
-abbrev Sz := Std.Usize
+private abbrev Sz := Std.Usize
 
 /-!
 ## `TagIndex` semantics
@@ -133,7 +133,7 @@ private theorem vec_tagged_index_val {U : Type} {Tag : Type}
   rfl
 
 /-- `usize` with payload `k % 2^bits` (total construction). -/
-def uTotal (k : Nat) : Sz := { bv := BitVec.ofNat UScalarTy.Usize.numBits k }
+private def uTotal (k : Nat) : Sz := { bv := BitVec.ofNat UScalarTy.Usize.numBits k }
 
 private lemma uTotal_val_of_lt {k : Nat} (h : k < 2 ^ UScalarTy.Usize.numBits) :
     (uTotal k).val = k := by
@@ -141,7 +141,7 @@ private lemma uTotal_val_of_lt {k : Nat} (h : k < 2 ^ UScalarTy.Usize.numBits) :
   rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h]
 
 /-- The tagged index with payload `k % 2^bits`. -/
-def uTag {Tag : Type} (k : Nat) : TagIndex Sz Tag := { index := uTotal k, marker := () }
+private def uTag {Tag : Type} (k : Nat) : TagIndex Sz Tag := { index := uTotal k, marker := () }
 
 private lemma uTotal_zero : uTotal 0 = 0#usize := by
   apply UScalar.eq_of_val_eq

@@ -57,7 +57,7 @@ set_option maxHeartbeats 1600000
 set_option maxRecDepth 10000
 
 /-- The loop invariant of `strong_process_marked_elements_loop` after `m` processed elements. -/
-structure SpmeInv (n : Nat) (olds : VecTy ST) (m : Nat) (id : InternMap) (kts : VecTy SigKey)
+private structure SpmeInv (n : Nat) (olds : VecTy ST) (m : Nat) (id : InternMap) (kts : VecTy SigKey)
     (spb : BlockPartitionBuilder) (stk : VecTy BT) (ei : Sz) : Prop where
   ei_eq : ei.val = m
   m_le : m ≤ olds.val.length
@@ -79,20 +79,20 @@ structure SpmeInv (n : Nat) (olds : VecTy ST) (m : Nat) (id : InternMap) (kts : 
 
 /-- `k` is the canonical key of the signature of `s` under the block map `bn`: its members are
     exactly the `StrongSignature`, and it is strictly sorted. -/
-def IsSigKey {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private def IsSigKey {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (bn : ST → BT) (s : ST) (k : SigKey) : Prop :=
   (∀ μ β, (μ, β) ∈ k.val ↔ (μ, β) ∈ StrongSignature (MercVerified.Lts.toLTS LTSInst sys) s bn) ∧
   List.Pairwise entLt k.val
 
-noncomputable abbrev emptyKey : SigKey := alloc.vec.Vec.new SigPair
+private noncomputable abbrev emptyKey : SigKey := alloc.vec.Vec.new SigPair
 
 /-- The class index `index_to_block[t]` of the `t`-th processed element. -/
-def clsAt (spb : BlockPartitionBuilder) (t : Nat) : Nat := (spb.index_to_block.val.getD t zBT).index.val
+private def clsAt (spb : BlockPartitionBuilder) (t : Nat) : Nat := (spb.index_to_block.val.getD t zBT).index.val
 
 /-- The signature-key semantics of the loop after `m` processed elements: the interning map and key
     table agree, and the class of each processed element names the key table entry holding the
     canonical key of its signature (w.r.t. the block map `bn`). -/
-structure SpmeSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
+private structure SpmeSem {L Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label) (sys : L)
     (bn : ST → BT) (olds : VecTy ST) (m : Nat) (id : InternMap) (kts : VecTy SigKey)
     (spb : BlockPartitionBuilder) : Prop where
   idinv : IdInv id kts

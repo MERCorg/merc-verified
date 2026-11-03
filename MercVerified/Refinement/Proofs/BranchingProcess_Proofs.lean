@@ -65,7 +65,7 @@ set_option maxRecDepth 10000
 open Classical
 
 /-- The state with index `a`. -/
-def stOf {n : Nat} (a : Fin n) : ST := uTag a.val
+private def stOf {n : Nat} (a : Fin n) : ST := uTag a.val
 
 private theorem stOf_index {n : Nat} (a : Fin n) (hn : n ≤ Usize.max) : (stOf a).index.val = a.val := by
   unfold stOf uTag
@@ -73,30 +73,30 @@ private theorem stOf_index {n : Nat} (a : Fin n) (hn : n ≤ Usize.max) : (stOf 
   exact uTotal_val_of_lt (by have := usize_max_succ; have := a.2; omega)
 
 /-- The abstract LTS on the states `Fin n` of an `LTS` implementor. -/
-def aLTS {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) :
+private def aLTS {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat) :
     Cslib.LTS (Fin n) (TagIndex Std.Usize LabelTag) where
   Tr a μ b := MercVerified.Lts.tr LTSInst sys (stOf a) μ (stOf b)
 
 /-- The block data of a concrete partition. -/
-def bdOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.BD n :=
+private def bdOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.BD n :=
   ⟨fun a => e2bAt p a.val, fun a => IsMarked p a.val⟩
 
 /-- The `state_to_key` array read as a function on `Fin n`. -/
-def keyOf {n : Nat} (stk : VecTy BT) : Fin n → Nat := fun a => (stk.val.getD a.val zBT).index.val
+private def keyOf {n : Nat} (stk : VecTy BT) : Fin n → Nat := fun a => (stk.val.getD a.val zBT).index.val
 
 /-- The abstract flat signature represented by a sorted entry list: the entries whose label is not
 the hat label are visible entries, the others hat entries carrying keys. -/
-def decodeSig (nl : Nat) (l : List SigEntry) : MercLib.Sigref.KSig (TagIndex Std.Usize LabelTag) where
+private def decodeSig (nl : Nat) (l : List SigEntry) : MercLib.Sigref.KSig (TagIndex Std.Usize LabelTag) where
   vis := {e | ∃ x ∈ l, x.1.index.val ≠ nl ∧ e = (x.1, x.2.index.val)}
   hat := {k | ∃ x ∈ l, x.1.index.val = nl ∧ k = x.2.index.val}
 
 /-- The abstract key-computation state of the concrete `state_to_key` and `key_to_signature`. -/
-def absOf {n : Nat} (nl : Nat) (stk : VecTy BT) (kts : VecTy SigKey) :
+private def absOf {n : Nat} (nl : Nat) (stk : VecTy BT) (kts : VecTy SigKey) :
     MercLib.Sigref.KC n (TagIndex Std.Usize LabelTag) :=
   ⟨keyOf stk, kts.val.map (fun v => decodeSig nl v.val)⟩
 
 /-- What the key computation needs of the `LTS` implementor and its labels. -/
-structure CEnv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize) : Prop where
+private structure CEnv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize) : Prop where
   num : LTSInst.num_of_labels sys = ok nl
   hid : ∀ l : TagIndex Std.Usize LabelTag,
     LTSInst.is_hidden_label sys l = ok (decide (l.index.val = 0))
@@ -584,14 +584,14 @@ private def ConcTopo {L Label : Type} (LTSInst : LTS L Label) (sys : L) : Prop :
       t.index.val < s.index.val
 
 /-- The state with index `s mod n`. -/
-def toFin {n : Nat} (hn0 : 0 < n) (s : ST) : Fin n := ⟨s.index.val % n, Nat.mod_lt _ hn0⟩
+private def toFin {n : Nat} (hn0 : 0 < n) (s : ST) : Fin n := ⟨s.index.val % n, Nat.mod_lt _ hn0⟩
 
 /-- The abstract initial key-computation state. -/
-def absInit {n : Nat} (stk0 : VecTy BT) : MercLib.Sigref.KC n (TagIndex Std.Usize LabelTag) :=
+private def absInit {n : Nat} (stk0 : VecTy BT) : MercLib.Sigref.KC n (TagIndex Std.Usize LabelTag) :=
   ⟨keyOf stk0, []⟩
 
 /-- The semantic loop invariant of `branching_process_marked_elements` after `m` elements. -/
-structure BrSem {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize) {n : Nat}
+private structure BrSem {L Label : Type} (LTSInst : LTS L Label) (sys : L) (nl : Std.Usize) {n : Nat}
     (hn0 : 0 < n) (p : BlockPartition) (olds : VecTy ST) (m : Nat) (stk0 stk : VecTy BT)
     (id : InternMap) (kts : VecTy SigKey) (spb : BlockPartitionBuilder) : Prop where
   idinv : IdInv id kts

@@ -224,10 +224,10 @@ split and by more than `n + 1 - n` with one. The invariants are `DirtyInv` / `Lo
 attribute [local reducible] alloc.vec.into_iter.IntoIter
 
 
-abbrev BT := TagIndex Sz BlockTag
-abbrev ST := TagIndex Sz StateTag
+private abbrev BT := TagIndex Sz BlockTag
+private abbrev ST := TagIndex Sz StateTag
 private abbrev InIter := alloc.vec.into_iter.IntoIter BT
-abbrev VecTy := alloc.vec.Vec
+private abbrev VecTy := alloc.vec.Vec
 private abbrev PWS := BlockPartition × VecTy BT × VecTy ST
 
 private noncomputable abbrev tagEqInst : core.cmp.PartialEq BT BT :=
@@ -878,21 +878,21 @@ touches nothing; a cache miss interns the signature under
 `key_to_signature.length`, inserts it into the map and pushes it, returning the
 fresh index. -/
 
-abbrev SigPair := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)
-abbrev SigKey := alloc.vec.Vec SigPair
-abbrev InternMap := std.collections.hash.map.HashMap SigKey BT verified.rustc_hash.FxBuildHasher alloc.alloc.Global
+private abbrev SigPair := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)
+private abbrev SigKey := alloc.vec.Vec SigPair
+private abbrev InternMap := std.collections.hash.map.HashMap SigKey BT verified.rustc_hash.FxBuildHasher alloc.alloc.Global
 
-noncomputable abbrev internEqInst : core.cmp.Eq SigKey :=
+private noncomputable abbrev internEqInst : core.cmp.Eq SigKey :=
   verified.alloc.vec.Vec.Insts.CoreCmpEq alloc.alloc.Global (verified.Pair.Insts.CoreCmpEq
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq LabelTag core.cmp.EqUsize)
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreCmpEq BlockTag core.cmp.EqUsize))
 
-noncomputable abbrev internHashInst : core.hash.Hash SigKey :=
+private noncomputable abbrev internHashInst : core.hash.Hash SigKey :=
   verified.alloc.vec.Vec.Insts.CoreHashHash alloc.alloc.Global (verified.Pair.Insts.CoreHashHash
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash LabelTag verified.Usize.Insts.CoreHashHash)
     (verified.merc_utilities.tagged_index.TagIndex.Insts.CoreHashHash BlockTag verified.Usize.Insts.CoreHashHash))
 
-noncomputable abbrev internBuildHasher : verified.core.hash.BuildHasher verified.rustc_hash.FxBuildHasher rustc_hash.FxHasher :=
+private noncomputable abbrev internBuildHasher : verified.core.hash.BuildHasher verified.rustc_hash.FxBuildHasher rustc_hash.FxHasher :=
   verified.rustc_hash.FxBuildHasher.Insts.CoreHashBuildHasherFxHasher
 
 private theorem allM_zip_lawful {α : Type} [DecidableEq α] (I : core.cmp.PartialEq α α) (hI : core.cmp.PartialEq.IsLawfulEq I) :
@@ -1254,7 +1254,7 @@ private abbrev SpmeFinal :=
   InternMap × VecTy SigKey × SigKey × VecTy BT × VecTy Sz × VecTy ST × VecTy BT
 
 /-- The loop state type of `strong_process_marked_elements_loop`. -/
-abbrev SpmeState :=
+private abbrev SpmeState :=
   InternMap × VecTy SigKey × SigKey × BlockPartitionBuilder × VecTy BT × Sz
 
 /-- One element of `old_elements` is processable: the loop body's calls succeed
@@ -1447,7 +1447,7 @@ private lemma list_drop_eq_nil_iff {α : Type} (l : List α) (n : Nat) :
     success data of `LoopElementOk` together with the successor-state
     equations  `c = (id1, kts1, signature_builder1, …)` so that the body is
     pinned to the concrete continuation `c`. -/
-def LoopStepEq {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private def LoopStepEq {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (partition : BlockPartition) (st c : SpmeState) : Prop :=
   ∃ (state_index : ST) (ts : alloc.vec.Vec Transition)
     (signature_builder1 : SigKey) (index : BT) (id1 : InternMap) (kts1 : VecTy SigKey)
@@ -1746,7 +1746,7 @@ private theorem loopElementOk_of_reach {L : Type} {Label : Type}
     visitable states whose successive moves exhaust exactly the remaining list
     `rest` (intended to be `old_elements.val.drop element_index.val`).  `base`
     records "no more work"; `step` records one fully-pinned `cont` move. -/
-inductive spmeTable {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
+private inductive spmeTable {L : Type} {Label : Type} (LTSInst : verified.merc_lts.lts.LTS L Label)
     (sys : L) (partition : BlockPartition) : SpmeState → List ST → Prop where
   | base : ∀ st : SpmeState, spmeTable LTSInst sys partition st []
   | step : ∀ (st c : SpmeState) (head : ST) (rest : List ST),

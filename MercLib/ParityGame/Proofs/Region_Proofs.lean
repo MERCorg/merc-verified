@@ -32,7 +32,7 @@ private theorem Player.opp_opp (i : Player) : i.opp.opp = i := by cases i <;> rf
 /-- `W` is a region of player `j` in `X` with strategy `σ`: `j` stays in `W` using `σ`, the
     opponent cannot leave `W` (inside `X`), and every play confined to `W` that conforms to `σ`
     is won by `j`. -/
-structure Game.Region (G : Game V) (X : Set V) (j : Player) (W : Set V) (σ : Strategy V) :
+private structure Game.Region (G : Game V) (X : Set V) (j : Player) (W : Set V) (σ : Strategy V) :
     Prop where
   sub : W ⊆ X
   mine : ∀ v ∈ W, G.owner v = j → σ v ∈ W ∧ G.edge v (σ v)
@@ -42,7 +42,7 @@ structure Game.Region (G : Game V) (X : Set V) (j : Player) (W : Set V) (σ : St
     G.PlayWonBy j p
 
 /-- The invariant of the recursion: a partition of `X` into two regions. -/
-structure Game.Strong (G : Game V) (X : Set V) (r : Solution V) : Prop where
+private structure Game.Strong (G : Game V) (X : Set V) (r : Solution V) : Prop where
   cover : r.win .zero ∪ r.win .one = X
   disj : Disjoint (r.win .zero) (r.win .one)
   region : ∀ j, G.Region X j (r.win j) (r.strat j)

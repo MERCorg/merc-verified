@@ -36,8 +36,8 @@ open MercVerified.Refinement
 namespace MercVerified.Refinement.Proofs
 
 /-- The default state/block used by the `getD` accessors. -/
-abbrev zST : TagIndex Std.Usize StateTag := { index := 0#usize, marker := () }
-abbrev zBT : TagIndex Std.Usize BlockTag := { index := 0#usize, marker := () }
+private abbrev zST : TagIndex Std.Usize StateTag := { index := 0#usize, marker := () }
+private abbrev zBT : TagIndex Std.Usize BlockTag := { index := 0#usize, marker := () }
 
 set_option maxHeartbeats 800000
 set_option maxRecDepth 10000
@@ -378,7 +378,7 @@ private theorem blkAt_set {q : BlockPartition} (kk : Std.Usize) (hK : kk.val < q
   · simp [hj]
 
 /-- A state is marked when its offset is at or beyond its block's `marked_split`. -/
-def IsMarked (p : BlockPartition) (s : Nat) : Prop :=
+private def IsMarked (p : BlockPartition) (s : Nat) : Prop :=
   (blkAt p (e2bAt p s)).marked_split.val ≤ offAt p s
 
 /-- Marking an unmarked state `f` (swap it with the last unmarked element and shrink the unmarked

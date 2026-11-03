@@ -119,7 +119,7 @@ private def brEntry (hat : TagIndex Std.Usize LabelTag) (bn : ST → BT) (hid : 
   else (t.label, bn t.to)
 
 /-- All the calls the loop makes for the transitions `l` of `s` succeed with the given values. -/
-structure BrOk {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
+private structure BrOk {L Label : Type} (LTSInst : LTS L Label) (sys : L) (partition : BlockPartition)
     (state_to_key : Slice BT) (s : ST) (bn : ST → BT) (hid : TagIndex Std.Usize LabelTag → Bool)
     (mk : ST → Bool) (key : ST → BT) (hat : TagIndex Std.Usize LabelTag) (l : List Transition) : Prop where
   bs : verified.merc_reduction.block_partition.BlockPartition.Insts.Merc_reductionPartitionPartition.block_number

@@ -33,10 +33,10 @@ open MercVerified.Lts.Proofs
 namespace MercVerified.Refinement.Proofs
 
 /-- A signature entry: a label index paired with a block index. -/
-abbrev SigEntry := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)
+private abbrev SigEntry := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize BlockTag)
 
 /-- Lexicographic strict order on signature entries (on the underlying indices). -/
-def entLt (a b : SigEntry) : Prop :=
+private def entLt (a b : SigEntry) : Prop :=
   a.1.index.val < b.1.index.val ∨ (a.1.index.val = b.1.index.val ∧ a.2.index.val < b.2.index.val)
 
 private instance : Std.Irrefl entLt := ⟨by intro a h; unfold entLt at h; omega⟩

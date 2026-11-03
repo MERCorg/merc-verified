@@ -280,7 +280,7 @@ private theorem markList_loc_lt (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fi
 /-! ### The backwards closure (first phase of `SortedClosure`) -/
 
 /-- Invariant of the closure loop. -/
-structure LoopInv (tau : Fin n → Fin n → Prop) (b : ℕ) (rp₀ rp : RP n) (it k : ℕ) : Prop where
+private structure LoopInv (tau : Fin n → Fin n → Prop) (b : ℕ) (rp₀ rp : RP n) (it k : ℕ) : Prop where
   wf : rp.WF
   blk : rp.blk = rp₀.blk
   nb : rp.nb = rp₀.nb

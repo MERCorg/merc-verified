@@ -111,7 +111,7 @@ private theorem branching_process_worklist_block_contract {L : Type} {Label : Ty
   simp [block_has_marked_contract b0 hb0wf, num_of_blocks_contract, hMark, bind_ok]
 
 /-- The abstract configuration of a concrete partition: block equivalence and marked states. -/
-def cfgOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.Config (Fin n) :=
+private def cfgOf (p : BlockPartition) (n : Nat) : MercLib.Sigref.Config (Fin n) :=
   ⟨(bdOf p n).setoid, {x | IsMarked p x.val}⟩
 
 private theorem bdOf_setoid_eq {n : Nat} {p q : BlockPartition} (h : ∀ s, e2bAt q s = e2bAt p s) :
@@ -125,7 +125,7 @@ private def bworklistMeasure (n : Nat) (ctx : WorklistContextBranching) : Nat :=
   (n - ctx.partition.blocks.val.length) * (n + 1) + ctx.worklist.val.length
 
 /-- The abstract invariant of the loop. -/
-structure BrLoopInv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
+private structure BrLoopInv {L Label : Type} (LTSInst : LTS L Label) (sys : L) (n : Nat)
     (ctx : WorklistContextBranching) : Prop where
   dirty : DirtyInv n ctx.partition ctx.worklist
   stk : ctx.state_to_key.val.length = n

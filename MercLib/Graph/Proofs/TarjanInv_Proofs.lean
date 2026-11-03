@@ -24,21 +24,21 @@ open Relation
 variable {n : ℕ}
 
 /-- Reachability along the edges (transitions flagged `true`). -/
-abbrev Reach (g : Graph n) := ReflTransGen (Edge g)
+private abbrev Reach (g : Graph n) := ReflTransGen (Edge g)
 
 /-- The state has been initialised (its discovery time and lowlink are set). -/
-def Init (g : Graph n) (c : Ctx n) (v : Fin n) : Prop := c.low v ≠ g.unv
+private def Init (g : Graph n) (c : Ctx n) (v : Fin n) : Prop := c.low v ≠ g.unv
 
 /-- The state is initialised and has been assigned to a block. -/
-def Done (g : Graph n) (c : Ctx n) (v : Fin n) : Prop := Init g c v ∧ v ∉ c.stk
+private def Done (g : Graph n) (c : Ctx n) (v : Fin n) : Prop := Init g c v ∧ v ∉ c.stk
 
 /-- The edge `x → w` has been examined by the search: for a state in the work stack, the
 transitions before its resume offset. -/
-def Examined (g : Graph n) (W : List (Fin n × ℕ)) (x w : Fin n) : Prop :=
+private def Examined (g : Graph n) (W : List (Fin n × ℕ)) (x w : Fin n) : Prop :=
   Edge g x w ∧ ∀ off, (x, off) ∈ W → ∃ i, i < off ∧ (g.adj x)[i]? = some (true, w)
 
 /-- The invariant of the search. -/
-structure Inv (g : Graph n) (c : Ctx n) : Prop where
+private structure Inv (g : Graph n) (c : Ctx n) : Prop where
   -- discovery times
   time_card : c.time = (Finset.univ.filter (fun v => c.low v ≠ g.unv)).card
   disc_lt : ∀ v, Init g c v → c.disc v < c.time

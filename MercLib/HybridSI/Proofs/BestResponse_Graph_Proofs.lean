@@ -56,7 +56,7 @@ private theorem time_iterT_le {α : Type*} (f : α → TimeM ℕ α) (K : ℕ) (
 variable (nb : V → List V)
 
 /-- `u` reaches `x` along `nb`-edges whose sources lie in `S`. -/
-def Reach (S : V → Bool) (u x : V) : Prop :=
+private def Reach (S : V → Bool) (u x : V) : Prop :=
   Relation.ReflTransGen (fun a b => S a = true ∧ b ∈ nb a) u x
 
 private theorem reachRound_apply (S X : V → Bool) (v : V) :

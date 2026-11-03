@@ -62,7 +62,7 @@ namespace MercVerified.Refinement.Proofs
 
 open MercLib.Sigref.Topo
 
-abbrev RMark := verified.merc_reduction.sort_topological.Mark
+private abbrev RMark := verified.merc_reduction.sort_topological.Mark
 
 /-- The Rust mark `Temporary`. -/
 private abbrev rTemp : RMark := verified.merc_reduction.sort_topological.Mark.Temporary
@@ -71,13 +71,13 @@ private abbrev rTemp : RMark := verified.merc_reduction.sort_topological.Mark.Te
 private abbrev rPerm : RMark := verified.merc_reduction.sort_topological.Mark.Permanent
 
 /-- The model mark of a Rust mark. -/
-def mOf : Option RMark → Option MercLib.Sigref.Topo.Mark
+private def mOf : Option RMark → Option MercLib.Sigref.Topo.Mark
   | none => none
   | some .Temporary => some .temp
   | some .Permanent => some .perm
 
 /-- The model marks of the Rust marks vector. -/
-def mkOf {n : Nat} (ms : List (Option RMark)) : Fin n → Option MercLib.Sigref.Topo.Mark :=
+private def mkOf {n : Nat} (ms : List (Option RMark)) : Fin n → Option MercLib.Sigref.Topo.Mark :=
   fun i => mOf (ms.getD i.val none)
 
 /-- The targets of the hidden transitions that are not self-loops, in order. -/
@@ -306,13 +306,13 @@ section Visit
 variable {L Label : Type} (LTSInst : LTS L Label) (sys : L)
 
 /-- The number of transitions of a state. -/
-noncomputable def outLen {n : Nat} (u : Fin n) : Nat := (outVec LTSInst sys (stOf u)).val.length
+private noncomputable def outLen {n : Nat} (u : Fin n) : Nat := (outVec LTSInst sys (stOf u)).val.length
 
 /-- The total number of transitions of the `n` states. -/
-noncomputable def Eout (n : Nat) : Nat := ∑ u : Fin n, outLen LTSInst sys u
+private noncomputable def Eout (n : Nat) : Nat := ∑ u : Fin n, outLen LTSInst sys u
 
 /-- The transitions of the states that are not yet marked. -/
-noncomputable def potSum {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) : Nat :=
+private noncomputable def potSum {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) : Nat :=
   ∑ u : Fin n, if m u = none then outLen LTSInst sys u else 0
 
 private theorem potSum_le {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) :
@@ -322,7 +322,7 @@ private theorem potSum_le {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Ma
   intro u _
   split_ifs <;> omega
 
-theorem potSum_update_none {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) (x : Fin n)
+private theorem potSum_update_none {n : Nat} (m : Fin n → Option MercLib.Sigref.Topo.Mark) (x : Fin n)
     (hx : m x = none) (mk : MercLib.Sigref.Topo.Mark) :
     potSum LTSInst sys (Function.update m x (some mk)) + outLen LTSInst sys x =
       potSum LTSInst sys m := by
@@ -383,7 +383,7 @@ private noncomputable def toCfg {n : Nat} (hn0 : 0 < n) (D : alloc.vec.Vec ST)
   idx := idx
 
 /-- Well-formedness of the Rust state of the topological sort. -/
-structure RI {n : Nat} (D : alloc.vec.Vec ST) (marks : alloc.vec.Vec (Option RMark))
+private structure RI {n : Nat} (D : alloc.vec.Vec ST) (marks : alloc.vec.Vec (Option RMark))
     (stack : alloc.vec.Vec ST) : Prop where
   mlen : marks.val.length = n
   dlt : ∀ t ∈ D.val, t.index.val < n

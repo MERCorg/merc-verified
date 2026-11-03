@@ -39,7 +39,7 @@ open MercVerified.Lts.Proofs
 namespace MercVerified.Refinement.Proofs
 
 /-- Lookup in the interning map. -/
-noncomputable abbrev internGet (id : InternMap) (q : SigKey) :=
+private noncomputable abbrev internGet (id : InternMap) (q : SigKey) :=
   std.collections.hash.map.HashMap.get_key_value internEqInst internHashInst internBuildHasher
     (verified.core.borrow.Borrow.Blanket SigKey) internHashInst internEqInst id q
 
@@ -54,18 +54,18 @@ private theorem sigKey_eq_false {a b : SigKey} (h : a ≠ b) :
 /-- The interning map and the key table agree: a lookup returns exactly the queried key, stored at
     the class index naming its position in the table, and every table entry is found at its own
     position. -/
-def IdInv (id : InternMap) (kts : VecTy SigKey) : Prop :=
+private def IdInv (id : InternMap) (kts : VecTy SigKey) : Prop :=
   (∀ q k v, internGet id q = ok (some (k, v)) →
       k = q ∧ ∃ h : v.index.val < kts.val.length, kts.val[v.index.val] = q) ∧
   (∀ i (h : i < kts.val.length), internGet id kts.val[i] = ok (some (kts.val[i], uTag i)))
 
-theorem IdInv.of_empty {id : InternMap} {kts : VecTy SigKey} (hid : ∀ q, internGet id q = ok none)
+private theorem IdInv.of_empty {id : InternMap} {kts : VecTy SigKey} (hid : ∀ q, internGet id q = ok none)
     (hkts : kts.val = []) : IdInv id kts := by
   refine ⟨fun q k v h => ?_, fun i h => ?_⟩
   · rw [hid q] at h; simp at h
   · rw [hkts] at h; simp at h
 
-theorem IdInv.nodup {id : InternMap} {kts : VecTy SigKey} (h : IdInv id kts)
+private theorem IdInv.nodup {id : InternMap} {kts : VecTy SigKey} (h : IdInv id kts)
     (hlen : kts.val.length ≤ Usize.max) : kts.val.Nodup := by
   rw [List.nodup_iff_injective_get]
   intro i j hij
@@ -97,7 +97,7 @@ private theorem len_tag_eq (kts : VecTy SigKey) :
 
 /-- A cache miss keeps the interning invariant: the new key is appended and found at the new index,
     all other lookups are unchanged. -/
-theorem IdInv.new {id id' : InternMap} {kts kts' : VecTy SigKey} (h : IdInv id kts) {sb : SigKey}
+private theorem IdInv.new {id id' : InternMap} {kts kts' : VecTy SigKey} (h : IdInv id kts) {sb : SigKey}
     (hget : internGet id sb = ok none) (hkts' : kts'.val = kts.val ++ [sb])
     (hlook : internGet id' sb = ok (some (sb, uTag kts.val.length)))
     (hother : ∀ q, internEqInst.partialEqInst.eq sb q = ok false → internGet id' q = internGet id q)

@@ -71,7 +71,7 @@ open MercVerified.Lts.Proofs MercVerified.Refinement
 
 namespace MercVerified.Refinement.Proofs
 
-abbrev QElem := TagIndex Std.Usize LabelTag × TagIndex Std.Usize StateTag
+private abbrev QElem := TagIndex Std.Usize LabelTag × TagIndex Std.Usize StateTag
 
 private theorem ip_block_number (ip : IndexedPartition) (st : TagIndex Std.Usize StateTag)
     (h : st.index.val < ip.partition.val.length) :
@@ -192,7 +192,7 @@ private theorem elemD_eq (ip : IndexedPartition) (t : Transition) (ht : t.to.ind
   simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem ht]
 
 /-- The list stored in row `b` of the outgoing table. -/
-def rowOf (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (b : Nat) : List QElem :=
+private def rowOf (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (b : Nat) : List QElem :=
   (outgoing.val[b]?.map (fun v => v.val)).getD []
 
 private theorem rowOf_set (outgoing : alloc.vec.Vec (alloc.vec.Vec QElem)) (b : Nat) (hb : b < outgoing.val.length)
@@ -576,14 +576,14 @@ private theorem push_transitions_spec (transitions : Slice QElem)
   exact h
 
 /-- The sum of the first `i` row lengths. -/
-def tot (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (i : Nat) : Nat :=
+private def tot (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (i : Nat) : Nat :=
   ((List.range i).map (fun b => (rowOf out0 b).length)).sum
 
 /-- The offsets of the first `i` blocks given the sorted rows `Ls`. -/
-def offs (Ls : List (List QElem)) (i : Nat) : List Nat :=
+private def offs (Ls : List (List QElem)) (i : Nat) : List Nat :=
   (List.range i).map (fun j => ((Ls.take j).flatten).length)
 
-structure BuildInv (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K i : Nat) (Ls : List (List QElem))
+private structure BuildInv (out0 : alloc.vec.Vec (alloc.vec.Vec QElem)) (K i : Nat) (Ls : List (List QElem))
     (out : alloc.vec.Vec (alloc.vec.Vec QElem))
     (st : ByteCompressedVec Std.Usize) (lb : ByteCompressedVec (TagIndex Std.Usize LabelTag))
     (tb : ByteCompressedVec (TagIndex Std.Usize StateTag)) : Prop where

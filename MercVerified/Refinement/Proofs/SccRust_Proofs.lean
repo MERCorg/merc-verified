@@ -66,10 +66,10 @@ open MercVerified.Lts.Proofs MercVerified.Refinement
 
 namespace MercVerified.Refinement.Proofs
 
-abbrev SC := verified.merc_reduction.scc_decomposition.SccContext
+private abbrev SC := verified.merc_reduction.scc_decomposition.SccContext
 
 /-- The function on `Fin n` that a vector represents. -/
-def view {α β : Type} (n : Nat) (f : α → β) (d : β) (l : List α) : Fin n → β :=
+private def view {α β : Type} (n : Nat) (f : α → β) (d : β) (l : List α) : Fin n → β :=
   fun i => (l[i.val]?.map f).getD d
 
 private theorem view_set {α β : Type} {n : Nat} (f : α → β) (d : β) (l : List α) (i : Fin n)
@@ -88,7 +88,7 @@ private theorem view_get {α β : Type} {n : Nat} (f : α → β) (d : β) (l : 
   simp [view, hi]
 
 /-- The Rust context represents the model context. -/
-structure SR (n : Nat) (ctx : SC) (c : MercLib.Tarjan.Ctx n) : Prop where
+private structure SR (n : Nat) (ctx : SC) (c : MercLib.Tarjan.Ctx n) : Prop where
   llen : ctx.low.val.length = n
   dlen : ctx.disc.val.length = n
   olen : ctx.on_scc_stack.val.length = n
@@ -116,7 +116,7 @@ private theorem vset_val {α : Type} (v : alloc.vec.Vec α) (i : Std.Usize) (x :
 
 namespace SR
 
-variable {n : Nat} {ctx : SC} {c : MercLib.Tarjan.Ctx n}
+variable {n : Nat} {ctx : verified.merc_reduction.scc_decomposition.SccContext} {c : MercLib.Tarjan.Ctx n}
 
 private theorem set_disc (h : SR n ctx c) (iu : Std.Usize) (i : Fin n) (hiu : iu.val = i.val) (x : Std.Usize) :
     SR n { ctx with disc := vset ctx.disc iu x } { c with disc := Function.update c.disc i x.val } := by

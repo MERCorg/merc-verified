@@ -33,7 +33,7 @@ variable {V : Type*} [Fintype V] [LinearOrder V]
 variable (G : Game V) [DecidableRel G.edge] (pl : Bool) (p : V → V)
 
 /-- The player as a `Player`. -/
-def plr (pl : Bool) : Player := if pl then .one else .zero
+private def plr (pl : Bool) : Player := if pl then .one else .zero
 
 private theorem favours_iff (x : V) : favours G pl x = true ↔ Good (plr pl) (G.prio x) := by
   cases pl <;> simp [favours, plr, good_zero_iff, good_one_iff]
@@ -45,7 +45,7 @@ private theorem pw_eq (x : V) : pw G pl x = wI G (plr pl) x := by
   · rw [ite_eq_right h, ite_eq_right (fun h' => h ((favours_iff G pl x).2 h'))]
 
 /-- The player's reward of a cycle maximum. -/
-abbrev rr (x : V) : ℤ := rI G (plr pl) x
+private abbrev rr (x : V) : ℤ := rI G (plr pl) x
 
 private theorem rr_eq (x : V) : rr G pl x = if favours G pl x then (rank x : ℤ) + 1 else -((rank x : ℤ) + 1) := by
   unfold rr rI
@@ -119,13 +119,13 @@ private theorem cands_pairwise : (cands G pl).Pairwise fun a b => rr G pl b < rr
 
 /-- The vertices that were unclassified when `μ` was processed: unclassified ones and those of
     classes of reward at most that of `μ`. -/
-def Rset (cls : V → Option V) (μ : V) : V → Bool := fun u =>
+private def Rset (cls : V → Option V) (μ : V) : V → Bool := fun u =>
   match cls u with
   | none => true
   | some ν => decide (rr G pl ν ≤ rr G pl μ)
 
 /-- The invariant of the fold of `classStep` over the candidates, with `rest` still to do. -/
-structure ClsInv (cls : V → Option V) (rest : List V) : Prop where
+private structure ClsInv (cls : V → Option V) (rest : List V) : Prop where
   sorted : rest.Pairwise fun a b => rr G pl b < rr G pl a
   past : ∀ z x, z ∉ rest → x ∈ rest → rr G pl x < rr G pl z
   cls_max : ∀ v μ, cls v = some μ → cls μ = some μ ∧ ∀ x ∈ rest, rr G pl x < rr G pl μ
@@ -138,7 +138,7 @@ structure ClsInv (cls : V → Option V) (rest : List V) : Prop where
   wit : ∀ μ, cls μ = some μ → ∃ y ∈ hsucc G pl p μ,
     reachFrom (hsucc G pl p) (fun u => Rset G pl cls μ u && decide (u ≤ μ)) μ y = true
 
-theorem Reach.mono {nb : V → List V} {S S' : V → Bool} (h : ∀ u, S u = true → S' u = true)
+private theorem Reach.mono {nb : V → List V} {S S' : V → Bool} (h : ∀ u, S u = true → S' u = true)
     {u x : V} (hr : Reach nb S u x) : Reach nb S' u x := by
   unfold Reach at hr ⊢
   induction hr with
@@ -151,7 +151,7 @@ private theorem rset_none {cls : V → Option V} {u : V} (μ : V) (h : cls u = n
 private theorem rset_some {cls : V → Option V} {u ν : V} (μ : V) (h : cls u = some ν) :
     Rset G pl cls μ u = decide (rr G pl ν ≤ rr G pl μ) := by simp [Rset, h]
 
-theorem Reach.congr {nb : V → List V} {S S' : V → Bool} (h : S = S') {u x : V} :
+private theorem Reach.congr {nb : V → List V} {S S' : V → Bool} (h : S = S') {u x : V} :
     Reach nb S u x ↔ Reach nb S' u x := by rw [h]
 
 /-- Before `x` is processed, `Rset … x` is the set of unclassified vertices. -/

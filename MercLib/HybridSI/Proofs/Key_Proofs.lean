@@ -195,9 +195,9 @@ private theorem negK_le_negK (κ κ' : Key) : negK κ ≤ negK κ' ↔ κ' ≤ �
   omega
 
 /-- `p` favours player `i`. -/
-def Good (i : Player) (p : ℕ) : Prop := Player.ofPrio p = i
+private def Good (i : Player) (p : ℕ) : Prop := Player.ofPrio p = i
 
-instance (i : Player) (p : ℕ) : Decidable (Good i p) := by unfold Good; infer_instance
+private instance (i : Player) (p : ℕ) : Decidable (Good i p) := by unfold Good; infer_instance
 
 variable (G : Game V) (f : V → V)
 
@@ -205,7 +205,7 @@ variable (G : Game V) (f : V → V)
 private def wI (i : Player) (y : V) : ℤ := if Good i (G.prio y) then 2 ^ rank y else -(2 ^ rank y)
 
 /-- Player `i`'s reward of a cycle maximum. -/
-def rI (i : Player) (l : V) : ℤ := if Good i (G.prio l) then (rank l : ℤ) + 1 else -((rank l : ℤ) + 1)
+private def rI (i : Player) (l : V) : ℤ := if Good i (G.prio l) then (rank l : ℤ) + 1 else -((rank l : ℤ) + 1)
 
 /-- Player `i`'s signed step count. -/
 private def eI (i : Player) (l : V) (k : ℕ) : ℤ := if Good i (G.prio l) then -(k : ℤ) else k

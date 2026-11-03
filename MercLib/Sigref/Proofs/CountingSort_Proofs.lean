@@ -23,13 +23,13 @@ edited or regenerated (see AGENTS.md).
 namespace MercLib.Sigref
 
 /-- Start position of class `j`: `ms` plus the sizes of all earlier classes. -/
-def cumS (ms : Nat) (szs : List Nat) (j : Nat) : Nat := ms + (szs.take j).sum
+private def cumS (ms : Nat) (szs : List Nat) (j : Nat) : Nat := ms + (szs.take j).sum
 
 /-- Number of earlier elements of the same class as element `t`. -/
-def rankOf (cls : List Nat) (t : Nat) : Nat := (cls.take t).count (cls.getD t 0)
+private def rankOf (cls : List Nat) (t : Nat) : Nat := (cls.take t).count (cls.getD t 0)
 
 /-- Target position of element `t`. -/
-def posOf (ms : Nat) (szs cls : List Nat) (t : Nat) : Nat :=
+private def posOf (ms : Nat) (szs cls : List Nat) (t : Nat) : Nat :=
   cumS ms szs (cls.getD t 0) + rankOf cls t
 
 private theorem cumS_succ (ms : Nat) (szs : List Nat) (j : Nat) (hj : j < szs.length) :

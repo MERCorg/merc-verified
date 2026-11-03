@@ -42,7 +42,7 @@ private noncomputable abbrev SIdx :=
     StateTag verified.Usize.Insts.Merc_collectionsCompressed_vecCompressedEntry core.marker.CopyUsize
 
 /-- The stored arrays of `sys` and the invariants of `assert_valid`. -/
-structure RawOf {Label : Type} (sys : LabelledTransitionSystem Label) (n : Nat) (off : List Nat)
+private structure RawOf {Label : Type} (sys : LabelledTransitionSystem Label) (n : Nat) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag)) : Prop where
   st : (ByteCompressedVec.toList sys.states).map (fun u : Std.Usize => u.val) = off
   lab : ByteCompressedVec.toList sys.transition_labels = labs
@@ -397,7 +397,7 @@ private theorem tag_eq_ok {Tag : Type} (a b : TagIndex Std.Usize Tag) :
     simp [h, this]
 
 /-- Side conditions of `assert_valid` beyond `RawOf`. -/
-structure RawGood {Label : Type} (sys : LabelledTransitionSystem Label) (n : Nat) (off : List Nat)
+private structure RawGood {Label : Type} (sys : LabelledTransitionSystem Label) (n : Nat) (off : List Nat)
     (labs : List (TagIndex Std.Usize LabelTag)) (tos : List (TagIndex Std.Usize StateTag)) : Prop where
   labs_lt : ∀ l ∈ labs, l.index.val < sys.labels.val.length
   nodup : ∀ s, s < n → ∀ i j, off.getD s 0 ≤ i → i < j → j < off.getD (s + 1) 0 →

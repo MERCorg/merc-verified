@@ -1,10 +1,6 @@
 module
 
 public import MercVerified.Refinement.Refinement
-public import MercVerified.Refinement.Proofs.Refinement_Proofs
-public import MercVerified.Refinement.Proofs.BranchingRun_Proofs
-public import MercVerified.Refinement.Proofs.BranchingIncoming_Proofs
-public import MercVerified.Refinement.Proofs.BranchingBridge_Proofs
 public import Aeneas.Std.WP
 import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
 import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs

@@ -27,10 +27,10 @@ open MercVerified.Lts.Proofs
 
 namespace MercVerified.Refinement.Proofs
 
-abbrev QElem' := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize StateTag)
+private abbrev QElem' := (TagIndex Std.Usize LabelTag) × (TagIndex Std.Usize StateTag)
 
 /-- Lexicographic strict order on signature entries (on the underlying indices). -/
-def qLt (a b : QElem') : Prop :=
+private def qLt (a b : QElem') : Prop :=
   a.1.index.val < b.1.index.val ∨ (a.1.index.val = b.1.index.val ∧ a.2.index.val < b.2.index.val)
 
 private instance : Std.Irrefl qLt := ⟨by intro a h; unfold qLt at h; omega⟩

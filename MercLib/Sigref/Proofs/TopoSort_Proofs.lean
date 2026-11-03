@@ -54,13 +54,13 @@ private abbrev Runs (succ : Fin n → List (Fin n)) (c c' : Cfg n) : Prop :=
 
 /-- The invariant of the finished states: they are exactly the `Permanent` ones, listed once, and
 every successor of a finished state was finished before it. -/
-structure Good (succ : Fin n → List (Fin n)) (c : Cfg n) : Prop where
+private structure Good (succ : Fin n → List (Fin n)) (c : Cfg n) : Prop where
   perm : ∀ a, c.marks a = some Mark.perm ↔ a ∈ c.order
   nodup : c.order.Nodup
   closed : ∀ l1 a l2, c.order = l1 ++ a :: l2 → ∀ b ∈ succ a, b ∈ l1
 
 /-- What a run preserves: the finishing order only grows, the `Temporary` states stay the same. -/
-structure Ext (c c' : Cfg n) : Prop where
+private structure Ext (c c' : Cfg n) : Prop where
   prefix_ : c.order <+: c'.order
   temp : ∀ t, c'.marks t = some Mark.temp ↔ c.marks t = some Mark.temp
   idx : c'.idx = c.idx
@@ -252,7 +252,7 @@ private theorem visit_all {succ : Fin n → List (Fin n)} (hA : Acyclic succ) : 
     · exact ha2
 
 /-- The configurations between two roots of the outer loop. -/
-structure Root (succ : Fin n → List (Fin n)) (c : Cfg n) : Prop where
+private structure Root (succ : Fin n → List (Fin n)) (c : Cfg n) : Prop where
   depth : c.depth = []
   good : Good succ c
   acyc : c.acyc = true

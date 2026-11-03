@@ -30,32 +30,32 @@ section Data
 variable {n : ℕ} {G : Type} (rp : RP n) (b : ℕ) (grp : Fin n → G)
 
 /-- The states of block `b`. -/
-noncomputable def blockStates : List (Fin n) :=
+private noncomputable def blockStates : List (Fin n) :=
   (List.finRange n).filter fun x => decide (rp.blk x = b)
 
 /-- The distinct pieces of the split, as values of `grp`. -/
-noncomputable def pieces : List G := ((blockStates rp b).map grp).dedup
+private noncomputable def pieces : List G := ((blockStates rp b).map grp).dedup
 
 /-- The dense number of the piece of `x`. -/
-noncomputable def rr (x : Fin n) : ℕ := (pieces rp b grp).idxOf (grp x)
+private noncomputable def rr (x : Fin n) : ℕ := (pieces rp b grp).idxOf (grp x)
 
 /-- The number of pieces. -/
-noncomputable def numPieces : ℕ := (pieces rp b grp).length
+private noncomputable def numPieces : ℕ := (pieces rp b grp).length
 
 /-- Number of states of block `b`. -/
-def blockSize : ℕ := rp.be b - rp.bs b
+private def blockSize : ℕ := rp.be b - rp.bs b
 
 /-- Piece of the state at location `p`. -/
-noncomputable def rAt (p : ℕ) : ℕ := if h : p < n then rr rp b grp (rp.loc.symm ⟨p, h⟩) else 0
+private noncomputable def rAt (p : ℕ) : ℕ := if h : p < n then rr rp b grp (rp.loc.symm ⟨p, h⟩) else 0
 
 /-- The class list of the counting sort: piece of the `t`-th location of the block. -/
-noncomputable def clsL : List ℕ := (List.range (blockSize rp b)).map fun t => rAt rp b grp (rp.bs b + t)
+private noncomputable def clsL : List ℕ := (List.range (blockSize rp b)).map fun t => rAt rp b grp (rp.bs b + t)
 
 /-- Piece sizes. -/
-noncomputable def szsL : List ℕ := (List.range (numPieces rp b grp)).map fun j => (clsL rp b grp).count j
+private noncomputable def szsL : List ℕ := (List.range (numPieces rp b grp)).map fun j => (clsL rp b grp).count j
 
 /-- The piece that keeps the old block id `b`: the one of the first state of the block. -/
-noncomputable def keepPiece : ℕ := rAt rp b grp (rp.bs b)
+private noncomputable def keepPiece : ℕ := rAt rp b grp (rp.bs b)
 
 /-- Block id of piece `j`: the kept piece keeps `b`, the others get fresh dense ids. -/
 private noncomputable def pid (j : ℕ) : ℕ :=
@@ -85,7 +85,7 @@ private theorem rr_lt {x : Fin n} (hx : rp.blk x = b) : rr rp b grp x < numPiece
   unfold rr numPieces
   exact List.idxOf_lt_length_iff.2 (mem_pieces.2 ⟨x, hx, rfl⟩)
 
-theorem rr_eq_iff {x y : Fin n} (hx : rp.blk x = b) (_hy : rp.blk y = b) :
+private theorem rr_eq_iff {x y : Fin n} (hx : rp.blk x = b) (_hy : rp.blk y = b) :
     rr rp b grp x = rr rp b grp y ↔ grp x = grp y := by
   unfold rr
   exact List.idxOf_inj (mem_pieces.2 ⟨x, hx, rfl⟩)
@@ -128,7 +128,7 @@ private theorem rAt_loc {x : Fin n} : rAt rp b grp (rp.loc x).val = rr rp b grp 
 
 private theorem clsL_length : (clsL rp b grp).length = blockSize rp b := by simp [clsL]
 
-theorem clsL_getElem {t : ℕ} (ht : t < (clsL rp b grp).length) :
+private theorem clsL_getElem {t : ℕ} (ht : t < (clsL rp b grp).length) :
     (clsL rp b grp)[t] = rAt rp b grp (rp.bs b + t) := by simp [clsL]
 
 private theorem clsL_lt (hwf : rp.WF) (hb : b < rp.nb) : ∀ c ∈ clsL rp b grp, c < numPieces rp b grp := by
@@ -142,7 +142,7 @@ private theorem clsL_lt (hwf : rp.WF) (hb : b < rp.nb) : ∀ c ∈ clsL rp b grp
   rw [dite_eq_left hpn]
   exact rr_lt (blk_at hwf hb (by omega) (by omega) hpn)
 
-theorem keepPiece_lt (hwf : rp.WF) (hb : b < rp.nb) : keepPiece rp b grp < numPieces rp b grp := by
+private theorem keepPiece_lt (hwf : rp.WF) (hb : b < rp.nb) : keepPiece rp b grp < numPieces rp b grp := by
   have h := bs_add_blockSize hwf hb
   have h2 := be_le_n hwf hb
   have h3 := blockSize_pos hwf hb
@@ -155,7 +155,7 @@ theorem keepPiece_lt (hwf : rp.WF) (hb : b < rp.nb) : keepPiece rp b grp < numPi
 private theorem numPieces_pos (hwf : rp.WF) (hb : b < rp.nb) : 0 < numPieces rp b grp :=
   lt_of_le_of_lt (Nat.zero_le _) (keepPiece_lt hwf hb)
 
-theorem clsL_getElem_state (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b)
+private theorem clsL_getElem_state (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b)
     (ht : (rp.loc x).val - rp.bs b < (clsL rp b grp).length) :
     (clsL rp b grp)[(rp.loc x).val - rp.bs b] = rr rp b grp x := by
   rw [clsL_getElem ht]
@@ -163,9 +163,9 @@ theorem clsL_getElem_state (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.b
   have e : rp.bs b + ((rp.loc x).val - rp.bs b) = (rp.loc x).val := by omega
   rw [e, rAt_loc]
 
-theorem szs_length : (szsL rp b grp).length = numPieces rp b grp := by simp [szsL]
+private theorem szs_length : (szsL rp b grp).length = numPieces rp b grp := by simp [szsL]
 
-theorem szs_count {j : ℕ} (hj : j < numPieces rp b grp) :
+private theorem szs_count {j : ℕ} (hj : j < numPieces rp b grp) :
     (szsL rp b grp).getD j 0 = (clsL rp b grp).count j := by
   simp [szsL, hj]
 

@@ -67,7 +67,7 @@ set_option maxRecDepth 10000
 
 /-- `q` arises from `q0` by marking states of block `b` (the only change is that the marked suffix
 of `b` grew; the elements at the previously marked positions did not move). -/
-structure Mono (n : Nat) (q0 q : BlockPartition) (b : Nat) : Prop where
+private structure Mono (n : Nat) (q0 q : BlockPartition) (b : Nat) : Prop where
   inv : PartInv n q
   e2b : q.element_to_block = q0.element_to_block
   nblocks : q.blocks.val.length = q0.blocks.val.length
