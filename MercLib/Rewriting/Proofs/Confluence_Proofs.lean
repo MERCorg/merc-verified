@@ -2,6 +2,8 @@ module
 
 public import MercLib.Rewriting.Confluence
 public import MercLib.Rewriting.Proofs.Soundness_Proofs
+import all MercLib.Rewriting.Proofs.Signature_Proofs
+import all MercLib.Rewriting.Proofs.Soundness_Proofs
 
 @[expose] public section
 
@@ -25,7 +27,7 @@ open Relation
 variable {α β : Type _} {r : α → α → Prop}
 
 /-- Reachability preserves a value that every single step preserves. -/
-theorem eq_of_reflTransGen (e : α → β) (hsound : ∀ ⦃a b⦄, r a b → e a = e b) :
+private theorem eq_of_reflTransGen (e : α → β) (hsound : ∀ ⦃a b⦄, r a b → e a = e b) :
     ∀ ⦃a b⦄, ReflTransGen r a b → e a = e b := by
   intro a b h
   induction h with
@@ -34,7 +36,7 @@ theorem eq_of_reflTransGen (e : α → β) (hsound : ∀ ⦃a b⦄, r a b → e 
 
 /-- If `r` normalises, preserves the value `e`, and distinct normal forms have distinct values,
 then every element has a unique normal form. -/
-theorem existsUnique_normal_of_value (hn : _root_.Relation.Normalizing r) (e : α → β)
+private theorem existsUnique_normal_of_value (hn : _root_.Relation.Normalizing r) (e : α → β)
     (hsound : ∀ ⦃a b⦄, r a b → e a = e b)
     (hinj : ∀ ⦃a b⦄, _root_.Relation.Normal r a → _root_.Relation.Normal r b →
       e a = e b → a = b) (a : α) :

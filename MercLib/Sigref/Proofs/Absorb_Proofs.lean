@@ -1,6 +1,11 @@
 module
 
 public import MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
 
 @[expose] public section
 
@@ -27,7 +32,7 @@ variable (d : SigData lts π)
 
 /-- The matching condition of `E π` for two `π`-related states with equal signatures
 (the core of `sig_E`, with the relation `σ`-equality made explicit). -/
-theorem sig_match (hWF : TauLoopFree lts) {s t : State} (hπ : π.r s t)
+private theorem sig_match (hWF : TauLoopFree lts) {s t : State} (hπ : π.r s t)
     (hσ : d.sigFn s = d.sigFn t) {a : Label} {s1 : State} (hTr : lts.Tr s a s1) :
     (a = HasTau.τ ∧ π.r s s1 ∧ d.sigFn s1 = d.sigFn t) ∨
     ∃ t' t1, InertReach lts π t t' ∧ π.r s t' ∧ d.sigFn s = d.sigFn t' ∧ lts.Tr t' a t1 ∧
@@ -50,7 +55,7 @@ theorem sig_match (hWF : TauLoopFree lts) {s t : State} (hπ : π.r s t)
       Or.inr ⟨not_and_or.1 hin, Quotient.exact hq⟩⟩
 
 /-- **An absorbing inert successor is `E π`-related.** -/
-theorem absorbs_E (hWF : TauLoopFree lts) {z a : State} (hA : d.Absorbs z a) :
+private theorem absorbs_E (hWF : TauLoopFree lts) {z a : State} (hA : d.Absorbs z a) :
     E lts π z a := by
   obtain ⟨hza, hπza, hsub⟩ := hA
   let R : State → State → Prop := fun x y =>

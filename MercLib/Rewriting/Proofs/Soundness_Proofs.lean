@@ -2,6 +2,7 @@ module
 
 public import MercLib.Rewriting.Soundness
 public import MercLib.Rewriting.Proofs.Signature_Proofs
+import all MercLib.Rewriting.Proofs.Signature_Proofs
 
 @[expose] public section
 
@@ -25,7 +26,7 @@ variable {R : TRS S V ι} {A : Algebra S}
 mutual
 
 /-- A step whose conditions are value-preserving is value-preserving. -/
-theorem eval_stepWith (hM : Model R A) (ν : Valuation A W)
+private theorem eval_stepWith (hM : Model R A) (ν : Valuation A W)
     {C : ∀ s, Term S W s → Term S W s → Prop}
     (hC : ∀ s a b, C s a b → Term.eval A ν a = Term.eval A ν b) :
     ∀ {s : S.Srt} {a b : Term S W s}, StepWith R C s a b →
@@ -38,7 +39,7 @@ theorem eval_stepWith (hM : Model R A) (ν : Valuation A W)
     rw [Term.eval_op, Term.eval_op, eval_argsStepWith hM ν hC h]
 
 /-- `eval_stepWith` for argument lists. -/
-theorem eval_argsStepWith (hM : Model R A) (ν : Valuation A W)
+private theorem eval_argsStepWith (hM : Model R A) (ν : Valuation A W)
     {C : ∀ s, Term S W s → Term S W s → Prop}
     (hC : ∀ s a b, C s a b → Term.eval A ν a = Term.eval A ν b) :
     ∀ {ss : List S.Srt} {as bs : Args S W ss}, ArgsStepWith R C ss as bs →
@@ -51,7 +52,7 @@ theorem eval_argsStepWith (hM : Model R A) (ν : Valuation A W)
 end
 
 /-- Every step at condition depth `n` preserves values. -/
-theorem eval_stepAt (hM : Model R A) (ν : Valuation A W) :
+private theorem eval_stepAt (hM : Model R A) (ν : Valuation A W) :
     ∀ (n : Nat) {s : S.Srt} {a b : Term S W s}, stepAt R n s a b →
       Term.eval A ν a = Term.eval A ν b := by
   intro n
@@ -65,7 +66,7 @@ theorem eval_stepAt (hM : Model R A) (ν : Valuation A W) :
     | tail _ hstep ihs => exact ihs.trans (ih hstep)
 
 /-- Rewriting preserves values: the algebra is a model of the equational theory. -/
-theorem Step.eval_eq (hM : Model R A) (ν : Valuation A W) {s : S.Srt} {a b : Term S W s}
+private theorem Step.eval_eq (hM : Model R A) (ν : Valuation A W) {s : S.Srt} {a b : Term S W s}
     (h : Step R s a b) : Term.eval A ν a = Term.eval A ν b := by
   obtain ⟨n, hn⟩ := h
   exact eval_stepAt hM ν n hn

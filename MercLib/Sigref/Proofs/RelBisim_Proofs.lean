@@ -4,6 +4,8 @@ public import MercLib.Sigref.RelBisim
 public import MercLib.Signatures.InductiveSignatures
 public import MercLib.Signatures.Proofs.InductiveSignatures_Proofs
 public import MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
 
 @[expose] public section
 
@@ -24,7 +26,7 @@ variable {State Label : Type} [HasTau Label]
 
 variable (lts : LTS State Label) (π : Setoid State)
 
-theorem relLTS_tau_inl {s : State} {z : State ⊕ Unit} :
+private theorem relLTS_tau_inl {s : State} {z : State ⊕ Unit} :
     (relLTS lts π).Tr (.inl s) HasTau.τ z ↔ ∃ x, z = .inl x ∧ InertTr lts π s x := by
   rcases z with x | u
   · simp only [relLTS]
@@ -37,7 +39,7 @@ theorem relLTS_tau_inl {s : State} {z : State ⊕ Unit} :
       exact absurd (congrArg Prod.snd hl) (by simp [HasTau.τ])
     · rintro ⟨y, hy, _⟩; cases hy
 
-theorem tauSTr_inl {s : State} {z : State ⊕ Unit} (h : (relLTS lts π).τSTr (.inl s) z) :
+private theorem tauSTr_inl {s : State} {z : State ⊕ Unit} (h : (relLTS lts π).τSTr (.inl s) z) :
     ∃ t, z = .inl t ∧ InertReach lts π s t := by
   induction h with
   | refl => exact ⟨s, rfl, Relation.ReflTransGen.refl⟩
@@ -46,14 +48,14 @@ theorem tauSTr_inl {s : State} {z : State ⊕ Unit} (h : (relLTS lts π).τSTr (
     obtain ⟨x, rfl, hx⟩ := (relLTS_tau_inl lts π).1 hstep
     exact ⟨x, rfl, hp.tail hx⟩
 
-theorem inertReach_tauSTr {s t : State} (h : InertReach lts π s t) :
+private theorem inertReach_tauSTr {s t : State} (h : InertReach lts π s t) :
     (relLTS lts π).τSTr (.inl s) (.inl t) := by
   induction h with
   | refl => exact Relation.ReflTransGen.refl
   | tail _ hstep ih =>
     exact ih.tail ((relLTS_tau_inl lts π).2 ⟨_, rfl, hstep⟩)
 
-theorem InertReach.rel {s t : State} (h : InertReach lts π s t) : π.r s t := by
+private theorem InertReach.rel {s t : State} (h : InertReach lts π s t) : π.r s t := by
   induction h with
   | refl => exact π.refl _
   | tail _ hstep ih => exact π.trans ih hstep.2
@@ -62,7 +64,7 @@ theorem InertReach.rel {s t : State} (h : InertReach lts π s t) : π.r s t := b
 A π-inert τ-step is matched by doing nothing or by an inert path followed by an inert step (with
 `E`-related targets); every other step is matched by an inert path followed by a step with
 `π`-related target. -/
-theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : lts.Tr s a s1) :
+private theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : lts.Tr s a s1) :
     (a = HasTau.τ ∧ π.r s s1 ∧ E lts π s1 t) ∨
     ∃ t' t1, InertReach lts π t t' ∧ E lts π s t' ∧ lts.Tr t' a t1 ∧
       ((a = HasTau.τ ∧ π.r s s1 ∧ E lts π s1 t1) ∨
@@ -99,7 +101,7 @@ theorem E_step {s t : State} (h : E lts π s t) {a : Label} {s1 : State} (hTr : 
 
 /-- **Coinduction principle for `E π`**: a symmetric relation satisfying the matching condition of
 `E_step` (with itself in place of `E`) is contained in `E π`. -/
-theorem E_coind (R : State → State → Prop) (hsymm : ∀ s t, R s t → R t s)
+private theorem E_coind (R : State → State → Prop) (hsymm : ∀ s t, R s t → R t s)
     (hR : ∀ s t, R s t → π.r s t ∧ ∀ a s1, lts.Tr s a s1 →
       ((a = HasTau.τ ∧ π.r s s1 ∧ R s1 t) ∨
        ∃ t' t1, InertReach lts π t t' ∧ R s t' ∧ lts.Tr t' a t1 ∧
@@ -161,21 +163,21 @@ theorem E_coind (R : State → State → Prop) (hsymm : ∀ s t, R s t → R t s
   intro s t h
   exact ⟨(hR s t h).1, r', h, hbis⟩
 
-theorem E.refl (s : State) : E lts π s s := ⟨π.refl s, MercLib.LTS.BranchingBisimilarity.refl _⟩
+private theorem E.refl (s : State) : E lts π s s := ⟨π.refl s, MercLib.LTS.BranchingBisimilarity.refl _⟩
 
-theorem E.symm {s t : State} (h : E lts π s t) : E lts π t s :=
+private theorem E.symm {s t : State} (h : E lts π s t) : E lts π t s :=
   ⟨π.symm h.1, MercLib.LTS.BranchingBisimilarity.symm h.2⟩
 
-theorem E.trans {s t u : State} (h1 : E lts π s t) (h2 : E lts π t u) : E lts π s u :=
+private theorem E.trans {s t u : State} (h1 : E lts π s t) (h2 : E lts π t u) : E lts π s u :=
   ⟨π.trans h1.1 h2.1, MercLib.LTS.BranchingBisimilarity.trans h1.2 h2.2⟩
 
-theorem E.rel {s t : State} (h : E lts π s t) : π.r s t := h.1
+private theorem E.rel {s t : State} (h : E lts π s t) : π.r s t := h.1
 
 /-- `E π` as a `Setoid`. -/
-def ESetoid : Setoid State := ⟨E lts π, ⟨E.refl lts π, fun h => E.symm lts π h, fun h1 h2 => E.trans lts π h1 h2⟩⟩
+private def ESetoid : Setoid State := ⟨E lts π, ⟨E.refl lts π, fun h => E.symm lts π h, fun h1 h2 => E.trans lts π h1 h2⟩⟩
 
 /-- The auxiliary LTS is τ-loop-free when `lts` is. -/
-theorem tauLoopFree_relLTS (hWF : TauLoopFree lts) : TauLoopFree (relLTS lts π) := by
+private theorem tauLoopFree_relLTS (hWF : TauLoopFree lts) : TauLoopFree (relLTS lts π) := by
   have hacc : ∀ s : State, Acc (fun z' z => (relLTS lts π).Tr z HasTau.τ z') (.inl s) := by
     intro s
     induction s using hWF.induction with
@@ -190,7 +192,7 @@ theorem tauLoopFree_relLTS (hWF : TauLoopFree lts) : TauLoopFree (relLTS lts π)
 
 /-- Strong stuttering for `E π` (needs τ-loop-freeness): states on an inert path between two
 `E`-related states are `E`-related to both. -/
-theorem E_stutter (hWF : TauLoopFree lts) {s t m t' : State} (hst : E lts π s t)
+private theorem E_stutter (hWF : TauLoopFree lts) {s t m t' : State} (hst : E lts π s t)
     (h1 : InertReach lts π t m) (h2 : InertReach lts π m t') (hst' : E lts π s t') :
     E lts π s m := by
   have hbb : BranchingBisimilarity (relLTS lts π) (.inl t) (.inl t') :=
@@ -201,7 +203,7 @@ theorem E_stutter (hWF : TauLoopFree lts) {s t m t' : State} (hst : E lts π s t
     MercLib.LTS.BranchingBisimilarity.trans hst.2 (MercLib.LTS.BranchingBisimilarity.symm hmid)⟩
 
 /-- Path lifting: an inert path on one side of an `E`-pair is mimicked on the other side. -/
-theorem E_lift {s t d : State} (hst : E lts π s t) (h : InertReach lts π t d) :
+private theorem E_lift {s t d : State} (hst : E lts π s t) (h : InertReach lts π t d) :
     ∃ s', InertReach lts π s s' ∧ E lts π s' d := by
   have hr := MercLib.LTS.BranchingBisimilarity.isBranchingBisimulation (lts := relLTS lts π)
   obtain ⟨z, hz, hbz⟩ := MercLib.LTS.IsBranchingBisimulation.stutter hr
@@ -213,7 +215,7 @@ theorem E_lift {s t d : State} (hst : E lts π s t) (h : InertReach lts π t d) 
 
 /-- A τ-path between branching-bisimilar states is inert whenever branching bisimilarity refines
 `π`. -/
-theorem inertReach_of_bb (hWF : TauLoopFree lts)
+private theorem inertReach_of_bb (hWF : TauLoopFree lts)
     (hπ : ∀ s t, BranchingBisimilarity lts s t → π.r s t) {t t' : State}
     (hp : lts.τSTr t t') (hb : BranchingBisimilarity lts t t') : InertReach lts π t t' := by
   induction hp with
@@ -225,7 +227,7 @@ theorem inertReach_of_bb (hWF : TauLoopFree lts)
     exact (ih htw).tail ⟨hstep, hπ _ _ (MercLib.LTS.BranchingBisimilarity.trans hwt hb)⟩
 
 /-- Branching bisimilarity is contained in `E π` as soon as it is contained in `π`. -/
-theorem E_of_bisim (hWF : TauLoopFree lts)
+private theorem E_of_bisim (hWF : TauLoopFree lts)
     (hπ : ∀ s t, BranchingBisimilarity lts s t → π.r s t) {s t : State}
     (h : BranchingBisimilarity lts s t) : E lts π s t := by
   refine E_coind lts π (BranchingBisimilarity lts) (fun _ _ => MercLib.LTS.BranchingBisimilarity.symm) ?_ s t h

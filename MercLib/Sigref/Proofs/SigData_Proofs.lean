@@ -5,6 +5,8 @@ public import MercLib.Signatures.Proofs.InductiveSignatures_Proofs
 public import Mathlib.SetTheory.Ordinal.Rank
 public import Mathlib.Order.Prod.Lex.Basic
 public import Mathlib.Logic.Encodable.Basic
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
 
 @[expose] public section
 
@@ -27,12 +29,12 @@ section Existence
 
 variable (lts : LTS State Label) {Block : Type} (part : State → Block) {Tag : Type}
 
-theorem choose_congr {α : Sort _} {P Q : α → Prop} (h : P = Q) (hp : ∃ a, P a) (hq : ∃ a, Q a) :
+private theorem choose_congr {α : Sort _} {P Q : α → Prop} (h : P = Q) (hp : ∃ a, P a) (hq : ∃ a, Q a) :
     hp.choose = hq.choose := by
   subst h; rfl
 
 /-- `Sig` at `s` only depends on `sigHash`/`sigFn` at the τ-successors of `s`. -/
-theorem Sig_congr (s : State) {h₁ h₂ : State → Tag} {f₁ f₂ : State → Set (Label × (Block ⊕ Tag))}
+private theorem Sig_congr (s : State) {h₁ h₂ : State → Tag} {f₁ f₂ : State → Set (Label × (Block ⊕ Tag))}
     (hh : ∀ u, lts.Tr s HasTau.τ u → h₁ u = h₂ u) (hf : ∀ u, lts.Tr s HasTau.τ u → f₁ u = f₂ u) :
     Sig lts part h₁ f₁ s = Sig lts part h₂ f₂ s := by
   have hpre : PreSig lts part h₁ s = PreSig lts part h₂ s := by
@@ -78,7 +80,7 @@ end Existence
 variable [Finite State]
 
 /-- A well-founded strict total order on states in which every τ-successor is smaller. -/
-theorem exists_tau_order (lts : LTS State Label) (hWF : TauLoopFree lts) :
+private theorem exists_tau_order (lts : LTS State Label) (hWF : TauLoopFree lts) :
     ∃ lt : State → State → Prop, WellFounded lt ∧ (∀ a b, a ≠ b → lt a b ∨ lt b a) ∧
       (∀ s u, lts.Tr s HasTau.τ u → lt u s) ∧ (∀ a b c, lt a b → lt b c → lt a c) := by
   obtain ⟨e, he⟩ := exists_injective_nat State
@@ -96,7 +98,7 @@ theorem exists_tau_order (lts : LTS State Label) (hWF : TauLoopFree lts) :
   · intro s u hu
     exact Prod.Lex.left _ _ (WellFounded.rank_lt_of_rel (r := fun s' s => lts.Tr s HasTau.τ s') hu)
 
-theorem sigData_exists (lts : LTS State Label) (hWF : TauLoopFree lts) (π : Setoid State) :
+private theorem sigData_exists (lts : LTS State Label) (hWF : TauLoopFree lts) (π : Setoid State) :
     Nonempty (SigData lts π) := by
   classical
   obtain ⟨lt, hlt, htot, hmono, htrans⟩ := exists_tau_order lts hWF
@@ -175,13 +177,13 @@ section
 open MercLib.Signatures
 
 /-- Existence of hash-coherent signature data on a finite τ-loop-free LTS. -/
-def SigDataExists (lts : LTS State Label) (π : Setoid State) : Prop :=
+private def SigDataExists (lts : LTS State Label) (π : Setoid State) : Prop :=
   TauLoopFree lts → Nonempty (SigData lts π)
 
 end
 
 /-- Headline: hash-coherent signature data exists. -/
-theorem sigDataExists (lts : LTS State Label) (π : Setoid State) :
+private theorem sigDataExists (lts : LTS State Label) (π : Setoid State) :
     SigDataExists lts π :=
   fun hWF => sigData_exists lts hWF π
 

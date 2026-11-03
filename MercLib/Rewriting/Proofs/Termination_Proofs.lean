@@ -2,6 +2,7 @@ module
 
 public import MercLib.Rewriting.Termination
 public import MercLib.Rewriting.Proofs.Signature_Proofs
+import all MercLib.Rewriting.Proofs.Signature_Proofs
 
 @[expose] public section
 
@@ -34,7 +35,7 @@ variable {M : MonotoneAlgebra S}
 mutual
 
 /-- A step strictly decreases the interpretation. -/
-theorem lt_stepWith (hD : Decreasing R M) (ν : Valuation M.alg W)
+private theorem lt_stepWith (hD : Decreasing R M) (ν : Valuation M.alg W)
     {C : ∀ s, Term S W s → Term S W s → Prop} :
     ∀ {s : S.Srt} {a b : Term S W s}, StepWith R C s a b →
       M.lt s (Term.eval M.alg ν b) (Term.eval M.alg ν a)
@@ -45,7 +46,7 @@ theorem lt_stepWith (hD : Decreasing R M) (ν : Valuation M.alg W)
     exact M.mono f (lt_argsStepWith hD ν h)
 
 /-- A step inside an argument list decreases exactly one position of the value list. -/
-theorem lt_argsStepWith (hD : Decreasing R M) (ν : Valuation M.alg W)
+private theorem lt_argsStepWith (hD : Decreasing R M) (ν : Valuation M.alg W)
     {C : ∀ s, Term S W s → Term S W s → Prop} :
     ∀ {ss : List S.Srt} {as bs : Args S W ss}, ArgsStepWith R C ss as bs →
       ValsLt M.alg.carrier M.lt (Args.eval M.alg ν as) (Args.eval M.alg ν bs)

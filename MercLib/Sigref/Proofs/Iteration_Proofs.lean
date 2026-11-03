@@ -6,6 +6,20 @@ public import MercLib.Sigref.Proofs.RPStep_Proofs
 public import MercLib.Sigref.Proofs.SigE_Proofs
 public import MercLib.Sigref.Proofs.Branching_Proofs
 public import MercLib.Sigref.Proofs.Split_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Branching_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.RPStep_Proofs
+import all MercLib.Sigref.Proofs.Refinable_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.Split_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
+import all MercLib.Sigref.Proofs.Worklist_Proofs
 
 @[expose] public section
 
@@ -30,7 +44,7 @@ open Classical
 
 variable {n : ℕ} {Label : Type} [HasTau Label]
 
-theorem mem_markTargets {lts : LTS (Fin n) Label} {inc : Fin n → List (Fin n × Label)}
+private theorem mem_markTargets {lts : LTS (Fin n) Label} {inc : Fin n → List (Fin n × Label)}
     (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u) (rp2 : RP n) (nbOld : ℕ) (y : Fin n) :
     y ∈ markTargets inc rp2 nbOld ↔
       ∃ a u, nbOld ≤ rp2.blk u ∧ lts.Tr y a u ∧ (a ≠ HasTau.τ ∨ rp2.blk y < nbOld) := by
@@ -55,7 +69,7 @@ variable {lts : LTS (Fin n) Label} {inc : Fin n → List (Fin n × Label)}
   {preds : Fin n → List (Fin n)}
 
 /-- **One iteration on the refinable partition is a step of the abstract algorithm.** -/
-theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
+private theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hWF : TauLoopFree lts)
     {c c' : Ctx n} (hwl : WLInv c) (hit : Iter lts inc preds c c') :
     WLInv c' ∧ BranchingStep lts c.rp.config c'.rp.config := by
@@ -221,19 +235,19 @@ theorem iter_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     rw [hr2, hpred]
     exact or_congr_left hXD.symm
 
-theorem init_wf (n : ℕ) (hn : 0 < n) : (init n hn).WF := by
+private theorem init_wf (n : ℕ) (hn : 0 < n) : (init n hn).WF := by
   refine ⟨?_, ?_, ?_⟩
   · intro b hb; simp [init] at *; omega
   · intro s; simp [init]
   · intro s b hb _ _; simp [init] at *; omega
 
-theorem init_config (n : ℕ) (hn : 0 < n) : (init n hn).config = initConfig (Fin n) := by
+private theorem init_config (n : ℕ) (hn : 0 < n) : (init n hn).config = initConfig (Fin n) := by
   unfold RP.config initConfig
   congr 1
   · exact Setoid.ext fun x y => ⟨fun _ => trivial, fun _ => rfl⟩
   · ext x; simp [RP.Dirty, init]
 
-theorem init_inv (n : ℕ) (hn : 0 < n) : WLInv (⟨init n hn, [0]⟩ : Ctx n) := by
+private theorem init_inv (n : ℕ) (hn : 0 < n) : WLInv (⟨init n hn, [0]⟩ : Ctx n) := by
   refine ⟨init_wf n hn, by simp, ?_, ?_⟩
   · intro b hb
     simp at hb; subst hb
@@ -241,7 +255,7 @@ theorem init_inv (n : ℕ) (hn : 0 < n) : WLInv (⟨init n hn, [0]⟩ : Ctx n) :
   · intro x _; simp [init]
 
 /-- Reachable contexts satisfy the worklist invariant and are abstract runs. -/
-theorem reach_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
+private theorem reach_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hWF : TauLoopFree lts)
     (hn : 0 < n) {c : Ctx n}
     (h : Relation.ReflTransGen (Iter lts inc preds) ⟨init n hn, [0]⟩ c) :
@@ -256,7 +270,7 @@ theorem reach_sim (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
 /-- **Correctness of the paper's algorithm on the refinable partition (partial)**: whenever the
 worklist is empty after a run from the initial partition, the partition is exactly branching
 bisimilarity. -/
-theorem rp_run_correct {n : ℕ} (hn : 0 < n) {lts : LTS (Fin n) Label}
+private theorem rp_run_correct {n : ℕ} (hn : 0 < n) {lts : LTS (Fin n) Label}
     {inc : Fin n → List (Fin n × Label)} {preds : Fin n → List (Fin n)}
     (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hWF : TauLoopFree lts)
@@ -271,7 +285,7 @@ theorem rp_run_correct {n : ℕ} (hn : 0 < n) {lts : LTS (Fin n) Label}
   exact absurd this List.not_mem_nil
 
 /-- **Termination**: every run of the algorithm on the refinable partition is finite. -/
-theorem rp_wf {n : ℕ} (hn : 0 < n) {lts : LTS (Fin n) Label}
+private theorem rp_wf {n : ℕ} (hn : 0 < n) {lts : LTS (Fin n) Label}
     {inc : Fin n → List (Fin n × Label)} {preds : Fin n → List (Fin n)}
     (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hWF : TauLoopFree lts) :

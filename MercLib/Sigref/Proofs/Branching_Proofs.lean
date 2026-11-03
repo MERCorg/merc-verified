@@ -3,6 +3,12 @@ module
 public import MercLib.Sigref.Branching
 public import MercLib.Sigref.Proofs.Strong_Proofs
 public import MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
 
 @[expose] public section
 
@@ -23,7 +29,7 @@ open Cslib
 
 variable {State Label : Type} [HasTau Label]
 
-theorem branchingInv_init (lts : LTS State Label) : BranchingInv lts (initConfig State) := by
+private theorem branchingInv_init (lts : LTS State Label) : BranchingInv lts (initConfig State) := by
   have hY : ∀ s, s ∈ inertClosure lts (initConfig State).π (initConfig State).X :=
     fun s => ⟨s, trivial, Relation.ReflTransGen.refl⟩
   exact ⟨fun _ _ _ => trivial, fun s t _ => ⟨fun _ => hY t, fun _ => hY s⟩,
@@ -33,20 +39,20 @@ section Closure
 
 variable {lts : LTS State Label} {π : Setoid State} {D : Set State}
 
-theorem mem_inertClosure_of_mem {s : State} (h : s ∈ D) : s ∈ inertClosure lts π D :=
+private theorem mem_inertClosure_of_mem {s : State} (h : s ∈ D) : s ∈ inertClosure lts π D :=
   ⟨s, h, Relation.ReflTransGen.refl⟩
 
-theorem inertClosure_head {s s1 : State} (hs : InertTr lts π s s1) (h : s1 ∈ inertClosure lts π D) :
+private theorem inertClosure_head {s s1 : State} (hs : InertTr lts π s s1) (h : s1 ∈ inertClosure lts π D) :
     s ∈ inertClosure lts π D := by
   obtain ⟨d, hd, hp⟩ := h
   exact ⟨d, hd, Relation.ReflTransGen.head hs hp⟩
 
-theorem inertClosure_path {s t : State} (hp : InertReach lts π s t) (h : t ∈ inertClosure lts π D) :
+private theorem inertClosure_path {s t : State} (hp : InertReach lts π s t) (h : t ∈ inertClosure lts π D) :
     s ∈ inertClosure lts π D := by
   obtain ⟨d, hd, hq⟩ := h
   exact ⟨d, hd, hp.trans hq⟩
 
-theorem not_inertClosure_path {s t : State} (hp : InertReach lts π s t)
+private theorem not_inertClosure_path {s t : State} (hp : InertReach lts π s t)
     (h : s ∉ inertClosure lts π D) : t ∉ inertClosure lts π D :=
   fun ht => h (inertClosure_path hp ht)
 
@@ -61,7 +67,7 @@ include f
 
 set_option linter.unusedSectionVars false in
 /-- The processed part `D` of the block is exactly its intersection with the dirty closure. -/
-theorem D_iff {s : State} :
+private theorem D_iff {s : State} :
     s ∈ inertClosure lts c.π (cls c.π s0 ∩ c.X) ↔
       s ∈ cls c.π s0 ∧ s ∈ inertClosure lts c.π c.X := by
   constructor
@@ -70,24 +76,24 @@ theorem D_iff {s : State} :
   · rintro ⟨hsB, d, hdX, hp⟩
     exact ⟨d, ⟨(cls_saturated c.π s0 s d (InertReach.rel lts c.π hp)).1 hsB, hdX⟩, hp⟩
 
-theorem le {s t : State} (h : c'.π.r s t) : c.π.r s t := ((f.rel s t).1 h).1
+private theorem le {s t : State} (h : c'.π.r s t) : c.π.r s t := ((f.rel s t).1 h).1
 
-theorem out {s t : State} (hs : s ∉ cls c.π s0) : c'.π.r s t ↔ c.π.r s t := by
+private theorem out {s t : State} (hs : s ∉ cls c.π s0) : c'.π.r s t ↔ c.π.r s t := by
   rw [f.rel]
   exact ⟨fun h => h.1, fun h => ⟨h, fun hB => absurd hB hs⟩⟩
 
 /-- The kept part is contained in the block. -/
-theorem keep_sub {t : State} (ht : t ∈ cls c'.π s1) : t ∈ cls c.π s0 :=
+private theorem keep_sub {t : State} (ht : t ∈ cls c'.π s1) : t ∈ cls c.π s0 :=
   (cls_saturated c.π s0 s1 t (f.le ht)).1 f.mem
 
 /-- `U = B \ keep` is a union of `π'`-classes. -/
-theorem U_sat {s t : State} (hst : c'.π.r s t) (hs : s ∈ cls c.π s0 \ cls c'.π s1) :
+private theorem U_sat {s t : State} (hst : c'.π.r s t) (hs : s ∈ cls c.π s0 \ cls c'.π s1) :
     t ∈ cls c.π s0 \ cls c'.π s1 := by
   refine ⟨(cls_saturated c.π s0 s t (f.le hst)).1 hs.1, fun ht => hs.2 ?_⟩
   exact c'.π.trans ht (c'.π.symm hst)
 
 /-- Inert paths outside the block are unaffected by the split. -/
-theorem inertReach_out {t x : State} (ht : t ∉ cls c.π s0) (hp : InertReach lts c.π t x) :
+private theorem inertReach_out {t x : State} (ht : t ∉ cls c.π s0) (hp : InertReach lts c.π t x) :
     InertReach lts c'.π t x := by
   induction hp with
   | refl => exact Relation.ReflTransGen.refl
@@ -97,7 +103,7 @@ theorem inertReach_out {t x : State} (ht : t ∉ cls c.π s0) (hp : InertReach l
     exact ih.tail ⟨hstep.1, (f.out hu).2 hstep.2⟩
 
 /-- Soundness: branching-bisimilar states stay together. -/
-theorem R' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
+private theorem R' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     (hb : BranchingBisimilarity lts s t) : c'.π.r s t := by
   rw [f.rel]
   unfold branchRel
@@ -108,7 +114,7 @@ theorem R' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
   · exact E_of_bisim lts c.π hWF inv.R hb
 
 /-- Base case of `M'`: a dirty state is mirrored by every bisimilar state. -/
-theorem M_base (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
+private theorem M_base (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     (hb : BranchingBisimilarity lts s t) (hs : s ∈ c'.X) :
     t ∈ inertClosure lts c'.π c'.X := by
   rw [f.dX] at hs
@@ -139,7 +145,7 @@ theorem M_base (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
       exact hμ hμτ (f.U_sat (c'.π.symm (f.R' hWF inv hb2)) ht'U)
 
 /-- The effective dirty set is closed under branching bisimilarity. -/
-theorem M' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
+private theorem M' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     (hb : BranchingBisimilarity lts s t) (hs : s ∈ inertClosure lts c'.π c'.X) :
     t ∈ inertClosure lts c'.π c'.X := by
   obtain ⟨d, hd, hp⟩ := hs
@@ -161,7 +167,7 @@ theorem M' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
 /-! ### Helper lemmas for `U'` and `S'` -/
 
 /-- Outside the block, `E π'` is contained in `E π`. -/
-theorem E_out {u v : State} (hE : E lts c'.π u v) (hu : u ∉ cls c.π s0) : E lts c.π u v := by
+private theorem E_out {u v : State} (hE : E lts c'.π u v) (hu : u ∉ cls c.π s0) : E lts c.π u v := by
   refine E_coind lts c.π (fun u v => E lts c'.π u v ∧ u ∉ cls c.π s0)
     (fun u v h => ⟨E.symm lts c'.π h.1, fun hv =>
       h.2 ((cls_saturated c.π s0 u v (f.le h.1.1)).2 hv)⟩) ?_ u v ⟨hE, hu⟩
@@ -186,7 +192,7 @@ theorem E_out {u v : State} (hE : E lts c'.π u v) (hu : u ∉ cls c.π s0) : E 
       · exact Or.inr (fun h' => h ((f.out hu).2 h'))
 
 /-- A clean state outside the block is clean for the old partition too. -/
-theorem notY_of_out {s : State} (hs : s ∉ cls c.π s0) (hs' : s ∉ inertClosure lts c'.π c'.X) :
+private theorem notY_of_out {s : State} (hs : s ∉ cls c.π s0) (hs' : s ∉ inertClosure lts c'.π c'.X) :
     s ∉ inertClosure lts c.π c.X := by
   rintro ⟨x, hxX, hp⟩
   have hxB : x ∉ cls c.π s0 := fun h =>
@@ -196,14 +202,14 @@ theorem notY_of_out {s : State} (hs : s ∉ cls c.π s0) (hs' : s ∉ inertClosu
   rw [f.dX]; exact Or.inl ⟨hxX, hxD⟩
 
 /-- A state that is clean after the step and was not processed was already clean. -/
-theorem notY_of_notD {s : State} (hs' : s ∉ inertClosure lts c'.π c'.X)
+private theorem notY_of_notD {s : State} (hs' : s ∉ inertClosure lts c'.π c'.X)
     (hD : s ∉ inertClosure lts c.π (cls c.π s0 ∩ c.X)) : s ∉ inertClosure lts c.π c.X := by
   by_cases hB : s ∈ cls c.π s0
   · intro hY; exact hD (f.D_iff.2 ⟨hB, hY⟩)
   · exact f.notY_of_out hB hs'
 
 /-- `E π` for any two clean-after-the-step states of one new block. -/
-theorem E_of_clean (inv : BranchingInv lts c) {s t : State} (hst : c'.π.r s t)
+private theorem E_of_clean (inv : BranchingInv lts c) {s t : State} (hst : c'.π.r s t)
     (hs : s ∉ inertClosure lts c'.π c'.X) (ht : t ∉ inertClosure lts c'.π c'.X) :
     E lts c.π s t := by
   have hπ := f.le hst
@@ -218,7 +224,7 @@ theorem E_of_clean (inv : BranchingInv lts c) {s t : State} (hst : c'.π.r s t)
     exact inv.U s t hπ (f.notY_of_notD hs hD) (f.notY_of_notD ht htD)
 
 /-- Inert steps of a clean (old) state survive the split. -/
-theorem inert_pres {u v : State} (hu : u ∉ inertClosure lts c.π c.X) (h : InertTr lts c.π u v) :
+private theorem inert_pres {u v : State} (hu : u ∉ inertClosure lts c.π c.X) (h : InertTr lts c.π u v) :
     InertTr lts c'.π u v := by
   refine ⟨h.1, ?_⟩
   by_cases hB : u ∈ cls c.π s0
@@ -229,7 +235,7 @@ theorem inert_pres {u v : State} (hu : u ∉ inertClosure lts c.π c.X) (h : Ine
     exact ⟨h.2, fun _ => ⟨⟨fun a => absurd a huD, fun a => absurd a hvD⟩, fun a => absurd a huD⟩⟩
   · exact (f.out hB).2 h.2
 
-theorem inertReach_pres {u v : State} (hu : u ∉ inertClosure lts c.π c.X)
+private theorem inertReach_pres {u v : State} (hu : u ∉ inertClosure lts c.π c.X)
     (h : InertReach lts c.π u v) : InertReach lts c'.π u v := by
   induction h with
   | refl => exact Relation.ReflTransGen.refl
@@ -237,7 +243,7 @@ theorem inertReach_pres {u v : State} (hu : u ∉ inertClosure lts c.π c.X)
     exact ih.tail (f.inert_pres (not_inertClosure_path hrest hu) hstep)
 
 /-- A clean state has no edge into `U` except τ-edges starting inside `U`. -/
-theorem clean_edge {u u1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π c'.X)
+private theorem clean_edge {u u1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π c'.X)
     (hTr : lts.Tr u a u1) (h1 : u1 ∈ cls c.π s0 \ cls c'.π s1) :
     a = HasTau.τ ∧ u ∈ cls c.π s0 \ cls c'.π s1 := by
   by_contra hcon
@@ -247,7 +253,7 @@ theorem clean_edge {u u1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π
   exact Or.inr ⟨a, u1, h1, hTr, fun hτ hU => hcon ⟨hτ, hU⟩⟩
 
 /-- Targets of non-inert edges of clean states land in the kept part. -/
-theorem tail_keep {u u1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π c'.X)
+private theorem tail_keep {u u1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π c'.X)
     (hTr : lts.Tr u a u1) (hN : a ≠ HasTau.τ ∨ ¬ c.π.r u u1) (hB : u1 ∈ cls c.π s0) :
     u1 ∈ cls c'.π s1 := by
   by_contra hk
@@ -258,7 +264,7 @@ theorem tail_keep {u u1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π 
   · exact h hπ
 
 /-- Tails of non-inert edges of two clean states are `π'`-related. -/
-theorem tails_pi' {u v u1 v1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π c'.X)
+private theorem tails_pi' {u v u1 v1 : State} {a : Label} (hu : u ∉ inertClosure lts c'.π c'.X)
     (hv : v ∉ inertClosure lts c'.π c'.X) (hTu : lts.Tr u a u1) (hTv : lts.Tr v a v1)
     (hNu : a ≠ HasTau.τ ∨ ¬ c.π.r u u1) (hNv : a ≠ HasTau.τ ∨ ¬ c.π.r v v1)
     (h : c.π.r u1 v1) : c'.π.r u1 v1 := by
@@ -268,7 +274,7 @@ theorem tails_pi' {u v u1 v1 : State} {a : Label} (hu : u ∉ inertClosure lts c
   · exact (f.out hB).2 h
 
 /-- Separation is preserved: a clean and a dirty state of one new block are not `E π'`-related. -/
-theorem S' (inv : BranchingInv lts c) {s t : State} (_hst : c'.π.r s t)
+private theorem S' (inv : BranchingInv lts c) {s t : State} (_hst : c'.π.r s t)
     (hs : s ∉ inertClosure lts c'.π c'.X) (ht : t ∈ inertClosure lts c'.π c'.X) :
     ¬ E lts c'.π s t := by
   intro hE
@@ -295,7 +301,7 @@ theorem S' (inv : BranchingInv lts c) {s t : State} (_hst : c'.π.r s t)
         exact hs' (inertClosure_path hIR' ⟨s'', hs''X, Relation.ReflTransGen.refl⟩)
 
 /-- Uniformity is preserved: clean states of a new block are `E π'`-related. -/
-theorem U' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
+private theorem U' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
     (hst : c'.π.r s t) (hs : s ∉ inertClosure lts c'.π c'.X)
     (ht : t ∉ inertClosure lts c'.π c'.X) : E lts c'.π s t := by
   let Q : State → State → Prop := fun s t => c'.π.r s t ∧ s ∉ inertClosure lts c'.π c'.X ∧
@@ -429,7 +435,7 @@ theorem U' (hWF : TauLoopFree lts) (inv : BranchingInv lts c) {s t : State}
 end StepFacts
 
 /-- **The invariant is preserved by every step.** -/
-theorem branchingInv_step (lts : LTS State Label) (hWF : TauLoopFree lts) {c c' : Config State}
+private theorem branchingInv_step (lts : LTS State Label) (hWF : TauLoopFree lts) {c c' : Config State}
     (inv : BranchingInv lts c) (h : BranchingStep lts c c') : BranchingInv lts c' := by
   obtain ⟨s0, s1, f⟩ := h
   exact ⟨fun s t hb => f.R' hWF inv hb,
@@ -438,12 +444,12 @@ theorem branchingInv_step (lts : LTS State Label) (hWF : TauLoopFree lts) {c c' 
     fun s t hst hs ht => f.S' inv hst hs ht⟩
 
 /-- An inert path is a τ-path. -/
-theorem inertReach_tauPath {lts : LTS State Label} {π : Setoid State} {s t : State}
+private theorem inertReach_tauPath {lts : LTS State Label} {π : Setoid State} {s t : State}
     (h : InertReach lts π s t) : lts.τSTr s t :=
   Relation.ReflTransGen.mono (fun _ _ h => h.1) _ _ h
 
 /-- **Final.** With no dirty state left, the partition is exactly branching bisimilarity. -/
-theorem branchingInv_final (lts : LTS State Label) {c : Config State}
+private theorem branchingInv_final (lts : LTS State Label) {c : Config State}
     (inv : BranchingInv lts c) (hX : ∀ s, s ∉ c.X) (s t : State) :
     c.π.r s t ↔ BranchingBisimilarity lts s t := by
   refine ⟨fun h => ?_, inv.R s t⟩
@@ -465,7 +471,7 @@ theorem branchingInv_final (lts : LTS State Label) {c : Config State}
   · exact Or.inr ⟨s', s'', hS, hT, c.π.symm h2, c.π.symm h3⟩
 
 /-- The termination measure, as for the strong algorithm. -/
-theorem branchingStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : Config State}
+private theorem branchingStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : Config State}
     (h : BranchingStep lts c c') : measure c' < measure c := by
   obtain ⟨s0, s1, f⟩ := h
   obtain ⟨e, heB, heX⟩ := f.dirty
@@ -495,12 +501,12 @@ theorem branchingStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : 
     exact Prod.Lex.left _ _ (Set.ncard_lt_ncard hss (Set.toFinite _))
 
 /-- **Termination:** on a finite state space every sequence of steps is finite. -/
-theorem branchingStep_wf [Finite State] (lts : LTS State Label) :
+private theorem branchingStep_wf [Finite State] (lts : LTS State Label) :
     WellFounded (fun c' c : Config State => BranchingStep lts c c') :=
   Subrelation.wf (fun h => branchingStep_measure_lt lts h) (InvImage.wf measure wellFounded_lt)
 
 /-- The split relation is an equivalence (this is where transitivity of `E π` is needed). -/
-def branchSetoid (lts : LTS State Label) (π : Setoid State) (X : Set State) (s0 : State) :
+private def branchSetoid (lts : LTS State Label) (π : Setoid State) (X : Set State) (s0 : State) :
     Setoid State where
   r := branchRel lts π X s0
   iseqv := by
@@ -517,7 +523,7 @@ def branchSetoid (lts : LTS State Label) (π : Setoid State) (X : Set State) (s0
       exact ⟨a1.trans b1, fun hsD => E.trans lts π (a2 hsD) (b2 (a1.1 hsD))⟩
 
 /-- **Progress**: a configuration with a dirty state can always take a step. -/
-theorem branchingStep_exists (lts : LTS State Label) (c : Config State) {s : State}
+private theorem branchingStep_exists (lts : LTS State Label) (c : Config State) {s : State}
     (hs : s ∈ c.X) : ∃ c', BranchingStep lts c c' := by
   let π' := branchSetoid lts c.π c.X s
   refine ⟨⟨π', (c.X \ inertClosure lts c.π (cls c.π s ∩ c.X)) ∪
@@ -525,7 +531,7 @@ theorem branchingStep_exists (lts : LTS State Label) (c : Config State) {s : Sta
   exact ⟨⟨s, c.π.refl s, hs⟩, c.π.refl s, fun _ _ => Iff.rfl, rfl⟩
 
 /-- Every reachable configuration satisfies the invariant. -/
-theorem branchingInv_reach (lts : LTS State Label) (hWF : TauLoopFree lts) {c : Config State}
+private theorem branchingInv_reach (lts : LTS State Label) (hWF : TauLoopFree lts) {c : Config State}
     (h : Relation.ReflTransGen (BranchingStep lts) (initConfig State) c) : BranchingInv lts c := by
   induction h with
   | refl => exact branchingInv_init lts
@@ -533,7 +539,7 @@ theorem branchingInv_reach (lts : LTS State Label) (hWF : TauLoopFree lts) {c : 
 
 /-- **Correctness of the abstract branching algorithm**: any run that ends without dirty states
 yields exactly branching bisimilarity. -/
-theorem branching_run_correct (lts : LTS State Label) (hWF : TauLoopFree lts) {c : Config State}
+private theorem branching_run_correct (lts : LTS State Label) (hWF : TauLoopFree lts) {c : Config State}
     (h : Relation.ReflTransGen (BranchingStep lts) (initConfig State) c)
     (hX : ∀ s, s ∉ c.X) (s t : State) : c.π.r s t ↔ BranchingBisimilarity lts s t :=
   branchingInv_final lts (branchingInv_reach lts hWF h) hX s t
@@ -541,7 +547,7 @@ theorem branching_run_correct (lts : LTS State Label) (hWF : TauLoopFree lts) {c
 /-- **Termination and totality**: on a finite τ-loop-free LTS the algorithm always reaches a
 configuration without dirty states, whatever choices it makes, and that configuration is branching
 bisimilarity. -/
-theorem branching_terminates [Finite State] (lts : LTS State Label) (hWF : TauLoopFree lts) :
+private theorem branching_terminates [Finite State] (lts : LTS State Label) (hWF : TauLoopFree lts) :
     ∃ c, Relation.ReflTransGen (BranchingStep lts) (initConfig State) c ∧ (∀ s, s ∉ c.X) ∧
       ∀ s t, c.π.r s t ↔ BranchingBisimilarity lts s t := by
   have key : ∀ c : Config State, Relation.ReflTransGen (BranchingStep lts) (initConfig State) c →

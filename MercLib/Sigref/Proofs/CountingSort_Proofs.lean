@@ -32,12 +32,12 @@ def rankOf (cls : List Nat) (t : Nat) : Nat := (cls.take t).count (cls.getD t 0)
 def posOf (ms : Nat) (szs cls : List Nat) (t : Nat) : Nat :=
   cumS ms szs (cls.getD t 0) + rankOf cls t
 
-theorem cumS_succ (ms : Nat) (szs : List Nat) (j : Nat) (hj : j < szs.length) :
+private theorem cumS_succ (ms : Nat) (szs : List Nat) (j : Nat) (hj : j < szs.length) :
     cumS ms szs (j + 1) = cumS ms szs j + szs[j] := by
   unfold cumS
   rw [List.sum_take_succ _ _ hj]; omega
 
-theorem cumS_mono (ms : Nat) (szs : List Nat) {i j : Nat} (h : i ≤ j) :
+private theorem cumS_mono (ms : Nat) (szs : List Nat) {i j : Nat} (h : i ≤ j) :
     cumS ms szs i ≤ cumS ms szs j := by
   induction h with
   | refl => exact le_refl _
@@ -49,14 +49,14 @@ theorem cumS_mono (ms : Nat) (szs : List Nat) {i j : Nat} (h : i ≤ j) :
         rw [List.take_of_length_le (by omega), List.take_of_length_le (by omega)]
       unfold cumS at *; rw [this]; exact ih
 
-theorem cumS_ge (ms : Nat) (szs : List Nat) (j : Nat) : ms ≤ cumS ms szs j := by
+private theorem cumS_ge (ms : Nat) (szs : List Nat) (j : Nat) : ms ≤ cumS ms szs j := by
   unfold cumS; omega
 
-theorem cumS_length (ms : Nat) (szs : List Nat) : cumS ms szs szs.length = ms + szs.sum := by
+private theorem cumS_length (ms : Nat) (szs : List Nat) : cumS ms szs szs.length = ms + szs.sum := by
   simp [cumS]
 
 /-- The class sizes add up to the number of elements. -/
-theorem sum_count_eq_length (K : Nat) (cls : List Nat) (hcls : ∀ x ∈ cls, x < K) :
+private theorem sum_count_eq_length (K : Nat) (cls : List Nat) (hcls : ∀ x ∈ cls, x < K) :
     ((List.range K).map (fun j => cls.count j)).sum = cls.length := by
   induction cls with
   | nil => simp
@@ -94,18 +94,18 @@ theorem sum_count_eq_length (K : Nat) (cls : List Nat) (hcls : ∀ x ∈ cls, x 
       rw [key]; simp [hx]
     simp [this]
 
-theorem count_take_mono (l : List Nat) (x : Nat) {a b : Nat} (h : a ≤ b) :
+private theorem count_take_mono (l : List Nat) (x : Nat) {a b : Nat} (h : a ≤ b) :
     (l.take a).count x ≤ (l.take b).count x := by
   have h1 := List.take_append_drop a (l.take b)
   rw [List.take_take, min_eq_left h] at h1
   conv_rhs => rw [← h1]
   rw [List.count_append]; omega
 
-theorem count_take_succ (l : List Nat) (t : Nat) (ht : t < l.length) :
+private theorem count_take_succ (l : List Nat) (t : Nat) (ht : t < l.length) :
     (l.take (t + 1)).count l[t] = (l.take t).count l[t] + 1 := by
   rw [List.take_succ_eq_append_getElem ht, List.count_append, List.count_singleton_self]
 
-theorem rank_lt_count (cls : List Nat) (t : Nat) (ht : t < cls.length) :
+private theorem rank_lt_count (cls : List Nat) (t : Nat) (ht : t < cls.length) :
     rankOf cls t < cls.count (cls[t]) := by
   unfold rankOf
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem ht]
@@ -115,7 +115,7 @@ theorem rank_lt_count (cls : List Nat) (t : Nat) (ht : t < cls.length) :
   rw [List.take_length] at h2
   omega
 
-theorem rank_strict (cls : List Nat) {t u : Nat} (htu : t < u) (hu : u < cls.length)
+private theorem rank_strict (cls : List Nat) {t u : Nat} (htu : t < u) (hu : u < cls.length)
     (hc : cls[t]'(by omega) = cls[u]) : rankOf cls t < rankOf cls u := by
   have ht : t < cls.length := by omega
   unfold rankOf
@@ -128,7 +128,7 @@ theorem rank_strict (cls : List Nat) {t u : Nat} (htu : t < u) (hu : u < cls.len
   omega
 
 /-- Bounds on the target position. -/
-theorem posOf_bounds (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
+private theorem posOf_bounds (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     (t : Nat) (ht : t < cls.length) :
     cumS ms szs cls[t] ≤ posOf ms szs cls t ∧
@@ -144,7 +144,7 @@ theorem posOf_bounds (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length 
   simp only [Option.getD_some]
   omega
 
-theorem posOf_inj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
+private theorem posOf_inj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     {t u : Nat} (ht : t < cls.length) (hu : u < cls.length)
     (h : posOf ms szs cls t = posOf ms szs cls u) : t = u := by
@@ -169,7 +169,7 @@ theorem posOf_inj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K
   · have := cumS_mono ms szs (i := cls[u] + 1) (j := cls[t]) (by omega); omega
 
 /-- Every position of `[ms, ms + |cls|)` is the target of some element. -/
-theorem posOf_surj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
+private theorem posOf_surj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K)
     {i : Nat} (h1 : ms ≤ i) (h2 : i < ms + cls.length) :
     ∃ t, ∃ _ : t < cls.length, posOf ms szs cls t = i := by
@@ -208,7 +208,7 @@ theorem posOf_surj (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = 
   exact ⟨t, Finset.mem_range.mp ht, hti⟩
 
 /-- The class sizes add up to the number of elements. -/
-theorem szs_sum_eq (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
+private theorem szs_sum_eq (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K) :
     szs.sum = cls.length := by
   have := sum_count_eq_length K cls hlt
@@ -224,7 +224,7 @@ theorem szs_sum_eq (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
   rw [this]
 
 /-- Every class ends at or before the end of the region. -/
-theorem cumS_le_end (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
+private theorem cumS_le_end (ms : Nat) (szs cls : List Nat) (K : Nat) (hK : szs.length = K)
     (hcnt : ∀ j, j < K → szs.getD j 0 = cls.count j) (hlt : ∀ x ∈ cls, x < K) (j : Nat) :
     cumS ms szs j ≤ ms + cls.length := by
   have hs := szs_sum_eq szs cls K hK hcnt hlt

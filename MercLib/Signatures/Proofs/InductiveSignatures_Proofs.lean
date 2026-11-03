@@ -6,6 +6,7 @@ public import MercLib.LTS.BranchingBisimilarity
 public import MercLib.Signatures.Signature
 public import MercLib.Signatures.InductiveSignatures
 public import MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section InductiveSignaturesProofs
 
@@ -34,7 +35,7 @@ Proof: well-founded induction on `s` via the τ-relation. If `Sig` delegates at 
 inert τ-successor `s_chosen`), the element lies in `sigFn s_chosen`; apply the IH and prepend
 the τ-step. Otherwise `sigFn s = PreSig s`, and the first PreSig branch supplies the witness
 directly (the inert-τ branch is excluded because it is tagged `Sum.inr`). -/
-theorem Sig.exists_witness_of_inl [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+private theorem Sig.exists_witness_of_inl [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
     (hWF : TauLoopFree lts) (partition : State → Block)
     {Tag : Type _} (sigHash : State → Tag)
     (sigFn : State → Set (Label × (Block ⊕ Tag)))
@@ -99,7 +100,7 @@ The argument: for inert τ-moves the matching state does nothing (Or.inl). For n
 on the left, the witness `(μ, Sum.inl (partition t)) ∈ sigFn s₁` lifts via stability to
 `sigFn s₂`; the previous lemma realizes it as an inert τ*-path on the right followed by a
 matching transition, giving Or.inr. The symmetric direction is identical. -/
-theorem IsStable.isHomBranchingBisimulation_inductive [Cslib.HasTau Label]
+private theorem IsStable.isHomBranchingBisimulation_inductive [Cslib.HasTau Label]
     {lts : Cslib.LTS State Label} (hWF : TauLoopFree lts)
     (partition : State → Block) {Tag : Type _} (sigHash : State → Tag)
     (sigFn : State → Set (Label × (Block ⊕ Tag)))
@@ -370,7 +371,7 @@ private theorem path_inertness [Cslib.HasTau Label] {lts : Cslib.LTS State Label
 
 /-- Public form of block-stability: if `x ≈br y` and `z` lies on a τ-path from `x` to `y`, then
 `z ≈br x`. -/
-theorem tauPath_mid [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
+private theorem tauPath_mid [Cslib.HasTau Label] {lts : Cslib.LTS State Label}
     (hWF : TauLoopFree lts) {x z y : State} (h1 : lts.τSTr x z) (h2 : lts.τSTr z y)
     (hxy : BranchingBisimilarity lts x y) : BranchingBisimilarity lts z x :=
   Quotient.exact (s := brSetoid lts) (block_stable hWF y h1 h2 (Quotient.sound hxy))

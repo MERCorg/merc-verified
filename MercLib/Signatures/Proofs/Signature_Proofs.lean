@@ -5,6 +5,7 @@ public import Cslib.Foundations.Semantics.LTS.Bisimulation
 public import MercLib.LTS.BranchingBisimilarity
 public import MercLib.Signatures.Signature
 public import MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section SignatureProofs
 
@@ -17,7 +18,7 @@ theorems below are stated in `Challenges/Signatures.lean` (human-vetted). -/
 
 -- If a partition is stable w.r.t. the StrongSignature (i.e., it is a fixed point of refinement),
 -- then same-block states form a bisimulation. This is the classical partition refinement result.
-theorem IsStable.isHomBisimulation (lts : Cslib.LTS State Label)
+private theorem IsStable.isHomBisimulation (lts : Cslib.LTS State Label)
     (partition : State → Block) (h : IsStable (fun s => StrongSignature lts s partition) partition) :
     Cslib.LTS.IsHomBisimulation lts (fun s s' => partition s = partition s') := by
   intro s₁ s₂ hRel μ
@@ -39,7 +40,7 @@ theorem IsStable.isHomBisimulation (lts : Cslib.LTS State Label)
 -- Key: BranchingSignature encodes (intermediate-block, label, successor-block) triples reachable
 -- via τ*-paths, so stability directly supplies the τ-prefix and matching transition required by
 -- the branching bisimulation condition.
-theorem IsStable.isHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
+private theorem IsStable.isHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
     (partition : State → Block)
     (h : IsStable (fun s => BranchingSignature lts s partition) partition) :
     IsHomBranchingBisimulation lts (fun s s' => partition s = partition s') := by
@@ -74,7 +75,7 @@ theorem IsStable.isHomBranchingBisimulation [Cslib.HasTau Label] (lts : Cslib.LT
 
 -- If a partition is stable w.r.t. SplitSignature, then same-block states form a bisimulation.
 -- Proof mirrors IsStable.isHomBisimulation but uses congr_fun to apply the per-label equality.
-theorem IsStable.isHomBisimulation_ofSplit (lts : Cslib.LTS State Label)
+private theorem IsStable.isHomBisimulation_ofSplit (lts : Cslib.LTS State Label)
     (partition : State → Block) (h : IsStable (fun s => SplitSignature lts s partition) partition) :
     Cslib.LTS.IsHomBisimulation lts (fun s s' => partition s = partition s') := by
   intro s₁ s₂ hRel μ
@@ -92,7 +93,7 @@ theorem IsStable.isHomBisimulation_ofSplit (lts : Cslib.LTS State Label)
     exact ⟨t₁, hTr₁, hEq⟩
 
 -- Same-block states under a SplitSignature-stable partition are bisimilar.
-theorem IsStable.bisimilarity_ofSplit (lts : Cslib.LTS State Label)
+private theorem IsStable.bisimilarity_ofSplit (lts : Cslib.LTS State Label)
     (partition : State → Block)
     (h : IsStable (fun s => SplitSignature lts s partition) partition)
     {s₁ s₂ : State} (hRel : partition s₁ = partition s₂) :
@@ -144,7 +145,7 @@ theorem strongFixPoint (lts : Cslib.LTS State Label)
   · exact Quotient.sound h
 
 -- SplitFixPoint implies bisimilarity.
-theorem SplitFixPoint.bisimilarity (lts : Cslib.LTS State Label)
+private theorem SplitFixPoint.bisimilarity (lts : Cslib.LTS State Label)
     {s s' : State} (h : SplitFixPoint lts s s') :
     Cslib.LTS.Bisimilarity lts lts s s' := by
   obtain ⟨_, partition, hStable, hEq⟩ := h
@@ -153,7 +154,7 @@ theorem SplitFixPoint.bisimilarity (lts : Cslib.LTS State Label)
 -- Reverse direction (split): bisimilarity implies SplitFixPoint. Uses the bisim quotient as the
 -- witness partition, with SplitSignature stability proved via funext + set extensionality.
 -- Together with SplitFixPoint.bisimilarity, this makes SplitFixPoint = Bisimilarity.
-theorem splitFixPoint (lts : Cslib.LTS State Label)
+private theorem splitFixPoint (lts : Cslib.LTS State Label)
     {s s' : State} (h : Cslib.LTS.Bisimilarity lts lts s s') :
     SplitFixPoint lts s s' := by
   let bisimSetoid : Setoid State :=
@@ -184,7 +185,7 @@ private theorem StrongSignature_mem_iff_SplitSignature (lts : Cslib.LTS State La
 
 -- Stability w.r.t. SplitSignature iff stability w.r.t. StrongSignature: direct proof via the
 -- membership bridge, without going through bisimilarity.
-theorem IsStable_SplitSignature_iff_StrongSignature (lts : Cslib.LTS State Label)
+private theorem IsStable_SplitSignature_iff_StrongSignature (lts : Cslib.LTS State Label)
     (partition : State → Block) :
     IsStable (fun s => SplitSignature lts s partition) partition ↔
     IsStable (fun s => StrongSignature lts s partition) partition := by
@@ -203,7 +204,7 @@ theorem IsStable_SplitSignature_iff_StrongSignature (lts : Cslib.LTS State Label
 
 -- SplitFixPoint and StrongFixPoint are equivalent: direct proof via stability equivalence,
 -- witnessing that the same partition works for both.
-theorem SplitFixPoint_iff_StrongFixPoint (lts : Cslib.LTS State Label) {s s' : State} :
+private theorem SplitFixPoint_iff_StrongFixPoint (lts : Cslib.LTS State Label) {s s' : State} :
     SplitFixPoint lts s s' ↔ StrongFixPoint lts s s' := by
   constructor
   · rintro ⟨Block, partition, hStable, hEq⟩
@@ -215,7 +216,7 @@ theorem SplitFixPoint_iff_StrongFixPoint (lts : Cslib.LTS State Label) {s s' : S
 
 -- SplitFixPoint and StrongFixPoint are equal as binary relations: the split-signature fixpoint
 -- characterizes exactly the same equivalence as the strong-signature fixpoint.
-theorem SplitFixPoint_eq_StrongFixPoint (lts : Cslib.LTS State Label) :
+private theorem SplitFixPoint_eq_StrongFixPoint (lts : Cslib.LTS State Label) :
     SplitFixPoint lts = StrongFixPoint lts :=
   funext fun _ => funext fun _ => propext (SplitFixPoint_iff_StrongFixPoint lts)
 

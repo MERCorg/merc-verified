@@ -6,6 +6,9 @@ public import MercLib.Signatures.Proofs.Signature_Proofs
 public import Mathlib.Data.Set.Card
 public import Mathlib.Order.WellFounded
 public import Mathlib.Order.Prod.Lex.Basic
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
 
 @[expose] public section
 
@@ -26,11 +29,11 @@ open Cslib
 
 variable {State Label : Type}
 
-theorem strongInv_init (lts : LTS State Label) : StrongInv lts (initConfig State) :=
+private theorem strongInv_init (lts : LTS State Label) : StrongInv lts (initConfig State) :=
   ⟨fun _ _ _ => trivial, fun _ _ _ => Iff.rfl, fun _ _ _ hs => absurd trivial hs⟩
 
 /-- Bisimilar states have equal signatures under any coarsening of bisimilarity. -/
-theorem sigS_eq_of_bisim (lts : LTS State Label) (π : Setoid State)
+private theorem sigS_eq_of_bisim (lts : LTS State Label) (π : Setoid State)
     (hR : ∀ s t, LTS.Bisimilarity lts lts s t → π.r s t) {s t : State}
     (h : LTS.Bisimilarity lts lts s t) : sigS lts π s = sigS lts π t := by
   have key : ∀ {s t : State}, LTS.Bisimilarity lts lts s t → ∀ x, x ∈ sigS lts π s → x ∈ sigS lts π t := by
@@ -40,7 +43,7 @@ theorem sigS_eq_of_bisim (lts : LTS State Label) (π : Setoid State)
   exact Set.ext fun x => ⟨key h x, key h.symm x⟩
 
 /-- Unfolded form of the relation of the split partition. -/
-theorem stepSetoid_r (lts : LTS State Label) (π : Setoid State) (X : Set State) (s0 : State)
+private theorem stepSetoid_r (lts : LTS State Label) (π : Setoid State) (X : Set State) (s0 : State)
     (s t : State) :
     (stepSetoid lts π X s0).r s t ↔
       π.r s t ∧ (s ∈ cls π s0 → ((s ∈ cls π s0 ∩ X ↔ t ∈ cls π s0 ∩ X) ∧
@@ -48,7 +51,7 @@ theorem stepSetoid_r (lts : LTS State Label) (π : Setoid State) (X : Set State)
 
 /-- **The invariant is preserved by every step.** This contains the real mathematical content
 (soundness `R`, marked-closure `M`, uniformity `U`). -/
-theorem strongInv_step (lts : LTS State Label) {c c' : Config State} (inv : StrongInv lts c)
+private theorem strongInv_step (lts : LTS State Label) {c c' : Config State} (inv : StrongInv lts c)
     (hstep : StrongStep lts c c') : StrongInv lts c' := by
   obtain ⟨s0, s1, ⟨d, hdB, hdX⟩, hs1, hπ, hX⟩ := hstep
   obtain ⟨π', X'⟩ := c'
@@ -111,7 +114,7 @@ theorem strongInv_step (lts : LTS State Label) {c c' : Config State} (inv : Stro
     fun s t hst hs ht => Set.ext fun x => ⟨sub s t hst hs ht x, sub t s (π'.symm hst) ht hs x⟩⟩
 
 /-- **Final.** With no dirty state left, the partition is exactly bisimilarity. -/
-theorem strongInv_final (lts : LTS State Label) {c : Config State} (inv : StrongInv lts c)
+private theorem strongInv_final (lts : LTS State Label) {c : Config State} (inv : StrongInv lts c)
     (hX : ∀ s, s ∉ c.X) (s t : State) : c.π.r s t ↔ LTS.Bisimilarity lts lts s t := by
   refine ⟨fun h => ?_, inv.R s t⟩
   refine Signatures.IsStable.bisimilarity lts (Quotient.mk c.π) (fun a b hab => ?_) (Quotient.sound h)
@@ -119,11 +122,11 @@ theorem strongInv_final (lts : LTS State Label) {c : Config State} (inv : Strong
 
 /-- The termination measure: the size of the relation (decreasing as blocks split), then the number
 of dirty states. -/
-noncomputable def measure (c : Config State) : Lex (ℕ × ℕ) :=
+private noncomputable def measure (c : Config State) : Lex (ℕ × ℕ) :=
   toLex (Set.ncard {p : State × State | c.π.r p.1 p.2}, Set.ncard c.X)
 
 /-- Every step strictly decreases the measure. -/
-theorem strongStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : Config State}
+private theorem strongStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : Config State}
     (h : StrongStep lts c c') : measure c' < measure c := by
   obtain ⟨s0, s1, ⟨d, hdB, hdX⟩, hs1, hπ, hX⟩ := h
   have hsub : {p : State × State | c'.π.r p.1 p.2} ⊆ {p : State × State | c.π.r p.1 p.2} := by
@@ -155,7 +158,7 @@ theorem strongStep_measure_lt [Finite State] (lts : LTS State Label) {c c' : Con
     exact Prod.Lex.left _ _ (Set.ncard_lt_ncard hss (Set.toFinite _))
 
 /-- **Termination:** on a finite state space every sequence of steps is finite. -/
-theorem strongStep_wf [Finite State] (lts : LTS State Label) :
+private theorem strongStep_wf [Finite State] (lts : LTS State Label) :
     WellFounded (fun c' c : Config State => StrongStep lts c c') :=
   Subrelation.wf (fun h => strongStep_measure_lt lts h) (InvImage.wf measure wellFounded_lt)
 /-- Headline: correctness of the abstract strong signature refinement. -/

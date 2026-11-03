@@ -3,6 +3,8 @@ module
 public import MercLib.Sigref.Iteration
 public import MercLib.Sigref.Proofs.Refinable_Proofs
 public import MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Refinable_Proofs
 
 @[expose] public section
 
@@ -56,12 +58,12 @@ noncomputable def szsL : List ℕ := (List.range (numPieces rp b grp)).map fun j
 noncomputable def keepPiece : ℕ := rAt rp b grp (rp.bs b)
 
 /-- Block id of piece `j`: the kept piece keeps `b`, the others get fresh dense ids. -/
-noncomputable def pid (j : ℕ) : ℕ :=
+private noncomputable def pid (j : ℕ) : ℕ :=
   if j = keepPiece rp b grp then b
   else if j < keepPiece rp b grp then rp.nb + j else rp.nb + j - 1
 
 /-- Inverse of `pid` on the new ids. -/
-noncomputable def pieceOf (i : ℕ) : ℕ :=
+private noncomputable def pieceOf (i : ℕ) : ℕ :=
   if i = b then keepPiece rp b grp
   else if i - rp.nb < keepPiece rp b grp then i - rp.nb else i - rp.nb + 1
 
@@ -71,15 +73,15 @@ section Lemmas
 
 variable {n : ℕ} {G : Type} {rp : RP n} {b : ℕ} {grp : Fin n → G}
 
-theorem mem_blockStates {x : Fin n} : x ∈ blockStates rp b ↔ rp.blk x = b := by
+private theorem mem_blockStates {x : Fin n} : x ∈ blockStates rp b ↔ rp.blk x = b := by
   simp [blockStates]
 
-theorem mem_pieces {g : G} : g ∈ pieces rp b grp ↔ ∃ x, rp.blk x = b ∧ grp x = g := by
+private theorem mem_pieces {g : G} : g ∈ pieces rp b grp ↔ ∃ x, rp.blk x = b ∧ grp x = g := by
   simp [pieces, mem_blockStates]
 
-theorem pieces_nodup : (pieces rp b grp).Nodup := List.nodup_dedup _
+private theorem pieces_nodup : (pieces rp b grp).Nodup := List.nodup_dedup _
 
-theorem rr_lt {x : Fin n} (hx : rp.blk x = b) : rr rp b grp x < numPieces rp b grp := by
+private theorem rr_lt {x : Fin n} (hx : rp.blk x = b) : rr rp b grp x < numPieces rp b grp := by
   unfold rr numPieces
   exact List.idxOf_lt_length_iff.2 (mem_pieces.2 ⟨x, hx, rfl⟩)
 
@@ -88,7 +90,7 @@ theorem rr_eq_iff {x y : Fin n} (hx : rp.blk x = b) (_hy : rp.blk y = b) :
   unfold rr
   exact List.idxOf_inj (mem_pieces.2 ⟨x, hx, rfl⟩)
 
-theorem rr_surj {j : ℕ} (hj : j < numPieces rp b grp) : ∃ x, rp.blk x = b ∧ rr rp b grp x = j := by
+private theorem rr_surj {j : ℕ} (hj : j < numPieces rp b grp) : ∃ x, rp.blk x = b ∧ rr rp b grp x = j := by
   unfold numPieces at hj
   have hmem : (pieces rp b grp)[j] ∈ pieces rp b grp := List.getElem_mem hj
   obtain ⟨x, hx, hg⟩ := mem_pieces.1 hmem
@@ -103,33 +105,33 @@ theorem rr_surj {j : ℕ} (hj : j < numPieces rp b grp) : ∃ x, rp.blk x = b �
 
 section Positions
 
-theorem blockSize_pos (hwf : rp.WF) (hb : b < rp.nb) : 0 < blockSize rp b := by
+private theorem blockSize_pos (hwf : rp.WF) (hb : b < rp.nb) : 0 < blockSize rp b := by
   have := hwf.block b hb; unfold blockSize; omega
 
-theorem bs_add_blockSize (hwf : rp.WF) (hb : b < rp.nb) : rp.bs b + blockSize rp b = rp.be b := by
+private theorem bs_add_blockSize (hwf : rp.WF) (hb : b < rp.nb) : rp.bs b + blockSize rp b = rp.be b := by
   have := hwf.block b hb; unfold blockSize; omega
 
-theorem be_le_n (hwf : rp.WF) (hb : b < rp.nb) : rp.be b ≤ n := (hwf.block b hb).2.1
+private theorem be_le_n (hwf : rp.WF) (hb : b < rp.nb) : rp.be b ≤ n := (hwf.block b hb).2.1
 
-theorem blk_at (hwf : rp.WF) (hb : b < rp.nb) {p : ℕ} (h1 : rp.bs b ≤ p) (h2 : p < rp.be b) (hpn : p < n) :
+private theorem blk_at (hwf : rp.WF) (hb : b < rp.nb) {p : ℕ} (h1 : rp.bs b ≤ p) (h2 : p < rp.be b) (hpn : p < n) :
     rp.blk (rp.loc.symm ⟨p, hpn⟩) = b :=
   hwf.unique _ b hb (by simpa using h1) (by simpa using h2)
 
-theorem loc_mem (hwf : rp.WF) (_hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
+private theorem loc_mem (hwf : rp.WF) (_hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
     rp.bs b ≤ (rp.loc x).val ∧ (rp.loc x).val < rp.be b := by
   have := hwf.state x; rw [hx] at this; exact this.2
 
-theorem rAt_loc {x : Fin n} : rAt rp b grp (rp.loc x).val = rr rp b grp x := by
+private theorem rAt_loc {x : Fin n} : rAt rp b grp (rp.loc x).val = rr rp b grp x := by
   unfold rAt
   rw [dite_eq_left (rp.loc x).isLt]
   simp
 
-theorem clsL_length : (clsL rp b grp).length = blockSize rp b := by simp [clsL]
+private theorem clsL_length : (clsL rp b grp).length = blockSize rp b := by simp [clsL]
 
 theorem clsL_getElem {t : ℕ} (ht : t < (clsL rp b grp).length) :
     (clsL rp b grp)[t] = rAt rp b grp (rp.bs b + t) := by simp [clsL]
 
-theorem clsL_lt (hwf : rp.WF) (hb : b < rp.nb) : ∀ c ∈ clsL rp b grp, c < numPieces rp b grp := by
+private theorem clsL_lt (hwf : rp.WF) (hb : b < rp.nb) : ∀ c ∈ clsL rp b grp, c < numPieces rp b grp := by
   intro c hc
   obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hc
   have ht' : t < blockSize rp b := List.mem_range.1 ht
@@ -150,7 +152,7 @@ theorem keepPiece_lt (hwf : rp.WF) (hb : b < rp.nb) : keepPiece rp b grp < numPi
   rw [dite_eq_left hpn]
   exact rr_lt (blk_at hwf hb le_rfl (by omega) hpn)
 
-theorem numPieces_pos (hwf : rp.WF) (hb : b < rp.nb) : 0 < numPieces rp b grp :=
+private theorem numPieces_pos (hwf : rp.WF) (hb : b < rp.nb) : 0 < numPieces rp b grp :=
   lt_of_le_of_lt (Nat.zero_le _) (keepPiece_lt hwf hb)
 
 theorem clsL_getElem_state (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b)
@@ -167,7 +169,7 @@ theorem szs_count {j : ℕ} (hj : j < numPieces rp b grp) :
     (szsL rp b grp).getD j 0 = (clsL rp b grp).count j := by
   simp [szsL, hj]
 
-theorem count_pos (hwf : rp.WF) (hb : b < rp.nb) {j : ℕ} (hj : j < numPieces rp b grp) : 0 < (clsL rp b grp).count j := by
+private theorem count_pos (hwf : rp.WF) (hb : b < rp.nb) {j : ℕ} (hj : j < numPieces rp b grp) : 0 < (clsL rp b grp).count j := by
   obtain ⟨x, hx, hxj⟩ := rr_surj hj (rp := rp) (b := b) (grp := grp)
   have hl := loc_mem hwf hb hx
   have hlen : (rp.loc x).val - rp.bs b < (clsL rp b grp).length := by
@@ -177,10 +179,10 @@ theorem count_pos (hwf : rp.WF) (hb : b < rp.nb) {j : ℕ} (hj : j < numPieces r
   exact List.count_pos_iff.2 (this ▸ List.getElem_mem hlen)
 
 /-- New location (before the cast to `Fin`) of a state of the block. -/
-noncomputable def Pfun (rp : RP n) (b : ℕ) (grp : Fin n → G) (x : Fin n) : ℕ :=
+private noncomputable def Pfun (rp : RP n) (b : ℕ) (grp : Fin n → G) (x : Fin n) : ℕ :=
   posOf (rp.bs b) (szsL rp b grp) (clsL rp b grp) ((rp.loc x).val - rp.bs b)
 
-theorem Pfun_bounds (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
+private theorem Pfun_bounds (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
     cumS (rp.bs b) (szsL rp b grp) (rr rp b grp x) ≤ Pfun rp b grp x ∧
       Pfun rp b grp x < cumS (rp.bs b) (szsL rp b grp) (rr rp b grp x + 1) := by
   have hl := loc_mem hwf hb hx
@@ -192,7 +194,7 @@ theorem Pfun_bounds (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = 
   rw [e] at this
   exact this
 
-theorem Pfun_inj (hwf : rp.WF) (hb : b < rp.nb) {x y : Fin n} (hx : rp.blk x = b)
+private theorem Pfun_inj (hwf : rp.WF) (hb : b < rp.nb) {x y : Fin n} (hx : rp.blk x = b)
     (hy : rp.blk y = b) (h : Pfun rp b grp x = Pfun rp b grp y) : x = y := by
   have hlx := loc_mem hwf hb hx
   have hly := loc_mem hwf hb hy
@@ -204,7 +206,7 @@ theorem Pfun_inj (hwf : rp.WF) (hb : b < rp.nb) {x y : Fin n} (hx : rp.blk x = b
     (szs_length) (fun j hj => szs_count hj) (clsL_lt hwf hb) hlenx hleny h
   exact rp.loc.injective (Fin.ext (by omega))
 
-theorem cumS_end_le (hwf : rp.WF) (hb : b < rp.nb) (j : ℕ) :
+private theorem cumS_end_le (hwf : rp.WF) (hb : b < rp.nb) (j : ℕ) :
     cumS (rp.bs b) (szsL rp b grp) j ≤ rp.be b := by
   have := cumS_le_end (rp.bs b) (szsL rp b grp) (clsL rp b grp) (numPieces rp b grp)
     (szs_length) (fun j hj => szs_count hj) (clsL_lt hwf hb) j
@@ -212,7 +214,7 @@ theorem cumS_end_le (hwf : rp.WF) (hb : b < rp.nb) (j : ℕ) :
   have h2 := bs_add_blockSize hwf hb
   omega
 
-theorem cumS_lt_succ (hwf : rp.WF) (hb : b < rp.nb) {j : ℕ} (hj : j < numPieces rp b grp) :
+private theorem cumS_lt_succ (hwf : rp.WF) (hb : b < rp.nb) {j : ℕ} (hj : j < numPieces rp b grp) :
     cumS (rp.bs b) (szsL rp b grp) j < cumS (rp.bs b) (szsL rp b grp) (j + 1) := by
   have hlen : j < (szsL rp b grp).length := by rw [szs_length]; exact hj
   rw [cumS_succ _ _ _ hlen]
@@ -222,14 +224,14 @@ theorem cumS_lt_succ (hwf : rp.WF) (hb : b < rp.nb) {j : ℕ} (hj : j < numPiece
   simp only [Option.getD_some] at h2
   omega
 
-theorem Pfun_lt_n (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
+private theorem Pfun_lt_n (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
     Pfun rp b grp x < rp.be b ∧ rp.bs b ≤ Pfun rp b grp x := by
   have h := Pfun_bounds hwf hb hx (grp := grp)
   have h2 := cumS_end_le hwf hb (rr rp b grp x + 1) (grp := grp)
   have h3 := cumS_ge (rp.bs b) (szsL rp b grp) (rr rp b grp x)
   omega
 
-theorem range_unique (_hwf : rp.WF) (_hb : b < rp.nb) {j j' p : ℕ}
+private theorem range_unique (_hwf : rp.WF) (_hb : b < rp.nb) {j j' p : ℕ}
     (_hj : j < numPieces rp b grp) (_hj' : j' < numPieces rp b grp)
     (h1 : cumS (rp.bs b) (szsL rp b grp) j ≤ p) (h2 : p < cumS (rp.bs b) (szsL rp b grp) (j + 1))
     (h3 : cumS (rp.bs b) (szsL rp b grp) j' ≤ p) (h4 : p < cumS (rp.bs b) (szsL rp b grp) (j' + 1)) :
@@ -242,12 +244,12 @@ theorem range_unique (_hwf : rp.WF) (_hb : b < rp.nb) {j j' p : ℕ}
     omega
 
 /-- The new location function, as a function to `Fin n`. -/
-noncomputable def locFun (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G) (x : Fin n) : Fin n :=
+private noncomputable def locFun (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G) (x : Fin n) : Fin n :=
   if h : rp.blk x = b then
     ⟨Pfun rp b grp x, lt_of_lt_of_le (Pfun_lt_n hwf hb h).1 (be_le_n hwf hb)⟩
   else rp.loc x
 
-theorem locFun_inj (hwf : rp.WF) (hb : b < rp.nb) : Function.Injective (locFun hwf hb grp) := by
+private theorem locFun_inj (hwf : rp.WF) (hb : b < rp.nb) : Function.Injective (locFun hwf hb grp) := by
   intro x y hxy
   unfold locFun at hxy
   by_cases hx : rp.blk x = b <;> by_cases hy : rp.blk y = b
@@ -267,17 +269,17 @@ theorem locFun_inj (hwf : rp.WF) (hb : b < rp.nb) : Function.Injective (locFun h
     exact rp.loc.injective hxy
 
 /-- The new location permutation. -/
-noncomputable def newLoc (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G) : Equiv.Perm (Fin n) :=
+private noncomputable def newLoc (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G) : Equiv.Perm (Fin n) :=
   Equiv.ofBijective (locFun hwf hb grp) (Finite.injective_iff_bijective.1 (locFun_inj hwf hb))
 
-theorem newLoc_apply (hwf : rp.WF) (hb : b < rp.nb) (x : Fin n) :
+private theorem newLoc_apply (hwf : rp.WF) (hb : b < rp.nb) (x : Fin n) :
     newLoc hwf hb grp x = locFun hwf hb grp x := rfl
 
-theorem locFun_val_in (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
+private theorem locFun_val_in (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : rp.blk x = b) :
     (locFun hwf hb grp x).val = Pfun rp b grp x := by
   unfold locFun; rw [dite_eq_left hx]
 
-theorem locFun_val_out (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : ¬ rp.blk x = b) :
+private theorem locFun_val_out (hwf : rp.WF) (hb : b < rp.nb) {x : Fin n} (hx : ¬ rp.blk x = b) :
     locFun hwf hb grp x = rp.loc x := by
   unfold locFun; rw [dite_eq_right hx]
 
@@ -289,24 +291,24 @@ variable (hwf : rp.WF) (hb : b < rp.nb)
 include hwf hb
 
 set_option linter.unusedSectionVars false in
-theorem pid_cases {j : ℕ} : pid rp b grp j = b ∨ rp.nb ≤ pid rp b grp j := by
+private theorem pid_cases {j : ℕ} : pid rp b grp j = b ∨ rp.nb ≤ pid rp b grp j := by
   unfold pid; split_ifs <;> omega
 
-theorem pid_lt {j : ℕ} (hj : j < numPieces rp b grp) :
+private theorem pid_lt {j : ℕ} (hj : j < numPieces rp b grp) :
     pid rp b grp j < rp.nb + numPieces rp b grp - 1 := by
   have := keepPiece_lt hwf hb (grp := grp)
   unfold pid; split_ifs <;> omega
 
-theorem pieceOf_pid {j : ℕ} (_hj : j < numPieces rp b grp) : pieceOf rp b grp (pid rp b grp j) = j := by
+private theorem pieceOf_pid {j : ℕ} (_hj : j < numPieces rp b grp) : pieceOf rp b grp (pid rp b grp j) = j := by
   have := keepPiece_lt hwf hb (grp := grp)
   unfold pid pieceOf; split_ifs <;> omega
 
-theorem pid_pieceOf {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) (hi2 : i < rp.nb + numPieces rp b grp - 1) :
+private theorem pid_pieceOf {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) (hi2 : i < rp.nb + numPieces rp b grp - 1) :
     pid rp b grp (pieceOf rp b grp i) = i := by
   have := keepPiece_lt hwf hb (grp := grp)
   unfold pid pieceOf; split_ifs <;> omega
 
-theorem pieceOf_lt {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) (hi2 : i < rp.nb + numPieces rp b grp - 1) :
+private theorem pieceOf_lt {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) (hi2 : i < rp.nb + numPieces rp b grp - 1) :
     pieceOf rp b grp i < numPieces rp b grp := by
   have := keepPiece_lt hwf hb (grp := grp)
   unfold pieceOf; split_ifs <;> omega
@@ -314,7 +316,7 @@ theorem pieceOf_lt {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) (hi2 : i < rp.nb + num
 end Ids
 
 /-- The split partition. -/
-noncomputable def newRP (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G) : RP n where
+private noncomputable def newRP (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G) : RP n where
   loc := newLoc hwf hb grp
   blk := fun x => if rp.blk x = b then pid rp b grp (rr rp b grp x) else rp.blk x
   nb := rp.nb + numPieces rp b grp - 1
@@ -329,32 +331,32 @@ section NewFacts
 
 variable (hwf : rp.WF) (hb : b < rp.nb) (grp : Fin n → G)
 
-theorem newRP_blk_in {x : Fin n} (hx : rp.blk x = b) :
+private theorem newRP_blk_in {x : Fin n} (hx : rp.blk x = b) :
     (newRP hwf hb grp).blk x = pid rp b grp (rr rp b grp x) := by simp [newRP, hx]
 
-theorem newRP_blk_out {x : Fin n} (hx : ¬ rp.blk x = b) :
+private theorem newRP_blk_out {x : Fin n} (hx : ¬ rp.blk x = b) :
     (newRP hwf hb grp).blk x = rp.blk x := by simp [newRP, hx]
 
-theorem newRP_loc_in {x : Fin n} (hx : rp.blk x = b) :
+private theorem newRP_loc_in {x : Fin n} (hx : rp.blk x = b) :
     ((newRP hwf hb grp).loc x).val = Pfun rp b grp x := locFun_val_in hwf hb hx
 
-theorem newRP_loc_out {x : Fin n} (hx : ¬ rp.blk x = b) :
+private theorem newRP_loc_out {x : Fin n} (hx : ¬ rp.blk x = b) :
     (newRP hwf hb grp).loc x = rp.loc x := locFun_val_out hwf hb hx
 
-theorem newRP_tab_new {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) :
+private theorem newRP_tab_new {i : ℕ} (hi : i = b ∨ rp.nb ≤ i) :
     (newRP hwf hb grp).bs i = cumS (rp.bs b) (szsL rp b grp) (pieceOf rp b grp i) ∧
     (newRP hwf hb grp).be i = cumS (rp.bs b) (szsL rp b grp) (pieceOf rp b grp i + 1) ∧
     (newRP hwf hb grp).bm i = cumS (rp.bs b) (szsL rp b grp) (pieceOf rp b grp i + 1) := by
   simp [newRP, hi]
 
-theorem newRP_tab_old {i : ℕ} (hi : ¬ (i = b ∨ rp.nb ≤ i)) :
+private theorem newRP_tab_old {i : ℕ} (hi : ¬ (i = b ∨ rp.nb ≤ i)) :
     (newRP hwf hb grp).bs i = rp.bs i ∧ (newRP hwf hb grp).be i = rp.be i ∧
     (newRP hwf hb grp).bm i = rp.bm i := by
   simp [newRP, hi]
 
-theorem newRP_nb : (newRP hwf hb grp).nb = rp.nb + numPieces rp b grp - 1 := rfl
+private theorem newRP_nb : (newRP hwf hb grp).nb = rp.nb + numPieces rp b grp - 1 := rfl
 
-theorem newRP_wf : (newRP hwf hb grp).WF := by
+private theorem newRP_wf : (newRP hwf hb grp).WF := by
   have hK := keepPiece_lt hwf hb (grp := grp)
   have hn := numPieces_pos hwf hb (grp := grp)
   refine ⟨?_, ?_, ?_⟩
@@ -423,7 +425,7 @@ theorem newRP_wf : (newRP hwf hb grp).WF := by
         rw [newRP_loc_out hwf hb grp hx] at h1 h2
         exact hwf.unique x i hib h1 h2
 
-theorem newRP_isSplit : IsSplit rp (newRP hwf hb grp) b grp := by
+private theorem newRP_isSplit : IsSplit rp (newRP hwf hb grp) b grp := by
   have hn := numPieces_pos hwf hb (grp := grp)
   refine ⟨newRP_wf hwf hb grp, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [newRP_nb]; omega
@@ -497,13 +499,13 @@ variable {n : ℕ} {Label : Type} [HasTau Label]
 /-- **The split layout exists** (paper `finish_partition_marked`): any valid partition and block can be
 split by any grouping function into a partition satisfying `IsSplit` (counting-sort layout, dense
 block ids, one piece keeping the old id, all pieces unmarked). -/
-def SplitExists {G : Type} (rp : RP n) (b : ℕ) (grp : Fin n → G) : Prop :=
+private def SplitExists {G : Type} (rp : RP n) (b : ℕ) (grp : Fin n → G) : Prop :=
   rp.WF → b < rp.nb → ∃ rp', IsSplit rp rp' b grp
 
 end
 
 /-- Headline: the split layout exists. -/
-theorem splitExists {n : ℕ} {G : Type} (rp : RP n) (b : ℕ) (grp : Fin n → G) :
+private theorem splitExists {n : ℕ} {G : Type} (rp : RP n) (b : ℕ) (grp : Fin n → G) :
     SplitExists rp b grp :=
   fun hwf hb => ⟨newRP hwf hb grp, newRP_isSplit hwf hb grp⟩
 

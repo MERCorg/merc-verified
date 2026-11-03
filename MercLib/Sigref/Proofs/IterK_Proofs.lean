@@ -3,6 +3,23 @@ module
 public import MercLib.Sigref.KeyComp
 public import MercLib.Sigref.Proofs.KeyComp_Proofs
 public import MercLib.Sigref.Proofs.Iteration_Proofs
+import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Signatures.Proofs.Signature_Proofs
+import all MercLib.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Sigref.Proofs.Branching_Proofs
+import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Sigref.Proofs.Iteration_Proofs
+import all MercLib.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Sigref.Proofs.RPStep_Proofs
+import all MercLib.Sigref.Proofs.Refinable_Proofs
+import all MercLib.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Sigref.Proofs.SigData_Proofs
+import all MercLib.Sigref.Proofs.SigE_Proofs
+import all MercLib.Sigref.Proofs.Split_Proofs
+import all MercLib.Sigref.Proofs.Strong_Proofs
+import all MercLib.Sigref.Proofs.Worklist_Proofs
 
 @[expose] public section
 
@@ -31,7 +48,7 @@ variable {lts : LTS (Fin n) Label} {inc : Fin n → List (Fin n × Label)}
   {preds : Fin n → List (Fin n)}
 
 /-- An implementation-keyed iteration from a state satisfying the invariant is an `Iter`. -/
-theorem iterK_iter (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hTopo : TopoSorted lts)
+private theorem iterK_iter (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hTopo : TopoSorted lts)
     {c c' : Ctx n} (hwl : WLInv c) (hinv : BranchingInv lts c.rp.config)
     (h : IterK lts inc preds c c') : Iter lts inc preds c c' := by
   obtain ⟨b, wl', key0, rp2, hwleq, hsplit, rfl⟩ := h
@@ -107,7 +124,7 @@ theorem iterK_iter (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (h
   · exact ⟨fun _ => Or.inl hxb, fun _ => Or.inl hxb⟩
 
 /-- Runs of `IterK` are runs of `Iter`. -/
-theorem reachK (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
+private theorem reachK (hinc : ∀ u y a, (y, a) ∈ inc u ↔ lts.Tr y a u)
     (hpreds : ∀ x y, y ∈ preds x ↔ lts.Tr y HasTau.τ x) (hTopo : TopoSorted lts)
     (hn : 0 < n) {c : Ctx n}
     (h : Relation.ReflTransGen (IterK lts inc preds) ⟨init n hn, [0]⟩ c) :

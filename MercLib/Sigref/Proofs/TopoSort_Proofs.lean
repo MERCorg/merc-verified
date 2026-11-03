@@ -17,7 +17,7 @@ open Relation
 
 variable {n : ℕ}
 
-theorem pushSuccs_spec (m : Fin n → Option Mark) (ts D : List (Fin n)) (a : Bool) :
+private theorem pushSuccs_spec (m : Fin n → Option Mark) (ts D : List (Fin n)) (a : Bool) :
     (pushSuccs m ts D a).1 = (ts.filter (fun w => decide (m w = none))).reverse ++ D ∧
     ((pushSuccs m ts D a).2 = true ↔ a = true ∧ ∀ w ∈ ts, m w ≠ some Mark.temp) := by
   induction ts generalizing D a with
@@ -46,10 +46,10 @@ theorem pushSuccs_spec (m : Fin n → Option Mark) (ts D : List (Fin n)) (a : Bo
         · rw [h2]; simp [hw]
 
 /-- The edge relation of the graph. -/
-def E (succ : Fin n → List (Fin n)) (a b : Fin n) : Prop := b ∈ succ a
+private def E (succ : Fin n → List (Fin n)) (a b : Fin n) : Prop := b ∈ succ a
 
 /-- Reflexive-transitive closure of `step`. -/
-abbrev Runs (succ : Fin n → List (Fin n)) (c c' : Cfg n) : Prop :=
+private abbrev Runs (succ : Fin n → List (Fin n)) (c c' : Cfg n) : Prop :=
   ReflTransGen (fun a b => step succ a = some b) c c'
 
 /-- The invariant of the finished states: they are exactly the `Permanent` ones, listed once, and
@@ -65,19 +65,19 @@ structure Ext (c c' : Cfg n) : Prop where
   temp : ∀ t, c'.marks t = some Mark.temp ↔ c.marks t = some Mark.temp
   idx : c'.idx = c.idx
 
-theorem Ext.refl (c : Cfg n) : Ext c c := ⟨List.prefix_refl _, fun _ => Iff.rfl, rfl⟩
+private theorem Ext.refl (c : Cfg n) : Ext c c := ⟨List.prefix_refl _, fun _ => Iff.rfl, rfl⟩
 
-theorem Ext.trans {c1 c2 c3 : Cfg n} (h1 : Ext c1 c2) (h2 : Ext c2 c3) : Ext c1 c3 :=
+private theorem Ext.trans {c1 c2 c3 : Cfg n} (h1 : Ext c1 c2) (h2 : Ext c2 c3) : Ext c1 c3 :=
   ⟨h1.prefix_.trans h2.prefix_, fun t => (h2.temp t).trans (h1.temp t), h2.idx.trans h1.idx⟩
 
 /-- The claim for the visit of `v`. -/
-def VisitStmt (succ : Fin n → List (Fin n)) (v : Fin n) : Prop :=
+private def VisitStmt (succ : Fin n → List (Fin n)) (v : Fin n) : Prop :=
   ∀ (c : Cfg n) (D : List (Fin n)), c.depth = v :: D → Good succ c → c.acyc = true →
     (∀ t, c.marks t = some Mark.temp → TransGen (E succ) t v) →
     ∃ c', Runs succ c c' ∧ c'.depth = D ∧ Good succ c' ∧ Ext c c' ∧
       c'.marks v = some Mark.perm ∧ c'.acyc = true
 
-theorem closed_snoc (succ : Fin n → List (Fin n)) (o : List (Fin n)) (v : Fin n)
+private theorem closed_snoc (succ : Fin n → List (Fin n)) (o : List (Fin n)) (v : Fin n)
     (hc : ∀ l1 a l2, o = l1 ++ a :: l2 → ∀ b ∈ succ a, b ∈ l1) (hv : ∀ b ∈ succ v, b ∈ o) :
     ∀ l1 a l2, o ++ [v] = l1 ++ a :: l2 → ∀ b ∈ succ a, b ∈ l1 := by
   intro l1 a l2 h b hb
@@ -92,7 +92,7 @@ theorem closed_snoc (succ : Fin n → List (Fin n)) (o : List (Fin n)) (v : Fin 
     obtain ⟨h1, h2⟩ := List.append_inj' h' rfl
     exact hc l1 a l2' h1 b hb
 
-theorem cands {succ : Fin n → List (Fin n)} (_hA : Acyclic succ) (v : Fin n) (ih : ∀ w, E succ v w → VisitStmt succ w) :
+private theorem cands {succ : Fin n → List (Fin n)} (_hA : Acyclic succ) (v : Fin n) (ih : ∀ w, E succ v w → VisitStmt succ w) :
     ∀ (cs : List (Fin n)), (∀ w ∈ cs, E succ v w) → ∀ (c : Cfg n) (D : List (Fin n)),
       c.depth = cs ++ D → Good succ c → c.acyc = true →
       (∀ t, c.marks t = some Mark.temp → t = v ∨ TransGen (E succ) t v) →
@@ -121,13 +121,13 @@ theorem cands {succ : Fin n → List (Fin n)} (_hA : Acyclic succ) (v : Fin n) (
     · exact (hg2.perm x).2 (hx2.prefix_.subset ((hg1.perm x).1 hp1))
     · exact hp2 x hx
 
-theorem acyclic_wf {succ : Fin n → List (Fin n)} (hA : Acyclic succ) : WellFounded (fun b a : Fin n => TransGen (E succ) a b) := by
+private theorem acyclic_wf {succ : Fin n → List (Fin n)} (hA : Acyclic succ) : WellFounded (fun b a : Fin n => TransGen (E succ) a b) := by
   have : IsTrans (Fin n) (fun b a : Fin n => TransGen (E succ) a b) :=
     ⟨fun a b c hab hbc => TransGen.trans hbc hab⟩
   have : Std.Irrefl (fun b a : Fin n => TransGen (E succ) a b) := ⟨fun a h => hA a h⟩
   exact Finite.wellFounded_of_trans_of_irrefl _
 
-theorem step_none (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
+private theorem step_none (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
     (hd : c.depth = x :: D) (hm : c.marks x = none) :
     step succ c = some { c with
       marks := Function.update c.marks x (some Mark.temp)
@@ -135,7 +135,7 @@ theorem step_none (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : L
       acyc := (pushSuccs (Function.update c.marks x (some Mark.temp)) (succ x) (x :: D) c.acyc).2 } := by
   simp [step, hd, hm]
 
-theorem step_temp (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
+private theorem step_temp (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
     (hd : c.depth = x :: D) (hm : c.marks x = some Mark.temp) :
     step succ c = some {
       marks := Function.update c.marks x (some Mark.perm)
@@ -145,12 +145,12 @@ theorem step_temp (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : L
       idx := c.idx } := by
   simp [step, hd, hm]
 
-theorem step_perm (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
+private theorem step_perm (succ : Fin n → List (Fin n)) (c : Cfg n) (x : Fin n) (D : List (Fin n))
     (hd : c.depth = x :: D) (hm : c.marks x = some Mark.perm) :
     step succ c = some { c with depth := D } := by
   simp [step, hd, hm]
 
-theorem visit_all {succ : Fin n → List (Fin n)} (hA : Acyclic succ) : ∀ v, VisitStmt succ v := by
+private theorem visit_all {succ : Fin n → List (Fin n)} (hA : Acyclic succ) : ∀ v, VisitStmt succ v := by
   intro v
   induction v using (acyclic_wf hA).induction with
   | _ v ih =>
@@ -259,21 +259,21 @@ structure Root (succ : Fin n → List (Fin n)) (c : Cfg n) : Prop where
   notemp : ∀ a, c.marks a ≠ some Mark.temp
   done : ∀ a : Fin n, a.val < c.idx → c.marks a = some Mark.perm
 
-theorem step_root (succ : Fin n → List (Fin n)) (c : Cfg n) (hd : c.depth = []) (h : c.idx < n)
+private theorem step_root (succ : Fin n → List (Fin n)) (c : Cfg n) (hd : c.depth = []) (h : c.idx < n)
     (hm : c.marks ⟨c.idx, h⟩ = none) :
     step succ c = some { c with depth := [⟨c.idx, h⟩], idx := c.idx + 1 } := by
   simp [step, hd, h, hm]
 
-theorem step_root_marked (succ : Fin n → List (Fin n)) (c : Cfg n) (hd : c.depth = [])
+private theorem step_root_marked (succ : Fin n → List (Fin n)) (c : Cfg n) (hd : c.depth = [])
     (h : c.idx < n) (hm : c.marks ⟨c.idx, h⟩ ≠ none) :
     step succ c = some { c with idx := c.idx + 1 } := by
   simp [step, hd, h, hm]
 
-theorem step_end (succ : Fin n → List (Fin n)) (c : Cfg n) (hd : c.depth = []) (h : ¬ c.idx < n) :
+private theorem step_end (succ : Fin n → List (Fin n)) (c : Cfg n) (hd : c.depth = []) (h : ¬ c.idx < n) :
     step succ c = none := by
   simp [step, hd, h]
 
-theorem root_init (succ : Fin n → List (Fin n)) : Root succ (init n) := by
+private theorem root_init (succ : Fin n → List (Fin n)) : Root succ (init n) := by
   refine ⟨rfl, ⟨?_, ?_, ?_⟩, rfl, ?_, ?_⟩
   · intro a; simp [init]
   · simp [init]
@@ -281,7 +281,7 @@ theorem root_init (succ : Fin n → List (Fin n)) : Root succ (init n) := by
   · intro a; simp [init]
   · intro a ha; simp [init] at ha
 
-theorem root_progress {succ : Fin n → List (Fin n)} (hA : Acyclic succ) :
+private theorem root_progress {succ : Fin n → List (Fin n)} (hA : Acyclic succ) :
     ∀ k, k ≤ n → ∃ c, Runs succ (init n) c ∧ Root succ c ∧ c.idx = k := by
   intro k
   induction k with
@@ -329,13 +329,13 @@ theorem root_progress {succ : Fin n → List (Fin n)} (hA : Acyclic succ) :
         subst this; exact hperm
 
 /-- **Correctness of the topological sort.** -/
-def TopoSortCorrect (succ : Fin n → List (Fin n)) : Prop :=
+private def TopoSortCorrect (succ : Fin n → List (Fin n)) : Prop :=
   Acyclic succ → ∀ c, Relation.ReflTransGen (fun a b => step succ a = some b) (init n) c →
     step succ c = none →
       c.acyc = true ∧ c.order.Nodup ∧ (∀ v, v ∈ c.order) ∧
       ∀ l1 a l2, c.order = l1 ++ a :: l2 → ∀ b ∈ succ a, b ∈ l1
 
-theorem topoSortCorrect (succ : Fin n → List (Fin n)) : TopoSortCorrect succ := by
+private theorem topoSortCorrect (succ : Fin n → List (Fin n)) : TopoSortCorrect succ := by
   intro hA c hc hterm
   obtain ⟨cn, hrn, hroot, hidx⟩ := root_progress hA n le_rfl
   have hterm_n : step succ cn = none := step_end succ cn hroot.depth (by omega)
@@ -353,7 +353,7 @@ theorem topoSortCorrect (succ : Fin n → List (Fin n)) : TopoSortCorrect succ :
   refine ⟨hroot.acyc, hroot.good.nodup, fun v => ?_, hroot.good.closed⟩
   exact (hroot.good.perm v).1 (hroot.done v (by rw [hidx]; exact v.2))
 
-theorem filter_none_update (marks : Fin n → Option Mark) (x : Fin n) (mk : Mark)
+private theorem filter_none_update (marks : Fin n → Option Mark) (x : Fin n) (mk : Mark)
     (hx : marks x = none) :
     Finset.univ.filter (fun u => Function.update marks x (some mk) u = none) =
       (Finset.univ.filter (fun u => marks u = none)).erase x := by
@@ -362,7 +362,7 @@ theorem filter_none_update (marks : Fin n → Option Mark) (x : Fin n) (mk : Mar
   · subst hu; simp [hx]
   · simp [hu]
 
-theorem filter_none_update_ne (marks : Fin n → Option Mark) (x : Fin n) (mk : Mark)
+private theorem filter_none_update_ne (marks : Fin n → Option Mark) (x : Fin n) (mk : Mark)
     (hx : marks x ≠ none) :
     Finset.univ.filter (fun u => Function.update marks x (some mk) u = none) =
       Finset.univ.filter (fun u => marks u = none) := by
@@ -372,10 +372,10 @@ theorem filter_none_update_ne (marks : Fin n → Option Mark) (x : Fin n) (mk : 
   · simp [Function.update_of_ne hu]
 
 /-- **Termination of the topological sort.** -/
-def TopoSortTerminates (succ : Fin n → List (Fin n)) : Prop :=
+private def TopoSortTerminates (succ : Fin n → List (Fin n)) : Prop :=
   ∀ c c', step succ c = some c' → measure succ c' < measure succ c
 
-theorem topoSortTerminates (succ : Fin n → List (Fin n)) : TopoSortTerminates succ := by
+private theorem topoSortTerminates (succ : Fin n → List (Fin n)) : TopoSortTerminates succ := by
   intro c c' h
   unfold step at h
   rcases hd : c.depth with _ | ⟨x, D⟩
@@ -432,7 +432,7 @@ theorem topoSortTerminates (succ : Fin n → List (Fin n)) : TopoSortTerminates 
         unfold measure
         simp [hd]
 
-theorem step_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : step succ c = some c') :
+private theorem step_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : step succ c = some c') :
     c.idx ≤ c'.idx := by
   unfold step at h
   rcases hd : c.depth with _ | ⟨x, D⟩
@@ -451,7 +451,7 @@ theorem step_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : step s
     | some mk =>
       cases mk <;> (rw [hm] at h; simp only at h; cases h; rfl)
 
-theorem step_nil_idx {succ : Fin n → List (Fin n)} {c c' : Cfg n} (hd : c.depth = [])
+private theorem step_nil_idx {succ : Fin n → List (Fin n)} {c c' : Cfg n} (hd : c.depth = [])
     (h : step succ c = some c') : c'.idx = c.idx + 1 := by
   unfold step at h
   rw [hd] at h
@@ -463,7 +463,7 @@ theorem step_nil_idx {succ : Fin n → List (Fin n)} {c c' : Cfg n} (hd : c.dept
     · rw [ite_eq_right hm] at h; cases h; rfl
   · rw [dite_eq_right hi] at h; cases h
 
-theorem runs_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : Runs succ c c') :
+private theorem runs_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : Runs succ c c') :
     c.idx ≤ c'.idx := by
   induction h with
   | refl => exact le_rfl
@@ -471,7 +471,7 @@ theorem runs_idx_mono {succ : Fin n → List (Fin n)} {c c' : Cfg n} (h : Runs s
 
 /-- Two configurations with an empty stack that are reached from one configuration and have the same
 counter are equal. -/
-theorem unique_empty {succ : Fin n → List (Fin n)} {c a b : Cfg n} (ha : Runs succ c a)
+private theorem unique_empty {succ : Fin n → List (Fin n)} {c a b : Cfg n} (ha : Runs succ c a)
     (hb : Runs succ c b) (hda : a.depth = []) (hdb : b.depth = []) (hi : a.idx = b.idx) : a = b := by
   have hru : Relator.RightUnique (fun x y => step succ x = some y) := by
     intro a b b' h h'; rw [h] at h'; exact Option.some.inj h'
@@ -490,7 +490,7 @@ theorem unique_empty {succ : Fin n → List (Fin n)} {c a b : Cfg n} (ha : Runs 
       omega
 
 /-- One iteration of the outer loop from a root configuration. -/
-theorem root_step {succ : Fin n → List (Fin n)} (hA : Acyclic succ) {c : Cfg n} (hroot : Root succ c)
+private theorem root_step {succ : Fin n → List (Fin n)} (hA : Acyclic succ) {c : Cfg n} (hroot : Root succ c)
     (hi : c.idx < n) : ∃ c2, Runs succ c c2 ∧ Root succ c2 ∧ c2.idx = c.idx + 1 := by
   by_cases hm : c.marks ⟨c.idx, hi⟩ = none
   · set c1 : Cfg n := { c with depth := [⟨c.idx, hi⟩], idx := c.idx + 1 } with hc1

@@ -17,11 +17,11 @@ variable {State State' Label : Type} [HasTau Label]
 
 /-- **The quotient is branching bisimilar to the LTS.** If every block only contains states of one
 τ-SCC (soundness), the relation `s ↦ blk s` is a branching bisimulation from `lts` to the quotient. -/
-def QuotientCrossBisimulation (lts : LTS State Label) (blk : State → ℕ) : Prop :=
+private def QuotientCrossBisimulation (lts : LTS State Label) (blk : State → ℕ) : Prop :=
   (∀ s t, blk s = blk t → lts.τSTr s t) →
     IsCrossBB lts (quotientTau lts blk) (fun s b => blk s = b)
 
-theorem quotientCrossBisimulation (lts : LTS State Label) (blk : State → ℕ) :
+private theorem quotientCrossBisimulation (lts : LTS State Label) (blk : State → ℕ) :
     QuotientCrossBisimulation lts blk := by
   intro hs s b hr μ
   subst hr
@@ -35,11 +35,11 @@ theorem quotientCrossBisimulation (lts : LTS State Label) (blk : State → ℕ) 
     refine Or.inr ⟨s0, t0, (LTS.sTr_τSTr_iff lts).mpr (hs s s0 h0.symm), hstep, h0, h1⟩
 
 /-- **The quotient by the τ-SCCs has no τ-cycle.** -/
-def QuotientTauAcyclic (lts : LTS State Label) (blk : State → ℕ) (k : ℕ) : Prop :=
+private def QuotientTauAcyclic (lts : LTS State Label) (blk : State → ℕ) (k : ℕ) : Prop :=
   IsTauSccPartition lts blk k →
     ∀ b, ¬ Relation.TransGen (fun b c => (quotientTau lts blk).Tr b HasTau.τ c) b b
 
-theorem quotientTauAcyclic (lts : LTS State Label) (blk : State → ℕ) (k : ℕ) :
+private theorem quotientTauAcyclic (lts : LTS State Label) (blk : State → ℕ) (k : ℕ) :
     QuotientTauAcyclic lts blk k := by
   intro ⟨_, _, hiff⟩ b hcyc
   have hs : ∀ s t, blk s = blk t → lts.τSTr s t := fun s t h => ((hiff s t).1 h).1

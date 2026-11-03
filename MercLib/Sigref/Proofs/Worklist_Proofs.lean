@@ -2,6 +2,7 @@ module
 
 public import MercLib.Sigref.Worklist
 public import MercLib.Sigref.Proofs.Refinable_Proofs
+import all MercLib.Sigref.Proofs.Refinable_Proofs
 
 @[expose] public section
 
@@ -20,7 +21,7 @@ open Classical
 
 variable {n : ℕ}
 
-theorem mark_of_dirty (rp : RP n) (x : Fin n) (h : rp.Dirty x) : rp.mark x = rp := by
+private theorem mark_of_dirty (rp : RP n) (x : Fin n) (h : rp.Dirty x) : rp.mark x = rp := by
   unfold mark
   rw [dite_eq_right]
   intro hc
@@ -28,7 +29,7 @@ theorem mark_of_dirty (rp : RP n) (x : Fin n) (h : rp.Dirty x) : rp.mark x = rp 
   omega
 
 /-- Some state of a block with a non-empty marked suffix is dirty. -/
-theorem exists_dirty_of_lt {rp : RP n} (hwf : rp.WF) {b : ℕ} (hb : b < rp.nb)
+private theorem exists_dirty_of_lt {rp : RP n} (hwf : rp.WF) {b : ℕ} (hb : b < rp.nb)
     (h : rp.bm b < rp.be b) : ∃ y, rp.blk y = b ∧ rp.Dirty y := by
   have hbl := hwf.block b hb
   let y := rp.loc.symm ⟨rp.be b - 1, by omega⟩
@@ -36,7 +37,7 @@ theorem exists_dirty_of_lt {rp : RP n} (hwf : rp.WF) {b : ℕ} (hb : b < rp.nb)
   have hyb : rp.blk y = b := hwf.unique y b hb (by omega) (by omega)
   exact ⟨y, hyb, by unfold Dirty; rw [hyb]; omega⟩
 
-theorem markW_inv {c : Ctx n} (h : WLInv c) (x : Fin n) : WLInv (markW c x) := by
+private theorem markW_inv {c : Ctx n} (h : WLInv c) (x : Fin n) : WLInv (markW c x) := by
   unfold markW
   split_ifs with hd hbm
   · exact h
@@ -83,18 +84,18 @@ theorem markW_inv {c : Ctx n} (h : WLInv c) (x : Fin n) : WLInv (markW c x) := b
       · exact h.dirty z hz
       · exact hmem
 
-theorem markAllW_inv (l : List (Fin n)) {c : Ctx n} (h : WLInv c) : WLInv (markAllW l c) := by
+private theorem markAllW_inv (l : List (Fin n)) {c : Ctx n} (h : WLInv c) : WLInv (markAllW l c) := by
   induction l generalizing c with
   | nil => exact h
   | cons x xs ih => exact ih (markW_inv h x)
 
-theorem markW_rp (c : Ctx n) (x : Fin n) : (markW c x).rp = c.rp.mark x := by
+private theorem markW_rp (c : Ctx n) (x : Fin n) : (markW c x).rp = c.rp.mark x := by
   unfold markW
   by_cases hd : c.rp.Dirty x
   · rw [ite_eq_left hd]; exact (mark_of_dirty _ _ hd).symm
   · rw [ite_eq_right hd]
 
-theorem markAllW_dirty {c : Ctx n} (h : WLInv c) (l : List (Fin n)) (z : Fin n) :
+private theorem markAllW_dirty {c : Ctx n} (h : WLInv c) (l : List (Fin n)) (z : Fin n) :
     (markAllW l c).rp.Dirty z ↔ c.rp.Dirty z ∨ z ∈ l := by
   induction l generalizing c with
   | nil => simp [markAllW]
@@ -112,12 +113,12 @@ theorem markAllW_dirty {c : Ctx n} (h : WLInv c) (l : List (Fin n)) (z : Fin n) 
         · exact Or.inl (Or.inr h)
         · exact Or.inr h
 
-theorem markAllW_blk (l : List (Fin n)) (c : Ctx n) : (markAllW l c).rp.blk = c.rp.blk := by
+private theorem markAllW_blk (l : List (Fin n)) (c : Ctx n) : (markAllW l c).rp.blk = c.rp.blk := by
   induction l generalizing c with
   | nil => rfl
   | cons x xs ih => simp only [markAllW]; rw [ih, markW_rp, mark_blk]
 
-theorem markAllW_nb (l : List (Fin n)) (c : Ctx n) : (markAllW l c).rp.nb = c.rp.nb := by
+private theorem markAllW_nb (l : List (Fin n)) (c : Ctx n) : (markAllW l c).rp.nb = c.rp.nb := by
   induction l generalizing c with
   | nil => rfl
   | cons x xs ih => simp only [markAllW]; rw [ih, markW_rp, mark_nb]

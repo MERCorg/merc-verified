@@ -17,33 +17,33 @@ namespace RP
 
 variable {n : ℕ}
 
-theorem mark_blk (rp : RP n) (s : Fin n) : (rp.mark s).blk = rp.blk := by
+private theorem mark_blk (rp : RP n) (s : Fin n) : (rp.mark s).blk = rp.blk := by
   unfold mark; split_ifs <;> rfl
 
-theorem mark_nb (rp : RP n) (s : Fin n) : (rp.mark s).nb = rp.nb := by
+private theorem mark_nb (rp : RP n) (s : Fin n) : (rp.mark s).nb = rp.nb := by
   unfold mark; split_ifs <;> rfl
 
 section MarkProofs
 
 variable {rp : RP n} (hwf : rp.WF) (s : Fin n)
 
-theorem mark_eq (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) :
+private theorem mark_eq (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) :
     rp.mark s = { rp with
       loc := (Equiv.swap s (lastClean s hc)).trans rp.loc
       bm := Function.update rp.bm (rp.blk s) (rp.bm (rp.blk s) - 1) } := by
   unfold mark lastClean; rw [dite_eq_left hc]
 
-theorem loc_lastClean (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) :
+private theorem loc_lastClean (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) :
     (rp.loc (lastClean s hc)).val = rp.bm (rp.blk s) - 1 := by
   unfold lastClean; simp
 
-theorem mark_loc (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) (x : Fin n) :
+private theorem mark_loc (hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n) (x : Fin n) :
     ((rp.mark s).loc x) = rp.loc (Equiv.swap s (lastClean s hc) x) := by
   rw [mark_eq s hc]; rfl
 
 include hwf
 
-theorem mark_wf : (rp.mark s).WF := by
+private theorem mark_wf : (rp.mark s).WF := by
   by_cases hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n
   swap
   · unfold mark; rw [dite_eq_right hc]; exact hwf
@@ -81,7 +81,7 @@ theorem mark_wf : (rp.mark s).WF := by
     exact this
 
 /-- `MarkDirty` adds exactly the state `s` to the dirty set and leaves the partition alone. -/
-theorem mark_dirty (x : Fin n) : (rp.mark s).Dirty x ↔ rp.Dirty x ∨ x = s := by
+private theorem mark_dirty (x : Fin n) : (rp.mark s).Dirty x ↔ rp.Dirty x ∨ x = s := by
   unfold Dirty
   rw [mark_blk]
   by_cases hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n
@@ -139,13 +139,13 @@ section MarkMore
 
 variable {rp : RP n} (s : Fin n)
 
-theorem mark_bs (rp : RP n) (s : Fin n) : (rp.mark s).bs = rp.bs := by
+private theorem mark_bs (rp : RP n) (s : Fin n) : (rp.mark s).bs = rp.bs := by
   unfold mark; split_ifs <;> rfl
 
-theorem mark_be (rp : RP n) (s : Fin n) : (rp.mark s).be = rp.be := by
+private theorem mark_be (rp : RP n) (s : Fin n) : (rp.mark s).be = rp.be := by
   unfold mark; split_ifs <;> rfl
 
-theorem mark_bm_le (rp : RP n) (s : Fin n) (b : ℕ) : (rp.mark s).bm b ≤ rp.bm b := by
+private theorem mark_bm_le (rp : RP n) (s : Fin n) (b : ℕ) : (rp.mark s).bm b ≤ rp.bm b := by
   unfold mark
   split_ifs with h
   · show Function.update rp.bm (rp.blk s) (rp.bm (rp.blk s) - 1) b ≤ rp.bm b
@@ -155,7 +155,7 @@ theorem mark_bm_le (rp : RP n) (s : Fin n) (b : ℕ) : (rp.mark s).bm b ≤ rp.b
   · exact le_rfl
 
 /-- `MarkDirty` only moves states at locations below the split of their block. -/
-theorem mark_loc_of_ge (rp : RP n) (s x : Fin n) (hx : rp.bm (rp.blk s) ≤ (rp.loc x).val) :
+private theorem mark_loc_of_ge (rp : RP n) (s x : Fin n) (hx : rp.bm (rp.blk s) ≤ (rp.loc x).val) :
     (rp.mark s).loc x = rp.loc x := by
   by_cases hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n
   · rw [mark_loc s hc]
@@ -168,27 +168,27 @@ theorem mark_loc_of_ge (rp : RP n) (s x : Fin n) (hx : rp.bm (rp.blk s) ≤ (rp.
 
 end MarkMore
 
-theorem markList_blk (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).blk = rp.blk := by
+private theorem markList_blk (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).blk = rp.blk := by
   induction l generalizing rp with
   | nil => rfl
   | cons x xs ih => simp only [markList]; rw [ih]; split_ifs <;> simp [mark_blk]
 
-theorem markList_nb (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).nb = rp.nb := by
+private theorem markList_nb (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).nb = rp.nb := by
   induction l generalizing rp with
   | nil => rfl
   | cons x xs ih => simp only [markList]; rw [ih]; split_ifs <;> simp [mark_nb]
 
-theorem markList_bs (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).bs = rp.bs := by
+private theorem markList_bs (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).bs = rp.bs := by
   induction l generalizing rp with
   | nil => rfl
   | cons x xs ih => simp only [markList]; rw [ih]; split_ifs <;> simp [mark_bs]
 
-theorem markList_be (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).be = rp.be := by
+private theorem markList_be (b : ℕ) (l : List (Fin n)) (rp : RP n) : (markList b l rp).be = rp.be := by
   induction l generalizing rp with
   | nil => rfl
   | cons x xs ih => simp only [markList]; rw [ih]; split_ifs <;> simp [mark_be]
 
-theorem markList_wf (b : ℕ) (l : List (Fin n)) (rp : RP n) (h : rp.WF) : (markList b l rp).WF := by
+private theorem markList_wf (b : ℕ) (l : List (Fin n)) (rp : RP n) (h : rp.WF) : (markList b l rp).WF := by
   induction l generalizing rp with
   | nil => exact h
   | cons x xs ih =>
@@ -198,7 +198,7 @@ theorem markList_wf (b : ℕ) (l : List (Fin n)) (rp : RP n) (h : rp.WF) : (mark
     · exact mark_wf h x
     · exact h
 
-theorem markList_bm_le (b : ℕ) (l : List (Fin n)) (rp : RP n) (b' : ℕ) :
+private theorem markList_bm_le (b : ℕ) (l : List (Fin n)) (rp : RP n) (b' : ℕ) :
     (markList b l rp).bm b' ≤ rp.bm b' := by
   induction l generalizing rp with
   | nil => exact le_rfl
@@ -210,7 +210,7 @@ theorem markList_bm_le (b : ℕ) (l : List (Fin n)) (rp : RP n) (b' : ℕ) :
     · exact le_rfl
 
 /-- Locations at or above the split of block `b` are untouched when marking states of block `b`. -/
-theorem markList_loc_of_ge (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n)
+private theorem markList_loc_of_ge (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n)
     (hx : rp.bm b ≤ (rp.loc x).val) : (markList b l rp).loc x = rp.loc x := by
   induction l generalizing rp with
   | nil => rfl
@@ -224,7 +224,7 @@ theorem markList_loc_of_ge (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n)
     · rw [ite_eq_right hy]; exact ih rp hx
 
 /-- Effect of `markList` on the dirty set. -/
-theorem markList_dirty (hwf : rp.WF) (b : ℕ) (l : List (Fin n)) (x : Fin n) :
+private theorem markList_dirty (hwf : rp.WF) (b : ℕ) (l : List (Fin n)) (x : Fin n) :
     (markList b l rp).Dirty x ↔ rp.Dirty x ∨ (x ∈ l ∧ rp.blk x = b) := by
   induction l generalizing rp with
   | nil => simp [markList]
@@ -253,7 +253,7 @@ theorem markList_dirty (hwf : rp.WF) (b : ℕ) (l : List (Fin n)) (x : Fin n) :
           · exact absurd (h ▸ h2) hy
           · exact Or.inr ⟨h, h2⟩
 
-theorem mark_loc_lt (rp : RP n) (s x : Fin n) (M : ℕ) (hM : rp.bm (rp.blk s) ≤ M)
+private theorem mark_loc_lt (rp : RP n) (s x : Fin n) (M : ℕ) (hM : rp.bm (rp.blk s) ≤ M)
     (hx : (rp.loc x).val < M) : ((rp.mark s).loc x).val < M := by
   by_cases hc : (rp.loc s).val < rp.bm (rp.blk s) ∧ rp.bm (rp.blk s) - 1 < n
   · rw [mark_loc s hc, Equiv.swap_apply_def]
@@ -265,7 +265,7 @@ theorem mark_loc_lt (rp : RP n) (s x : Fin n) (M : ℕ) (hM : rp.bm (rp.blk s) �
     · exact hx
   · unfold mark; rw [dite_eq_right hc]; exact hx
 
-theorem markList_loc_lt (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n) (M : ℕ)
+private theorem markList_loc_lt (b : ℕ) (l : List (Fin n)) (rp : RP n) (x : Fin n) (M : ℕ)
     (hM : rp.bm b ≤ M) (hx : (rp.loc x).val < M) : ((markList b l rp).loc x).val < M := by
   induction l generalizing rp with
   | nil => exact hx
@@ -295,7 +295,7 @@ structure LoopInv (tau : Fin n → Fin n → Prop) (b : ℕ) (rp₀ rp : RP n) (
   fuel : it + 1 ≤ rp.bs b + k
 
 /-- Closedness of the dirty set within the block, the loop's postcondition. -/
-def Closed (tau : Fin n → Fin n → Prop) (b : ℕ) (rp : RP n) : Prop :=
+private def Closed (tau : Fin n → Fin n → Prop) (b : ℕ) (rp : RP n) : Prop :=
   ∀ x, rp.blk x = b → rp.Dirty x → ∀ y, tau y x → rp.blk y = b → rp.Dirty y
 
 section ClosureProofs
@@ -303,7 +303,7 @@ section ClosureProofs
 variable {tau : Fin n → Fin n → Prop} {b : ℕ} {preds : Fin n → List (Fin n)}
   {rp₀ rp : RP n}
 
-theorem LoopInv.init (hwf : rp₀.WF) (hb : b < rp₀.nb) :
+private theorem LoopInv.init (hwf : rp₀.WF) (hb : b < rp₀.nb) :
     LoopInv tau b rp₀ rp₀ (rp₀.be b - 1) (rp₀.be b - rp₀.bs b) := by
   have hbl := hwf.block b hb
   refine ⟨hwf, rfl, rfl, rfl, rfl, fun x h => h, ?_, ?_, ?_, ?_, ?_⟩
@@ -318,7 +318,7 @@ theorem LoopInv.init (hwf : rp₀.WF) (hb : b < rp₀.nb) :
   · omega
   · omega
 
-theorem LoopInv.step (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) {it k : ℕ}
+private theorem LoopInv.step (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) {it k : ℕ}
     (hb : b < rp₀.nb) (inv : LoopInv tau b rp₀ rp it (k + 1))
     (h : rp.bs b < rp.bm b ∧ rp.bm b ≤ it ∧ it < n) :
     LoopInv tau b rp₀ (markList b (preds (rp.loc.symm ⟨it, h.2.2⟩)) rp) (it - 1) k := by
@@ -364,7 +364,7 @@ theorem LoopInv.step (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) {it k : ℕ}
   · rw [markList_be]; have := inv.below; omega
   · rw [markList_bs]; have := inv.fuel; omega
 
-theorem closureLoop_spec (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) (hb : b < rp₀.nb) :
+private theorem closureLoop_spec (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) (hb : b < rp₀.nb) :
     ∀ (k it : ℕ) (rp : RP n), LoopInv tau b rp₀ rp it k →
       ∃ it' k', LoopInv tau b rp₀ (closureLoop b preds k it rp) it' k' ∧
         Closed tau b (closureLoop b preds k it rp)
@@ -403,7 +403,7 @@ theorem closureLoop_spec (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) (hb : b <
 /-- **Backwards closure** (the first phase of `SortedClosure`): the closure loop keeps the partition
 and every other block, and makes the dirty states of block `b` exactly those that reach an originally
 dirty state of the block by τ-steps inside the block. -/
-theorem closure_spec (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) (hwf : rp₀.WF) (hb : b < rp₀.nb) :
+private theorem closure_spec (hpreds : ∀ x y, y ∈ preds x ↔ tau y x) (hwf : rp₀.WF) (hb : b < rp₀.nb) :
     (closure b preds rp₀).WF ∧ (closure b preds rp₀).blk = rp₀.blk ∧
     (∀ x, rp₀.blk x ≠ b → ((closure b preds rp₀).Dirty x ↔ rp₀.Dirty x)) ∧
     (∀ x, rp₀.blk x = b → ((closure b preds rp₀).Dirty x ↔ DirtyClosure tau rp₀ b x)) ∧
