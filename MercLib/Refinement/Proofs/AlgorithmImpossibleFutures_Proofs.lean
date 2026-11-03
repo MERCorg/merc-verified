@@ -11,6 +11,12 @@ public import MercLib.Refinement.Proofs.Antichain_Proofs
 public import MercLib.Refinement.Proofs.Product_Proofs
 public import MercLib.Refinement.Proofs.Algorithm_Proofs
 public import MercLib.Refinement.Proofs.ImpossibleFutures_Proofs
+import all MercLib.Control.Proofs.While_Proofs
+import all MercLib.Refinement.Proofs.Algorithm_Proofs
+import all MercLib.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Refinement.Proofs.ImpossibleFutures_Proofs
+import all MercLib.Refinement.Proofs.Product_Proofs
+import all MercLib.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -36,28 +42,28 @@ section WeakTrace
 variable [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
 
 /-- Some TR-witness is reachable from `x` in the inner product `NormTr lts2 ⋉ lts1`. -/
-def TRReach (x : Set State2 × State1) : Prop :=
+private def TRReach (x : Set State2 × State1) : Prop :=
   ∃ q, (product (NormTr lts2) lts1).CanReach x q ∧ IsTRWitness q.1 q.2
 
 variable {lts1 lts2}
 
 /-- Reachability of a TR-witness is antitone (Proposition 2 and Lemma 3). -/
-theorem TRReach.antitone {x y : Set State2 × State1} (hle : ProductLE x y)
+private theorem TRReach.antitone {x y : Set State2 × State1} (hle : ProductLE x y)
     (h : TRReach lts1 lts2 y) : TRReach lts1 lts2 x := by
   obtain ⟨q, hq, hw⟩ := h
   obtain ⟨q', hq', hq'le⟩ := productLE_canReach (normTr_isMonotone lts2) lts1 hle hq
   exact ⟨q', hq', IsTRWitness.antitone hq'le hw⟩
 
-theorem TRReach.of_canReach {x y : Set State2 × State1}
+private theorem TRReach.of_canReach {x y : Set State2 × State1}
     (hxy : (product (NormTr lts2) lts1).CanReach x y) (h : TRReach lts1 lts2 y) :
     TRReach lts1 lts2 x := by
   obtain ⟨q, hq, hw⟩ := h
   exact ⟨q, canReach_trans hxy hq, hw⟩
 
-theorem posSound_empty : PosSound lts1 lts2 (Antichain.empty ProductLE) :=
+private theorem posSound_empty : PosSound lts1 lts2 (Antichain.empty ProductLE) :=
   ⟨rfl, fun _ ⟨_, hy, _⟩ => absurd hy (Set.notMem_empty _)⟩
 
-theorem negSound_empty : NegSound lts1 lts2 (Antichain.empty fun y x => ProductLE x y) :=
+private theorem negSound_empty : NegSound lts1 lts2 (Antichain.empty fun y x => ProductLE x y) :=
   ⟨rfl, fun _ ⟨_, hy, _⟩ => absurd hy (Set.notMem_empty _)⟩
 
 end WeakTrace
@@ -66,7 +72,7 @@ open scoped Classical in
 /-- Lines 10-19 of Algorithm 5 as a recursive function: the `for` loop over the outgoing
     transitions of `impl` (a state of `lts1`), extending `working` and `antichain`. Returns `none`
     if line 16 fires. `forIn_outgoingOpt` relates it to the `for` loop of `weakTraceOpt`. -/
-noncomputable def forSuccessorsOpt [HasTau Label] (lts2 : LTS State2 Label)
+private noncomputable def forSuccessorsOpt [HasTau Label] (lts2 : LTS State2 Label)
     (pos neg : Antichain (Set State2 × State1)) (spec : Set State2) :
     List (Label × State1) → List (Set State2 × State1) → Antichain (Set State2 × State1) →
       Option (List (Set State2 × State1) × Antichain (Set State2 × State1))
@@ -80,7 +86,7 @@ noncomputable def forSuccessorsOpt [HasTau Label] (lts2 : LTS State2 Label)
     else forSuccessorsOpt lts2 pos neg spec rest working antichain
 
 open scoped Classical in
-theorem forSuccessorsOpt_cons [HasTau Label] (lts2 : LTS State2 Label)
+private theorem forSuccessorsOpt_cons [HasTau Label] (lts2 : LTS State2 Label)
     (pos neg : Antichain (Set State2 × State1)) (spec : Set State2) (a : Label) (t : State1)
     (rest : List (Label × State1)) (w : List (Set State2 × State1))
     (A : Antichain (Set State2 × State1)) :
@@ -92,7 +98,7 @@ theorem forSuccessorsOpt_cons [HasTau Label] (lts2 : LTS State2 Label)
       else forSuccessorsOpt lts2 pos neg spec rest w A := by
   rw [forSuccessorsOpt]; rfl
 
-theorem forSuccessorsOpt_none [HasTau Label] {lts2 : LTS State2 Label}
+private theorem forSuccessorsOpt_none [HasTau Label] {lts2 : LTS State2 Label}
     {pos neg : Antichain (Set State2 × State1)} {spec : Set State2} :
     ∀ {l : List (Label × State1)} {w : List (Set State2 × State1)}
       {A : Antichain (Set State2 × State1)},
@@ -107,7 +113,7 @@ theorem forSuccessorsOpt_none [HasTau Label] {lts2 : LTS State2 Label}
       obtain ⟨p, hp, he⟩ := forSuccessorsOpt_none h
       exact ⟨p, List.mem_cons_of_mem _ hp, he⟩
 
-theorem forSuccessorsOpt_some [HasTau Label] {lts2 : LTS State2 Label}
+private theorem forSuccessorsOpt_some [HasTau Label] {lts2 : LTS State2 Label}
     {pos neg : Antichain (Set State2 × State1)} {spec : Set State2} :
     ∀ {l : List (Label × State1)} {w w' : List (Set State2 × State1)}
       {A A' : Antichain (Set State2 × State1)}, A.le = ProductLE →
@@ -126,7 +132,7 @@ theorem forSuccessorsOpt_some [HasTau Label] {lts2 : LTS State2 Label}
 
 /-- The result of Algorithm 5 started from `init`: the verdict is `true` iff no TR-witness is
     reachable from `init`, and the returned antichain is sound. -/
-def InnerOk [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
+private def InnerOk [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
     (init : Set State2 × State1) (r : Bool × Antichain (Set State2 × State1)) : Prop :=
   (r.1 = true ↔ ¬ TRReach lts1 lts2 init) ∧
     (if r.1 then PosSound lts1 lts2 r.2 else NegSound lts1 lts2 r.2)
@@ -135,13 +141,13 @@ def InnerOk [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
 
 /-- The state of the loops of `weakTraceOpt`: the value of a pending early `return`, `working`
     and `antichain`. -/
-abbrev LoopState5 (State1 State2 : Type*) :=
+private abbrev LoopState5 (State1 State2 : Type*) :=
   Option (Bool × Antichain (Set State2 × State1)) × List (Set State2 × State1) ×
     Antichain (Set State2 × State1)
 
 open scoped Classical in
 /-- One iteration of the `for` loop (lines 11-19) on the transition `impl -a-> t`. -/
-noncomputable def succStepOpt [HasTau Label] (lts2 : LTS State2 Label)
+private noncomputable def succStepOpt [HasTau Label] (lts2 : LTS State2 Label)
     (init : Set State2 × State1) (pos neg : Antichain (Set State2 × State1)) (spec : Set State2)
     (a : Label) (t : State1) (w : List (Set State2 × State1))
     (A : Antichain (Set State2 × State1)) : ForInStep (LoopState5 State1 State2) :=
@@ -152,7 +158,7 @@ noncomputable def succStepOpt [HasTau Label] (lts2 : LTS State2 Label)
   else .yield (none, w, A)
 
 /-- The `for` loop (lines 10-19) computes `forSuccessorsOpt`. -/
-theorem forIn_outgoingOpt [HasTau Label] {lts2 : LTS State2 Label} {init : Set State2 × State1}
+private theorem forIn_outgoingOpt [HasTau Label] {lts2 : LTS State2 Label} {init : Set State2 × State1}
     {pos neg : Antichain (Set State2 × State1)} {spec : Set State2}
     (g : Label × State1 → LoopState5 State1 State2 → Id (ForInStep (LoopState5 State1 State2)))
     (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStepOpt lts2 init pos neg spec a t w A) :
@@ -173,7 +179,7 @@ theorem forIn_outgoingOpt [HasTau Label] {lts2 : LTS State2 Label} {init : Set S
     · simp only [eq_false h1, eq_false h2, ↓reduceIte]
       exact forIn_outgoingOpt g hg rest w A
 
-theorem forIn_outgoingOpt_none [HasTau Label] {lts2 : LTS State2 Label}
+private theorem forIn_outgoingOpt_none [HasTau Label] {lts2 : LTS State2 Label}
     {init : Set State2 × State1} {pos neg : Antichain (Set State2 × State1)} {spec : Set State2}
     (g : Label × State1 → LoopState5 State1 State2 → Id (ForInStep (LoopState5 State1 State2)))
     (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStepOpt lts2 init pos neg spec a t w A)
@@ -183,7 +189,7 @@ theorem forIn_outgoingOpt_none [HasTau Label] {lts2 : LTS State2 Label}
   rw [h] at this
   exact this
 
-theorem forIn_outgoingOpt_some [HasTau Label] {lts2 : LTS State2 Label}
+private theorem forIn_outgoingOpt_some [HasTau Label] {lts2 : LTS State2 Label}
     {init : Set State2 × State1} {pos neg : Antichain (Set State2 × State1)} {spec : Set State2}
     (g : Label × State1 → LoopState5 State1 State2 → Id (ForInStep (LoopState5 State1 State2)))
     (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStepOpt lts2 init pos neg spec a t w A)
@@ -195,7 +201,7 @@ theorem forIn_outgoingOpt_some [HasTau Label] {lts2 : LTS State2 Label}
   exact this
 
 /-- The `for` loop does not increase `|pending antichain| + |working|`. -/
-theorem forSuccessorsOpt_measure [HasTau Label] [Finite State1] [Finite State2]
+private theorem forSuccessorsOpt_measure [HasTau Label] [Finite State1] [Finite State2]
     {lts2 : LTS State2 Label} {pos neg : Antichain (Set State2 × State1)} {spec : Set State2} :
     ∀ {l : List (Label × State1)} {w w' : List (Set State2 × State1)}
       {A A' : Antichain (Set State2 × State1)}, A.le = ProductLE →
@@ -218,14 +224,14 @@ theorem forSuccessorsOpt_measure [HasTau Label] [Finite State1] [Finite State2]
     · exact forSuccessorsOpt_measure hle h
 
 /-- The postcondition of the `while` loop of Algorithm 5 started from `init`. -/
-def LoopPost5 [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
+private def LoopPost5 [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
     (init : Set State2 × State1) (pos : Antichain (Set State2 × State1))
     (s : LoopState5 State1 State2) : Prop :=
   (∀ r, s.1 = some r → InnerOk lts1 lts2 init r) ∧
     (s.1 = none → InnerOk lts1 lts2 init (true, ⟨pos.le, pos.set ∪ s.2.2.set⟩))
 
 /-- **Proposition 3**, for the whole of Algorithm 5 (including the cached answers of lines 2-5). -/
-theorem weakTraceOpt_ok [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
+private theorem weakTraceOpt_ok [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (pos neg : Antichain (Set State2 × State1))
     (hpos : PosSound lts1 lts2 pos) (hneg : NegSound lts1 lts2 neg) (t : State1)
     (impl : State2) :
@@ -331,14 +337,14 @@ section CheckLoop
 variable [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
   (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
 
-theorem mem_toList [Finite State] {U : Set State} {t : State} : t ∈ toList U ↔ t ∈ U := by
+private theorem mem_toList [Finite State] {U : Set State} {t : State} : t ∈ toList U ↔ t ∈ U := by
   simp [toList]
 
 open scoped Classical in
 /-- Lines 8-14 of Algorithm 6 as a recursive function: pop the states `t` of `spec'` and call
     Algorithm 5 against `impl`. Returns the final `(b, antichain⁺, antichain⁻)`. `forIn_toList`
     relates it to the inner `for` loop of `weakImpossibleFuturesOpt`. -/
-noncomputable def checkLoop (impl : State2) :
+private noncomputable def checkLoop (impl : State2) :
     List State1 → Bool → Antichain (Set State2 × State1) → Antichain (Set State2 × State1) →
       Bool × Antichain (Set State2 × State1) × Antichain (Set State2 × State1)
   | [], b, pos, neg => (b, pos, neg)
@@ -350,12 +356,12 @@ noncomputable def checkLoop (impl : State2) :
     else (b, pos, neg)
 
 /-- The state `(antichain⁻, antichain⁺, b)` of the inner `for` loop of Algorithm 6. -/
-abbrev CheckState (State1 State2 : Type*) :=
+private abbrev CheckState (State1 State2 : Type*) :=
   Antichain (Set State2 × State1) × Antichain (Set State2 × State1) × Bool
 
 open scoped Classical in
 /-- One iteration of the inner `for` loop (lines 8-14) on the state `t`. -/
-noncomputable def checkStep (impl : State2) (t : State1) (s : CheckState State1 State2) :
+private noncomputable def checkStep (impl : State2) (t : State1) (s : CheckState State1 State2) :
     ForInStep (CheckState State1 State2) :=
   if ¬ (Stable lts2 impl ∧ s.2.2 = true) then .done s
   else
@@ -364,7 +370,7 @@ noncomputable def checkStep (impl : State2) (t : State1) (s : CheckState State1 
       if b' = true then .yield (s.1, antichain', false) else .yield (antichain', s.2.1, s.2.2)
 
 /-- The inner `for` loop (lines 8-14) computes `checkLoop`. -/
-theorem forIn_toList (impl : State2)
+private theorem forIn_toList (impl : State2)
     (g : State1 → CheckState State1 State2 → Id (ForInStep (CheckState State1 State2)))
     (hg : ∀ t s, (g t s).run = checkStep lts1 lts2 impl t s) :
     ∀ (ts : List State1) (neg pos : Antichain (Set State2 × State1)) (b : Bool),
@@ -384,13 +390,13 @@ theorem forIn_toList (impl : State2)
     · simp only [eq_false hc, not_false_eq_true, ↓reduceIte, checkLoop]
       rfl
 
-theorem checkLoop_false (impl : State2) :
+private theorem checkLoop_false (impl : State2) :
     ∀ (ts : List State1) (pos neg : Antichain (Set State2 × State1)),
       checkLoop lts1 lts2 impl ts false pos neg = (false, pos, neg)
   | [], _, _ => rfl
   | _ :: _, _, _ => by simp [checkLoop]
 
-theorem checkLoop_unstable {impl : State2} (hst : ¬ Stable lts2 impl) :
+private theorem checkLoop_unstable {impl : State2} (hst : ¬ Stable lts2 impl) :
     ∀ (ts : List State1) (b : Bool) (pos neg : Antichain (Set State2 × State1)),
       checkLoop lts1 lts2 impl ts b pos neg = (b, pos, neg)
   | [], _, _, _ => rfl
@@ -398,7 +404,7 @@ theorem checkLoop_unstable {impl : State2} (hst : ¬ Stable lts2 impl) :
 
 /-- Lines 8-14 at a stable implementation state: the loop keeps the antichains sound, and ends
     with `b = true` iff no state of `ts` is weak trace included in `impl`. -/
-theorem checkLoop_spec {impl : State2} (hst : Stable lts2 impl) :
+private theorem checkLoop_spec {impl : State2} (hst : Stable lts2 impl) :
     ∀ (ts : List State1) (pos neg : Antichain (Set State2 × State1)),
       PosSound lts1 lts2 pos → NegSound lts1 lts2 neg →
       PosSound lts1 lts2 (checkLoop lts1 lts2 impl ts true pos neg).2.1 ∧
@@ -426,7 +432,7 @@ theorem checkLoop_spec {impl : State2} (hst : Stable lts2 impl) :
       exact fun h => absurd (hiff.mp trivial) h
 
 /-- Lines 8-14 keep the antichains sound. -/
-theorem checkLoop_sound (impl : State2) (ts : List State1)
+private theorem checkLoop_sound (impl : State2) (ts : List State1)
     {pos neg : Antichain (Set State2 × State1)} (hpos : PosSound lts1 lts2 pos)
     (hneg : NegSound lts1 lts2 neg) :
     PosSound lts1 lts2 (checkLoop lts1 lts2 impl ts true pos neg).2.1 ∧
@@ -438,7 +444,7 @@ theorem checkLoop_sound (impl : State2) (ts : List State1)
     exact ⟨hpos, hneg⟩
 
 /-- Lines 7-16 decide whether a popped, non-empty pair is a stable IF-witness. -/
-theorem stableIFWitness_iff_checkLoop {spec : Set State1} {impl : State2} {b : Bool}
+private theorem stableIFWitness_iff_checkLoop {spec : Set State1} {impl : State2} {b : Bool}
     {pos neg pos' neg' : Antichain (Set State2 × State1)} (hne : spec.Nonempty)
     (hpos : PosSound lts1 lts2 pos) (hneg : NegSound lts1 lts2 neg)
     (hcl : checkLoop lts1 lts2 impl (toList spec) true pos neg = (b, pos', neg')) :
@@ -462,25 +468,25 @@ theorem stableIFWitness_iff_checkLoop {spec : Set State1} {impl : State2} {b : B
 end CheckLoop
 
 /-- No stable IF-witness is reachable from `p0` (the right-hand side of Theorem 3). -/
-def NoIFWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
+private def NoIFWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
     (p0 : Set State1 × State2) : Prop :=
   ¬ ∃ q, (product (NormTr lts1) lts2).CanReach p0 q ∧ IsStableIFWitness lts1 lts2 q.1 q.2
 
 /-- The state of the outer loop of Algorithm 6: the value of a pending early `return`, `working`,
     `antichain`, `antichain⁻` and `antichain⁺`. -/
-abbrev LoopState6 (State1 : Type u) (State2 : Type v) :=
+private abbrev LoopState6 (State1 : Type u) (State2 : Type v) :=
   Option (ULift.{max u v} Bool) × List (Set State1 × State2) × Antichain (Set State1 × State2) ×
     Antichain (Set State2 × State1) × Antichain (Set State2 × State1)
 
 /-- The postcondition of the outer loop of Algorithm 6. -/
-def LoopPost6 [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
+private def LoopPost6 [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
     (p0 : Set State1 × State2) (s : LoopState6 State1 State2) : Prop :=
   (s.1 = none ∧ NoIFWitness lts1 lts2 p0) ∨
     ∃ b, s.1 = some (.up b) ∧ (b = true ↔ NoIFWitness lts1 lts2 p0)
 
 /-- **Theorem 3**, for the whole algorithm: Algorithm 6 returns `true` iff no stable IF-witness is
     reachable from the initial pair. -/
-theorem weakImpossibleFuturesOpt_iff [HasTau Label] [Finite Label] [Finite State1]
+private theorem weakImpossibleFuturesOpt_iff [HasTau Label] [Finite Label] [Finite State1]
     [Finite State2] (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label)
     (s2 : State2) :
     weakImpossibleFuturesOpt lts1 s1 lts2 s2 = true ↔ NoIFWitness lts1 lts2 (NormInit lts1 s1, s2) := by

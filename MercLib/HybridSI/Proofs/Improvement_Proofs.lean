@@ -1,6 +1,11 @@
 module
 
 public import MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIImprovementProofs
 
@@ -41,22 +46,22 @@ variable {G : Game V} {f g : V → V} {i : Player}
 
 /-! ### Rewards -/
 
-theorem rI_injective {l l' : V} (h : rI G i l = rI G i l') : l = l' := by
+private theorem rI_injective {l l' : V} (h : rI G i l = rI G i l') : l = l' := by
   unfold rI at h
   split_ifs at h <;> exact rank_injective (by omega)
 
-theorem rI_lt_of_bad {l m : V} (hbad : ¬ Good i (G.prio l)) (hml : m < l) :
+private theorem rI_lt_of_bad {l m : V} (hbad : ¬ Good i (G.prio l)) (hml : m < l) :
     rI G i l < rI G i m := by
   have := rank_lt_rank hml
   unfold rI; split_ifs <;> omega
 
-theorem rI_lt_of_good {l m : V} (hgood : Good i (G.prio m)) (hlm : l < m) :
+private theorem rI_lt_of_good {l m : V} (hgood : Good i (G.prio m)) (hlm : l < m) :
     rI G i l < rI G i m := by
   have := rank_lt_rank hlm
   unfold rI; split_ifs <;> omega
 
 /-- Comparison of keys of two profiles, in components. -/
-theorem K_le_iff' (a b : V) :
+private theorem K_le_iff' (a b : V) :
     K G f i a ≤ K G g i b ↔ rI G i (cycMax f a) < rI G i (cycMax g b) ∨
       (rI G i (cycMax f a) = rI G i (cycMax g b) ∧
         (∑ y ∈ bSet f a, wI G i y < ∑ y ∈ bSet g b, wI G i y ∨
@@ -68,7 +73,7 @@ theorem K_le_iff' (a b : V) :
 
 /-- If from some point on a sequence stays strictly below the common cycle maximum `L` of `f`,
     and `L` favours `i`, the keys of `f` increase strictly forever: impossible. -/
-theorem tail_lt_false {p : ℕ → V} (hstep : ∀ n, K G f i (f (p n)) ≤ K G f i (p (n + 1)))
+private theorem tail_lt_false {p : ℕ → V} (hstep : ∀ n, K G f i (f (p n)) ≤ K G f i (p (n + 1)))
     {N : ℕ} {L : V} (hL : Good i (G.prio L)) (h : ∀ n ≥ N, cycMax f (p n) = L ∧ p n < L) :
     False := by
   have hinc : ∀ n ≥ N, K G f i (p n) < K G f i (p (n + 1)) := by
@@ -100,7 +105,7 @@ theorem tail_lt_false {p : ℕ → V} (hstep : ∀ n, K G f i (f (p n)) ≤ K G 
 
 /-- If from some point on a sequence has the common cycle maximum `L` of `f`, stays at or below
     `M > L` and visits `M` infinitely often, then `M` favours `i`. -/
-theorem tail_upper_false {p : ℕ → V} (hstep : ∀ n, K G f i (f (p n)) ≤ K G f i (p (n + 1)))
+private theorem tail_upper_false {p : ℕ → V} (hstep : ∀ n, K G f i (f (p n)) ≤ K G f i (p (n + 1)))
     {N : ℕ} {L M : V} (hML : L < M) (hbad : ¬ Good i (G.prio M))
     (h : ∀ n ≥ N, cycMax f (p n) = L ∧ p n ≤ M) (hfreq : ∀ n, ∃ m ≥ n, p m = M) : False := by
   have hw : wI G i M = -(2 ^ rank M) := by unfold wI; rw [ite_eq_right hbad]
@@ -157,7 +162,7 @@ theorem tail_upper_false {p : ℕ → V} (hstep : ∀ n, K G f i (f (p n)) ≤ K
 
 /-- Along the path of `g` to its cycle maximum `M`, if `f` has cycle maximum `M` everywhere on
     the play of `g`, the keys of `f` are at most those of `g`. -/
-theorem K_le_path (hdom : ∀ u, K G f i (f u) ≤ K G f i (g u)) (M : V) :
+private theorem K_le_path (hdom : ∀ u, K G f i (f u) ≤ K G f i (g u)) (M : V) :
     ∀ (k : ℕ) (x : V), stepsTo g x = k → cycMax g x = M → (∀ m, cycMax f (g^[m] x) = M) →
       K G f i x ≤ K G g i x
   | 0, x, hk, hg, hf => by
@@ -188,7 +193,7 @@ theorem K_le_path (hdom : ∀ u, K G f i (f u) ≤ K G f i (g u)) (M : V) :
 /-- **Master lemma** (VJ Lemma 5.5 for profiles): if every move of `g` is at least as good for
     `i` as the move of `f`, measured in the keys of `f`, then the keys of `g` dominate those of
     `f` pointwise. -/
-theorem K_le_of_dom (hdom : ∀ u, K G f i (f u) ≤ K G f i (g u)) (v : V) :
+private theorem K_le_of_dom (hdom : ∀ u, K G f i (f u) ≤ K G f i (g u)) (v : V) :
     K G f i v ≤ K G g i v := by
   let p : ℕ → V := fun n => g^[n] v
   have hstep : ∀ n, K G f i (f (p n)) ≤ K G f i (p (n + 1)) := fun n => by
@@ -243,18 +248,18 @@ theorem K_le_of_dom (hdom : ∀ u, K G f i (f u) ≤ K G f i (g u)) (v : V) :
 
 variable (G) [DecidableRel G.edge]
 
-theorem ownedBy_true_iff (v : V) : ownedBy G true v = true ↔ G.owner v = .one := by
+private theorem ownedBy_true_iff (v : V) : ownedBy G true v = true ↔ G.owner v = .one := by
   simp [ownedBy]
 
-theorem ownedBy_false_iff (v : V) : ownedBy G false v = true ↔ G.owner v = .zero := by
+private theorem ownedBy_false_iff (v : V) : ownedBy G false v = true ↔ G.owner v = .zero := by
   simp [ownedBy]
 
-theorem owner_one_of_ne {v : V} (h : G.owner v ≠ .zero) : G.owner v = .one := by
+private theorem owner_one_of_ne {v : V} (h : G.owner v ≠ .zero) : G.owner v = .one := by
   cases hv : G.owner v <;> simp_all
 
 /-- (a) One-player optimality for Odd: a best response `q` of Odd (returned by `respond`) gives
     keys at most those of any profile with the same Even moves. -/
-theorem respond_odd_optimal {bf : ℕ} {p q : V → V} (hq : respond G true bf p = some q)
+private theorem respond_odd_optimal {bf : ℕ} {p q : V → V} (hq : respond G true bf p = some q)
     (g : V → V) (hg : ∀ v, G.edge v (g v)) (hgq : ∀ v, G.owner v = .zero → g v = q v) (v : V) :
     key G q v ≤ key G g v := by
   have hodd := (respond_spec G true bf p q hq).2.2
@@ -267,7 +272,7 @@ theorem respond_odd_optimal {bf : ℕ} {p q : V → V} (hq : respond G true bf p
   simpa [K, kfor] using this
 
 /-- (a) One-player optimality for Even (dual). -/
-theorem respond_even_optimal {bf : ℕ} {p q : V → V} (hq : respond G false bf p = some q)
+private theorem respond_even_optimal {bf : ℕ} {p q : V → V} (hq : respond G false bf p = some q)
     (g : V → V) (hg : ∀ v, G.edge v (g v)) (hgq : ∀ v, G.owner v = .one → g v = q v) (v : V) :
     key G g v ≤ key G q v := by
   have heven := (respond_spec G false bf p q hq).2.2
@@ -284,7 +289,7 @@ theorem respond_even_optimal {bf : ℕ} {p q : V → V} (hq : respond G false bf
     arbitrary edges at Odd vertices. Then the keys of `g` dominate those of `f`, and at every Even
     vertex the key of the chosen successor does not decrease, and increases strictly where `g`
     switches. -/
-theorem improvement (hodd : ∀ u, G.owner u = .one → ∀ w, G.edge u w → key G f (f u) ≤ key G f w)
+private theorem improvement (hodd : ∀ u, G.owner u = .one → ∀ w, G.edge u w → key G f (f u) ≤ key G f w)
     (hg : ∀ u, G.owner u = .one → G.edge u (g u))
     (hsw : ∀ u, G.owner u = .zero → g u = f u ∨ key G f (f u) < key G f (g u)) :
     (∀ v, key G f v ≤ key G g v) ∧
@@ -304,7 +309,7 @@ theorem improvement (hodd : ∀ u, G.owner u = .one → ∀ w, G.edge u w → ke
   · exact ⟨by rw [h]; exact hle _, fun hne => absurd h hne⟩
   · exact ⟨le_of_lt (lt_of_lt_of_le h (hle _)), fun _ => lt_of_lt_of_le h (hle _)⟩
 
-theorem mem_improving {ks : V → Key} {p : V → V} {v w : V} (h : w ∈ improving G ks p v) :
+private theorem mem_improving {ks : V → Key} {p : V → V} {v w : V} (h : w ∈ improving G ks p v) :
     G.owner v = .zero ∧ ks (p v) < ks w := by
   unfold improving at h
   split_ifs at h with hv

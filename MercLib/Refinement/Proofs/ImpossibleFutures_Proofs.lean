@@ -7,6 +7,9 @@ public import MercLib.Refinement.ImpossibleFutures
 public import MercLib.Refinement.Proofs.Semantics_Proofs
 public import MercLib.Refinement.Proofs.Product_Proofs
 public import MercLib.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Refinement.Proofs.Product_Proofs
+import all MercLib.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -25,7 +28,7 @@ Section 4.2, and Lemma 11 (`impossibleFutures_eq_of_tauCycle`). -/
 /-- **Lemma 4** (in this package's orientation): impossible futures refinement fails iff some weak
     trace `ρ` of the implementation reaches a state `s` such that every `ρ`-derivative `t` of the
     specification has a weak trace that `s` lacks. -/
-theorem not_impossibleFuturesRefines_iff [HasTau Label]
+private theorem not_impossibleFuturesRefines_iff [HasTau Label]
     (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label) (s2 : State2) :
     ¬ (s1 ⊑if[lts1,lts2] s2) ↔
       ∃ ρ s, WeakTr lts2 s2 ρ s ∧
@@ -93,7 +96,7 @@ theorem impossibleFuturesRefines_iff_not_reachable_ifWitness [HasTau Label]
     exact hnwit ⟨U, s, product_zip (NormTr lts1) lts2 hρ2 hU, hwit⟩
 
 /-- **Lemma 9**: anti-monotonicity of IF-witnesses under `ProductLE`. -/
-theorem IsIFWitness.antitone [HasTau Label]
+private theorem IsIFWitness.antitone [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) {U V : Set State1} {s t : State2}
     (hle : ProductLE (U, s) (V, t)) (hwit : IsIFWitness lts1 lts2 V t) :
     IsIFWitness lts1 lts2 U s := by
@@ -104,7 +107,7 @@ theorem IsIFWitness.antitone [HasTau Label]
   · exact Or.inr (fun u hu hsub => hmem u (hUV hu) hsub)
 
 /-- Anti-monotonicity for the stable-only witness test of Algorithm 6. -/
-theorem IsStableIFWitness.antitone [HasTau Label]
+private theorem IsStableIFWitness.antitone [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) {U V : Set State1} {s t : State2}
     (hle : ProductLE (U, s) (V, t)) (hwit : IsStableIFWitness lts1 lts2 V t) :
     IsStableIFWitness lts1 lts2 U s := by
@@ -115,7 +118,7 @@ theorem IsStableIFWitness.antitone [HasTau Label]
   · exact Or.inr ⟨hstable, fun u hu hsub => hmem u (hUV hu) hsub⟩
 
 /-- **Lemma 10**: IF-witnesses survive implementation `τ`-steps of the product. -/
-theorem IsIFWitness.of_tau_step [HasTau Label]
+private theorem IsIFWitness.of_tau_step [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) {U : Set State1} {s s' : State2}
     (hstep : lts2.Tr s HasTau.τ s') (hwit : IsIFWitness lts1 lts2 U s) :
     IsIFWitness lts1 lts2 U s' := by
@@ -127,7 +130,7 @@ theorem IsIFWitness.of_tau_step [HasTau Label]
     exact ⟨u, (WeakTr.tau hstep).comp hu⟩
 
 /-- Lemma 10, multi-step: IF-witnesses survive `τ*`-paths of the implementation. -/
-theorem IsIFWitness.of_τSTr [HasTau Label]
+private theorem IsIFWitness.of_τSTr [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) {U : Set State1} {s t : State2}
     (hτ : lts2.τSTr s t) (hwit : IsIFWitness lts1 lts2 U s) :
     IsIFWitness lts1 lts2 U t := by
@@ -138,7 +141,7 @@ theorem IsIFWitness.of_τSTr [HasTau Label]
 /-- Reachable IF-witnesses can be taken stable when the implementation is convergent
     (consequence of Lemma 10), so the weak trace comparison only has to be made at stable
     implementation states. -/
-theorem reachable_ifWitness_iff_reachable_stableIFWitness [HasTau Label]
+private theorem reachable_ifWitness_iff_reachable_stableIFWitness [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (hconv : Convergent lts2)
     (p0 : Set State1 × State2) :
     (∃ U s, (product (NormTr lts1) lts2).CanReach p0 (U, s) ∧ IsIFWitness lts1 lts2 U s) ↔
@@ -161,7 +164,7 @@ theorem reachable_ifWitness_iff_reachable_stableIFWitness [HasTau Label]
 
 /-- **Lemma 11**: states on a common `τ`-cycle of the implementation have the same weak
     impossible futures. -/
-theorem impossibleFutures_eq_of_tauCycle [HasTau Label]
+private theorem impossibleFutures_eq_of_tauCycle [HasTau Label]
     (lts : LTS State Label) {s s' : State}
     (h1 : WeakTr lts s [] s') (h2 : WeakTr lts s' [] s) :
     impossibleFutures lts s = impossibleFutures lts s' := by

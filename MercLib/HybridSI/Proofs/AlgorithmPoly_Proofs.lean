@@ -2,6 +2,14 @@ module
 
 public import MercLib.HybridSI.AlgorithmPoly
 public import MercLib.HybridSI.Proofs.BestResponse_Proofs
+import all MercLib.HybridSI.Proofs.BestResponse_Classes_Proofs
+import all MercLib.HybridSI.Proofs.BestResponse_Graph_Proofs
+import all MercLib.HybridSI.Proofs.BestResponse_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIAlgorithmPolyProofs
 
@@ -18,10 +26,10 @@ set_option linter.unusedSectionVars false
 
 variable {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
 
-theorem keys_eq (f : V → V) : (fun v => look (keyTable G f) keyDefault v) = key G f :=
+private theorem keys_eq (f : V → V) : (fun v => look (keyTable G f) keyDefault v) = key G f :=
   funext (look_keyTable G f)
 
-theorem hbStepPoly_done {p : V → V} {kt : List (V × Key)} (h : (hbStepPoly G p).ret = .done kt) :
+private theorem hbStepPoly_done {p : V → V} {kt : List (V × Key)} (h : (hbStepPoly G p).ret = .done kt) :
     kt = keyTable G (bestResponse G true p) ∧
       ∀ v, improving G (key G (bestResponse G true p)) p v = [] := by
   unfold hbStepPoly keyTableT at h
@@ -33,7 +41,7 @@ theorem hbStepPoly_done {p : V → V} {kt : List (V × Key)} (h : (hbStepPoly G 
     exact hall v (mem_univList v)
   · simp at h
 
-theorem hbStepPoly_next {p : V → V} {qt : List (V × V)} (h : (hbStepPoly G p).ret = .next qt)
+private theorem hbStepPoly_next {p : V → V} {qt : List (V × V)} (h : (hbStepPoly G p).ret = .next qt)
     (he : ∀ v, G.edge v (p v)) : ∀ v, G.edge v (look qt v v) := by
   unfold hbStepPoly keyTableT at h
   simp only [TimeM.ret_bind, TimeM.ret_pure, keys_eq] at h
@@ -48,7 +56,7 @@ theorem hbStepPoly_next {p : V → V} {qt : List (V × V)} (h : (hbStepPoly G p)
     · exact filtered_sub G _ _ p v x hx
     · exact improving_sub G _ p v x hx
 
-theorem hbRunPoly_spec : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (kt : List (V × Key)),
+private theorem hbRunPoly_spec : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (kt : List (V × Key)),
     (hbRunPoly G fuel it p).ret = some (it', kt) → (∀ v, G.edge v (p v)) →
     ∃ p', (∀ v, G.edge v (p' v)) ∧ kt = keyTable G (bestResponse G true p') ∧
       ∀ v, improving G (key G (bestResponse G true p')) p' v = []
@@ -117,7 +125,7 @@ theorem hbPolyCorrect (fuel : ℕ) : HBPolyCorrect G fuel := by
 
 /-! ### Cost -/
 
-theorem roundCost_succList : roundCost (succList G) = edgeCount G + Fintype.card V := by
+private theorem roundCost_succList : roundCost (succList G) = edgeCount G + Fintype.card V := by
   unfold roundCost edgeCount
   rw [List.sum_map_add]
   simp [univList]
@@ -142,7 +150,7 @@ theorem hbStepPoly_cost (p : V → V) : HBStepCost G p := by
     generalize Fintype.card V * (Fintype.card V + 1) ^ 3 = K at *
     omega
 
-theorem hbRunPoly_cost_aux : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (kt : List (V × Key)),
+private theorem hbRunPoly_cost_aux : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (kt : List (V × Key)),
     (hbRunPoly G fuel it p).ret = some (it', kt) →
     it ≤ it' ∧ (hbRunPoly G fuel it p).time ≤
       (it' - it + 1) * (hbStepBound (Fintype.card V) (edgeCount G) + 1)

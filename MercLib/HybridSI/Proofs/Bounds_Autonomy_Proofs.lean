@@ -1,6 +1,17 @@
 module
 
 public import MercLib.HybridSI.Proofs.Bounds_Subgame_Proofs
+import all MercLib.HybridSI.Proofs.Bounds_Subgame_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Epoch_Proofs
+import all MercLib.HybridSI.Proofs.Filter_Proofs
+import all MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Potential_Proofs
+import all MercLib.HybridSI.Proofs.Termination_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIBoundsAutonomyProofs
 
@@ -32,7 +43,7 @@ local notation "GD" => subgame G D hD
 
 /-! ### Lists -/
 
-theorem univList_val : (univList D).map Subtype.val = (univList V).filter (· ∈ D) := by
+private theorem univList_val : (univList D).map Subtype.val = (univList V).filter (· ∈ D) := by
   refine List.Pairwise.eq_of_mem_iff (r := (· < ·)) ?_ ?_ fun a => ?_
   · exact List.Pairwise.map _ (fun _ _ h => h) (Finset.sortedLT_sort _).pairwise
   · exact List.Pairwise.filter _ (Finset.sortedLT_sort _).pairwise
@@ -41,7 +52,7 @@ theorem univList_val : (univList D).map Subtype.val = (univList V).filter (· �
     · rintro ⟨b, -, rfl⟩; exact ⟨mem_univList _, b.2⟩
     · rintro ⟨-, h⟩; exact ⟨⟨a, h⟩, mem_univList _, rfl⟩
 
-theorem succList_val (a : D) : succList G a.1 = (succList GD a).map Subtype.val := by
+private theorem succList_val (a : D) : succList G a.1 = (succList GD a).map Subtype.val := by
   unfold succList
   have : (fun w : D => decide ((subgame G D hD).edge a w)) =
       (fun w : V => decide (G.edge a.1 w)) ∘ Subtype.val := rfl
@@ -53,14 +64,14 @@ theorem succList_val (a : D) : succList G a.1 = (succList GD a).map Subtype.val 
 
 /-! ### Best successors -/
 
-theorem foldl_val (F : V → V → V) (FD : D → D → D) (hF : ∀ b x, (FD b x).1 = F b.1 x.1) :
+private theorem foldl_val (F : V → V → V) (FD : D → D → D) (hF : ∀ b x, (FD b x).1 = F b.1 x.1) :
     ∀ (ws : List D) (b : D), (ws.map Subtype.val).foldl F b.1 = (ws.foldl FD b).1
   | [], _ => rfl
   | x :: ws, b => by
     rw [List.map_cons, List.foldl_cons, List.foldl_cons, ← hF]
     exact foldl_val F FD hF ws _
 
-theorem bestOf_val (better : Key → Key → Bool) (κ : V → Key) (κD : D → Key)
+private theorem bestOf_val (better : Key → Key → Bool) (κ : V → Key) (κD : D → Key)
     (h : ∀ x y : D, better (κ x.1) (κ y.1) = better (κD x) (κD y)) (cur : D) (ws : List D) :
     bestOf better κ cur.1 (ws.map Subtype.val) = (bestOf better κD cur ws).1 := by
   unfold bestOf
@@ -68,7 +79,7 @@ theorem bestOf_val (better : Key → Key → Bool) (κ : V → Key) (κD : D →
   rw [h x b]
   split_ifs <;> rfl
 
-theorem argmaxKey_val (ks : V → Key) (ksD : D → Key)
+private theorem argmaxKey_val (ks : V → Key) (ksD : D → Key)
     (h : ∀ x y : D, ks x.1 < ks y.1 ↔ ksD x < ksD y)
     (d : D) : ∀ ws : List D, argmaxKey ks d.1 (ws.map Subtype.val) = (argmaxKey ksD d ws).1
   | [] => rfl
@@ -81,7 +92,7 @@ theorem argmaxKey_val (ks : V → Key) (ksD : D → Key)
 
 /-! ### Best responses -/
 
-theorem respondRound_val (pl : Bool) {p : V → V} {pD : D → D} (hp : ∀ a, (pD a).1 = p a.1)
+private theorem respondRound_val (pl : Bool) {p : V → V} {pD : D → D} (hp : ∀ a, (pD a).1 = p a.1)
     (a : D) : look (respondRound G pl p) a.1 a.1 = (look (respondRound GD pl pD) a a).1 := by
   rw [respondRound_apply, respondRound_apply]
   have hown : ownedBy GD pl a = ownedBy G pl a.1 := rfl
@@ -92,7 +103,7 @@ theorem respondRound_val (pl : Bool) {p : V → V} {pD : D → D} (hp : ∀ a, (
     cases pl <;> simp [key_lt_val G hD hp hp]
   · rw [ite_eq_right ho, ite_eq_right ho]; exact (hp a).symm
 
-theorem respond_succ {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
+private theorem respond_succ {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
     (pl : Bool) (bf : ℕ) (p : W → W) :
     respond H pl (bf + 1) p = if ∀ v, look (respondRound H pl p) v v = p v then some p
       else respond H pl bf (fun v => look (respondRound H pl p) v v) := by
@@ -102,7 +113,7 @@ theorem respond_succ {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [Decid
   · rw [ite_eq_left h, ite_eq_left (by simpa [List.all_eq_true] using fun v _ => h v)]
   · rw [ite_eq_right h, ite_eq_right (by simpa [List.all_eq_true, mem_univList] using h)]
 
-theorem respond_fix {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
+private theorem respond_fix {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
     (pl : Bool) : ∀ (bf : ℕ) (x y : W → W), respond H pl bf x = some y →
       (∀ v, look (respondRound H pl x) v v = x v) → y = x
   | 0, _, _, h, _ => by simp [respond] at h
@@ -111,7 +122,7 @@ theorem respond_fix {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [Decida
     exact (Option.some.inj h).symm
 
 /-- A best response restricts to the best response on the subgame. -/
-theorem respond_val (pl : Bool) : ∀ (bf : ℕ) (p q : V → V) (pD : D → D),
+private theorem respond_val (pl : Bool) : ∀ (bf : ℕ) (p q : V → V) (pD : D → D),
     (∀ a, (pD a).1 = p a.1) → respond G pl bf p = some q →
     ∃ qD : D → D, (∀ a, (qD a).1 = q a.1) ∧ respond GD pl bf pD = some qD
   | 0, _, _, _, _, h => by simp [respond] at h
@@ -136,7 +147,7 @@ theorem respond_val (pl : Bool) : ∀ (bf : ℕ) (p q : V → V) (pD : D → D),
 
 /-! ### Improving and filtered edges -/
 
-theorem improving_val {ks : V → Key} {ksD : D → Key}
+private theorem improving_val {ks : V → Key} {ksD : D → Key}
     (h : ∀ x y : D, ks x.1 < ks y.1 ↔ ksD x < ksD y) {p : V → V} {pD : D → D}
     (hp : ∀ a, (pD a).1 = p a.1) (a : D) :
     improving G ks p a.1 = (improving GD ksD pD a).map Subtype.val := by
@@ -150,11 +161,11 @@ theorem improving_val {ks : V → Key} {ksD : D → Key}
     refine List.filter_congr fun w _ => ?_
     simp only [comp_apply, ← hp a, h]
 
-instance mxDecidable {W : Type*} [Fintype W] (H : Game W) [DecidableRel H.edge] (κ : W → Key)
+private instance mxDecidable {W : Type*} [Fintype W] (H : Game W) [DecidableRel H.edge] (κ : W → Key)
     (v w : W) : Decidable (Mx H κ v w) := by
   unfold Mx; infer_instance
 
-theorem filtered_eq {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
+private theorem filtered_eq {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
     (ks kstar : W → Key) (p : W → W) (v : W) :
     filtered H ks kstar p v = (improving H ks p v).filter fun w => decide (Mx H kstar v w) := by
   unfold filtered
@@ -163,7 +174,7 @@ theorem filtered_eq {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [Decida
   exact ⟨fun h => filtered_max H (List.mem_filter.2 ⟨hw, h⟩),
     fun h => (List.mem_filter.1 (mem_filtered H hw h)).2⟩
 
-theorem mx_val {κ : V → Key} {κD : D → Key} (h : ∀ x y : D, κ x.1 ≤ κ y.1 ↔ κD x ≤ κD y)
+private theorem mx_val {κ : V → Key} {κD : D → Key} (h : ∀ x y : D, κ x.1 ≤ κ y.1 ↔ κD x ≤ κD y)
     (a w : D) : Mx G κ a.1 w.1 ↔ Mx GD κD a w := by
   constructor
   · intro hm x hx
@@ -171,7 +182,7 @@ theorem mx_val {κ : V → Key} {κD : D → Key} (h : ∀ x y : D, κ x.1 ≤ �
   · intro hm x hx
     exact (h ⟨x, hD a.1 a.2 x hx⟩ w).2 (hm _ hx)
 
-theorem filtered_val {ks kstar : V → Key} {ksD kstarD : D → Key}
+private theorem filtered_val {ks kstar : V → Key} {ksD kstarD : D → Key}
     (h : ∀ x y : D, ks x.1 < ks y.1 ↔ ksD x < ksD y)
     (h' : ∀ x y : D, kstar x.1 ≤ kstar y.1 ↔ kstarD x ≤ kstarD y) {p : V → V} {pD : D → D}
     (hp : ∀ a, (pD a).1 = p a.1) (a : D) :
@@ -184,7 +195,7 @@ theorem filtered_val {ks kstar : V → Key} {ksD kstarD : D → Key}
 /-! ### One iteration -/
 
 /-- One H-B iteration, with the filter known to be used. -/
-theorem hbStep_eq {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
+private theorem hbStep_eq {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [DecidableRel H.edge]
     (hrel : H.Relabelled) {bf : ℕ} {p ps : W → W} (he : ∀ v, H.edge v (p v))
     (hps : respond H true bf p = some ps) :
     hbStep H bf p = if ∀ v, improving H (key H ps) p v = [] then .done (keyTable H ps) else
@@ -215,13 +226,13 @@ theorem hbStep_eq {W : Type*} [Fintype W] [LinearOrder W] (H : Game W) [Decidabl
       obtain ⟨w, hw⟩ := hF ⟨v, hv⟩
       rw [ite_eq_left (by simpa [List.any_eq_true, mem_univList] using ⟨w, hw⟩)]
 
-theorem relabelled_subgame (hrel : G.Relabelled) : (subgame G D hD).Relabelled :=
+private theorem relabelled_subgame (hrel : G.Relabelled) : (subgame G D hD).Relabelled :=
   fun _ _ hab => hrel hab
 
 /-- One non-final iteration of H-B on `G` restricts to one iteration on the subgame: either a
     non-final one computing the restriction of the next profile, or a final one, and then the
     restriction to `D` is unchanged. -/
-theorem hbStep_val (hrel : G.Relabelled) {bf : ℕ} {p ps : V → V} {pD psD : D → D}
+private theorem hbStep_val (hrel : G.Relabelled) {bf : ℕ} {p ps : V → V} {pD psD : D → D}
     (hp : ∀ a, (pD a).1 = p a.1) (he : ∀ v, G.edge v (p v)) {qt : List (V × V)}
     (h : hbStep G bf p = .next qt) (hps : respond G true bf p = some ps)
     (hpsD : ∀ a, (psD a).1 = ps a.1) (hpsD' : respond GD true bf pD = some psD) :
@@ -331,7 +342,7 @@ theorem autonomy (bf : ℕ) : Autonomy G bf := by
 /-! ### O1 -/
 
 /-- Along a trace with enough fuel the potential `hbPot` increases strictly. -/
-theorem runTrace_pot_lt {bf L : ℕ} {p ps : ℕ → V → V} (hbf : hbFuel V ≤ bf)
+private theorem runTrace_pot_lt {bf L : ℕ} {p ps : ℕ → V → V} (hbf : hbFuel V ≤ bf)
     (h : RunTrace G bf L p ps) {a b : ℕ} (hab : a < b) (hb : b ≤ L) :
     hbPot G bf (p a) < hbPot G bf (p b) := by
   have hedge := runTrace_edge G h

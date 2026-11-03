@@ -20,19 +20,19 @@ set_option linter.unusedSectionVars false
 
 variable {V : Type*} [Fintype V] [LinearOrder V] (f : V → V)
 
-theorem iter_eq : ∀ (k : ℕ) (v : V), iter f k v = f^[k] v
+private theorem iter_eq : ∀ (k : ℕ) (v : V), iter f k v = f^[k] v
   | 0, _ => rfl
   | k + 1, v => by rw [iter, iter_eq k (f v), iterate_succ_apply]
 
-theorem mem_playPrefix (k : ℕ) (v y : V) : y ∈ playPrefix f k v ↔ ∃ i < k, f^[i] v = y := by
+private theorem mem_playPrefix (k : ℕ) (v y : V) : y ∈ playPrefix f k v ↔ ∃ i < k, f^[i] v = y := by
   simp [playPrefix, iter_eq]
 
 /-- `y` occurs infinitely often on the play from `x`. -/
-def Recurs (x y : V) : Prop := ∀ N, ∃ i, N ≤ i ∧ f^[i] x = y
+private def Recurs (x y : V) : Prop := ∀ N, ∃ i, N ≤ i ∧ f^[i] x = y
 
 variable {f}
 
-theorem recurs_apply_iff {x y : V} : Recurs f (f x) y ↔ Recurs f x y := by
+private theorem recurs_apply_iff {x y : V} : Recurs f (f x) y ↔ Recurs f x y := by
   constructor
   · intro h N
     obtain ⟨i, hi, e⟩ := h N
@@ -43,14 +43,14 @@ theorem recurs_apply_iff {x y : V} : Recurs f (f x) y ↔ Recurs f x y := by
     rw [← iterate_succ_apply, show (i - 1).succ = i by omega]
     exact e
 
-theorem recurs_trans {x y z : V} (hxy : Recurs f x y) (hyz : Recurs f y z) : Recurs f x z := by
+private theorem recurs_trans {x y z : V} (hxy : Recurs f x y) (hyz : Recurs f y z) : Recurs f x z := by
   intro N
   obtain ⟨i, -, hi⟩ := hxy 0
   obtain ⟨j, hj, e⟩ := hyz N
   exact ⟨j + i, by omega, by rw [iterate_add_apply, hi, e]⟩
 
 /-- A periodic point reachable from `x` recurs, and so does every point of its orbit. -/
-theorem recurs_of_periodic {x c : V} {p a : ℕ} (hp : 0 < p) (hc : IsPeriodicPt f p c)
+private theorem recurs_of_periodic {x c : V} {p a : ℕ} (hp : 0 < p) (hc : IsPeriodicPt f p c)
     (ha : f^[a] x = c) (i : ℕ) : Recurs f x (f^[i] c) := by
   intro N
   refine ⟨i + p * N + a, ?_, ?_⟩
@@ -59,19 +59,19 @@ theorem recurs_of_periodic {x c : V} {p a : ℕ} (hp : 0 < p) (hc : IsPeriodicPt
   · rw [iterate_add_apply, iterate_add_apply, ha, (hc.mul_const N).eq]
 
 /-- A recurring vertex is periodic. -/
-theorem periodic_of_recurs {x y : V} (h : Recurs f x y) : ∃ p, 0 < p ∧ IsPeriodicPt f p y := by
+private theorem periodic_of_recurs {x y : V} (h : Recurs f x y) : ∃ p, 0 < p ∧ IsPeriodicPt f p y := by
   obtain ⟨i, -, hi⟩ := h 0
   obtain ⟨j, hj, hj'⟩ := h (i + 1)
   refine ⟨j - i, by omega, ?_⟩
   show f^[j - i] y = y
   rw [← hi, ← iterate_add_apply, show j - i + i = j by omega, hj', hi]
 
-theorem recurs_self_of_recurs {x y : V} (h : Recurs f x y) : Recurs f y y := by
+private theorem recurs_self_of_recurs {x y : V} (h : Recurs f x y) : Recurs f y y := by
   obtain ⟨p, hp, hpy⟩ := periodic_of_recurs h
   simpa using recurs_of_periodic (a := 0) hp hpy rfl 0
 
 /-- After `|V|` steps the play is periodic, with a period of at most `|V|`. -/
-theorem exists_period (x : V) :
+private theorem exists_period (x : V) :
     ∃ p, 0 < p ∧ p ≤ Fintype.card V ∧ IsPeriodicPt f p (f^[Fintype.card V] x) := by
   obtain ⟨a, b, hab, e⟩ := Fintype.exists_ne_map_eq_of_card_lt
     (fun i : Fin (Fintype.card V + 1) => f^[i] x) (by simp)
@@ -89,7 +89,7 @@ theorem exists_period (x : V) :
   · exact key a b h e
   · exact key b a h e.symm
 
-theorem le_foldl_max : ∀ (l : List V) (c : V), c ≤ l.foldl max c ∧ ∀ y ∈ l, y ≤ l.foldl max c
+private theorem le_foldl_max : ∀ (l : List V) (c : V), c ≤ l.foldl max c ∧ ∀ y ∈ l, y ≤ l.foldl max c
   | [], c => by simp
   | x :: l, c => by
     obtain ⟨h1, h2⟩ := le_foldl_max l (max c x)
@@ -97,7 +97,7 @@ theorem le_foldl_max : ∀ (l : List V) (c : V), c ≤ l.foldl max c ∧ ∀ y �
     simp only [List.mem_cons, forall_eq_or_imp, List.foldl_cons]
     exact ⟨(le_max_right c x).trans h1, h2⟩
 
-theorem foldl_max_mem : ∀ (l : List V) (c : V), l.foldl max c = c ∨ l.foldl max c ∈ l
+private theorem foldl_max_mem : ∀ (l : List V) (c : V), l.foldl max c = c ∨ l.foldl max c ∈ l
   | [], c => by simp
   | x :: l, c => by
     simp only [List.foldl_cons, List.mem_cons]
@@ -107,7 +107,7 @@ theorem foldl_max_mem : ∀ (l : List V) (c : V), l.foldl max c = c ∨ l.foldl 
     · exact Or.inr (Or.inr h)
 
 /-- The cycle maximum recurs. -/
-theorem recurs_cycMax (x : V) : Recurs f x (cycMax f x) := by
+private theorem recurs_cycMax (x : V) : Recurs f x (cycMax f x) := by
   obtain ⟨p, hp, -, hc⟩ := exists_period (f := f) x
   unfold cycMax
   simp only [iter_eq]
@@ -120,7 +120,7 @@ theorem recurs_cycMax (x : V) : Recurs f x (cycMax f x) := by
     exact recurs_of_periodic hp hc rfl i
 
 /-- Every recurring vertex is at most the cycle maximum. -/
-theorem le_cycMax {x y : V} (h : Recurs f x y) : y ≤ cycMax f x := by
+private theorem le_cycMax {x y : V} (h : Recurs f x y) : y ≤ cycMax f x := by
   obtain ⟨p, hp, hpn, hc⟩ := exists_period (f := f) x
   obtain ⟨i, hi, e⟩ := h (Fintype.card V)
   have hy : y = f^[(i - Fintype.card V) % p] (f^[Fintype.card V] x) := by
@@ -132,17 +132,17 @@ theorem le_cycMax {x y : V} (h : Recurs f x y) : y ≤ cycMax f x := by
   rw [mem_playPrefix]
   exact ⟨_, lt_of_lt_of_le (Nat.mod_lt _ hp) hpn, hy.symm⟩
 
-theorem cycMax_apply (x : V) : cycMax f (f x) = cycMax f x :=
+private theorem cycMax_apply (x : V) : cycMax f (f x) = cycMax f x :=
   le_antisymm (le_cycMax (recurs_apply_iff.1 (recurs_cycMax (f x))))
     (le_cycMax (recurs_apply_iff.2 (recurs_cycMax x)))
 
-theorem cycMax_cycMax (x : V) : cycMax f (cycMax f x) = cycMax f x := by
+private theorem cycMax_cycMax (x : V) : cycMax f (cycMax f x) = cycMax f x := by
   have h := recurs_cycMax (f := f) x
   exact le_antisymm (le_cycMax (recurs_trans h (recurs_cycMax _)))
     (le_cycMax (recurs_self_of_recurs h))
 
 /-- The play from `x` reaches its cycle maximum within `2 |V|` steps. -/
-theorem exists_hit (x : V) : ∃ i, i < 2 * Fintype.card V + 1 ∧ f^[i] x = cycMax f x := by
+private theorem exists_hit (x : V) : ∃ i, i < 2 * Fintype.card V + 1 ∧ f^[i] x = cycMax f x := by
   have h := foldl_max_mem (playPrefix f (Fintype.card V) (f^[Fintype.card V] x))
     (f^[Fintype.card V] x)
   have hc : cycMax f x = (playPrefix f (Fintype.card V) (f^[Fintype.card V] x)).foldl max
@@ -156,7 +156,7 @@ theorem exists_hit (x : V) : ∃ i, i < 2 * Fintype.card V + 1 ∧ f^[i] x = cyc
     exact ⟨i + Fintype.card V, by omega, by rw [iterate_add_apply, e]⟩
 
 /-- `stepsTo` is the first time the play reaches its cycle maximum. -/
-theorem stepsTo_spec (x : V) :
+private theorem stepsTo_spec (x : V) :
     f^[stepsTo f x] x = cycMax f x ∧ ∀ j < stepsTo f x, f^[j] x ≠ cycMax f x := by
   obtain ⟨i, hi, e⟩ := exists_hit (f := f) x
   have hne : (List.range (2 * Fintype.card V + 1)).find?
@@ -177,11 +177,11 @@ theorem stepsTo_spec (x : V) :
   · rw [hs] at hj
     simpa [iter_eq] using hk.2.2 j hj
 
-theorem stepsTo_eq_zero {x : V} (h : x = cycMax f x) : stepsTo f x = 0 := by
+private theorem stepsTo_eq_zero {x : V} (h : x = cycMax f x) : stepsTo f x = 0 := by
   by_contra hne
   exact (stepsTo_spec (f := f) x).2 0 (by omega) (by simpa using h)
 
-theorem stepsTo_apply {x : V} (h : x ≠ cycMax f x) : stepsTo f x = stepsTo f (f x) + 1 := by
+private theorem stepsTo_apply {x : V} (h : x ≠ cycMax f x) : stepsTo f x = stepsTo f (f x) + 1 := by
   obtain ⟨h1, h2⟩ := stepsTo_spec (f := f) x
   obtain ⟨h1', h2'⟩ := stepsTo_spec (f := f) (f x)
   rw [cycMax_apply] at h1' h2'
@@ -198,15 +198,15 @@ theorem stepsTo_apply {x : V} (h : x ≠ cycMax f x) : stepsTo f x = stepsTo f (
     exact h2 (stepsTo f (f x) + 1) (by omega) (by rw [iterate_succ_apply, h1'])
   omega
 
-theorem mem_bSet {x y : V} :
+private theorem mem_bSet {x y : V} :
     y ∈ bSet f x ↔ (∃ i < stepsTo f x, f^[i] x = y) ∧ cycMax f x < y := by
   simp [bSet, mem_playPrefix]
 
-theorem bSet_eq_empty {x : V} (h : x = cycMax f x) : bSet f x = ∅ := by
+private theorem bSet_eq_empty {x : V} (h : x = cycMax f x) : bSet f x = ∅ := by
   ext y
   simp [mem_bSet, stepsTo_eq_zero h]
 
-theorem bSet_apply {x : V} (h : x ≠ cycMax f x) :
+private theorem bSet_apply {x : V} (h : x ≠ cycMax f x) :
     bSet f x = if cycMax f x < x then insert x (bSet f (f x)) else bSet f (f x) := by
   ext y
   simp only [mem_bSet, stepsTo_apply h]
@@ -231,7 +231,7 @@ theorem bSet_apply {x : V} (h : x ≠ cycMax f x) :
       exact ⟨⟨i + 1, by omega, by rw [iterate_succ_apply, e]⟩, hlt'⟩
 
 /-- A vertex more relevant than the cycle maximum is not revisited. -/
-theorem not_mem_bSet_apply {x : V} (h : cycMax f x < x) : x ∉ bSet f (f x) := by
+private theorem not_mem_bSet_apply {x : V} (h : cycMax f x < x) : x ∉ bSet f (f x) := by
   intro hx
   obtain ⟨⟨i, -, e⟩, -⟩ := mem_bSet.1 hx
   have hper : IsPeriodicPt f (i + 1) x := by
@@ -242,7 +242,7 @@ theorem not_mem_bSet_apply {x : V} (h : cycMax f x < x) : x ∉ bSet f (f x) := 
   exact absurd this (not_le.2 h)
 
 /-- From the successor of the cycle maximum no vertex above it is visited before it is reached. -/
-theorem bSet_apply_cycMax (x : V) : bSet f (f (cycMax f x)) = ∅ := by
+private theorem bSet_apply_cycMax (x : V) : bSet f (f (cycMax f x)) = ∅ := by
   ext y
   simp only [Finset.notMem_empty, iff_false]
   intro hy

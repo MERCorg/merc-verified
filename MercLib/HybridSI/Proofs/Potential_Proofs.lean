@@ -3,6 +3,15 @@ module
 public import MercLib.HybridSI.Potential
 public import MercLib.HybridSI.Proofs.Epoch_Proofs
 public import MercLib.HybridSI.Proofs.Termination_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Epoch_Proofs
+import all MercLib.HybridSI.Proofs.Filter_Proofs
+import all MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Termination_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIPotentialProofs
 
@@ -32,7 +41,7 @@ variable (G : Game V) [DecidableRel G.edge]
 /-! ### Traces -/
 
 /-- The profiles of a trace follow edges. -/
-theorem runTrace_edge {bf L : ℕ} {p ps : ℕ → V → V} (h : RunTrace G bf L p ps) :
+private theorem runTrace_edge {bf L : ℕ} {p ps : ℕ → V → V} (h : RunTrace G bf L p ps) :
     ∀ k ≤ L, ∀ v, G.edge v (p k v) := by
   obtain ⟨h0, -, hstep⟩ := h
   intro k
@@ -75,7 +84,7 @@ theorem runTraceOfRun (bf : ℕ) : RunTraceOfRun G bf := by
 
 /-! ### P2: monotonicity of the valuation -/
 
-theorem runTrace_step_le {bf L : ℕ} {p ps : ℕ → V → V} (h : RunTrace G bf L p ps) {k : ℕ}
+private theorem runTrace_step_le {bf L : ℕ} {p ps : ℕ → V → V} (h : RunTrace G bf L p ps) {k : ℕ}
     (hk : k < L) (v : V) : key G (ps k) v ≤ key G (ps (k + 1)) v := by
   have hedge := runTrace_edge G h
   obtain ⟨-, hresp, hstep⟩ := h
@@ -109,7 +118,7 @@ theorem valuationMonotone (bf : ℕ) : ValuationMonotone G bf := by
 /-! ### P3: changes of the cycle maxima -/
 
 /-- A non-decreasing sequence on `0, …, L` with values in `S` changes at most `|S| - 1` times. -/
-theorem card_changes_le (r : ℕ → ℤ) (L : ℕ) (S : Finset ℤ) (hS : ∀ k ≤ L, r k ∈ S)
+private theorem card_changes_le (r : ℕ → ℤ) (L : ℕ) (S : Finset ℤ) (hS : ∀ k ≤ L, r k ∈ S)
     (hmono : ∀ k < L, r k ≤ r (k + 1)) :
     ((Finset.range L).filter fun k => r k ≠ r (k + 1)).card + 1 ≤ S.card := by
   have hle : ∀ j k, j ≤ k → k ≤ L → r j ≤ r k := by
@@ -145,7 +154,7 @@ theorem card_changes_le (r : ℕ → ℤ) (L : ℕ) (S : Finset ℤ) (hS : ∀ k
   omega
 
 /-- The first key component is the reward (for Even) of the cycle maximum. -/
-theorem rI_le_of_key_le {f g : V → V} {a b : V} (h : key G f a ≤ key G g b) :
+private theorem rI_le_of_key_le {f g : V → V} {a b : V} (h : key G f a ≤ key G g b) :
     rI G .zero (cycMax f a) ≤ rI G .zero (cycMax g b) := by
   have ha := kfor_key G f .zero a
   have hb := kfor_key G g .zero b
@@ -181,56 +190,10 @@ theorem cycleMaxChanges (bf : ℕ) : CycleMaxChanges G bf := by
 
 /-! ### Entries into Even edges -/
 
-/-- Entries bound iterations (headline). -/
-theorem entryIterations (bf : ℕ) (p₀ : V → V) (c : ℕ) : EntryIterations G bf p₀ c := by
-  intro hent L p ps hp0 h
-  have hedge := runTrace_edge G h
-  set E : Finset (V × V) := Finset.univ.filter fun e : V × V => G.owner e.1 = .zero ∧ G.edge e.1 e.2
-  have hsub : Finset.range L ⊆ E.biUnion fun e => entryRounds L p e.1 e.2 := by
-    intro k hk
-    have hkL := Finset.mem_range.1 hk
-    obtain ⟨qt, hqt, hpk⟩ := h.2.2 k hkL
-    obtain ⟨ps', -, -, v, hv0, hv⟩ := hbStep_next_spec G hqt
-    have hne : p (k + 1) v ≠ p k v := by
-      rw [hpk]; intro he; simp only at he; rw [he] at hv; exact lt_irrefl _ hv
-    refine Finset.mem_biUnion.2 ⟨(v, p (k + 1) v), ?_, ?_⟩
-    · simp only [E, Finset.mem_filter, Finset.mem_univ, true_and]
-      exact ⟨hv0, hedge (k + 1) hkL v⟩
-    · simp only [entryRounds, Finset.mem_filter, Finset.mem_range]
-      simpa using ⟨hkL, Ne.symm hne⟩
-  calc L = (Finset.range L).card := (Finset.card_range L).symm
-    _ ≤ (E.biUnion fun e => entryRounds L p e.1 e.2).card := Finset.card_le_card hsub
-    _ ≤ ∑ e ∈ E, (entryRounds L p e.1 e.2).card := Finset.card_biUnion_le
-    _ ≤ ∑ _e ∈ E, c := Finset.sum_le_sum fun e he => by
-        simp only [E, Finset.mem_filter, Finset.mem_univ, true_and] at he
-        exact hent L p ps hp0 h e.1 e.2 he.1 he.2
-    _ = c * numEvenEdges G := by simp [numEvenEdges, E, mul_comm]
-
-theorem numEvenEdges_le : numEvenEdges G ≤ Fintype.card V * Fintype.card V := by
-  unfold numEvenEdges
-  exact (Finset.card_filter_le _ _).trans (by simp)
-
-/-- ENT gives polynomially many iterations (headline). -/
-theorem entryPoly : EntryPoly := by
-  intro hent
-  refine ⟨3, fun n G _ hrel it kt hrun => ?_⟩
-  obtain ⟨L, p, ps, hit, hp0, htr, -⟩ :=
-    runTraceOfRun G _ _ 0 (initProfile G) it kt (initProfile_edge G) hrun
-  have h1 := entryIterations G _ _ _ (hent n G _ hrel) L p ps hp0 htr
-  have h2 := numEvenEdges_le G
-  simp only [Fintype.card_fin] at h2
-  subst hit
-  calc 0 + L ≤ n * (n * n) := by
-        have := Nat.mul_le_mul_left n h2
-        omega
-    _ ≤ (n + 1) ^ 3 := by
-        have := Nat.mul_le_mul (Nat.le_succ n) (Nat.mul_le_mul (Nat.le_succ n) (Nat.le_succ n))
-        simpa [pow_succ, mul_assoc] using this
-
 /-! ### TOP: changes at the top level -/
 
 /-- With equal rewards of the cycle maxima, the `B`-sums (for Even) compare like the keys. -/
-theorem sum_le_of_key_le {f g : V → V} {a b : V} (h : key G f a ≤ key G g b)
+private theorem sum_le_of_key_le {f g : V → V} {a b : V} (h : key G f a ≤ key G g b)
     (hr : rI G .zero (cycMax f a) = rI G .zero (cycMax g b)) :
     ∑ y ∈ bSet f a, wI G .zero y ≤ ∑ y ∈ bSet g b, wI G .zero y := by
   have ha := kfor_key G f .zero a
@@ -244,11 +207,11 @@ theorem sum_le_of_key_le {f g : V → V} {a b : V} (h : key G f a ≤ key G g b)
 
 /-- The top-level potential of a vertex: twice the reward of the cycle maximum, plus `1` if the
     membership of the top vertex `t` in `B` is the one Even prefers. -/
-def topPot (t : V) (f : V → V) (v : V) : ℤ :=
+private def topPot (t : V) (f : V → V) (v : V) : ℤ :=
   2 * rI G .zero (cycMax f v) +
     if (t ∈ bSet f v) = (0 < wI G .zero t) then 1 else 0
 
-theorem topPot_mono {t : V} (ht : ∀ x, x ≤ t) {f g : V → V} {v : V}
+private theorem topPot_mono {t : V} (ht : ∀ x, x ≤ t) {f g : V → V} {v : V}
     (h : key G f v ≤ key G g v) : topPot G t f v ≤ topPot G t g v := by
   have hr := rI_le_of_key_le G h
   unfold topPot
@@ -278,7 +241,7 @@ theorem topPot_mono {t : V} (ht : ∀ x, x ≤ t) {f g : V → V} {v : V}
     by_cases h1 : t ∈ bSet f v <;> by_cases h2 : t ∈ bSet g v <;>
       by_cases h3 : 0 < wI G .zero t <;> simp_all <;> omega
 
-theorem topPot_inj {t : V} {f g : V → V} {v : V} (h : topPot G t f v = topPot G t g v) :
+private theorem topPot_inj {t : V} {f g : V → V} {v : V} (h : topPot G t f v = topPot G t g v) :
     topClass t f v = topClass t g v := by
   unfold topPot at h
   have hr : rI G .zero (cycMax f v) = rI G .zero (cycMax g v) := by split_ifs at h <;> omega
@@ -339,82 +302,7 @@ theorem vertexCycMaxChanges (bf : ℕ) : VertexCycMaxChanges G bf := by
   have := Finset.card_le_card hsub
   omega
 
-/-- Crossings at changes of a cycle maximum (headline, PXLc). -/
-theorem crossCycMaxChanges (bf : ℕ) : CrossCycMaxChanges G bf := by
-  intro L p ps h a b
-  have hsub : ((crossRounds G L ps a b).filter fun k =>
-      cycMax (ps k) a ≠ cycMax (ps (k + 1)) a ∨ cycMax (ps k) b ≠ cycMax (ps (k + 1)) b) ⊆
-      ((Finset.range L).filter fun k => cycMax (ps k) a ≠ cycMax (ps (k + 1)) a) ∪
-      ((Finset.range L).filter fun k => cycMax (ps k) b ≠ cycMax (ps (k + 1)) b) := by
-    intro k hk
-    simp only [crossRounds, Finset.mem_filter, Finset.mem_range, Finset.mem_union] at hk ⊢
-    tauto
-  have h1 := vertexCycMaxChanges G bf L p ps h a
-  have h2 := vertexCycMaxChanges G bf L p ps h b
-  have := (Finset.card_le_card hsub).trans (Finset.card_union_le _ _)
-  omega
-
 /-! ### RED: epoch changes and crossings of sibling pairs -/
-
-theorem cross_of_event {x y x' y' : Key} (h1 : x ≤ y) (h2 : y' ≤ x') (hn : ¬ (x = y ∧ x' = y')) :
-    compare x y ≠ compare x' y' ∧ compare y x ≠ compare y' x' := by
-  rcases lt_or_eq_of_le h1 with hl | he
-  · have c1 : compare x y = .lt := compare_lt_iff_lt.2 hl
-    have c2 : compare y x = .gt := compare_gt_iff_gt.2 hl
-    refine ⟨fun hc => ?_, fun hc => ?_⟩
-    · rw [c1] at hc
-      exact absurd (compare_lt_iff_lt.1 hc.symm) (not_lt.2 h2)
-    · rw [c2] at hc
-      exact absurd (compare_gt_iff_gt.1 hc.symm) (not_lt.2 h2)
-  · have hne : x' ≠ y' := fun he' => hn ⟨he, he'⟩
-    have c1 : compare x y = .eq := compare_eq_iff_eq.2 he
-    have c2 : compare y x = .eq := compare_eq_iff_eq.2 he.symm
-    refine ⟨fun hc => ?_, fun hc => ?_⟩
-    · rw [c1] at hc
-      exact hne (compare_eq_iff_eq.1 hc.symm)
-    · rw [c2] at hc
-      exact hne (compare_eq_iff_eq.1 hc.symm).symm
-
-/-- Epoch changes and crossings of sibling pairs (headline, RED). -/
-theorem epochCrossings (bf : ℕ) : EpochCrossings G bf := by
-  intro L p ps h
-  have hedge := runTrace_edge G h
-  have hpse : ∀ k ≤ L, ∀ v, G.edge v (ps k v) := fun k hk =>
-    (respond_spec G true bf _ _ (h.2.1 k hk)).2.1 (hedge k hk)
-  have hopt : ∀ k ≤ L, ∀ u, G.owner u = .one → ∀ w, G.edge u w →
-      key G (ps k) (ps k u) ≤ key G (ps k) w := fun k hk u hu w hw => by
-    simpa using (respond_spec G true bf _ _ (h.2.1 k hk)).2.2 u ((ownedBy_true_iff G u).2 hu) w hw
-  have hsub : oddChangeRounds G L ps ⊆ tieRounds G L ps ∪
-      (siblingPairs G).biUnion fun x => crossRounds G L ps x.2.1 x.2.2 := by
-    intro k hk
-    by_cases ht : k ∈ tieRounds G L ps
-    · exact Finset.mem_union_left _ ht
-    refine Finset.mem_union_right _ ?_
-    have hkL : k < L := by
-      simp only [oddChangeRounds, Finset.mem_filter, Finset.mem_range] at hk; exact hk.1
-    simp only [tieRounds, Finset.mem_filter, hk, true_and, not_forall] at ht
-    obtain ⟨u, hu, hab, hn⟩ := ht
-    have h1 := hopt k hkL.le u hu _ (hpse (k + 1) hkL u)
-    have h2 := hopt (k + 1) hkL u hu _ (hpse k hkL.le u)
-    obtain ⟨c1, c2⟩ := cross_of_event h1 h2 hn
-    rcases lt_or_gt_of_ne hab with hlt | hlt
-    · refine Finset.mem_biUnion.2 ⟨(u, ps k u, ps (k + 1) u), ?_, ?_⟩
-      · simp only [siblingPairs, Finset.mem_filter, Finset.mem_univ, true_and]
-        exact ⟨hu, hpse k hkL.le u, hpse (k + 1) hkL u, hlt⟩
-      · simp only [crossRounds, Finset.mem_filter, Finset.mem_range]
-        exact ⟨hkL, c1⟩
-    · refine Finset.mem_biUnion.2 ⟨(u, ps (k + 1) u, ps k u), ?_, ?_⟩
-      · simp only [siblingPairs, Finset.mem_filter, Finset.mem_univ, true_and]
-        exact ⟨hu, hpse (k + 1) hkL u, hpse k hkL.le u, hlt⟩
-      · simp only [crossRounds, Finset.mem_filter, Finset.mem_range]
-        exact ⟨hkL, c2⟩
-  calc (oddChangeRounds G L ps).card
-      ≤ (tieRounds G L ps ∪ (siblingPairs G).biUnion fun x => crossRounds G L ps x.2.1 x.2.2).card :=
-        Finset.card_le_card hsub
-    _ ≤ (tieRounds G L ps).card +
-        ((siblingPairs G).biUnion fun x => crossRounds G L ps x.2.1 x.2.2).card :=
-        Finset.card_union_le _ _
-    _ ≤ _ := Nat.add_le_add_left Finset.card_biUnion_le _
 
 end MercLib.HybridSI
 

@@ -2,6 +2,10 @@ module
 
 public import MercLib.HybridSI.Correctness
 public import MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSICorrectnessProofs
 
@@ -23,7 +27,7 @@ variable {V : Type*} [Fintype V] [LinearOrder V]
 
 /-! ### Tables -/
 
-theorem lookup_map_self {α : Type*} (g : V → α) :
+private theorem lookup_map_self {α : Type*} (g : V → α) :
     ∀ (l : List V) (v : V), v ∈ l → (l.map fun x => (x, g x)).lookup v = some (g v)
   | [], _, h => absurd h (List.not_mem_nil)
   | x :: l, v, h => by
@@ -34,21 +38,21 @@ theorem lookup_map_self {α : Type*} (g : V → α) :
       rw [this]
       exact lookup_map_self g l v ((List.mem_cons.1 h).resolve_left hv)
 
-theorem mem_univList (v : V) : v ∈ univList V := by simp [univList]
+private theorem mem_univList (v : V) : v ∈ univList V := by simp [univList]
 
-theorem look_tabulate {α : Type*} (g : V → α) (d : α) (v : V) : look (tabulate g) d v = g v := by
+private theorem look_tabulate {α : Type*} (g : V → α) (d : α) (v : V) : look (tabulate g) d v = g v := by
   simp [look, tabulate, lookup_map_self g _ v (mem_univList v)]
 
 variable (G : Game V) [DecidableRel G.edge]
 
-theorem mem_succList {v w : V} : w ∈ succList G v ↔ G.edge v w := by
+private theorem mem_succList {v w : V} : w ∈ succList G v ↔ G.edge v w := by
   simp [succList, mem_univList]
 
 /-! ### Best responses -/
 
 /-- `bestOf` for a maximising player: the result is at least the current move and every listed
     successor, and it is the current move or one of them. -/
-theorem bestOf_max (κ : V → Key) : ∀ (ws : List V) (cur : V),
+private theorem bestOf_max (κ : V → Key) : ∀ (ws : List V) (cur : V),
     (∀ w ∈ ws, κ w ≤ κ (bestOf (fun a b => decide (b < a)) κ cur ws)) ∧
       κ cur ≤ κ (bestOf (fun a b => decide (b < a)) κ cur ws) ∧
       (bestOf (fun a b => decide (b < a)) κ cur ws = cur ∨
@@ -78,7 +82,7 @@ theorem bestOf_max (κ : V → Key) : ∀ (ws : List V) (cur : V),
         · exact Or.inr (List.mem_cons_of_mem _ h)
 
 /-- `bestOf` for a minimising player. -/
-theorem bestOf_min (κ : V → Key) : ∀ (ws : List V) (cur : V),
+private theorem bestOf_min (κ : V → Key) : ∀ (ws : List V) (cur : V),
     (∀ w ∈ ws, κ (bestOf (fun a b => decide (a < b)) κ cur ws) ≤ κ w) ∧
       κ (bestOf (fun a b => decide (a < b)) κ cur ws) ≤ κ cur ∧
       (bestOf (fun a b => decide (a < b)) κ cur ws = cur ∨
@@ -107,10 +111,10 @@ theorem bestOf_min (κ : V → Key) : ∀ (ws : List V) (cur : V),
         · exact Or.inl h
         · exact Or.inr (List.mem_cons_of_mem _ h)
 
-theorem look_keyTable (p : V → V) (v : V) : look (keyTable G p) keyDefault v = key G p v :=
+private theorem look_keyTable (p : V → V) (v : V) : look (keyTable G p) keyDefault v = key G p v :=
   look_tabulate _ _ _
 
-theorem respondRound_apply (pl : Bool) (p : V → V) (v : V) :
+private theorem respondRound_apply (pl : Bool) (p : V → V) (v : V) :
     look (respondRound G pl p) v v = if ownedBy G pl v then
       bestOf (fun a b => if pl then decide (a < b) else decide (b < a)) (key G p) (p v)
         (succList G v) else p v := by
@@ -121,7 +125,7 @@ theorem respondRound_apply (pl : Bool) (p : V → V) (v : V) :
 
 /-- What a returned best response satisfies: the other player's moves are unchanged, moves follow
     edges, and no owned vertex has a strictly better successor under the returned profile. -/
-theorem respond_spec (pl : Bool) : ∀ (bf : ℕ) (p q : V → V), respond G pl bf p = some q →
+private theorem respond_spec (pl : Bool) : ∀ (bf : ℕ) (p q : V → V), respond G pl bf p = some q →
     (∀ v, ownedBy G pl v = false → q v = p v) ∧
     ((∀ v, G.edge v (p v)) → ∀ v, G.edge v (q v)) ∧
     (∀ v, ownedBy G pl v = true → ∀ w, G.edge v w →
@@ -168,7 +172,7 @@ theorem respond_spec (pl : Bool) : ∀ (bf : ℕ) (p q : V → V), respond G pl 
 /-! ### Exclusivity -/
 
 /-- The two players cannot both win from the same vertex. -/
-theorem not_winsFrom_both {σ τ : V → V} {v : V} (h0 : G.WinsFrom Set.univ .zero σ v)
+private theorem not_winsFrom_both {σ τ : V → V} {v : V} (h0 : G.WinsFrom Set.univ .zero σ v)
     (h1 : G.WinsFrom Set.univ .one τ v) : False := by
   classical
   let g : V → V := fun u => if G.owner u = .zero then σ u else τ u
@@ -218,7 +222,7 @@ theorem not_winsFrom_both {σ τ : V → V} {v : V} (h0 : G.WinsFrom Set.univ .z
 
 /-! ### The run of H-B -/
 
-theorem foldl_argmax_mem (ks : V → Key) : ∀ (ws : List V) (w : V),
+private theorem foldl_argmax_mem (ks : V → Key) : ∀ (ws : List V) (w : V),
     ws.foldl (fun b x => if decide (ks b < ks x) then x else b) w ∈ w :: ws
   | [], w => by simp
   | x :: ws, w => by
@@ -232,22 +236,22 @@ theorem foldl_argmax_mem (ks : V → Key) : ∀ (ws : List V) (w : V),
       · rw [h']; simp
       · exact List.mem_cons_of_mem _ (List.mem_cons_of_mem _ h')
 
-theorem argmaxKey_mem (ks : V → Key) (d : V) (w : V) (ws : List V) :
+private theorem argmaxKey_mem (ks : V → Key) (d : V) (w : V) (ws : List V) :
     argmaxKey ks d (w :: ws) ∈ w :: ws :=
   foldl_argmax_mem ks ws w
 
-theorem improving_sub (ks : V → Key) (p : V → V) (v w : V) (h : w ∈ improving G ks p v) :
+private theorem improving_sub (ks : V → Key) (p : V → V) (v w : V) (h : w ∈ improving G ks p v) :
     w ∈ succList G v := by
   unfold improving at h
   split_ifs at h
   · simp at h
   · exact (List.mem_filter.1 h).1
 
-theorem filtered_sub (ks kstar : V → Key) (p : V → V) (v w : V)
+private theorem filtered_sub (ks kstar : V → Key) (p : V → V) (v w : V)
     (h : w ∈ filtered G ks kstar p v) : w ∈ succList G v :=
   improving_sub G ks p v w (List.mem_filter.1 h).1
 
-theorem hbStep_done {bf : ℕ} {p : V → V} {kt : List (V × Key)} (h : hbStep G bf p = .done kt) :
+private theorem hbStep_done {bf : ℕ} {p : V → V} {kt : List (V × Key)} (h : hbStep G bf p = .done kt) :
     ∃ ps, respond G true bf p = some ps ∧ kt = keyTable G ps ∧
       ∀ v, improving G (key G ps) p v = [] := by
   unfold hbStep at h
@@ -264,7 +268,7 @@ theorem hbStep_done {bf : ℕ} {p : V → V} {kt : List (V × Key)} (h : hbStep 
       exact hall v (mem_univList v)
     · split at h <;> cases h
 
-theorem edge_of_sub (p : V → V) (he : ∀ v, G.edge v (p v)) (ks : V → Key) (v : V) (l : List V)
+private theorem edge_of_sub (p : V → V) (he : ∀ v, G.edge v (p v)) (ks : V → Key) (v : V) (l : List V)
     (hl : ∀ x ∈ l, x ∈ succList G v) :
     G.edge v (if l.isEmpty = true then p v else argmaxKey ks (p v) l) := by
   rcases l with _ | ⟨w, ws⟩
@@ -272,7 +276,7 @@ theorem edge_of_sub (p : V → V) (he : ∀ v, G.edge v (p v)) (ks : V → Key) 
   · simp only [List.isEmpty_cons, Bool.false_eq_true, ite_false]
     exact (mem_succList G).1 (hl _ (argmaxKey_mem ks (p v) w ws))
 
-theorem hbStep_next {bf : ℕ} {p : V → V} {qt : List (V × V)} (h : hbStep G bf p = .next qt)
+private theorem hbStep_next {bf : ℕ} {p : V → V} {qt : List (V × V)} (h : hbStep G bf p = .next qt)
     (he : ∀ v, G.edge v (p v)) : ∀ v, G.edge v (look qt v v) := by
   unfold hbStep at h
   rcases h1 : respond G true bf p with _ | ps
@@ -293,7 +297,7 @@ theorem hbStep_next {bf : ℕ} {p : V → V} {qt : List (V × V)} (h : hbStep G 
       · exact filtered_sub G _ _ p v x hx
       · exact improving_sub G _ p v x hx
 
-theorem hbRun_spec {bf : ℕ} : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (kt : List (V × Key)),
+private theorem hbRun_spec {bf : ℕ} : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (kt : List (V × Key)),
     hbRun G bf fuel it p = some (it', kt) → (∀ v, G.edge v (p v)) →
     ∃ p' ps, (∀ v, G.edge v (p' v)) ∧ respond G true bf p' = some ps ∧ kt = keyTable G ps ∧
       ∀ v, improving G (key G ps) p' v = []
@@ -311,16 +315,16 @@ theorem hbRun_spec {bf : ℕ} : ∀ (fuel it : ℕ) (p : V → V) (it' : ℕ) (k
 
 /-! ### Correctness -/
 
-theorem rI_one (l : V) : rI G .one l = -rI G .zero l := by
+private theorem rI_one (l : V) : rI G .one l = -rI G .zero l := by
   unfold rI
   by_cases h : G.prio l % 2 = 0
   · rw [ite_eq_right (by rw [good_one_iff]; simpa using h), ite_eq_left ((good_zero_iff _).2 h)]
   · rw [ite_eq_left ((good_one_iff _).2 h), ite_eq_right (by rw [good_zero_iff]; exact h)]; ring
 
-theorem rI_zero_ne (l : V) : rI G .zero l ≠ 0 := by
+private theorem rI_zero_ne (l : V) : rI G .zero l ≠ 0 := by
   unfold rI; split_ifs <;> omega
 
-theorem keyWinner_pos (f : V → V) (x : V) (i : Player) (h : keyWinner (key G f x) = i) :
+private theorem keyWinner_pos (f : V → V) (x : V) (i : Player) (h : keyWinner (key G f x) = i) :
     0 < rI G i (cycMax f x) := by
   have hr : (ofLex (key G f x)).1 = rI G .zero (cycMax f x) := by
     have := kfor_key G f .zero x
@@ -336,7 +340,7 @@ theorem keyWinner_pos (f : V → V) (x : V) (i : Player) (h : keyWinner (key G f
       have := rI_zero_ne G (cycMax f x)
       omega
 
-theorem initProfile_edge (v : V) : G.edge v (initProfile G v) := by
+private theorem initProfile_edge (v : V) : G.edge v (initProfile G v) := by
   obtain ⟨w, hw⟩ := G.total v
   have hne : succList G v ≠ [] := List.ne_nil_of_mem ((mem_succList G).2 hw)
   unfold initProfile

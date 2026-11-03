@@ -2,6 +2,12 @@ module
 
 public import MercLib.HybridSI.Proofs.BestResponse_Graph_Proofs
 public import MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.BestResponse_Graph_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIBestResponseClassesProofs
 
@@ -29,10 +35,10 @@ variable (G : Game V) [DecidableRel G.edge] (pl : Bool) (p : V → V)
 /-- The player as a `Player`. -/
 def plr (pl : Bool) : Player := if pl then .one else .zero
 
-theorem favours_iff (x : V) : favours G pl x = true ↔ Good (plr pl) (G.prio x) := by
+private theorem favours_iff (x : V) : favours G pl x = true ↔ Good (plr pl) (G.prio x) := by
   cases pl <;> simp [favours, plr, good_zero_iff, good_one_iff]
 
-theorem pw_eq (x : V) : pw G pl x = wI G (plr pl) x := by
+private theorem pw_eq (x : V) : pw G pl x = wI G (plr pl) x := by
   unfold pw wI
   by_cases h : favours G pl x = true
   · rw [ite_eq_left h, ite_eq_left ((favours_iff G pl x).1 h)]
@@ -41,19 +47,19 @@ theorem pw_eq (x : V) : pw G pl x = wI G (plr pl) x := by
 /-- The player's reward of a cycle maximum. -/
 abbrev rr (x : V) : ℤ := rI G (plr pl) x
 
-theorem rr_eq (x : V) : rr G pl x = if favours G pl x then (rank x : ℤ) + 1 else -((rank x : ℤ) + 1) := by
+private theorem rr_eq (x : V) : rr G pl x = if favours G pl x then (rank x : ℤ) + 1 else -((rank x : ℤ) + 1) := by
   unfold rr rI
   by_cases h : favours G pl x = true
   · rw [ite_eq_left h, ite_eq_left ((favours_iff G pl x).1 h)]
   · rw [ite_eq_right h, ite_eq_right (fun h' => h ((favours_iff G pl x).2 h'))]
 
-theorem rr_injective {x y : V} (h : rr G pl x = rr G pl y) : x = y := by
+private theorem rr_injective {x y : V} (h : rr G pl x = rr G pl y) : x = y := by
   rw [rr_eq, rr_eq] at h
   apply rank_injective
   split_ifs at h <;> omega
 
 /-- A vertex above `λ` with a reward at most that of `λ` is unfavourable. -/
-theorem not_favours_of_rr {l m : V} (hlm : l < m) (h : rr G pl m ≤ rr G pl l) :
+private theorem not_favours_of_rr {l m : V} (hlm : l < m) (h : rr G pl m ≤ rr G pl l) :
     favours G pl m = false := by
   have := rank_lt_rank hlm
   rw [rr_eq, rr_eq] at h
@@ -63,13 +69,13 @@ theorem not_favours_of_rr {l m : V} (hlm : l < m) (h : rr G pl m ≤ rr G pl l) 
   split_ifs at h <;> omega
 
 /-- Below an unfavourable `λ` every vertex has a greater reward. -/
-theorem rr_lt_of_lt_unfav {l m : V} (hml : m < l) (hl : favours G pl l = false) :
+private theorem rr_lt_of_lt_unfav {l m : V} (hml : m < l) (hl : favours G pl l = false) :
     rr G pl l < rr G pl m := by
   have := rank_lt_rank hml
   rw [rr_eq, rr_eq, ite_eq_right (by simp [hl])]
   split_ifs <;> omega
 
-theorem hsucc_ne_nil (v : V) : hsucc G pl p v ≠ [] := by
+private theorem hsucc_ne_nil (v : V) : hsucc G pl p v ≠ [] := by
   unfold hsucc
   split_ifs
   · obtain ⟨w, hw⟩ := G.total v
@@ -78,18 +84,18 @@ theorem hsucc_ne_nil (v : V) : hsucc G pl p v ≠ [] := by
 
 /-! ### The candidates -/
 
-theorem mem_cands (x : V) : x ∈ cands G pl := by
+private theorem mem_cands (x : V) : x ∈ cands G pl := by
   unfold cands
   by_cases h : favours G pl x = true <;> simp [mem_univList, h]
 
-theorem length_cands : (cands G pl).length = Fintype.card V := by
+private theorem length_cands : (cands G pl).length = Fintype.card V := by
   unfold cands
   rw [List.length_append, List.filter_reverse, List.length_reverse]
   have := List.length_eq_length_filter_add (l := univList V) (f := favours G pl)
   have hu : (univList V).length = Fintype.card V := by simp [univList]
   omega
 
-theorem cands_pairwise : (cands G pl).Pairwise fun a b => rr G pl b < rr G pl a := by
+private theorem cands_pairwise : (cands G pl).Pairwise fun a b => rr G pl b < rr G pl a := by
   have hs : (univList V).Pairwise (· < ·) := (Finset.sortedLT_sort _).pairwise
   unfold cands
   rw [List.pairwise_append]
@@ -139,17 +145,17 @@ theorem Reach.mono {nb : V → List V} {S S' : V → Bool} (h : ∀ u, S u = tru
   | refl => exact .refl
   | tail _ hab ih => exact ih.tail ⟨h _ hab.1, hab.2⟩
 
-theorem rset_none {cls : V → Option V} {u : V} (μ : V) (h : cls u = none) :
+private theorem rset_none {cls : V → Option V} {u : V} (μ : V) (h : cls u = none) :
     Rset G pl cls μ u = true := by simp [Rset, h]
 
-theorem rset_some {cls : V → Option V} {u ν : V} (μ : V) (h : cls u = some ν) :
+private theorem rset_some {cls : V → Option V} {u ν : V} (μ : V) (h : cls u = some ν) :
     Rset G pl cls μ u = decide (rr G pl ν ≤ rr G pl μ) := by simp [Rset, h]
 
 theorem Reach.congr {nb : V → List V} {S S' : V → Bool} (h : S = S') {u x : V} :
     Reach nb S u x ↔ Reach nb S' u x := by rw [h]
 
 /-- Before `x` is processed, `Rset … x` is the set of unclassified vertices. -/
-theorem rset_cur {cls : V → Option V} {x : V} {rest : List V} (hI : ClsInv G pl p cls (x :: rest)) :
+private theorem rset_cur {cls : V → Option V} {x : V} {rest : List V} (hI : ClsInv G pl p cls (x :: rest)) :
     Rset G pl cls x = unclassified cls := by
   funext u
   unfold Rset unclassified
@@ -159,7 +165,7 @@ theorem rset_cur {cls : V → Option V} {x : V} {rest : List V} (hI : ClsInv G p
     simp only [Option.isNone_some, decide_eq_false_iff_not, not_le]
     exact this
 
-theorem classStep_inv (cls : V → Option V) (x : V) (rest : List V)
+private theorem classStep_inv (cls : V → Option V) (x : V) (rest : List V)
     (hI : ClsInv G pl p cls (x :: rest)) : ClsInv G pl p (classStep G pl p cls x) rest := by
   have hsorted := List.pairwise_cons.1 hI.sorted
   have hpast : ∀ z y, z ∉ rest → y ∈ rest → rr G pl y < rr G pl z := by
@@ -275,55 +281,55 @@ theorem classStep_inv (cls : V → Option V) (x : V) (rest : List V)
         exact ⟨hRz, y, hy, (reachFrom_iff _ _ _ _).2 hr⟩
       · exact hI.opens z (by simp [hzx, hz]) hRz hy
 
-theorem foldl_classStep_inv : ∀ (rest : List V) (cls : V → Option V), ClsInv G pl p cls rest →
+private theorem foldl_classStep_inv : ∀ (rest : List V) (cls : V → Option V), ClsInv G pl p cls rest →
     ClsInv G pl p (rest.foldl (classStep G pl p) cls) []
   | [], _, h => h
   | x :: rest, cls, h => foldl_classStep_inv rest _ (classStep_inv G pl p cls x rest h)
 
-theorem classes_inv : ClsInv G pl p (classes G pl p) [] := by
+private theorem classes_inv : ClsInv G pl p (classes G pl p) [] := by
   refine foldl_classStep_inv G pl p _ _ ⟨cands_pairwise G pl, fun z _ hz _ => absurd (mem_cands G pl z) hz,
     fun v μ h => by simp at h, fun μ h => by simp at h, fun x hx => absurd (mem_cands G pl x) hx,
     fun μ h => by simp at h⟩
 
 /-! ### Properties of the classes -/
 
-theorem reach_of_seq {nb : V → List V} {S : V → Bool} (s : ℕ → V) (a b : ℕ) (hab : a ≤ b)
+private theorem reach_of_seq {nb : V → List V} {S : V → Bool} (s : ℕ → V) (a b : ℕ) (hab : a ≤ b)
     (h : ∀ k, a ≤ k → k < b → S (s k) = true ∧ s (k + 1) ∈ nb (s k)) : Reach nb S (s a) (s b) := by
   induction b, hab using Nat.le_induction with
   | base => exact Relation.ReflTransGen.refl
   | succ b hab ih =>
     exact Relation.ReflTransGen.tail (ih fun k h1 h2 => h k h1 (by omega)) (h b hab (by omega))
 
-theorem reach_trans {nb : V → List V} {S : V → Bool} {u v x : V} (h1 : Reach nb S u v)
+private theorem reach_trans {nb : V → List V} {S : V → Bool} {u v x : V} (h1 : Reach nb S u v)
     (h2 : Reach nb S v x) : Reach nb S u x := Relation.ReflTransGen.trans h1 h2
 
-theorem reach_head {nb : V → List V} {S : V → Bool} {u w x : V} (hu : S u = true) (hw : w ∈ nb u)
+private theorem reach_head {nb : V → List V} {S : V → Bool} {u w x : V} (hu : S u = true) (hw : w ∈ nb u)
     (h : Reach nb S w x) : Reach nb S u x := Relation.ReflTransGen.head ⟨hu, hw⟩ h
 
-theorem headD_mem_hsucc (u : V) : (hsucc G pl p u).headD u ∈ hsucc G pl p u := by
+private theorem headD_mem_hsucc (u : V) : (hsucc G pl p u).headD u ∈ hsucc G pl p u := by
   obtain ⟨x, xs, h⟩ := List.exists_cons_of_ne_nil (hsucc_ne_nil G pl p u)
   rw [h]; simp
 
 local notation "CL" => classes G pl p
 
-theorem classes_max {v l : V} (h : CL v = some l) : CL l = some l :=
+private theorem classes_max {v l : V} (h : CL v = some l) : CL l = some l :=
   ((classes_inv G pl p).cls_max v l h).1
 
-theorem classes_iff {l : V} (hl : CL l = some l) (v : V) :
+private theorem classes_iff {l : V} (hl : CL l = some l) (v : V) :
     CL v = some l ↔ Reach (hsucc G pl p) (Rset G pl CL l) v l :=
   (classes_inv G pl p).cls_iff l hl v
 
-theorem classes_opens (x : V) (hx : Rset G pl CL x x = true)
+private theorem classes_opens (x : V) (hx : Rset G pl CL x x = true)
     (hy : ∃ y ∈ hsucc G pl p x, Reach (hsucc G pl p) (fun u => Rset G pl CL x u && decide (u ≤ x)) y x) :
     CL x = some x :=
   (classes_inv G pl p).opens x (by simp) hx hy
 
-theorem classes_wit {l : V} (hl : CL l = some l) : ∃ y ∈ hsucc G pl p l,
+private theorem classes_wit {l : V} (hl : CL l = some l) : ∃ y ∈ hsucc G pl p l,
     reachFrom (hsucc G pl p) (fun u => Rset G pl CL l u && decide (u ≤ l)) l y = true :=
   (classes_inv G pl p).wit l hl
 
 /-- Every vertex is classified. -/
-theorem classes_total (v : V) : ∃ l, CL v = some l := by
+private theorem classes_total (v : V) : ∃ l, CL v = some l := by
   by_contra hne
   have hv : CL v = none := by
     rcases h : CL v with _ | l
@@ -361,7 +367,7 @@ theorem classes_total (v : V) : ∃ l, CL v = some l := by
   rw [hm] at this; cases this
 
 /-- Edges never lead to a class of greater reward. -/
-theorem classes_closed {v w l μ : V} (hv : CL v = some l) (hw : w ∈ hsucc G pl p v)
+private theorem classes_closed {v w l μ : V} (hv : CL v = some l) (hw : w ∈ hsucc G pl p v)
     (hwμ : CL w = some μ) : rr G pl μ ≤ rr G pl l := by
   by_contra hlt
   have hμ := classes_max G pl p hwμ
@@ -374,7 +380,7 @@ theorem classes_closed {v w l μ : V} (hv : CL v = some l) (hw : w ∈ hsucc G p
   exact hlt le_rfl
 
 /-- The maximum of a closed walk inside a class has reward at most that of the class. -/
-theorem classes_cycle {l : V} (s : ℕ → V) (a b : ℕ) (_hab : a < b) (hba : s b = s a)
+private theorem classes_cycle {l : V} (s : ℕ → V) (a b : ℕ) (_hab : a < b) (hba : s b = s a)
     (h : ∀ k, a ≤ k → k < b → s (k + 1) ∈ hsucc G pl p (s k) ∧ CL (s k) = some l)
     (j : ℕ) (hj1 : a ≤ j) (hj2 : j < b) (hmax : ∀ k, a ≤ k → k < b → s k ≤ s j) :
     rr G pl (s j) ≤ rr G pl l := by

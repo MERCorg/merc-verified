@@ -14,7 +14,7 @@ theorems are stated in `Challenges/ParityGame.lean` (human-vetted). -/
 
 variable {V : Type*}
 
-theorem infOcc_drop (s : ωSequence ℕ) (N : ℕ) : (s.drop N).infOcc = s.infOcc := by
+private theorem infOcc_drop (s : ωSequence ℕ) (N : ℕ) : (s.drop N).infOcc = s.infOcc := by
   ext x
   simp only [ωSequence.infOcc, Set.mem_ofPred_eq, ωSequence.get_drop, Filter.frequently_atTop]
   constructor
@@ -25,15 +25,15 @@ theorem infOcc_drop (s : ωSequence ℕ) (N : ℕ) : (s.drop N).infOcc = s.infOc
     obtain ⟨b, hb, e⟩ := h (a + N)
     exact ⟨b - N, by omega, by rwa [show N + (b - N) = b by omega]⟩
 
-theorem Game.playWonBy_drop (G : Game V) (i : Player) (p : ωSequence V) (N : ℕ) :
+private theorem Game.playWonBy_drop (G : Game V) (i : Player) (p : ωSequence V) (N : ℕ) :
     G.PlayWonBy i (p.drop N) ↔ G.PlayWonBy i p := by
   simp only [Game.PlayWonBy, Game.MaxInfPrio, ← ωSequence.drop_map, infOcc_drop]
 
-theorem Game.maxInfPrio_unique (G : Game V) {p : ωSequence V} {n m : ℕ}
+private theorem Game.maxInfPrio_unique (G : Game V) {p : ωSequence V} {n m : ℕ}
     (hn : G.MaxInfPrio p n) (hm : G.MaxInfPrio p m) : n = m :=
   le_antisymm (hm.2 _ hn.1) (hn.2 _ hm.1)
 
-theorem Game.exists_maxInfPrio (G : Game V) [Finite V] (p : ωSequence V) :
+private theorem Game.exists_maxInfPrio (G : Game V) [Finite V] (p : ωSequence V) :
     ∃ n, G.MaxInfPrio p n := by
   obtain ⟨x, -, hx⟩ := (ωSequence.frequently_in_finite_type (s := Set.univ) (xs := p)).mp
     (Filter.Frequently.of_forall fun _ => Set.mem_univ _)
@@ -57,9 +57,9 @@ theorem Game.playHasUniqueWinner (G : Game V) [Finite V] :
   rw [G.maxInfPrio_unique hm hn]
 
 /-- The nodes occurring infinitely often along a play. -/
-def nodeInf (p : ωSequence V) : Set V := {v | ∃ᶠ k in Filter.atTop, p k = v}
+private def nodeInf (p : ωSequence V) : Set V := {v | ∃ᶠ k in Filter.atTop, p k = v}
 
-theorem mem_infOcc_map_iff [Finite V] (f : V → ℕ) (p : ωSequence V) (m : ℕ) :
+private theorem mem_infOcc_map_iff [Finite V] (f : V → ℕ) (p : ωSequence V) (m : ℕ) :
     m ∈ (p.map f).infOcc ↔ ∃ v ∈ nodeInf p, f v = m := by
   constructor
   · intro h
@@ -70,7 +70,7 @@ theorem mem_infOcc_map_iff [Finite V] (f : V → ℕ) (p : ωSequence V) (m : �
     exact hv.mono fun k hk => by simp [ωSequence.map, hk]
 
 /-- The greatest recurring priority, in terms of the recurring nodes. -/
-theorem Game.maxInfPrio_iff [Finite V] (G : Game V) (p : ωSequence V) (M : ℕ) :
+private theorem Game.maxInfPrio_iff [Finite V] (G : Game V) (p : ωSequence V) (M : ℕ) :
     G.MaxInfPrio p M ↔ (∃ v ∈ nodeInf p, G.prio v = M) ∧ ∀ v ∈ nodeInf p, G.prio v ≤ M := by
   unfold Game.MaxInfPrio
   constructor
@@ -82,7 +82,7 @@ theorem Game.maxInfPrio_iff [Finite V] (G : Game V) (p : ωSequence V) (M : ℕ)
     obtain ⟨v, hv, rfl⟩ := (mem_infOcc_map_iff _ _ _).mp hm
     exact h2 v hv
 
-theorem Game.playWonBy_iff_of_maxInfPrio {G G' : Game V} {p : ωSequence V} {M M' : ℕ}
+private theorem Game.playWonBy_iff_of_maxInfPrio {G G' : Game V} {p : ωSequence V} {M M' : ℕ}
     (h : G.MaxInfPrio p M) (h' : G'.MaxInfPrio p M') (hp : Player.ofPrio M = Player.ofPrio M')
     (i : Player) : G'.PlayWonBy i p ↔ G.PlayWonBy i p := by
   constructor
@@ -93,7 +93,7 @@ theorem Game.playWonBy_iff_of_maxInfPrio {G G' : Game V} {p : ωSequence V} {M M
     refine ⟨M', h', ?_⟩
     rw [← hp, G.maxInfPrio_unique hn h]
 
-theorem exists_frequently_of_frequently {α : Type*} [Finite α] (P : ℕ → Prop) (f : ℕ → α)
+private theorem exists_frequently_of_frequently {α : Type*} [Finite α] (P : ℕ → Prop) (f : ℕ → α)
     (h : ∃ᶠ k in Filter.atTop, P k) : ∃ a, ∃ᶠ k in Filter.atTop, P k ∧ f k = a := by
   by_contra hcon
   push Not at hcon
@@ -101,7 +101,7 @@ theorem exists_frequently_of_frequently {α : Type*} [Finite α] (P : ℕ → Pr
   exact h (this.mono fun k hk hP => hk (f k) ⟨hP, rfl⟩)
 
 /-- A recurring node of a play has a recurring successor along the play. -/
-theorem exists_succ_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
+private theorem exists_succ_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
     (hp : ∀ n, G.edge (p n) (p (n + 1))) {v : V} (hv : v ∈ nodeInf p) :
     ∃ u ∈ nodeInf p, G.edge v u := by
   obtain ⟨u, hu⟩ := exists_frequently_of_frequently (fun k => p k = v) (fun k => p (k + 1)) hv
@@ -113,7 +113,7 @@ theorem exists_succ_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
   exact ⟨b + 1, by omega, h2⟩
 
 /-- A recurring node of a play has a recurring predecessor along the play. -/
-theorem exists_pred_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
+private theorem exists_pred_nodeInf [Finite V] (G : Game V) {p : ωSequence V}
     (hp : ∀ n, G.edge (p n) (p (n + 1))) {v : V} (hv : v ∈ nodeInf p) :
     ∃ u ∈ nodeInf p, G.edge u v := by
   have hv' : ∃ᶠ k in Filter.atTop, p (k + 1) = v := by

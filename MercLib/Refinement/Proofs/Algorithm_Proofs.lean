@@ -9,6 +9,10 @@ public import MercLib.Refinement.Proofs.Semantics_Proofs
 public import MercLib.Refinement.Proofs.Antichain_Proofs
 public import MercLib.Refinement.Proofs.Product_Proofs
 public import MercLib.Control.Proofs.While_Proofs
+import all MercLib.Control.Proofs.While_Proofs
+import all MercLib.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Refinement.Proofs.Product_Proofs
+import all MercLib.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -36,7 +40,7 @@ noncomputable def succSpec [HasTau Label] (lts1 : LTS State1 Label) (spec : Set 
     (a : Label) : Set State1 :=
   if a = HasTau.τ then spec else { s' | ∃ s ∈ spec, WeakTr lts1 s [a] s' }
 
-theorem mem_outgoing [Finite Label] [Finite State2] {lts2 : LTS State2 Label} {s : State2}
+private theorem mem_outgoing [Finite Label] [Finite State2] {lts2 : LTS State2 Label} {s : State2}
     {p : Label × State2} : p ∈ outgoing lts2 s ↔ lts2.Tr s p.1 p.2 := by
   simp [outgoing]
 
@@ -44,7 +48,7 @@ open scoped Classical in
 /-- Lines 13-22 as a recursive function: the inner `for` loop over the outgoing transitions of
     `impl`, extending `working` and `antichain`. Returns `none` if line 19 (`return false`)
     fires. `forIn_outgoing` relates it to the `for` loop of `refinesNew`. -/
-noncomputable def forSuccessors [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1) :
+private noncomputable def forSuccessors [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1) :
     List (Label × State2) → List (Set State1 × State2) → Antichain (Set State1 × State2) →
       Option (List (Set State1 × State2) × Antichain (Set State1 × State2))
   | [], working, antichain => some (working, antichain)
@@ -57,22 +61,22 @@ noncomputable def forSuccessors [HasTau Label] (lts1 : LTS State1 Label) (spec :
     else forSuccessors lts1 spec rest working antichain
 
 /-- `L1` makes the visible steps of the subset construction of `lts1` from `spec`. -/
-def StepsBy [HasTau Label] (lts1 : LTS State1 Label) (L1 : LTS (Set State1) Label)
+private def StepsBy [HasTau Label] (lts1 : LTS State1 Label) (L1 : LTS (Set State1) Label)
     (spec : Set State1) : Prop :=
   ∀ a V, IsVisible a → (L1.Tr spec a V ↔ V = succSpec lts1 spec a)
 
-theorem stepsBy_normTr [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1) :
+private theorem stepsBy_normTr [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1) :
     StepsBy lts1 (NormTr lts1) spec := by
   intro a V ha
   simp [NormTr, succSpec, ha, show ¬ a = HasTau.τ from ha]
 
-theorem stepsBy_fdrNormTr [HasTau Label] (lts1 : LTS State1 Label) {spec : Set State1}
+private theorem stepsBy_fdrNormTr [HasTau Label] (lts1 : LTS State1 Label) {spec : Set State1}
     (h : ¬ SetDivergent lts1 spec) : StepsBy lts1 (FdrNormTr lts1) spec := by
   intro a V ha
   simp [FdrNormTr, succSpec, ha, h, show ¬ a = HasTau.τ from ha]
 
 /-- The product steps out of `(spec, impl)` are `impl`'s steps, with `succSpec` on the left. -/
-theorem product_tr_iff [HasTau Label] {lts1 : LTS State1 Label} {L1 : LTS (Set State1) Label}
+private theorem product_tr_iff [HasTau Label] {lts1 : LTS State1 Label} {L1 : LTS (Set State1) Label}
     {lts2 : LTS State2 Label} {spec : Set State1} {impl : State2} {μ : Label}
     {q : Set State1 × State2} (h : StepsBy lts1 L1 spec) :
     (product L1 lts2).Tr (spec, impl) μ q ↔ lts2.Tr impl μ q.2 ∧ q.1 = succSpec lts1 spec μ := by
@@ -86,13 +90,13 @@ theorem product_tr_iff [HasTau Label] {lts1 : LTS State1 Label} {L1 : LTS (Set S
     rw [h μ q1 hμ]
     exact ⟨fun ⟨_, h1, h2⟩ => ⟨h2, h1⟩, fun ⟨h1, h2⟩ => ⟨hμ, h2, h1⟩⟩
 
-theorem Antichain.le_trans_of_eq {A : Antichain (Set State1 × State2)} (h : A.le = ProductLE) :
+private theorem Antichain.le_trans_of_eq {A : Antichain (Set State1 × State2)} (h : A.le = ProductLE) :
     ∀ {x y z}, A.le x y → A.le y z → A.le x z := by
   intro x y z h1 h2
   rw [h] at h1 h2 ⊢
   exact h1.trans h2
 
-theorem Antichain.mem_insert_self {A : Antichain (Set State1 × State2)} (h : A.le = ProductLE)
+private theorem Antichain.mem_insert_self {A : Antichain (Set State1 × State2)} (h : A.le = ProductLE)
     (x : Set State1 × State2) : x ⊑ insert x A :=
   ⟨x, Or.inl rfl, by change A.le x x; rw [h]⟩
 
@@ -110,7 +114,7 @@ structure SuccFacts [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
   keep : ∀ x ∈ w, x ∈ w'
   covered : ∀ p ∈ l, (succSpec lts1 spec p.1, p.2) ⊑ A' ∨ extra (succSpec lts1 spec p.1, p.2)
 
-theorem SuccFacts.nil [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+private theorem SuccFacts.nil [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
     {extra : Set State1 × State2 → Prop} {w : List (Set State1 × State2)}
     {A : Antichain (Set State1 × State2)} (hle : A.le = ProductLE) :
     SuccFacts lts1 spec extra [] w A w A :=
@@ -119,7 +123,7 @@ theorem SuccFacts.nil [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State
 
 /-- A pushed successor `x0 = (succSpec spec a, t)`: the facts for the rest of the loop give the
     facts for the whole loop. -/
-theorem SuccFacts.push [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+private theorem SuccFacts.push [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
     {extra : Set State1 × State2 → Prop} {a : Label} {t : State2} {rest : List (Label × State2)}
     {w w' : List (Set State1 × State2)} {A A' : Antichain (Set State1 × State2)}
     (hle : A.le = ProductLE) (hne : succSpec lts1 spec a ≠ ∅)
@@ -148,7 +152,7 @@ theorem SuccFacts.push [HasTau Label] {lts1 : LTS State1 Label} {spec : Set Stat
     · exact r.covered p hp
 
 /-- A skipped successor that is already covered by `A` or satisfies `extra`. -/
-theorem SuccFacts.skip [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+private theorem SuccFacts.skip [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
     {extra : Set State1 × State2 → Prop} {a : Label} {t : State2} {rest : List (Label × State2)}
     {w w' : List (Set State1 × State2)} {A A' : Antichain (Set State1 × State2)}
     (hcov : (succSpec lts1 spec a, t) ⊑ A ∨ extra (succSpec lts1 spec a, t))
@@ -168,7 +172,7 @@ theorem SuccFacts.skip [HasTau Label] {lts1 : LTS State1 Label} {spec : Set Stat
     · exact r.covered p hp
 
 open scoped Classical in
-theorem forSuccessors_cons [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
+private theorem forSuccessors_cons [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
     (a : Label) (t : State2) (rest : List (Label × State2)) (w : List (Set State1 × State2))
     (A : Antichain (Set State1 × State2)) :
     forSuccessors lts1 spec ((a, t) :: rest) w A =
@@ -179,7 +183,7 @@ theorem forSuccessors_cons [HasTau Label] (lts1 : LTS State1 Label) (spec : Set 
       else forSuccessors lts1 spec rest w A := by
   rw [forSuccessors]; rfl
 
-theorem forSuccessors_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1} :
+private theorem forSuccessors_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1} :
     ∀ {l : List (Label × State2)} {w : List (Set State1 × State2)}
       {A : Antichain (Set State1 × State2)},
       forSuccessors lts1 spec l w A = none → ∃ p ∈ l, succSpec lts1 spec p.1 = ∅
@@ -193,7 +197,7 @@ theorem forSuccessors_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set 
     · obtain ⟨p, hp, he⟩ := forSuccessors_none h
       exact ⟨p, List.mem_cons_of_mem _ hp, he⟩
 
-theorem forSuccessors_some [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1} :
+private theorem forSuccessors_some [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1} :
     ∀ {l : List (Label × State2)} {w w' : List (Set State1 × State2)}
       {A A' : Antichain (Set State1 × State2)}, A.le = ProductLE →
       forSuccessors lts1 spec l w A = some (w', A') →
@@ -236,7 +240,7 @@ variable [HasTau Label] {L1 : LTS (Set State1) Label} {lts2 : LTS State2 Label}
   {A : Antichain (Set State1 × State2)}
 
 /-- Lines 2-3: the invariant holds initially. -/
-theorem initial (hp0 : p0.1.Nonempty) :
+private theorem initial (hp0 : p0.1.Nonempty) :
     ExploreInv L1 lts2 W Pr Ex p0 ∅ [p0] (insert p0 (Antichain.empty ProductLE)) where
   le_eq := rfl
   reach x hx := by rw [List.mem_singleton.mp hx]; exact Cslib.LTS.CanReach.refl _ _
@@ -250,7 +254,7 @@ theorem initial (hp0 : p0.1.Nonempty) :
   init := Antichain.mem_insert_self rfl p0
 
 /-- The `else` branch of the `done` guard (never taken): the invariant is kept. -/
-theorem skip {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done (p :: w) A)
+private theorem skip {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done (p :: w) A)
     (hp : p ∈ done) : ExploreInv L1 lts2 W Pr Ex p0 done w A where
   le_eq := h.le_eq
   reach x hx := h.reach x (List.mem_cons_of_mem _ hx)
@@ -266,7 +270,7 @@ theorem skip {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done 
   init := h.init
 
 /-- A pruned pair (not a witness) is moved to `done` without exploring its successors. -/
-theorem prune {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done (p :: w) A)
+private theorem prune {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done (p :: w) A)
     (hpr : Pr p.1) (hW : ¬ W p.1 p.2) : ExploreInv L1 lts2 W Pr Ex p0 (insert p done) w A where
   le_eq := h.le_eq
   reach x hx := h.reach x (List.mem_cons_of_mem _ hx)
@@ -289,7 +293,7 @@ theorem prune {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done
 
 /-- A pair that is not a witness, whose successors are pushed by a successful `for` loop
     (lines 13-22), is moved to `done`. -/
-theorem step {lts1 : LTS State1 Label} {spec : Set State1} {impl : State2}
+private theorem step {lts1 : LTS State1 Label} {spec : Set State1} {impl : State2}
     {l : List (Label × State2)}
     {w' : List (Set State1 × State2)} {A' : Antichain (Set State1 × State2)}
     (h : ExploreInv L1 lts2 W Pr Ex p0 done ((spec, impl) :: w) A)
@@ -328,12 +332,12 @@ theorem step {lts1 : LTS State1 Label} {spec : Set State1} {impl : State2}
   init := r.mono _ h.init
 
 /-- A popped pair is reachable. -/
-theorem reach_head {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done (p :: w) A) :
+private theorem reach_head {p : Set State1 × State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done (p :: w) A) :
     (product L1 lts2).CanReach p0 p :=
   h.reach p List.mem_cons_self
 
 /-- A successor of a popped pair is reachable. -/
-theorem reach_succ {lts1 : LTS State1 Label} {spec : Set State1} {impl : State2} {a : Label}
+private theorem reach_succ {lts1 : LTS State1 Label} {spec : Set State1} {impl : State2} {a : Label}
     {t : State2} (h : ExploreInv L1 lts2 W Pr Ex p0 done ((spec, impl) :: w) A)
     (hsteps : StepsBy lts1 L1 spec) (htr : lts2.Tr impl a t) :
     (product L1 lts2).CanReach p0 (succSpec lts1 spec a, t) :=
@@ -343,7 +347,7 @@ theorem reach_succ {lts1 : LTS State1 Label} {spec : Set State1} {impl : State2}
 /-- When `working` is empty, no pair reachable from a pair dominating one of `done` is a witness,
     unless it is pruned: every such pair is dominated by a pair of `done` (Proposition 2,
     saturation) or reachable from an `Ex` pair, and witnesses are antitone (Lemma 3). -/
-theorem safe (hmono : IsMonotoneNormalForm L1)
+private theorem safe (hmono : IsMonotoneNormalForm L1)
     (hW_anti : ∀ {U V : Set State1} {s t : State2}, ProductLE (U, s) (V, t) → W V t → W U s)
     (hPr_mono : ∀ {U V : Set State1}, U ⊆ V → Pr U → Pr V)
     (hPr_path : ∀ {x q : Set State1 × State2} {σ : List Label},
@@ -371,7 +375,7 @@ theorem safe (hmono : IsMonotoneNormalForm L1)
       exact hEx z' hex ⟨q', hq', hW_anti hq'le hw⟩
 
 /-- Line 23: when `working` is empty, no witness is reachable from `p0`. -/
-theorem no_witness (hmono : IsMonotoneNormalForm L1)
+private theorem no_witness (hmono : IsMonotoneNormalForm L1)
     (hW_anti : ∀ {U V : Set State1} {s t : State2}, ProductLE (U, s) (V, t) → W V t → W U s)
     (hPr_mono : ∀ {U V : Set State1}, U ⊆ V → Pr U → Pr V)
     (hPr_path : ∀ {x q : Set State1 × State2} {σ : List Label},
@@ -392,42 +396,42 @@ end ExploreInv
 
 /-- The normal form explored by Algorithm 2: `norm` for stable failures, `normfdr` for
     failures-divergences refinement. -/
-def ModeNorm [HasTau Label] (lts1 : LTS State1 Label) : Bool → LTS (Set State1) Label
+private def ModeNorm [HasTau Label] (lts1 : LTS State1 Label) : Bool → LTS (Set State1) Label
   | false => NormTr lts1
   | true => FdrNormTr lts1
 
 /-- The witnesses Algorithm 2 looks for: SF-witnesses or FD-witnesses. -/
-def ModeWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) :
+private def ModeWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) :
     Bool → Set State1 → State2 → Prop
   | false => IsSFWitness lts1 lts2
   | true => IsFDWitness lts1 lts2
 
 /-- The pairs Algorithm 2 does not expand (line 6): divergent specification sets, when checking
     for divergences. -/
-def Pruned [HasTau Label] (lts1 : LTS State1 Label) (checkDiv : Bool) (U : Set State1) : Prop :=
+private def Pruned [HasTau Label] (lts1 : LTS State1 Label) (checkDiv : Bool) (U : Set State1) : Prop :=
   checkDiv = true ∧ SetDivergent lts1 U
 
 section Mode
 
 variable [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label)
 
-theorem modeNorm_isMonotone (c : Bool) : IsMonotoneNormalForm (ModeNorm lts1 c) := by
+private theorem modeNorm_isMonotone (c : Bool) : IsMonotoneNormalForm (ModeNorm lts1 c) := by
   cases c
   · exact normTr_isMonotone lts1
   · exact fdrNormTr_isMonotone lts1
 
-theorem modeWitness_antitone (c : Bool) {U V : Set State1} {s t : State2}
+private theorem modeWitness_antitone (c : Bool) {U V : Set State1} {s t : State2}
     (hle : ProductLE (U, s) (V, t)) (hw : ModeWitness lts1 lts2 c V t) :
     ModeWitness lts1 lts2 c U s := by
   cases c
   · exact IsSFWitness.antitone lts1 lts2 hle hw
   · exact IsFDWitness.antitone lts1 lts2 hle hw
 
-theorem pruned_mono {c : Bool} {U V : Set State1} (hUV : U ⊆ V) :
+private theorem pruned_mono {c : Bool} {U V : Set State1} (hUV : U ⊆ V) :
     Pruned lts1 c U → Pruned lts1 c V
   | ⟨hc, s, hs, hd⟩ => ⟨hc, s, hUV hs, hd⟩
 
-theorem pruned_path {c : Bool} {x q : Set State1 × State2} {σ : List Label}
+private theorem pruned_path {c : Bool} {x q : Set State1 × State2} {σ : List Label}
     (h : (product (ModeNorm lts1 c) lts2).MTr x σ q) (hp : Pruned lts1 c x.1) : q.1 = x.1 := by
   induction h with
   | refl => rfl
@@ -437,24 +441,24 @@ theorem pruned_path {c : Bool} {x q : Set State1 × State2} {σ : List Label}
     · rw [ih ⟨rfl, hmid ▸ hd⟩, hmid]
     · exact absurd hd hnd
 
-theorem not_pruned_of_witness {c : Bool} {U : Set State1} {s : State2}
+private theorem not_pruned_of_witness {c : Bool} {U : Set State1} {s : State2}
     (hw : ModeWitness lts1 lts2 c U s) : ¬ Pruned lts1 c U := by
   rintro ⟨rfl, hd⟩
   exact hw.1 hd
 
-theorem modeWitness_empty (c : Bool) (s : State2) : ModeWitness lts1 lts2 c ∅ s := by
+private theorem modeWitness_empty (c : Bool) (s : State2) : ModeWitness lts1 lts2 c ∅ s := by
   cases c
   · exact Or.inl rfl
   · exact ⟨fun ⟨_, h, _⟩ => h, Or.inl rfl⟩
 
-theorem stepsBy_modeNorm {c : Bool} {spec : Set State1} (h : ¬ Pruned lts1 c spec) :
+private theorem stepsBy_modeNorm {c : Bool} {spec : Set State1} (h : ¬ Pruned lts1 c spec) :
     StepsBy lts1 (ModeNorm lts1 c) spec := by
   cases c
   · exact stepsBy_normTr lts1 spec
   · exact stepsBy_fdrNormTr lts1 fun hd => h ⟨rfl, hd⟩
 
 /-- Lines 7-12 decide whether a popped, non-pruned, non-empty pair is a witness. -/
-theorem modeWitness_iff {c : Bool} {spec : Set State1} {impl : State2} (hne : spec.Nonempty)
+private theorem modeWitness_iff {c : Bool} {spec : Set State1} {impl : State2} (hne : spec.Nonempty)
     (hp : ¬ Pruned lts1 c spec) :
     ModeWitness lts1 lts2 c spec impl ↔
       (c = true ∧ lts2.Divergent impl) ∨
@@ -472,12 +476,12 @@ end Mode
 
 /-- The state of the loops of `refinesNew`: the value of a pending early `return`, `working` and
     `antichain`. -/
-abbrev LoopState (State1 : Type u) (State2 : Type v) :=
+private abbrev LoopState (State1 : Type u) (State2 : Type v) :=
   Option (ULift.{max u v} Bool) × List (Set State1 × State2) × Antichain (Set State1 × State2)
 
 open scoped Classical in
 /-- One iteration of the `for` loop (lines 14-22) on the transition `impl -a-> t`. -/
-noncomputable def succStep [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
+private noncomputable def succStep [HasTau Label] (lts1 : LTS State1 Label) (spec : Set State1)
     (a : Label) (t : State2) (w : List (Set State1 × State2))
     (A : Antichain (Set State1 × State2)) : ForInStep (LoopState State1 State2) :=
   if succSpec lts1 spec a = ∅ then .done (some (.up false), w, A)
@@ -486,7 +490,7 @@ noncomputable def succStep [HasTau Label] (lts1 : LTS State1 Label) (spec : Set 
   else .yield (none, w, A)
 
 /-- The `for` loop (lines 13-22) computes `forSuccessors`. -/
-theorem forIn_outgoing [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+private theorem forIn_outgoing [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
     (g : Label × State2 → LoopState State1 State2 → Id (ForInStep (LoopState State1 State2)))
     (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStep lts1 spec a t w A) :
     ∀ (l : List (Label × State2)) w A,
@@ -506,7 +510,7 @@ theorem forIn_outgoing [HasTau Label] {lts1 : LTS State1 Label} {spec : Set Stat
     · simp only [h1, h2, not_false_eq_true, ↓reduceIte]
       exact forIn_outgoing g hg rest _ _
 
-theorem forIn_outgoing_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+private theorem forIn_outgoing_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
     (g : Label × State2 → LoopState State1 State2 → Id (ForInStep (LoopState State1 State2)))
     (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStep lts1 spec a t w A)
     {l : List (Label × State2)} {w A} (h : forSuccessors lts1 spec l w A = none) :
@@ -515,7 +519,7 @@ theorem forIn_outgoing_none [HasTau Label] {lts1 : LTS State1 Label} {spec : Set
   rw [h] at this
   exact this
 
-theorem forIn_outgoing_some [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
+private theorem forIn_outgoing_some [HasTau Label] {lts1 : LTS State1 Label} {spec : Set State1}
     (g : Label × State2 → LoopState State1 State2 → Id (ForInStep (LoopState State1 State2)))
     (hg : ∀ a t w A, (g (a, t) (none, w, A)).run = succStep lts1 spec a t w A)
     {l : List (Label × State2)} {w A w' A'} (h : forSuccessors lts1 spec l w A = some (w', A')) :
@@ -525,11 +529,11 @@ theorem forIn_outgoing_some [HasTau Label] {lts1 : LTS State1 Label} {spec : Set
   exact this
 
 /-- The specification pairs not (yet) covered by `A`. -/
-def pending (A : Antichain (Set State1 × State2)) : Set (Set State1 × State2) := {x | ¬ x ⊑ A}
+private def pending (A : Antichain (Set State1 × State2)) : Set (Set State1 × State2) := {x | ¬ x ⊑ A}
 
 /-- The `for` loop does not increase `|pending antichain| + |working|`: every pushed pair was not
     covered by the antichain before, and is covered after. -/
-theorem forSuccessors_measure [HasTau Label] [Finite State1] [Finite State2]
+private theorem forSuccessors_measure [HasTau Label] [Finite State1] [Finite State2]
     {lts1 : LTS State1 Label} {spec : Set State1} :
     ∀ {l : List (Label × State2)} {w w' : List (Set State1 × State2)}
       {A A' : Antichain (Set State1 × State2)}, A.le = ProductLE →
@@ -552,20 +556,20 @@ theorem forSuccessors_measure [HasTau Label] [Finite State1] [Finite State2]
       omega
 
 /-- No witness is reachable from `p0` (the right-hand side of Theorem 2). -/
-def NoWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
+private def NoWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
     (p0 : Set State1 × State2) : Prop :=
   ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach p0 q ∧ ModeWitness lts1 lts2 c q.1 q.2
 
 /-- The postcondition of the `while` loop: an early `return b` has `b = true` iff no witness is
     reachable, and running out of work means no witness is reachable. -/
-def LoopPost [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
+private def LoopPost [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
     (p0 : Set State1 × State2) (s : LoopState State1 State2) : Prop :=
   (s.1 = none ∧ NoWitness lts1 lts2 c p0) ∨
     ∃ b, s.1 = some (.up b) ∧ (b = true ↔ NoWitness lts1 lts2 c p0)
 
 /-- **Theorem 2**, for the whole algorithm: `refinesNew` returns `true` iff no witness is reachable
     from the initial pair. -/
-theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
+private theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
     (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label) (s2 : State2) (c : Bool) :
     refinesNew lts1 s1 lts2 s2 c = true ↔
       ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach (NormInit lts1 s1, s2) q ∧

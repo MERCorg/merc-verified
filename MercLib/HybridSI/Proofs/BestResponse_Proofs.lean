@@ -2,6 +2,13 @@ module
 
 public import MercLib.HybridSI.Proofs.BestResponse_Classes_Proofs
 public import MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.HybridSI.Proofs.BestResponse_Classes_Proofs
+import all MercLib.HybridSI.Proofs.BestResponse_Graph_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIBestResponseProofs
 
@@ -36,25 +43,25 @@ local notation "DV" => bfVal (allowed G pl p (classes G pl p)) (isTarget (classe
   (bfWeight G pl (classes G pl p))
 
 /-- The signed step term of a class maximum. -/
-def eW (l : V) : ℤ := if favours G pl l then -1 else 1
+private def eW (l : V) : ℤ := if favours G pl l then -1 else 1
 
-theorem mem_allowed {cls : V → Option V} {v w : V} :
+private theorem mem_allowed {cls : V → Option V} {v w : V} :
     w ∈ allowed G pl p cls v ↔ w ∈ hsucc G pl p v ∧ cls w = cls v := by
   simp [allowed]
 
-theorem isTarget_of_class {v l : V} (h : CL v = some l) : TG v = true ↔ v = l := by
+private theorem isTarget_of_class {v l : V} (h : CL v = some l) : TG v = true ↔ v = l := by
   simp only [isTarget, h, beq_iff_eq, Option.some.injEq]
   exact eq_comm
 
-theorem cw_eq {v l : V} (h : CL v = some l) :
+private theorem cw_eq {v l : V} (h : CL v = some l) :
     CW v = (if l < v then scale V * pw G pl v else 0) + eW G pl l := by
   simp [bfWeight, h, eW]
 
-theorem pw_signed : SignedPow (pw G pl) := fun y => by
+private theorem pw_signed : SignedPow (pw G pl) := fun y => by
   rw [pw_eq]; exact wI_signed G _ y
 
 /-- A nonempty set of vertices whose greatest element is unfavourable has signed sum `≤ -1`. -/
-theorem sum_pw_neg (T : Finset V) (m : V) (hm : m ∈ T) (hmax : ∀ y ∈ T, y ≤ m)
+private theorem sum_pw_neg (T : Finset V) (m : V) (hm : m ∈ T) (hmax : ∀ y ∈ T, y ≤ m)
     (hf : favours G pl m = false) : ∑ y ∈ T, pw G pl y ≤ -1 := by
   obtain ⟨h1, h2⟩ := top_dominates (pw G pl) (pw_signed G pl) T m hm hmax
   have : pw G pl m < 0 := by
@@ -65,7 +72,7 @@ theorem sum_pw_neg (T : Finset V) (m : V) (hm : m ∈ T) (hmax : ∀ y ∈ T, y 
   omega
 
 /-- The weight of a segment inside class `l`, injective on its indices. -/
-theorem sum_cw_seg {l : V} (s : ℕ → V) (a b : ℕ) (hcl : ∀ k, a ≤ k → k < b → CL (s k) = some l)
+private theorem sum_cw_seg {l : V} (s : ℕ → V) (a b : ℕ) (hcl : ∀ k, a ≤ k → k < b → CL (s k) = some l)
     (hinj : Set.InjOn s (Set.Ico a b)) :
     ∑ k ∈ Finset.Ico a b, CW (s k) = scale V *
       ∑ z ∈ ((Finset.Ico a b).image s).filter (l < ·), pw G pl z + ((b - a : ℕ) : ℤ) * eW G pl l := by
@@ -83,7 +90,7 @@ theorem sum_cw_seg {l : V} (s : ℕ → V) (a b : ℕ) (hcl : ∀ k, a ≤ k →
   split_ifs <;> simp
 
 /-- Every simple cycle inside a class that avoids the class maximum is negative. -/
-theorem negCyc_classes : NegCyc AL TG CW := by
+private theorem negCyc_classes : NegCyc AL TG CW := by
   classical
   intro s a b hab hba hedge hinj
   obtain ⟨l, hl⟩ := classes_total G pl p (s a)
@@ -152,15 +159,15 @@ theorem negCyc_classes : NegCyc AL TG CW := by
 local notation "QM" => movesOf G pl p (allowed G pl p (classes G pl p)) (bfVal (allowed G pl p
   (classes G pl p)) (isTarget (classes G pl p)) (bfWeight G pl (classes G pl p)))
 
-theorem DV_fix (v : V) : DV v = if TG v then 0 else
+private theorem DV_fix (v : V) : DV v = if TG v then 0 else
     (AL v).foldr (fun w a => max ((CW v : WithBot ℤ) + DV w) a) ⊥ := by
   conv_lhs => rw [← bfVal_fix _ _ _ (negCyc_classes G pl p)]
   exact bfRound_apply _ _ _ _ v
 
-theorem DV_tgt {v : V} (h : TG v = true) : DV v = 0 := by rw [DV_fix, ite_eq_left h]
+private theorem DV_tgt {v : V} (h : TG v = true) : DV v = 0 := by rw [DV_fix, ite_eq_left h]
 
 /-- Every classified vertex has an allowed successor. -/
-theorem exists_allowed {v l : V} (hv : CL v = some l) : ∃ w, w ∈ AL v := by
+private theorem exists_allowed {v l : V} (hv : CL v = some l) : ∃ w, w ∈ AL v := by
   have hl := classes_max G pl p hv
   by_cases hvl : v = l
   · subst hvl
@@ -173,12 +180,12 @@ theorem exists_allowed {v l : V} (hv : CL v = some l) : ∃ w, w ∈ AL v := by
     · exact absurd h hvl
     · exact ⟨w, (mem_allowed G pl p).2 ⟨hw.2, by rw [(classes_iff G pl p hl w).2 hwr, hv]⟩⟩
 
-theorem moves_apply (v : V) : QM v = if ownedBy G pl v then
+private theorem moves_apply (v : V) : QM v = if ownedBy G pl v then
     argmaxBy DV (p v) (AL v) else p v := by
   unfold movesOf; rw [matV_eq]
 
 /-- The move of a classified vertex is allowed and of greatest value. -/
-theorem moves_spec {v l : V} (hv : CL v = some l) :
+private theorem moves_spec {v l : V} (hv : CL v = some l) :
     QM v ∈ AL v ∧ ∀ w ∈ AL v, DV w ≤ DV (QM v) := by
   obtain ⟨w0, hw0⟩ := exists_allowed G pl p hv
   rw [moves_apply]
@@ -191,17 +198,17 @@ theorem moves_spec {v l : V} (hv : CL v = some l) :
     rw [← hsub w0 hw0]
     exact ⟨hw0, fun w hw => by rw [hsub w hw, ← hsub w0 hw0]⟩
 
-theorem moves_class {v l : V} (hv : CL v = some l) : CL (QM v) = some l := by
+private theorem moves_class {v l : V} (hv : CL v = some l) : CL (QM v) = some l := by
   rw [((mem_allowed G pl p).1 (moves_spec G pl p hv).1).2, hv]
 
-theorem moves_hsucc {v l : V} (hv : CL v = some l) : QM v ∈ HS v :=
+private theorem moves_hsucc {v l : V} (hv : CL v = some l) : QM v ∈ HS v :=
   ((mem_allowed G pl p).1 (moves_spec G pl p hv).1).1
 
-theorem moves_other {v : V} (h : ownedBy G pl v = false) : QM v = p v := by
+private theorem moves_other {v : V} (h : ownedBy G pl v = false) : QM v = p v := by
   rw [moves_apply, ite_eq_right (by simp [h])]
 
 /-- Off the targets the value is the weight plus the value of the move. -/
-theorem DV_step {v l : V} (hv : CL v = some l) (hvl : v ≠ l) :
+private theorem DV_step {v l : V} (hv : CL v = some l) (hvl : v ≠ l) :
     DV v = (CW v : WithBot ℤ) + DV (QM v) := by
   have ht : TG v = false := by
     by_contra h; exact hvl ((isTarget_of_class G pl p hv).1 (by simpa using h))
@@ -210,12 +217,12 @@ theorem DV_step {v l : V} (hv : CL v = some l) (hvl : v ≠ l) :
   refine le_antisymm (foldr_max_le _ _ _ fun w hw => add_le_add_right (h2 w hw) _)
     (le_foldr_max (fun w => (CW v : WithBot ℤ) + DV w) _ _ h1)
 
-theorem iterate_class {v l : V} (hv : CL v = some l) : ∀ k, CL (QM^[k] v) = some l
+private theorem iterate_class {v l : V} (hv : CL v = some l) : ∀ k, CL (QM^[k] v) = some l
   | 0 => hv
   | k + 1 => by rw [iterate_succ_apply']; exact moves_class G pl p (iterate_class hv k)
 
 /-- Every classified vertex has a finite value. -/
-theorem DV_ne_bot {v l : V} (hv : CL v = some l) : DV v ≠ ⊥ := by
+private theorem DV_ne_bot {v l : V} (hv : CL v = some l) : DV v ≠ ⊥ := by
   have hl := classes_max G pl p hv
   have hr := (classes_iff G pl p hl v).1 hv
   induction hr using Relation.ReflTransGen.head_induction_on with
@@ -231,7 +238,7 @@ theorem DV_ne_bot {v l : V} (hv : CL v = some l) : DV v ≠ ⊥ := by
       exact WithBot.add_ne_bot.2 ⟨WithBot.coe_ne_bot, hne⟩
 
 /-- Telescoping along the moves. -/
-theorem DV_tel (s : ℕ → V) (a b : ℕ) (hab : a ≤ b)
+private theorem DV_tel (s : ℕ → V) (a b : ℕ) (hab : a ≤ b)
     (h : ∀ k, a ≤ k → k < b → DV (s k) = (CW (s k) : WithBot ℤ) + DV (s (k + 1))) :
     DV (s a) = ((∑ k ∈ Finset.Ico a b, CW (s k) : ℤ) : WithBot ℤ) + DV (s b) := by
   induction b, hab using Nat.le_induction with
@@ -242,11 +249,11 @@ theorem DV_tel (s : ℕ → V) (a b : ℕ) (hab : a ≤ b)
 
 /-! ### The play of the moves -/
 
-theorem moves_ne_of_class {v l : V} (hv : CL v = some l) (hvl : v ≠ l) : TG v = false := by
+private theorem moves_ne_of_class {v l : V} (hv : CL v = some l) (hvl : v ≠ l) : TG v = false := by
   by_contra h; exact hvl ((isTarget_of_class G pl p hv).1 (by simpa using h))
 
 /-- The play from a classified vertex reaches the class maximum. -/
-theorem moves_reach {v l : V} (hv : CL v = some l) : ∃ j, QM^[j] v = l := by
+private theorem moves_reach {v l : V} (hv : CL v = some l) : ∃ j, QM^[j] v = l := by
   by_contra hne
   push Not at hne
   obtain ⟨P, hP, -, hper⟩ := exists_period (f := QM) v
@@ -273,7 +280,7 @@ theorem moves_reach {v l : V} (hv : CL v = some l) : ∃ j, QM^[j] v = l := by
   omega
 
 /-- A vertex reaching the class maximum through the class below it has value `≥ -j`. -/
-theorem DV_ge_of_reachIt {l : V} (hl : CL l = some l) :
+private theorem DV_ge_of_reachIt {l : V} (hl : CL l = some l) :
     ∀ (j : ℕ) (u : V), reachIt HS (fun u => Rset G pl CL l u && decide (u ≤ l)) l j u = true →
       ((-(j : ℤ) : ℤ) : WithBot ℤ) ≤ DV u := by
   intro j
@@ -305,7 +312,7 @@ theorem DV_ge_of_reachIt {l : V} (hl : CL l = some l) :
           _ ≤ (CW u : WithBot ℤ) + DV (QM u) := add_le_add_right ((ih w hwj).trans hle) _
 
 /-- The cycle maximum of the play from a class maximum is itself. -/
-theorem cycMax_moves_max {l : V} (hl : CL l = some l) : cycMax QM l = l := by
+private theorem cycMax_moves_max {l : V} (hl : CL l = some l) : cycMax QM l = l := by
   classical
   obtain ⟨j, hj⟩ := moves_reach G pl p (moves_class G pl p hl)
   have hper : IsPeriodicPt QM (j + 1) l := by
@@ -376,30 +383,30 @@ theorem cycMax_moves_max {l : V} (hl : CL l = some l) : cycMax QM l = l := by
     exact_mod_cast this
   omega
 
-theorem cycMax_iterate (f : V → V) : ∀ (k : ℕ) (v : V), cycMax f (f^[k] v) = cycMax f v
+private theorem cycMax_iterate (f : V → V) : ∀ (k : ℕ) (v : V), cycMax f (f^[k] v) = cycMax f v
   | 0, _ => rfl
   | k + 1, v => by rw [iterate_succ_apply', cycMax_apply, cycMax_iterate f k v]
 
 /-- The cycle maximum of the play from a vertex of class `l` is `l`. -/
-theorem cycMax_moves {v l : V} (hv : CL v = some l) : cycMax QM v = l := by
+private theorem cycMax_moves {v l : V} (hv : CL v = some l) : cycMax QM v = l := by
   obtain ⟨j, hj⟩ := moves_reach G pl p hv
   rw [← cycMax_iterate QM j v, hj, cycMax_moves_max G pl p (classes_max G pl p hv)]
 
 /-! ### Values are keys -/
 
-theorem stepsTo_le (f : V → V) (x : V) : stepsTo f x ≤ 2 * Fintype.card V := by
+private theorem stepsTo_le (f : V → V) (x : V) : stepsTo f x ≤ 2 * Fintype.card V := by
   obtain ⟨i, hi, e⟩ := exists_hit (f := f) x
   by_contra h
   exact (stepsTo_spec (f := f) x).2 i (by omega) e
 
-theorem eI_eq (l : V) (k : ℕ) : eI G (plr pl) l k = eW G pl l * k := by
+private theorem eI_eq (l : V) (k : ℕ) : eI G (plr pl) l k = eW G pl l * k := by
   unfold eI eW
   by_cases h : favours G pl l = true
   · rw [ite_eq_left ((favours_iff G pl l).1 h), ite_eq_left h]; ring
   · rw [ite_eq_right (fun h' => h ((favours_iff G pl l).2 h')), ite_eq_right h]; ring
 
 /-- The value of a vertex: `M` times the signed sum over `B`, plus the signed step count. -/
-theorem value_eq {l : V} : ∀ (n : ℕ) (v : V), stepsTo QM v = n → CL v = some l →
+private theorem value_eq {l : V} : ∀ (n : ℕ) (v : V), stepsTo QM v = n → CL v = some l →
     DV v = ((scale V * ∑ y ∈ bSet QM v, wI G (plr pl) y + eW G pl l * stepsTo QM v : ℤ) : WithBot ℤ) := by
   intro n
   induction n with
@@ -427,7 +434,7 @@ theorem value_eq {l : V} : ∀ (n : ℕ) (v : V), stepsTo QM v = n → CL v = so
     split_ifs <;> ring
 
 /-- No owned vertex has a strictly better successor (player `pl`'s view). -/
-theorem moves_stable {v w : V} (hw : w ∈ HS v) :
+private theorem moves_stable {v w : V} (hw : w ∈ HS v) :
     K G QM (plr pl) w ≤ K G QM (plr pl) (QM v) := by
   obtain ⟨l, hv⟩ := classes_total G pl p v
   obtain ⟨μ, hwμ⟩ := classes_total G pl p w
@@ -460,12 +467,12 @@ theorem moves_stable {v w : V} (hw : w ∈ HS v) :
 
 /-! ### The timed program computes the moves -/
 
-theorem ret_foldlM {α β : Type*} (f : β → α → TimeM ℕ β) :
+private theorem ret_foldlM {α β : Type*} (f : β → α → TimeM ℕ β) :
     ∀ (xs : List α) (b : β), (xs.foldlM f b).ret = xs.foldl (fun b a => (f b a).ret) b
   | [], _ => rfl
   | a :: xs, b => by simp [List.foldlM_cons, ret_foldlM f xs]
 
-theorem time_foldlM_le {α β : Type*} (f : β → α → TimeM ℕ β) (K : ℕ)
+private theorem time_foldlM_le {α β : Type*} (f : β → α → TimeM ℕ β) (K : ℕ)
     (hf : ∀ b a, (f b a).time ≤ K) : ∀ (xs : List α) (b : β), (xs.foldlM f b).time ≤ xs.length * K
   | [], _ => by simp
   | a :: xs, b => by
@@ -474,20 +481,20 @@ theorem time_foldlM_le {α β : Type*} (f : β → α → TimeM ℕ β) (K : ℕ
     have := hf b a
     rw [Nat.succ_mul]; omega
 
-theorem ret_classStepT (cls : V → Option V) (x : V) :
+private theorem ret_classStepT (cls : V → Option V) (x : V) :
     (classStepT G pl p cls x).ret = classStep G pl p cls x := by
   unfold classStepT classStep opens
   simp only [TimeM.ret_bind, ret_reachFromT]
   split_ifs <;> simp [ret_reachFromT]
 
-theorem ret_classesT : (classesT G pl p).ret = classes G pl p := by
+private theorem ret_classesT : (classesT G pl p).ret = classes G pl p := by
   unfold classesT classes
   rw [ret_foldlM]
   congr 1
   funext cls x
   exact ret_classStepT G pl p cls x
 
-theorem bestResponse_eq : bestResponse G pl p = QM := by
+private theorem bestResponse_eq : bestResponse G pl p = QM := by
   unfold bestResponse bestResponseT
   simp only [TimeM.ret_bind, ret_classesT, ret_bfValT, mat_eq]
   rfl
@@ -511,16 +518,16 @@ theorem bestResponse_optimal : BestResponseOptimal G pl p := by
 
 /-! ### Cost -/
 
-theorem roundCost_mono {nb nb' : V → List V} (h : ∀ v, (nb v).length ≤ (nb' v).length) :
+private theorem roundCost_mono {nb nb' : V → List V} (h : ∀ v, (nb v).length ≤ (nb' v).length) :
     roundCost nb ≤ roundCost nb' := by
   unfold roundCost
   exact List.sum_le_sum (fun v _ => by have := h v; omega)
 
-theorem le_roundCost (nb : V → List V) (v : V) : (nb v).length + 1 ≤ roundCost nb := by
+private theorem le_roundCost (nb : V → List V) (v : V) : (nb v).length + 1 ≤ roundCost nb := by
   unfold roundCost
   exact List.le_sum_of_mem (List.mem_map.2 ⟨v, mem_univList v, rfl⟩)
 
-theorem roundCost_hsucc : roundCost HS ≤ edgeCount G + 2 * Fintype.card V := by
+private theorem roundCost_hsucc : roundCost HS ≤ edgeCount G + 2 * Fintype.card V := by
   have h1 : roundCost HS ≤ ((univList V).map fun v => (succList G v).length + 2).sum := by
     unfold roundCost
     refine List.sum_le_sum (fun v _ => ?_)
@@ -533,7 +540,7 @@ theorem roundCost_hsucc : roundCost HS ≤ edgeCount G + 2 * Fintype.card V := b
     ring
   omega
 
-theorem time_classStepT (cls : V → Option V) (x : V) :
+private theorem time_classStepT (cls : V → Option V) (x : V) :
     (classStepT G pl p cls x).time ≤ 1 + 2 * Fintype.card V * roundCost HS + roundCost HS +
       Fintype.card V := by
   have h1 := time_reachFromT HS (fun v => unclassified cls v && decide (v ≤ x)) x

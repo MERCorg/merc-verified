@@ -14,7 +14,7 @@ namespace MercLib.Refinement
 /-- A weak trace over `a :: ρ'` splits into a weak step over the singleton `[a]` followed by one
     over `ρ'`. The general "split at any prefix" fact also holds but this is the only shape the
     rest of the development needs. -/
-theorem WeakTr.splitHead [HasTau Label] {lts : LTS State Label} {s t : State} {ν : List Label}
+private theorem WeakTr.splitHead [HasTau Label] {lts : LTS State Label} {s t : State} {ν : List Label}
     (h : WeakTr lts s ν t) : ∀ {a : Label} {ρ' : List Label}, ν = a :: ρ' →
       ∃ u, WeakTr lts s [a] u ∧ WeakTr lts u ρ' t := by
   induction h with
@@ -41,7 +41,7 @@ theorem WeakTr.splitHead [HasTau Label] {lts : LTS State Label} {s t : State} {�
 /-- A weak trace over `ρ1 ++ ρ2` splits into a weak step over `ρ1` followed by one over `ρ2`,
     for any way of cutting the list (not just at the head, unlike `WeakTr.splitHead`, which this
     is proved from by induction on `ρ1`). -/
-theorem WeakTr.splitAppend [HasTau Label] {lts : LTS State Label} {t : State} :
+private theorem WeakTr.splitAppend [HasTau Label] {lts : LTS State Label} {t : State} :
     ∀ {ρ1 ρ2 : List Label} {s : State}, WeakTr lts s (ρ1 ++ ρ2) t →
       ∃ u, WeakTr lts s ρ1 u ∧ WeakTr lts u ρ2 t := by
   intro ρ1
@@ -57,7 +57,7 @@ theorem WeakTr.splitAppend [HasTau Label] {lts : LTS State Label} {t : State} :
 /-- The `ρ`-image of a set of states under `WeakTr` is already closed under further `ε`-steps:
     extending by `[]` (on the right) never adds anything new. Used to show that every state
     reachable in the normal form (`NormTr`/`FdrNormTr`) is `ε`-saturated. -/
-theorem weakImage_eps_closed [HasTau Label] (lts : LTS State Label) (U : Set State)
+private theorem weakImage_eps_closed [HasTau Label] (lts : LTS State Label) (U : Set State)
     (ρ : List Label) :
     { t | ∃ u ∈ { t | ∃ s ∈ U, WeakTr lts s ρ t }, WeakTr lts u [] t } =
       { t | ∃ s ∈ U, WeakTr lts s ρ t } := by
@@ -69,7 +69,7 @@ theorem weakImage_eps_closed [HasTau Label] (lts : LTS State Label) (U : Set Sta
     exact ⟨t, ⟨s, hs, hst⟩, WeakTr.refl t⟩
 
 /-- A `τ*`-path is a weak transition over the empty trace. -/
-theorem WeakTr.of_τSTr [HasTau Label] {lts : LTS State Label} {s t : State}
+private theorem WeakTr.of_τSTr [HasTau Label] {lts : LTS State Label} {s t : State}
     (h : lts.τSTr s t) : WeakTr lts s [] t := by
   induction h with
   | refl => exact .refl _
@@ -80,7 +80,7 @@ theorem WeakTr.of_τSTr [HasTau Label] {lts : LTS State Label} {s t : State}
     on forever, since that would itself witness `s`'s divergence. Needed for the "`U = ∅`" case of
     Theorem 3.24 (an FD-witness there gives no stable implementation state for free, unlike the
     SF-witness case which starts from a `Stable` hypothesis). -/
-theorem not_divergent_has_stable [HasTau Label] {lts : LTS State Label} {s : State}
+private theorem not_divergent_has_stable [HasTau Label] {lts : LTS State Label} {s : State}
     (h : ¬ lts.Divergent s) : ∃ t, lts.τSTr s t ∧ Stable lts t := by
   by_contra hcon
   push Not at hcon

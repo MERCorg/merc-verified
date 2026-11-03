@@ -2,6 +2,13 @@ module
 
 public import MercLib.HybridSI.Epoch
 public import MercLib.HybridSI.Proofs.Filter_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Filter_Proofs
+import all MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIEpochProofs
 
@@ -30,9 +37,9 @@ variable {V : Type*} [Fintype V] [LinearOrder V]
 variable (G : Game V) [DecidableRel G.edge]
 
 /-- `w` is a best successor of `v` for the keys `κ`. -/
-def Mx (κ : V → Key) (v w : V) : Prop := ∀ x, G.edge v x → κ x ≤ κ w
+private def Mx (κ : V → Key) (v w : V) : Prop := ∀ x, G.edge v x → κ x ≤ κ w
 
-theorem filtered_max {ks kstar : V → Key} {p : V → V} {v w : V}
+private theorem filtered_max {ks kstar : V → Key} {p : V → V} {v w : V}
     (h : w ∈ filtered G ks kstar p v) : Mx G kstar v w := by
   intro x hx
   unfold filtered at h
@@ -41,7 +48,7 @@ theorem filtered_max {ks kstar : V → Key} {p : V → V} {v w : V}
   rw [hw]
   exact le_foldl_max_of_mem _ _ (Or.inr (List.mem_map_of_mem ((mem_succList G).2 hx)))
 
-theorem mem_filtered {ks kstar : V → Key} {p : V → V} {v w : V}
+private theorem mem_filtered {ks kstar : V → Key} {p : V → V} {v w : V}
     (hi : w ∈ improving G ks p v) (hm : Mx G kstar v w) : w ∈ filtered G ks kstar p v := by
   have hmem := improving_sub G ks p v w hi
   unfold filtered
@@ -57,7 +64,7 @@ theorem mem_filtered {ks kstar : V → Key} {p : V → V} {v w : V}
   rw [hx]
   exact hm x ((mem_succList G).1 (by rw [hx]; exact List.mem_cons_self))
 
-theorem hbStep_next_pstar {bf : ℕ} {p ps : V → V} {qt : List (V × V)}
+private theorem hbStep_next_pstar {bf : ℕ} {p ps : V → V} {qt : List (V × V)}
     (hps : respond G true bf p = some ps) (h : hbStep G bf p = .next qt) :
     ∃ pstar, respond G false bf ps = some pstar := by
   unfold hbStep at h
@@ -70,7 +77,7 @@ theorem hbStep_next_pstar {bf : ℕ} {p ps : V → V} {qt : List (V × V)}
 
 /-- A non-final iteration: some edge is improving, and once some filtered edge exists, every
     vertex keeps its move (and has no filtered edge) or switches to a filtered edge. -/
-theorem hbStep_next_filtered {bf : ℕ} {p ps pstar : V → V} {qt : List (V × V)}
+private theorem hbStep_next_filtered {bf : ℕ} {p ps pstar : V → V} {qt : List (V × V)}
     (hps : respond G true bf p = some ps) (hpstar : respond G false bf ps = some pstar)
     (h : hbStep G bf p = .next qt) :
     (∃ v, improving G (key G ps) p v ≠ []) ∧
@@ -112,7 +119,7 @@ theorem hbStep_next_filtered {bf : ℕ} {p ps pstar : V → V} {qt : List (V × 
       exact argmaxKey_mem _ _ w ws
 
 /-- One iteration of an epoch, measured with the keys `K*` of Even's best response `pstar`. -/
-theorem epoch_round {bf : ℕ} {p ps pstar : V → V} {qt : List (V × V)}
+private theorem epoch_round {bf : ℕ} {p ps pstar : V → V} {qt : List (V × V)}
     (he : ∀ v, G.edge v (p v)) (hps : respond G true bf p = some ps)
     (hpstar : respond G false bf ps = some pstar) (h : hbStep G bf p = .next qt) :
     (∀ v, Mx G (key G pstar) v (p v) → Mx G (key G pstar) v (look qt v v)) ∧

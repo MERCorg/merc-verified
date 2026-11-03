@@ -2,6 +2,12 @@ module
 
 public import MercLib.HybridSI.Proofs.Improvement_Proofs
 public import Mathlib.Data.Fintype.BigOperators
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSITerminationProofs
 
@@ -26,7 +32,7 @@ variable {V : Type*} [Fintype V] [LinearOrder V]
 
 /-! ### Strictly increasing chains in a finite type -/
 
-theorem chain_bound {α β : Type*} [Fintype α] [Preorder β] (s : ℕ → α) (Φ : α → β) (n : ℕ)
+private theorem chain_bound {α β : Type*} [Fintype α] [Preorder β] (s : ℕ → α) (Φ : α → β) (n : ℕ)
     (h : ∀ k, k + 1 ≤ n → Φ (s k) < Φ (s (k + 1))) : n + 1 ≤ Fintype.card α := by
   have hlt : ∀ a b, a < b → b ≤ n → Φ (s a) < Φ (s b) := by
     intro a b hab hbn
@@ -46,7 +52,7 @@ theorem chain_bound {α β : Type*} [Fintype α] [Preorder β] (s : ℕ → α) 
 
 /-! ### `bestOf` only switches to strictly better moves -/
 
-theorem bestOf_max_strict (κ : V → Key) : ∀ (ws : List V) (cur : V),
+private theorem bestOf_max_strict (κ : V → Key) : ∀ (ws : List V) (cur : V),
     bestOf (fun a b => decide (b < a)) κ cur ws = cur ∨
       κ cur < κ (bestOf (fun a b => decide (b < a)) κ cur ws)
   | [], cur => Or.inl rfl
@@ -62,7 +68,7 @@ theorem bestOf_max_strict (κ : V → Key) : ∀ (ws : List V) (cur : V),
     · simp only [hb, decide_false, Bool.false_eq_true, ite_false]
       exact bestOf_max_strict κ ws cur
 
-theorem bestOf_min_strict (κ : V → Key) : ∀ (ws : List V) (cur : V),
+private theorem bestOf_min_strict (κ : V → Key) : ∀ (ws : List V) (cur : V),
     bestOf (fun a b => decide (a < b)) κ cur ws = cur ∨
       κ (bestOf (fun a b => decide (a < b)) κ cur ws) < κ cur
   | [], cur => Or.inl rfl
@@ -83,14 +89,14 @@ variable (G : Game V) [DecidableRel G.edge]
 /-! ### Termination of `respond` -/
 
 /-- The player whose point of view `respond pl` takes. -/
-def plPlayer (pl : Bool) : Player := if pl then .one else .zero
+private def plPlayer (pl : Bool) : Player := if pl then .one else .zero
 
 /-- The potential of a profile for `respond pl`: the key of the move of each vertex of `pl`. -/
-def respondPot (pl : Bool) (p : V → V) : V → Key :=
+private def respondPot (pl : Bool) (p : V → V) : V → Key :=
   fun u => if ownedBy G pl u then kfor (plPlayer pl) (key G p (p u)) else keyDefault
 
 /-- One round of `respond` either changes nothing or strictly increases the potential. -/
-theorem respondRound_lt (pl : Bool) (p : V → V)
+private theorem respondRound_lt (pl : Bool) (p : V → V)
     (hne : ¬ ((univList V).all fun v => look (respondRound G pl p) v v == p v) = true) :
     respondPot G pl p < respondPot G pl fun v => look (respondRound G pl p) v v := by
   set q : V → V := fun v => look (respondRound G pl p) v v with hq
@@ -136,7 +142,7 @@ theorem respondRound_lt (pl : Bool) (p : V → V)
     simp only [respondPot, ite_eq_left hown] at this
     exact absurd (lt_of_lt_of_le h (hK _)) (by simp only [K]; rw [this]; exact lt_irrefl _)
 
-theorem respond_none_chain (pl : Bool) : ∀ (F : ℕ) (p : V → V), respond G pl F p = none →
+private theorem respond_none_chain (pl : Bool) : ∀ (F : ℕ) (p : V → V), respond G pl F p = none →
     ∃ s : ℕ → V → V, s 0 = p ∧ ∀ k, k + 1 < F → respondPot G pl (s k) < respondPot G pl (s (k + 1))
   | 0, p, _ => ⟨fun _ => p, rfl, fun k hk => absurd hk (by omega)⟩
   | F + 1, p, h => by
@@ -151,7 +157,7 @@ theorem respond_none_chain (pl : Bool) : ∀ (F : ℕ) (p : V → V), respond G 
     · exact hs k (by omega)
 
 /-- `respond` returns within `|V|^|V| + 1` rounds. -/
-theorem respond_isSome (pl : Bool) {F : ℕ} (hF : hbFuel V ≤ F) (p : V → V) :
+private theorem respond_isSome (pl : Bool) {F : ℕ} (hF : hbFuel V ≤ F) (p : V → V) :
     (respond G pl F p).isSome := by
   by_contra hn
   obtain ⟨s, -, hs⟩ := respond_none_chain G pl F p (Option.not_isSome_iff_eq_none.1 hn)
@@ -164,7 +170,7 @@ theorem respond_isSome (pl : Bool) {F : ℕ} (hF : hbFuel V ≤ F) (p : V → V)
 
 /-- What a non-final H-B iteration does: every Even move is kept or switched to a strictly
     better successor (in the keys of Odd's best response), and some move is switched. -/
-theorem hbStep_next_spec {bf : ℕ} {p : V → V} {qt : List (V × V)}
+private theorem hbStep_next_spec {bf : ℕ} {p : V → V} {qt : List (V × V)}
     (h : hbStep G bf p = .next qt) : ∃ ps, respond G true bf p = some ps ∧
       (∀ v, look qt v v = p v ∨ (G.owner v = .zero ∧ key G ps (p v) < key G ps (look qt v v))) ∧
       ∃ v, G.owner v = .zero ∧ key G ps (p v) < key G ps (look qt v v) := by
@@ -221,12 +227,12 @@ theorem hbStep_next_spec {bf : ℕ} {p : V → V} {qt : List (V × V)}
         exact mem_improving G (hchoose v hv)
 
 /-- The potential of a profile for H-B: the key, under Odd's best response, of Even's move. -/
-def hbPot (bf : ℕ) (p : V → V) : V → Key :=
+private def hbPot (bf : ℕ) (p : V → V) : V → Key :=
   match respond G true bf p with
   | some ps => fun u => if G.owner u = .zero then key G ps (p u) else keyDefault
   | none => fun _ => keyDefault
 
-theorem hbStep_lt {bf : ℕ} (hbf : hbFuel V ≤ bf) {p : V → V} {qt : List (V × V)}
+private theorem hbStep_lt {bf : ℕ} (hbf : hbFuel V ≤ bf) {p : V → V} {qt : List (V × V)}
     (h : hbStep G bf p = .next qt) (he : ∀ v, G.edge v (p v)) :
     hbPot G bf p < hbPot G bf fun v => look qt v v := by
   obtain ⟨ps, hps, hmove, v, hv0, hv⟩ := hbStep_next_spec G h
@@ -266,7 +272,7 @@ theorem hbStep_lt {bf : ℕ} (hbf : hbFuel V ≤ bf) {p : V → V} {qt : List (V
       exact fun he => (ne_of_lt hv) (by rw [show look qt v v = p v from he])
     exact absurd ((himp.2 v hv0).2 hne) (by rw [this]; exact lt_irrefl _)
 
-theorem hbStep_ne_stuck {bf : ℕ} (hbf : hbFuel V ≤ bf) (p : V → V) : hbStep G bf p ≠ .stuck := by
+private theorem hbStep_ne_stuck {bf : ℕ} (hbf : hbFuel V ≤ bf) (p : V → V) : hbStep G bf p ≠ .stuck := by
   obtain ⟨ps, hps⟩ := Option.isSome_iff_exists.1 (respond_isSome G true hbf p)
   obtain ⟨pstar, hpstar⟩ := Option.isSome_iff_exists.1 (respond_isSome G false hbf ps)
   unfold hbStep
@@ -276,7 +282,7 @@ theorem hbStep_ne_stuck {bf : ℕ} (hbf : hbFuel V ≤ bf) (p : V → V) : hbSte
   · simp
   · rw [hpstar]; simp
 
-theorem hbRun_none_chain {bf : ℕ} (hbf : hbFuel V ≤ bf) : ∀ (F it : ℕ) (p : V → V),
+private theorem hbRun_none_chain {bf : ℕ} (hbf : hbFuel V ≤ bf) : ∀ (F it : ℕ) (p : V → V),
     hbRun G bf F it p = none → (∀ v, G.edge v (p v)) →
     ∃ s : ℕ → V → V, s 0 = p ∧ ∀ k, k + 1 < F → hbPot G bf (s k) < hbPot G bf (s (k + 1))
   | 0, _, p, _, _ => ⟨fun _ => p, rfl, fun k hk => absurd hk (by omega)⟩

@@ -12,9 +12,9 @@ namespace MercLib.Refinement
 
 /-! Machine-generated; may be freely edited or regenerated (see AGENTS.md). -/
 
-@[refl] theorem ProductLE.refl (p : Set State1 × State2) : ProductLE p p := ⟨rfl, le_refl _⟩
+@[refl] private theorem ProductLE.refl (p : Set State1 × State2) : ProductLE p p := ⟨rfl, le_refl _⟩
 
-theorem ProductLE.trans {p q r : Set State1 × State2}
+private theorem ProductLE.trans {p q r : Set State1 × State2}
     (h1 : ProductLE p q) (h2 : ProductLE q r) : ProductLE p r :=
   ⟨h1.1.trans h2.1, h1.2.trans h2.2⟩
 
@@ -22,20 +22,20 @@ namespace Antichain
 
 variable {α : Type*}
 
-theorem mem_def {A : Antichain α} {x : α} : x ⊑ A ↔ ∃ y ∈ A.set, A.le y x := Iff.rfl
+private theorem mem_def {A : Antichain α} {x : α} : x ⊑ A ↔ ∃ y ∈ A.set, A.le y x := Iff.rfl
 
-theorem mem_set_insert {A : Antichain α} {x y : α} :
+private theorem mem_set_insert {A : Antichain α} {x y : α} :
     y ∈ (insert x A).set ↔ y = x ∨ (y ∈ A.set ∧ ¬ A.le x y) := Iff.rfl
 
-@[simp] theorem le_insert {A : Antichain α} {x : α} : (insert x A).le = A.le := rfl
+@[simp] private theorem le_insert {A : Antichain α} {x : α} : (insert x A).le = A.le := rfl
 
 /-- A stored element of an antichain with a reflexive order is (trivially) contained in it. -/
-theorem mem_of_mem_set {A : Antichain α} (hrefl : ∀ x, A.le x x) {x : α}
+private theorem mem_of_mem_set {A : Antichain α} (hrefl : ∀ x, A.le x x) {x : α}
     (hx : x ∈ A.set) : x ⊑ A :=
   ⟨x, hx, hrefl x⟩
 
 /-- Membership is monotone in the stored set. -/
-theorem mem_mono {A A' : Antichain α} (hle : A.le = A'.le) (hAA' : A.set ⊆ A'.set)
+private theorem mem_mono {A A' : Antichain α} (hle : A.le = A'.le) (hAA' : A.set ⊆ A'.set)
     {x : α} (hx : x ⊑ A) : x ⊑ A' :=
   let ⟨y, hyA, hyx⟩ := hx
   ⟨y, hAA' hyA, hle ▸ hyx⟩
@@ -44,7 +44,7 @@ theorem mem_mono {A A' : Antichain α} (hle : A.le = A'.le) (hAA' : A.set ⊆ A'
     remove anything that was already contained. (The paper states this with the extra hypothesis
     `¬ y ⊑ A`, matching the only context it's ever applied in - after a failed membership test -
     but the proof below does not actually need it.) -/
-theorem mem_insert_of_mem {A : Antichain α}
+private theorem mem_insert_of_mem {A : Antichain α}
     (htrans : ∀ {x y z}, A.le x y → A.le y z → A.le x z) {x y : α}
     (hx : x ⊑ A) (_hy : ¬ y ⊑ A) : x ⊑ insert y A := by
   by_cases hyx : A.le y x
@@ -54,13 +54,13 @@ theorem mem_insert_of_mem {A : Antichain α}
 
 end Antichain
 
-theorem normTr_isMonotone [HasTau Label] (lts : LTS State Label) :
+private theorem normTr_isMonotone [HasTau Label] (lts : LTS State Label) :
     IsMonotoneNormalForm (NormTr lts) := by
   rintro U V a V' hUV ⟨hvis, rfl⟩
   exact ⟨{ t | ∃ s ∈ U, WeakTr lts s [a] t }, ⟨hvis, rfl⟩,
     fun t ⟨s, hs, hst⟩ => ⟨s, hUV hs, hst⟩⟩
 
-theorem fdrNormTr_isMonotone [HasTau Label] (lts : LTS State Label) :
+private theorem fdrNormTr_isMonotone [HasTau Label] (lts : LTS State Label) :
     IsMonotoneNormalForm (FdrNormTr lts) := by
   rintro U V a V' hUV ⟨hvis, hnd, rfl⟩
   refine ⟨{ t | ∃ s ∈ U, WeakTr lts s [a] t }, ⟨hvis, ?_, rfl⟩,
@@ -70,7 +70,7 @@ theorem fdrNormTr_isMonotone [HasTau Label] (lts : LTS State Label) :
 /-- **Lemma 5.7**, multi-step: `L1 ⋉ L2` states ordered by `ProductLE` simulate each other's
     moves, staying ordered. Needs only `IsMonotoneNormalForm L1`, so it applies uniformly to the
     `norm`/`normfdr` products of Theorems 3.11/3.14 and 3.24. -/
-theorem IsMonotoneNormalForm.simulate [HasTau Label]
+private theorem IsMonotoneNormalForm.simulate [HasTau Label]
     {L1 : LTS (Set State1) Label} (hmono : IsMonotoneNormalForm L1) (lts2 : LTS State2 Label)
     {p q : Set State1 × State2} (hpq : ProductLE p q) {σ : List Label} {q' : Set State1 × State2}
     (h : (product L1 lts2).MTr q σ q') :
@@ -90,7 +90,7 @@ theorem IsMonotoneNormalForm.simulate [HasTau Label]
 
 /-- **Proposition 5.8.** Anti-monotonicity of reachability: from a `ProductLE`-smaller start, any
     state reachable from a bigger one is matched by a smaller-or-equal reachable state. -/
-theorem productLE_canReach [HasTau Label]
+private theorem productLE_canReach [HasTau Label]
     {L1 : LTS (Set State1) Label} (hmono : IsMonotoneNormalForm L1) (lts2 : LTS State2 Label)
     {p q q' : Set State1 × State2} (hpq : ProductLE p q)
     (h : (product L1 lts2).CanReach q q') :
@@ -100,12 +100,12 @@ theorem productLE_canReach [HasTau Label]
   exact ⟨p', ⟨σ, hp'⟩, hple⟩
 
 /-- **Lemma 5.9** for TR-witnesses: anti-monotonicity under `ProductLE`. -/
-theorem IsTRWitness.antitone {U V : Set State1} {s t : State2}
+private theorem IsTRWitness.antitone {U V : Set State1} {s t : State2}
     (hle : ProductLE (U, s) (V, t)) (hwit : IsTRWitness V t) : IsTRWitness U s :=
   Set.subset_eq_empty hle.2 hwit
 
 /-- **Lemma 5.9** for SF-witnesses: anti-monotonicity under `ProductLE`. -/
-theorem IsSFWitness.antitone [HasTau Label]
+private theorem IsSFWitness.antitone [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) {U V : Set State1} {s t : State2}
     (hle : ProductLE (U, s) (V, t)) (hwit : IsSFWitness lts1 lts2 V t) :
     IsSFWitness lts1 lts2 U s := by
@@ -117,7 +117,7 @@ theorem IsSFWitness.antitone [HasTau Label]
     exact hsub.trans (fun _ ⟨s', hs', hstab, hX⟩ => ⟨s', hU hs', hstab, hX⟩)
 
 /-- **Lemma 5.9** for FD-witnesses: anti-monotonicity under `ProductLE`. -/
-theorem IsFDWitness.antitone [HasTau Label]
+private theorem IsFDWitness.antitone [HasTau Label]
     (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) {U V : Set State1} {s t : State2}
     (hle : ProductLE (U, s) (V, t)) (hwit : IsFDWitness lts1 lts2 V t) :
     IsFDWitness lts1 lts2 U s := by

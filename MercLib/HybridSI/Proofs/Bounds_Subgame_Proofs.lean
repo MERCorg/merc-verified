@@ -2,6 +2,16 @@ module
 
 public import MercLib.HybridSI.Bounds
 public import MercLib.HybridSI.Proofs.Potential_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Epoch_Proofs
+import all MercLib.HybridSI.Proofs.Filter_Proofs
+import all MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Potential_Proofs
+import all MercLib.HybridSI.Proofs.Termination_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIBoundsSubgameProofs
 
@@ -26,7 +36,7 @@ variable {V : Type*} [Fintype V] [LinearOrder V]
 
 /-- A signed sum of distinct powers of two is smaller than another iff the most relevant element
     of the symmetric difference is in the second set exactly when its weight is positive. -/
-theorem sum_lt_iff (δ : V → ℤ) (hδ : SignedPow δ) (A B : Finset V) :
+private theorem sum_lt_iff (δ : V → ℤ) (hδ : SignedPow δ) (A B : Finset V) :
     ∑ y ∈ A, δ y < ∑ y ∈ B, δ y ↔
       ∃ t, (t ∈ A ↔ t ∉ B) ∧ (∀ y, (y ∈ A ↔ y ∉ B) → y ≤ t) ∧ (t ∈ B ↔ 0 < δ t) := by
   classical
@@ -83,14 +93,14 @@ section Restrict
 variable {f : V → V} {fD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
 include hf
 
-theorem iterate_val : ∀ (i : ℕ) (a : D), (fD^[i] a).1 = f^[i] a.1
+private theorem iterate_val : ∀ (i : ℕ) (a : D), (fD^[i] a).1 = f^[i] a.1
   | 0, _ => rfl
   | i + 1, a => by rw [iterate_succ_apply, iterate_succ_apply, iterate_val i, hf]
 
-theorem recurs_val {a b : D} : Recurs fD a b ↔ Recurs f a.1 b.1 := by
+private theorem recurs_val {a b : D} : Recurs fD a b ↔ Recurs f a.1 b.1 := by
   simp only [Recurs, ← iterate_val hf, Subtype.ext_iff]
 
-theorem cycMax_val (a : D) : (cycMax fD a).1 = cycMax f a.1 := by
+private theorem cycMax_val (a : D) : (cycMax fD a).1 = cycMax f a.1 := by
   refine le_antisymm (le_cycMax ((recurs_val hf).1 (recurs_cycMax a))) ?_
   obtain ⟨i, -, hi⟩ := recurs_cycMax (f := f) a.1 0
   have hb : Recurs fD a (fD^[i] a) := by
@@ -99,7 +109,7 @@ theorem cycMax_val (a : D) : (cycMax fD a).1 = cycMax f a.1 := by
   rw [← iterate_val hf, ← hi] at *
   exact this
 
-theorem stepsTo_val (a : D) : stepsTo fD a = stepsTo f a.1 := by
+private theorem stepsTo_val (a : D) : stepsTo fD a = stepsTo f a.1 := by
   obtain ⟨h1, h2⟩ := stepsTo_spec (f := fD) a
   obtain ⟨h1', h2'⟩ := stepsTo_spec (f := f) a.1
   rcases lt_trichotomy (stepsTo fD a) (stepsTo f a.1) with h | h | h
@@ -107,7 +117,7 @@ theorem stepsTo_val (a : D) : stepsTo fD a = stepsTo f a.1 := by
   · exact h
   · exact absurd (Subtype.ext (by rw [iterate_val hf, h1', cycMax_val hf])) (h2 _ h)
 
-theorem bSet_val (a : D) : bSet f a.1 = (bSet fD a).map (Embedding.subtype _) := by
+private theorem bSet_val (a : D) : bSet f a.1 = (bSet fD a).map (Embedding.subtype _) := by
   ext y
   simp only [Finset.mem_map, Embedding.coe_subtype, mem_bSet, stepsTo_val hf]
   constructor
@@ -122,7 +132,7 @@ theorem bSet_val (a : D) : bSet f a.1 = (bSet fD a).map (Embedding.subtype _) :=
 
 end Restrict
 
-theorem rI_lt_val (i : Player) (x y : D) :
+private theorem rI_lt_val (i : Player) (x y : D) :
     rI G i x.1 < rI G i y.1 ↔ rI (subgame G D hD) i x < rI (subgame G D hD) i y := by
   have e : ∀ z : D, Good i ((subgame G D hD).prio z) ↔ Good i (G.prio z.1) := fun _ => Iff.rfl
   rcases lt_trichotomy x y with h | h | h
@@ -138,13 +148,13 @@ theorem rI_lt_val (i : Player) (x y : D) :
     simp only [e]
     split_ifs <;> constructor <;> intro _ <;> omega
 
-theorem rI_eq_val (i : Player) (x y : D) :
+private theorem rI_eq_val (i : Player) (x y : D) :
     rI G i x.1 = rI G i y.1 ↔ rI (subgame G D hD) i x = rI (subgame G D hD) i y := by
   constructor
   · intro h; rw [Subtype.ext (rI_injective h)]
   · intro h; rw [rI_injective h]
 
-theorem wI_pos_val (i : Player) (x : D) :
+private theorem wI_pos_val (i : Player) (x : D) :
     0 < wI G i x.1 ↔ 0 < wI (subgame G D hD) i x := by
   have p1 := pow_pos (two_pos (α := ℤ)) (rank x.1)
   have p2 := pow_pos (two_pos (α := ℤ)) (rank x)
@@ -155,7 +165,7 @@ theorem wI_pos_val (i : Player) (x : D) :
     | exact absurd h2 h1
     | (constructor <;> intro _ <;> linarith)
 
-theorem sum_lt_val (i : Player) (A B : Finset D) :
+private theorem sum_lt_val (i : Player) (A B : Finset D) :
     ∑ y ∈ A.map (Embedding.subtype _), wI G i y < ∑ y ∈ B.map (Embedding.subtype _), wI G i y ↔
       ∑ y ∈ A, wI (subgame G D hD) i y < ∑ y ∈ B, wI (subgame G D hD) i y := by
   rw [sum_lt_iff _ (wI_signed G i), sum_lt_iff _ (wI_signed _ i)]
@@ -179,10 +189,10 @@ theorem sum_lt_val (i : Player) (A B : Finset D) :
     refine ⟨s.1, by rw [hmA, hmB]; exact hs, fun y hy => ?_, by rw [wI_pos_val G hD, ← hb, hmB]⟩
     exact hmax ⟨y, hD' y hy⟩ (by rw [← hmA, ← hmB]; exact hy)
 
-theorem eI_val (i : Player) (x : D) (k : ℕ) : eI G i x.1 k = eI (subgame G D hD) i x k := rfl
+private theorem eI_val (i : Player) (x : D) (k : ℕ) : eI G i x.1 k = eI (subgame G D hD) i x k := rfl
 
 /-- Comparisons of keys agree on a closed subgame. -/
-theorem key_le_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
+private theorem key_le_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
     (hg : ∀ a, (gD a).1 = g a.1) (a b : D) :
     key G f a.1 ≤ key G g b.1 ↔ key (subgame G D hD) fD a ≤ key (subgame G D hD) gD b := by
   have k1 : key G f a.1 ≤ key G g b.1 ↔ K G f .zero a.1 ≤ K G g .zero b.1 := by simp [K, kfor]
@@ -200,12 +210,12 @@ theorem key_le_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a
       sum_lt_val G hD]
   rw [hs]
 
-theorem key_lt_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
+private theorem key_lt_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
     (hg : ∀ a, (gD a).1 = g a.1) (a b : D) :
     key G f a.1 < key G g b.1 ↔ key (subgame G D hD) fD a < key (subgame G D hD) gD b := by
   rw [← not_le, ← not_le, key_le_val G hD hg hf]
 
-theorem key_eq_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
+private theorem key_eq_val {f g : V → V} {fD gD : D → D} (hf : ∀ a, (fD a).1 = f a.1)
     (hg : ∀ a, (gD a).1 = g a.1) (a b : D) :
     key G f a.1 = key G g b.1 ↔ key (subgame G D hD) fD a = key (subgame G D hD) gD b := by
   rw [le_antisymm_iff, le_antisymm_iff, key_le_val G hD hf hg, key_le_val G hD hg hf]

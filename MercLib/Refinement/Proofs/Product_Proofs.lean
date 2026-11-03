@@ -3,6 +3,7 @@ module
 public import MercLib.Refinement.Semantics
 public import MercLib.Refinement.Product
 public import MercLib.Refinement.Proofs.Semantics_Proofs
+import all MercLib.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -14,7 +15,7 @@ namespace MercLib.Refinement
 
 /-- Two states of a product are related by `CanReach` whenever one is, composed transitively
     (`Cslib.LTS.CanReach` has no transitivity lemma of its own). -/
-theorem canReach_trans {lts : LTS State Label} {s t u : State}
+private theorem canReach_trans {lts : LTS State Label} {s t u : State}
     (h1 : lts.CanReach s t) (h2 : lts.CanReach t u) : lts.CanReach s u := by
   obtain ⟨μs1, h1⟩ := h1
   obtain ⟨μs2, h2⟩ := h2
@@ -22,7 +23,7 @@ theorem canReach_trans {lts : LTS State Label} {s t u : State}
 
 /-- Lemmas 3.4/3.5 combined into a single closed form: the normal form's multistep transition
     relation from `NormInit lts s1` along `ρ` reaches exactly the `ρ`-weak-derivatives of `s1`. -/
-theorem normTr_image [HasTau Label] (lts : LTS State Label) (s1 : State) :
+private theorem normTr_image [HasTau Label] (lts : LTS State Label) (s1 : State) :
     ∀ {ρ : List Label} {U : Set State},
       (NormTr lts).MTr (NormInit lts s1) ρ U → U = { t | WeakTr lts s1 ρ t } := by
   intro ρ
@@ -51,7 +52,7 @@ theorem normTr_image [HasTau Label] (lts : LTS State Label) (s1 : State) :
     multistep trace of `L1` and a weak trace of `L2` from the chosen states. Stated for a generic
     `L1 : LTS (Set State1) Label` so it serves both `NormTr lts1` (Theorems 3.11, 3.14) and
     `FdrNormTr lts1` (Theorem 3.24) without re-proving. -/
-theorem product_unzip [HasTau Label]
+private theorem product_unzip [HasTau Label]
     (L1 : LTS (Set State1) Label) (lts2 : LTS State2 Label) {p q : Set State1 × State2}
     {μs : List Label} (h : (product L1 lts2).MTr p μs q) :
     ∃ ρ : List Label, L1.MTr p.1 ρ q.1 ∧ WeakTr lts2 p.2 ρ q.2 := by
@@ -65,7 +66,7 @@ theorem product_unzip [HasTau Label]
 
 /-- Zip direction: an `L1`-trace and a matching weak trace of `L2` glue into a reachable pair of
     `L1 ⋉ L2`. Generic in `L1 : LTS (Set State1) Label` for the same reason as `product_unzip`. -/
-theorem product_zip [HasTau Label]
+private theorem product_zip [HasTau Label]
     (L1 : LTS (Set State1) Label) (lts2 : LTS State2 Label) {s0 s : State2} {ρ : List Label}
     (h2 : WeakTr lts2 s0 ρ s) :
     ∀ {U0 U : Set State1}, L1.MTr U0 ρ U →
@@ -94,7 +95,7 @@ theorem product_zip [HasTau Label]
 
 /-- The normal form's transition relation is total on visible-only label sequences: every state
     has *some* `ρ`-derivative (possibly `∅`), for any sequence of visible labels `ρ`. -/
-theorem normTr_total [HasTau Label] (lts : LTS State Label) (U0 : Set State) :
+private theorem normTr_total [HasTau Label] (lts : LTS State Label) (U0 : Set State) :
     ∀ {ρ : List Label}, (∀ μ ∈ ρ, IsVisible μ) → ∃ U, (NormTr lts).MTr U0 ρ U := by
   intro ρ
   induction ρ using List.reverseRecOn with
@@ -177,7 +178,7 @@ theorem stableFailuresRefines_iff_not_reachable_sfWitness [HasTau Label]
     `NormTr`: the proof only ever uses the equational component of `(FdrNormTr lts).Tr`, so it
     goes through unchanged (the divergence guard only affects *whether* a transition exists, not
     what the reached set equals when one does). -/
-theorem fdrNormTr_image [HasTau Label] (lts : LTS State Label) (s1 : State) :
+private theorem fdrNormTr_image [HasTau Label] (lts : LTS State Label) (s1 : State) :
     ∀ {ρ : List Label} {U : Set State},
       (FdrNormTr lts).MTr (NormInit lts s1) ρ U → U = { t | WeakTr lts s1 ρ t } := by
   intro ρ
@@ -204,7 +205,7 @@ theorem fdrNormTr_image [HasTau Label] (lts : LTS State Label) (s1 : State) :
     non-divergent, it also succeeds reaching some `V` via just the prefix `ρ'`, with `V` itself
     non-divergent: either `σ = []` and `V = U`, or `σ` is nonempty and non-divergence of its
     source `V` is exactly `FdrNormTr`'s guard on the first step of `σ`. -/
-theorem fdrNormTr_prefix_not_divergent [HasTau Label] (lts : LTS State Label)
+private theorem fdrNormTr_prefix_not_divergent [HasTau Label] (lts : LTS State Label)
     {ρ ρ' σ : List Label} {U0 U : Set State}
     (h : (FdrNormTr lts).MTr U0 ρ U) (hρ : ρ = ρ' ++ σ) (hUnd : ¬ SetDivergent lts U) :
     ∃ V, (FdrNormTr lts).MTr U0 ρ' V ∧ ¬ SetDivergent lts V := by
@@ -223,7 +224,7 @@ theorem fdrNormTr_prefix_not_divergent [HasTau Label] (lts : LTS State Label)
     `ρ`, then `ρ` is not a divergence of `L1`: no prefix of `ρ` can reach a divergent state,
     since every such prefix's normal-form image is non-divergent by
     `fdrNormTr_prefix_not_divergent`. -/
-theorem fdrNormTr_not_divergences [HasTau Label] (lts : LTS State Label) (s1 : State)
+private theorem fdrNormTr_not_divergences [HasTau Label] (lts : LTS State Label) (s1 : State)
     {ρ : List Label} {U : Set State}
     (h : (FdrNormTr lts).MTr (NormInit lts s1) ρ U) (hUnd : ¬ SetDivergent lts U) :
     ρ ∉ divergences lts s1 := by
@@ -234,7 +235,7 @@ theorem fdrNormTr_not_divergences [HasTau Label] (lts : LTS State Label) (s1 : S
   exact ⟨t, hwt, hdt⟩
 
 /-- **Theorem 3.24, forward direction (Lemma 3.22 analogue).** -/
-theorem failuresDivergencesRefines_of_not_reachable_fdWitness_aux [HasTau Label]
+private theorem failuresDivergencesRefines_of_not_reachable_fdWitness_aux [HasTau Label]
     (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label) (s2 : State2)
     (hfailBot : failuresBot lts2 s2 ⊆ failuresBot lts1 s1)
     (hdiv : divergences lts2 s2 ⊆ divergences lts1 s1) :
@@ -276,7 +277,7 @@ theorem failuresDivergencesRefines_of_not_reachable_fdWitness_aux [HasTau Label]
     gets stuck exactly at a divergent intermediate set reached via some prefix of `ρ`. Needed for
     the reverse direction of Theorem 3.24, where `normTr_total`'s unconditional totality
     (available for plain `NormTr`) no longer holds. -/
-theorem fdrNormTr_reach_or_stuck [HasTau Label] (lts1 : LTS State1 Label) (s1 : State1) :
+private theorem fdrNormTr_reach_or_stuck [HasTau Label] (lts1 : LTS State1 Label) (s1 : State1) :
     ∀ {ρ : List Label}, (∀ μ ∈ ρ, IsVisible μ) →
       ∃ ρ' U, (∃ σ, ρ = ρ' ++ σ) ∧ (FdrNormTr lts1).MTr (NormInit lts1 s1) ρ' U ∧
         (ρ' = ρ ∨ SetDivergent lts1 U) := by
@@ -300,7 +301,7 @@ theorem fdrNormTr_reach_or_stuck [HasTau Label] (lts1 : LTS State1 Label) (s1 : 
     · exact ⟨ρ', U, ⟨σ ++ [a], by rw [hσ, List.append_assoc]⟩, hmtr, Or.inr hdiv⟩
 
 /-- **Theorem 3.24, reverse direction (Lemma 3.23 analogue).** -/
-theorem failuresDivergencesRefines_of_not_reachable_fdWitness [HasTau Label]
+private theorem failuresDivergencesRefines_of_not_reachable_fdWitness [HasTau Label]
     (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label) (s2 : State2)
     (hnwit : ¬ ∃ U s, (product (FdrNormTr lts1) lts2).CanReach (NormInit lts1 s1, s2) (U, s) ∧
       IsFDWitness lts1 lts2 U s) :

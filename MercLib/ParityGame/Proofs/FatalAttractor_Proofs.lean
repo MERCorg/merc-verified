@@ -15,26 +15,26 @@ variable {V : Type*}
 section
 variable (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T : Set V)
 
-theorem Game.mpre_mono {A B : Set V} (h : A ⊆ B) : G.mpre X i c T A ⊆ G.mpre X i c T B := by
+private theorem Game.mpre_mono {A B : Set V} (h : A ⊆ B) : G.mpre X i c T A ⊆ G.mpre X i c T B := by
   rintro v ⟨hvX, hc, (⟨ho, w, hwX, he, hw⟩ | ⟨ho, hall⟩)⟩
   · exact ⟨hvX, hc, Or.inl ⟨ho, w, hwX, he, Set.union_subset_union_left T h hw⟩⟩
   · exact ⟨hvX, hc, Or.inr ⟨ho, fun w hwX he => Set.union_subset_union_left T h (hall w hwX he)⟩⟩
 
-theorem Game.mattrStage_succ_subset (k : ℕ) :
+private theorem Game.mattrStage_succ_subset (k : ℕ) :
     G.mattrStage X i c T k ⊆ G.mattrStage X i c T (k + 1) := by
   induction k with
   | zero => exact Set.empty_subset _
   | succ k ih => exact G.mpre_mono X i c T ih
 
-theorem Game.mattrStage_mono : Monotone (G.mattrStage X i c T) :=
+private theorem Game.mattrStage_mono : Monotone (G.mattrStage X i c T) :=
   monotone_nat_of_le_succ (G.mattrStage_succ_subset X i c T)
 
-theorem Game.mem_mattr_iff {v : V} :
+private theorem Game.mem_mattr_iff {v : V} :
     v ∈ G.mattr X i c T ↔ ∃ k, v ∈ G.mattrStage X i c T k := Iff.rfl
 
 /-- A node of the monotone attractor lies in the stage given by its rank, the rank is positive,
     and every stage containing it is at least its rank. -/
-theorem Game.mattrRank_spec {v : V} (hv : v ∈ G.mattr X i c T) :
+private theorem Game.mattrRank_spec {v : V} (hv : v ∈ G.mattr X i c T) :
     0 < G.mattrRank X i c T v ∧ v ∈ G.mattrStage X i c T (G.mattrRank X i c T v) ∧
       ∀ k, v ∈ G.mattrStage X i c T k → G.mattrRank X i c T v ≤ k := by
   classical
@@ -51,22 +51,22 @@ theorem Game.mattrRank_spec {v : V} (hv : v ∈ G.mattr X i c T) :
   · intro k hk; rw [hr]; exact Nat.find_min' hv' hk
 
 /-- Unfolding the stage of a node at its rank. -/
-theorem Game.mem_mpre_of_mattr {v : V} (hv : v ∈ G.mattr X i c T) :
+private theorem Game.mem_mpre_of_mattr {v : V} (hv : v ∈ G.mattr X i c T) :
     v ∈ G.mpre X i c T (G.mattrStage X i c T (G.mattrRank X i c T v - 1)) := by
   obtain ⟨hpos, hmem, -⟩ := G.mattrRank_spec X i c T hv
   obtain ⟨k, hk⟩ : ∃ k, G.mattrRank X i c T v = k + 1 := ⟨_, (Nat.succ_pred_eq_of_pos hpos).symm⟩
   rw [hk] at hmem ⊢
   exact hmem
 
-theorem Game.mattr_subset_X : G.mattr X i c T ⊆ X := fun _ hv =>
+private theorem Game.mattr_subset_X : G.mattr X i c T ⊆ X := fun _ hv =>
   (G.mem_mpre_of_mattr X i c T hv).1
 
-theorem Game.prio_le_of_mattr {v : V} (hv : v ∈ G.mattr X i c T) : G.prio v ≤ c :=
+private theorem Game.prio_le_of_mattr {v : V} (hv : v ∈ G.mattr X i c T) : G.prio v ≤ c :=
   (G.mem_mpre_of_mattr X i c T hv).2.1
 
 /-- The monotone attractor strategy moves from a node of `i` along an edge inside `X` into the
     previous stage or the target. -/
-theorem Game.mattrStrategy_spec {v : V} (hv : v ∈ G.mattr X i c T) (ho : G.owner v = i) :
+private theorem Game.mattrStrategy_spec {v : V} (hv : v ∈ G.mattr X i c T) (ho : G.owner v = i) :
     G.mattrStrategy X i c T v ∈ X ∧ G.edge v (G.mattrStrategy X i c T v) ∧
       G.mattrStrategy X i c T v ∈
         G.mattrStage X i c T (G.mattrRank X i c T v - 1) ∪ T := by
@@ -85,7 +85,7 @@ theorem Game.mattrStrategy_spec {v : V} (hv : v ∈ G.mattr X i c T) (ho : G.own
 
 /-- Every conforming move out of the monotone attractor goes into the previous stage or the
     target. -/
-theorem Game.step_of_mattr {v w : V} (hv : v ∈ G.mattr X i c T)
+private theorem Game.step_of_mattr {v w : V} (hv : v ∈ G.mattr X i c T)
     (hs : G.Step X i (G.mattrStrategy X i c T) v w) :
     w ∈ G.mattrStage X i c T (G.mattrRank X i c T v - 1) ∪ T := by
   obtain ⟨-, hwX, he, hσ⟩ := hs
@@ -102,7 +102,7 @@ section
 variable (G : Game V) (X : Set V) (c : ℕ) (T : Set V)
 
 /-- With a fatal attractor, conforming moves stay inside `MA(T)`. -/
-theorem Game.step_mem_ma (hfat : G.IsFatal X c T) {v w : V} (hv : v ∈ G.ma X c T)
+private theorem Game.step_mem_ma (hfat : G.IsFatal X c T) {v w : V} (hv : v ∈ G.ma X c T)
     (hs : G.Step X (Player.ofPrio c) (G.mattrStrategy X (Player.ofPrio c) c T) v w) :
     w ∈ G.ma X c T := by
   rcases G.step_of_mattr X _ c T hv hs with h | h
@@ -110,7 +110,7 @@ theorem Game.step_mem_ma (hfat : G.IsFatal X c T) {v w : V} (hv : v ∈ G.ma X c
   · exact hfat h
 
 /-- From every node of `MA(T)`, a conforming play reaches `T` after at least one step. -/
-theorem Game.exists_visit_target {p : ωSequence V}
+private theorem Game.exists_visit_target {p : ωSequence V}
     (hp : G.ConformingPlay X (Player.ofPrio c) (G.mattrStrategy X (Player.ofPrio c) c T) p) :
     ∀ r N, G.mattrRank X (Player.ofPrio c) c T (p N) = r → p N ∈ G.ma X c T →
       ∃ n, N < n ∧ p n ∈ T := by

@@ -3,6 +3,7 @@ module
 public import MercLib.ParityGame.Game
 public import MercLib.ParityGame.Proofs.Game_Proofs
 public import Cslib.Foundations.Data.OmegaSequence.Init
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 
@@ -18,15 +19,15 @@ closed *regions* (`Region`), partitions into two regions (`Strong`), and the equ
 
 variable {V : Type*}
 
-theorem Player.opp_ne (i : Player) : i.opp ≠ i := by cases i <;> simp [Player.opp]
+private theorem Player.opp_ne (i : Player) : i.opp ≠ i := by cases i <;> simp [Player.opp]
 
-theorem Player.eq_or_eq_opp (o i : Player) : o = i ∨ o = i.opp := by
+private theorem Player.eq_or_eq_opp (o i : Player) : o = i ∨ o = i.opp := by
   cases o <;> cases i <;> simp [Player.opp]
 
-theorem Player.ne_iff {o i : Player} : o ≠ i ↔ o = i.opp := by
+private theorem Player.ne_iff {o i : Player} : o ≠ i ↔ o = i.opp := by
   cases o <;> cases i <;> simp [Player.opp]
 
-theorem Player.opp_opp (i : Player) : i.opp.opp = i := by cases i <;> rfl
+private theorem Player.opp_opp (i : Player) : i.opp.opp = i := by cases i <;> rfl
 
 /-- `W` is a region of player `j` in `X` with strategy `σ`: `j` stays in `W` using `σ`, the
     opponent cannot leave `W` (inside `X`), and every play confined to `W` that conforms to `σ`
@@ -46,23 +47,23 @@ structure Game.Strong (G : Game V) (X : Set V) (r : Solution V) : Prop where
   disj : Disjoint (r.win .zero) (r.win .one)
   region : ∀ j, G.Region X j (r.win j) (r.strat j)
 
-theorem Game.Region.empty (G : Game V) (X : Set V) (j : Player) (σ : Strategy V) :
+private theorem Game.Region.empty (G : Game V) (X : Set V) (j : Player) (σ : Strategy V) :
     G.Region X j ∅ σ :=
   ⟨Set.empty_subset _, by simp, by simp, fun p hp => absurd (hp 0).1 (Set.notMem_empty _)⟩
 
-theorem Game.Strong.cover' {G : Game V} {X : Set V} {r : Solution V} (h : G.Strong X r)
+private theorem Game.Strong.cover' {G : Game V} {X : Set V} {r : Solution V} (h : G.Strong X r)
     (i : Player) : r.win i ∪ r.win i.opp = X := by
   cases i
   · exact h.cover
   · simpa [Player.opp, Set.union_comm] using h.cover
 
-theorem Game.Strong.disj' {G : Game V} {X : Set V} {r : Solution V} (h : G.Strong X r)
+private theorem Game.Strong.disj' {G : Game V} {X : Set V} {r : Solution V} (h : G.Strong X r)
     (i : Player) : Disjoint (r.win i) (r.win i.opp) := by
   cases i
   · exact h.disj
   · simpa [Player.opp] using h.disj.symm
 
-theorem Game.Strong.of_opp {G : Game V} {X : Set V} {r : Solution V} (i : Player)
+private theorem Game.Strong.of_opp {G : Game V} {X : Set V} {r : Solution V} (i : Player)
     (hcov : r.win i ∪ r.win i.opp = X) (hdisj : Disjoint (r.win i) (r.win i.opp))
     (hi : G.Region X i (r.win i) (r.strat i))
     (hj : G.Region X i.opp (r.win i.opp) (r.strat i.opp)) : G.Strong X r := by
@@ -78,7 +79,7 @@ theorem Game.Strong.of_opp {G : Game V} {X : Set V} {r : Solution V} (i : Player
     · exact hj
 
 /-- A node of a region is won by its player's strategy. -/
-theorem Game.Region.winsFrom {G : Game V} {X : Set V} {j : Player} {W : Set V} {σ : Strategy V}
+private theorem Game.Region.winsFrom {G : Game V} {X : Set V} {j : Player} {W : Set V} {σ : Strategy V}
     (hreg : G.Region X j W σ) (hX : G.IsSubgame X) {v : V} (hv : v ∈ W) :
     G.WinsFrom X j σ v := by
   have hstep : ∀ a b, a ∈ W → G.Step X j σ a b → b ∈ W := by
@@ -104,7 +105,7 @@ theorem Game.Region.winsFrom {G : Game V} {X : Set V} {j : Player} {W : Set V} {
     exact hreg.won p fun n => ⟨hall n, (hp n).2.2.1, (hp n).2.2.2⟩
 
 /-- A strong solution of a subgame is a solution in the sense of `Game.Solves`. -/
-theorem Game.Strong.solves {G : Game V} {X : Set V} {r : Solution V} (h : G.Strong X r)
+private theorem Game.Strong.solves {G : Game V} {X : Set V} {r : Solution V} (h : G.Strong X r)
     (hX : G.IsSubgame X) : G.Solves X r := by
   refine ⟨h.cover, h.disj, fun i v hv => ?_⟩
   have hreg := h.region i
@@ -133,11 +134,11 @@ theorem Game.Strong.solves {G : Game V} {X : Set V} {r : Solution V} (h : G.Stro
 
 open Classical in
 /-- The move following `σ` at nodes of `i` and `τ` elsewhere. -/
-noncomputable def Game.joint (G : Game V) (i : Player) (σ τ : Strategy V) (u : V) : V :=
+private noncomputable def Game.joint (G : Game V) (i : Player) (σ τ : Strategy V) (u : V) : V :=
   if G.owner u = i then σ u else τ u
 
 /-- Winning strategies of both players cannot coexist after a conforming move. -/
-theorem Game.no_both (G : Game V) [Finite V] {X : Set V} {i : Player} {σ τ : Strategy V}
+private theorem Game.no_both (G : Game V) [Finite V] {X : Set V} {i : Player} {σ τ : Strategy V}
     {v w : V} (hv : G.WinsFrom X i σ v) (hw : G.WinsFrom X i.opp τ w) (hs : G.Step X i σ v w) :
     False := by
   classical
@@ -189,7 +190,7 @@ theorem Game.no_both (G : Game V) [Finite V] {X : Set V} {i : Player} {σ τ : S
   exact Player.opp_ne i ((hj _ w2').trans (hj _ w1).symm)
 
 /-- A strong solution is a solution (given a finite game) and conversely. -/
-theorem Game.Solves.strong {G : Game V} [Finite V] {X : Set V} {r : Solution V}
+private theorem Game.Solves.strong {G : Game V} [Finite V] {X : Set V} {r : Solution V}
     (h : G.Solves X r) : G.Strong X r := by
   obtain ⟨hcov, hdisj, hwin⟩ := h
   have hsub : ∀ j, r.win j ⊆ X := fun j => by
@@ -220,7 +221,7 @@ theorem Game.Solves.strong {G : Game V} [Finite V] {X : Set V} {r : Solution V}
       ⟨hsub j (hp n).1, hsub j (hp (n + 1)).1, (hp n).2.1, (hp n).2.2⟩
 
 /-- Regions of the two players are disjoint. -/
-theorem Game.Region.disjoint {G : Game V} [Finite V] {X : Set V} {i : Player} {W W' : Set V}
+private theorem Game.Region.disjoint {G : Game V} [Finite V] {X : Set V} {i : Player} {W W' : Set V}
     {σ τ : Strategy V} (h : G.Region X i W σ) (h' : G.Region X i.opp W' τ) : Disjoint W W' := by
   classical
   refine Set.disjoint_left.mpr fun v hv hv' => ?_
@@ -265,7 +266,7 @@ theorem Game.Region.disjoint {G : Game V} [Finite V] {X : Set V} {i : Player} {W
   exact Player.opp_ne i ((hj _ w2).trans (hj _ w1).symm)
 
 /-- A region of a closed subset `C` of `X` is a region of `X`. -/
-theorem Game.Region.lift {G : Game V} {X C : Set V} {j : Player} {W : Set V} {σ : Strategy V}
+private theorem Game.Region.lift {G : Game V} {X C : Set V} {j : Player} {W : Set V} {σ : Strategy V}
     (h : G.Region C j W σ) (hCX : C ⊆ X) (hC : ∀ v ∈ C, ∀ w ∈ X, G.edge v w → w ∈ C) :
     G.Region X j W σ :=
   ⟨fun _ hv => hCX (h.sub hv), h.mine, fun v hv ho w hw he => h.theirs v hv ho w (hC v (h.sub hv) w hw he) he,

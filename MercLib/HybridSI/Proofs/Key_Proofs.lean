@@ -8,6 +8,7 @@ public import Mathlib.Tactic.Positivity
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.NormNum
 public import Mathlib.Tactic.Linarith
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
 
 @[expose] public section HybridSIKeyProofs
 
@@ -29,13 +30,13 @@ variable {V : Type*} [Fintype V] [LinearOrder V]
 
 /-! ### Ranks -/
 
-theorem rank_eq_card (x : V) : rank x = (Finset.univ.filter (· < x)).card := by
+private theorem rank_eq_card (x : V) : rank x = (Finset.univ.filter (· < x)).card := by
   unfold rank univList
   rw [← List.toFinset_card_of_nodup ((Finset.sort_nodup _ _).filter _), List.toFinset_filter,
     Finset.sort_toFinset]
   rfl
 
-theorem rank_lt_rank {x y : V} (h : x < y) : rank x < rank y := by
+private theorem rank_lt_rank {x y : V} (h : x < y) : rank x < rank y := by
   rw [rank_eq_card, rank_eq_card]
   refine Finset.card_lt_card ⟨fun z hz => ?_, fun hsub => ?_⟩
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hz ⊢
@@ -43,7 +44,7 @@ theorem rank_lt_rank {x y : V} (h : x < y) : rank x < rank y := by
   · have := hsub (Finset.mem_filter.2 ⟨Finset.mem_univ x, h⟩)
     simp at this
 
-theorem rank_lt_rank_iff {x y : V} : rank x < rank y ↔ x < y := by
+private theorem rank_lt_rank_iff {x y : V} : rank x < rank y ↔ x < y := by
   constructor
   · intro h
     by_contra h'
@@ -52,7 +53,7 @@ theorem rank_lt_rank_iff {x y : V} : rank x < rank y ↔ x < y := by
     · subst h''; omega
   · exact rank_lt_rank
 
-theorem rank_injective : Injective (rank : V → ℕ) := by
+private theorem rank_injective : Injective (rank : V → ℕ) := by
   intro x y h
   by_contra hne
   rcases lt_or_gt_of_ne hne with h' | h'
@@ -62,9 +63,9 @@ theorem rank_injective : Injective (rank : V → ℕ) := by
 /-! ### Signed sums of powers of two -/
 
 /-- `δ` is a signed power of two at every vertex. -/
-def SignedPow (δ : V → ℤ) : Prop := ∀ y, δ y = 2 ^ rank y ∨ δ y = -(2 ^ rank y)
+private def SignedPow (δ : V → ℤ) : Prop := ∀ y, δ y = 2 ^ rank y ∨ δ y = -(2 ^ rank y)
 
-theorem abs_sum_lt_of_lt (δ : V → ℤ) (hδ : SignedPow δ) (D : Finset V) (t : V)
+private theorem abs_sum_lt_of_lt (δ : V → ℤ) (hδ : SignedPow δ) (D : Finset V) (t : V)
     (hD : ∀ y ∈ D, y < t) : |∑ y ∈ D, δ y| < 2 ^ rank t := by
   have h1 : |∑ y ∈ D, δ y| ≤ ∑ y ∈ D, (2 : ℤ) ^ rank y := by
     refine (Finset.abs_sum_le_sum_abs _ _).trans (le_of_eq (Finset.sum_congr rfl fun y _ => ?_))
@@ -81,7 +82,7 @@ theorem abs_sum_lt_of_lt (δ : V → ℤ) (hδ : SignedPow δ) (D : Finset V) (t
   omega
 
 /-- A sum of distinct signed powers of two has the sign of its greatest term. -/
-theorem top_dominates (δ : V → ℤ) (hδ : SignedPow δ) (D : Finset V) (t : V) (ht : t ∈ D)
+private theorem top_dominates (δ : V → ℤ) (hδ : SignedPow δ) (D : Finset V) (t : V) (ht : t ∈ D)
     (hmax : ∀ y ∈ D, y ≤ t) : (0 < ∑ y ∈ D, δ y ↔ 0 < δ t) ∧ ∑ y ∈ D, δ y ≠ 0 := by
   rw [← Finset.add_sum_erase D δ ht]
   have hr := abs_sum_lt_of_lt δ hδ (D.erase t) t fun y hy =>
@@ -92,7 +93,7 @@ theorem top_dominates (δ : V → ℤ) (hδ : SignedPow δ) (D : Finset V) (t : 
 
 /-- Comparing two signed sums over sets decides the comparison of their parts at or above any
     threshold `m` in the same direction. -/
-theorem upper_le_of_le (δ : V → ℤ) (hδ : SignedPow δ) (A B : Finset V) (m : V)
+private theorem upper_le_of_le (δ : V → ℤ) (hδ : SignedPow δ) (A B : Finset V) (m : V)
     (h : ∑ y ∈ A, δ y ≤ ∑ y ∈ B, δ y) :
     ∑ y ∈ A.filter (m ≤ ·), δ y ≤ ∑ y ∈ B.filter (m ≤ ·), δ y := by
   classical
@@ -164,21 +165,21 @@ theorem upper_le_of_le (δ : V → ℤ) (hδ : SignedPow δ) (A B : Finset V) (m
 /-! ### Keys for a player -/
 
 /-- Componentwise negation of a key. -/
-def negK (κ : Key) : Key := toLex (-(ofLex κ).1, toLex (-(ofLex (ofLex κ).2).1, -(ofLex (ofLex κ).2).2))
+private def negK (κ : Key) : Key := toLex (-(ofLex κ).1, toLex (-(ofLex (ofLex κ).2).1, -(ofLex (ofLex κ).2).2))
 
 /-- Player `i`'s view of a key: the key itself for Even, its negation for Odd. -/
-def kfor (i : Player) (κ : Key) : Key := match i with
+private def kfor (i : Player) (κ : Key) : Key := match i with
   | .zero => κ
   | .one => negK κ
 
-theorem lex_le_iff (a b : ℤ) (c d : Lex (ℤ × ℤ)) :
+private theorem lex_le_iff (a b : ℤ) (c d : Lex (ℤ × ℤ)) :
     (toLex (a, c) : Key) ≤ toLex (b, d) ↔ a < b ∨ (a = b ∧ c ≤ d) := Prod.Lex.toLex_le_toLex
 
-theorem lex2_le_iff (a b c d : ℤ) :
+private theorem lex2_le_iff (a b c d : ℤ) :
     (toLex (a, c) : Lex (ℤ × ℤ)) ≤ toLex (b, d) ↔ a < b ∨ (a = b ∧ c ≤ d) :=
   Prod.Lex.toLex_le_toLex
 
-theorem negK_le_negK (κ κ' : Key) : negK κ ≤ negK κ' ↔ κ' ≤ κ := by
+private theorem negK_le_negK (κ κ' : Key) : negK κ ≤ negK κ' ↔ κ' ≤ κ := by
   have e : ∀ κ : Key,
       κ = toLex ((ofLex κ).1, toLex ((ofLex (ofLex κ).2).1, (ofLex (ofLex κ).2).2)) := fun _ => rfl
   generalize ha : (ofLex κ).1 = a
@@ -201,25 +202,25 @@ instance (i : Player) (p : ℕ) : Decidable (Good i p) := by unfold Good; infer_
 variable (G : Game V) (f : V → V)
 
 /-- Player `i`'s signed weight of a vertex. -/
-def wI (i : Player) (y : V) : ℤ := if Good i (G.prio y) then 2 ^ rank y else -(2 ^ rank y)
+private def wI (i : Player) (y : V) : ℤ := if Good i (G.prio y) then 2 ^ rank y else -(2 ^ rank y)
 
 /-- Player `i`'s reward of a cycle maximum. -/
 def rI (i : Player) (l : V) : ℤ := if Good i (G.prio l) then (rank l : ℤ) + 1 else -((rank l : ℤ) + 1)
 
 /-- Player `i`'s signed step count. -/
-def eI (i : Player) (l : V) (k : ℕ) : ℤ := if Good i (G.prio l) then -(k : ℤ) else k
+private def eI (i : Player) (l : V) (k : ℕ) : ℤ := if Good i (G.prio l) then -(k : ℤ) else k
 
-theorem wI_signed (i : Player) : SignedPow (wI G i) := fun y => by
+private theorem wI_signed (i : Player) : SignedPow (wI G i) := fun y => by
   unfold wI; split_ifs <;> simp
 
-theorem good_zero_iff (p : ℕ) : Good .zero p ↔ p % 2 = 0 := by
+private theorem good_zero_iff (p : ℕ) : Good .zero p ↔ p % 2 = 0 := by
   unfold Good Player.ofPrio; split_ifs with h <;> simp [h]
 
-theorem good_one_iff (p : ℕ) : Good .one p ↔ ¬ p % 2 = 0 := by
+private theorem good_one_iff (p : ℕ) : Good .one p ↔ ¬ p % 2 = 0 := by
   unfold Good Player.ofPrio; split_ifs with h <;> simp [h]
 
 /-- Player `i`'s view of the key of `x`, in components. -/
-theorem kfor_key (i : Player) (x : V) :
+private theorem kfor_key (i : Player) (x : V) :
     kfor i (key G f x) = toLex (rI G i (cycMax f x),
       toLex (∑ y ∈ bSet f x, wI G i y, eI G i (cycMax f x) (stepsTo f x))) := by
   cases i
@@ -242,21 +243,21 @@ theorem kfor_key (i : Player) (x : V) :
 
 variable {G f}
 
-theorem rI_pos_iff (i : Player) (l : V) : 0 < rI G i l ↔ Good i (G.prio l) := by
+private theorem rI_pos_iff (i : Player) (l : V) : 0 < rI G i l ↔ Good i (G.prio l) := by
   unfold rI; split_ifs with h <;> simp [h]
 
-theorem rI_inj {i : Player} {l l' : V} (h : rI G i l = rI G i l') (hpos : 0 < rI G i l) : l = l' := by
+private theorem rI_inj {i : Player} {l l' : V} (h : rI G i l = rI G i l') (hpos : 0 < rI G i l) : l = l' := by
   have hl := (rI_pos_iff i l).1 hpos
   have hl' : Good i (G.prio l') := (rI_pos_iff i l').1 (h ▸ hpos)
   unfold rI at h
   rw [ite_eq_left hl, ite_eq_left hl'] at h
   exact rank_injective (by omega)
 
-theorem sum_bSet_self {x : V} (h : x = cycMax f x) (i : Player) :
+private theorem sum_bSet_self {x : V} (h : x = cycMax f x) (i : Player) :
     ∑ y ∈ bSet f x, wI G i y = 0 := by
   rw [bSet_eq_empty h, Finset.sum_empty]
 
-theorem sum_bSet_apply {x : V} (h : x ≠ cycMax f x) (i : Player) :
+private theorem sum_bSet_apply {x : V} (h : x ≠ cycMax f x) (i : Player) :
     ∑ y ∈ bSet f x, wI G i y =
       ∑ y ∈ bSet f (f x), wI G i y + if cycMax f x < x then wI G i x else 0 := by
   rw [bSet_apply h]
@@ -265,7 +266,7 @@ theorem sum_bSet_apply {x : V} (h : x ≠ cycMax f x) (i : Player) :
   · simp
 
 /-- The part of the signed sum at or above `m`, along one step. -/
-theorem upper_bSet_apply {x m : V} (h : x ≠ cycMax f x) (i : Player) :
+private theorem upper_bSet_apply {x m : V} (h : x ≠ cycMax f x) (i : Player) :
     ∑ y ∈ (bSet f x).filter (m ≤ ·), wI G i y =
       ∑ y ∈ (bSet f (f x)).filter (m ≤ ·), wI G i y +
         if cycMax f x < x ∧ m ≤ x then wI G i x else 0 := by

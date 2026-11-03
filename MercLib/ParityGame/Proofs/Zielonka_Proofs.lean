@@ -4,6 +4,9 @@ public import MercLib.ParityGame.Zielonka
 public import MercLib.ParityGame.Proofs.Game_Proofs
 public import MercLib.ParityGame.Proofs.Attractor_Proofs
 public import MercLib.ParityGame.Proofs.Region_Proofs
+import all MercLib.ParityGame.Proofs.Attractor_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
+import all MercLib.ParityGame.Proofs.Region_Proofs
 
 open Cslib (ωSequence)
 
@@ -19,7 +22,7 @@ its strategy and the opponent cannot leave it) and plays confined to `W` are won
 
 variable {V : Type*}
 
-theorem Game.anyMove_spec (G : Game V) {X : Set V} (hX : G.IsSubgame X) {v : V} (hv : v ∈ X) :
+private theorem Game.anyMove_spec (G : Game V) {X : Set V} (hX : G.IsSubgame X) {v : V} (hv : v ∈ X) :
     G.anyMove X v ∈ X ∧ G.edge v (G.anyMove X v) := by
   classical
   have h := hX v hv
@@ -27,7 +30,7 @@ theorem Game.anyMove_spec (G : Game V) {X : Set V} (hX : G.IsSubgame X) {v : V} 
   rw [dite_eq_left h]
   exact h.choose_spec
 
-theorem Game.frequently_mem_of_frequently_attr (G : Game V) (X : Set V) (i : Player) (U : Set V)
+private theorem Game.frequently_mem_of_frequently_attr (G : Game V) (X : Set V) (i : Player) (U : Set V)
     (σ : Strategy V)
     (hσ : ∀ v ∈ G.attr X i U, v ∉ U → G.owner v = i → σ v = G.attrStrategy X i U v)
     (p : ωSequence V) (hp : G.ConformingPlay X i σ p)
@@ -39,7 +42,7 @@ theorem Game.frequently_mem_of_frequently_attr (G : Game V) (X : Set V) (i : Pla
   exact ⟨n, by omega, hnU⟩
 
 /-- Step 2 of the algorithm is correct. -/
-theorem Game.wonAll_strong (G : Game V) [Finite V] {X : Set V} {i : Player} {m : ℕ} {U : Set V}
+private theorem Game.wonAll_strong (G : Game V) [Finite V] {X : Set V} {i : Player} {m : ℕ} {U : Set V}
     (hX : G.IsSubgame X) (hUX : U ⊆ X) (hUm : ∀ v ∈ U, G.prio v = m)
     (hmax : ∀ v ∈ X, G.prio v ≤ m) (hi : Player.ofPrio m = i) {r₁ : Solution V}
     (hr₁ : G.Strong (X \ G.attr X i U) r₁) (he : r₁.win i.opp = ∅) :
@@ -103,7 +106,7 @@ theorem Game.wonAll_strong (G : Game V) [Finite V] {X : Set V} {i : Player} {m :
       exact this
 
 /-- Step 3 of the algorithm is correct. -/
-theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
+private theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
     (hAtrap : ∀ v ∈ X \ A, G.owner v = i → ∀ w ∈ X, G.edge v w → w ∉ A)
     {r₁ r₂ : Solution V} (hr₁ : G.Strong (X \ A) r₁)
     (hr₂ : G.Strong (X \ G.attr X i.opp (r₁.win i.opp)) r₂) :
@@ -233,7 +236,7 @@ theorem Game.wonSplit_strong (G : Game V) [Finite V] {X A : Set V} {i : Player}
         rw [h3 ho, hstrat_j, ite_eq_right fun hW' => hex n (hWB hW'), ite_eq_right (hex n)]
 
 /-- The invariant holds for the algorithm's result on every subgame. -/
-theorem Game.zielonkaAux_strong (G : Game V) [Finite V] :
+private theorem Game.zielonkaAux_strong (G : Game V) [Finite V] :
     ∀ (n : ℕ) (X : Set V), X.ncard = n → G.IsSubgame X → G.Strong X (G.zielonkaAux X) := by
   classical
   intro n

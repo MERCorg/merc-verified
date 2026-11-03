@@ -3,6 +3,7 @@ module
 public import MercLib.ParityGame.Attractor
 public import MercLib.ParityGame.Proofs.Game_Proofs
 public import Mathlib.Data.Fintype.Order
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 
@@ -19,7 +20,7 @@ variable (G : Game V) (X : Set V) (i : Player) (U : Set V)
 
 /-- A node first added at stage `k + 1` lies in `X` and is either a node of `i` with an edge
     into stage `k`, or a node of `1 - i` all of whose successors in `X` are in stage `k`. -/
-theorem Game.attrStage_succ_mem {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
+private theorem Game.attrStage_succ_mem {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
     (hv : v ∉ G.attrStage X i U k) :
     v ∈ X ∧ ((G.owner v = i ∧ ∃ w ∈ G.attrStage X i U k, G.edge v w) ∨
       (G.owner v ≠ i ∧ ∀ w ∈ X, G.edge v w → w ∈ G.attrStage X i U k)) := by
@@ -29,17 +30,17 @@ theorem Game.attrStage_succ_mem {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (
   · exact h
 
 /-- The attractor stages form an increasing chain. -/
-theorem Game.attrStage_mono : Monotone (G.attrStage X i U) :=
+private theorem Game.attrStage_mono : Monotone (G.attrStage X i U) :=
   monotone_nat_of_le_succ fun k => by
     intro _ hv
     simp only [Game.attrStage, Set.mem_union]
     exact Or.inl hv
 
 /-- The target set `U` is contained in its attractor. -/
-theorem Game.subset_attr : U ⊆ G.attr X i U := fun _ hv => ⟨0, hv⟩
+private theorem Game.subset_attr : U ⊆ G.attr X i U := fun _ hv => ⟨0, hv⟩
 
 /-- Every attractor stage stays inside the subgame `X` (when `U ⊆ X`). -/
-theorem Game.attrStage_subset (hU : U ⊆ X) (k : ℕ) : G.attrStage X i U k ⊆ X := by
+private theorem Game.attrStage_subset (hU : U ⊆ X) (k : ℕ) : G.attrStage X i U k ⊆ X := by
   induction k with
   | zero => exact hU
   | succ k ih =>
@@ -50,12 +51,12 @@ theorem Game.attrStage_subset (hU : U ⊆ X) (k : ℕ) : G.attrStage X i U k ⊆
     · exact hvX
 
 /-- The attractor stays inside the subgame `X` (when `U ⊆ X`). -/
-theorem Game.attr_subset (hU : U ⊆ X) : G.attr X i U ⊆ X := by
+private theorem Game.attr_subset (hU : U ⊆ X) : G.attr X i U ⊆ X := by
   rintro v ⟨k, hk⟩
   exact G.attrStage_subset X i U hU k hk
 
 /-- A node of `i` with an edge into the attractor is in the attractor. -/
-theorem Game.mem_attr_of_owner {v w : V} (hv : v ∈ X) (ho : G.owner v = i)
+private theorem Game.mem_attr_of_owner {v w : V} (hv : v ∈ X) (ho : G.owner v = i)
     (he : G.edge v w) (hw : w ∈ G.attr X i U) : v ∈ G.attr X i U := by
   obtain ⟨k, hk⟩ := hw
   refine ⟨k + 1, ?_⟩
@@ -63,7 +64,7 @@ theorem Game.mem_attr_of_owner {v w : V} (hv : v ∈ X) (ho : G.owner v = i)
   exact Or.inr ⟨hv, Or.inl ⟨ho, w, hk, he⟩⟩
 
 /-- All the attractor lies in a single stage (finite games). -/
-theorem Game.exists_attr_subset_stage [Finite V] : ∃ K, G.attr X i U ⊆ G.attrStage X i U K := by
+private theorem Game.exists_attr_subset_stage [Finite V] : ∃ K, G.attr X i U ⊆ G.attrStage X i U K := by
   classical
   let f : V → ℕ := fun w => if h : w ∈ G.attr X i U then h.choose else 0
   obtain ⟨M, hM⟩ := Finite.exists_le f
@@ -73,7 +74,7 @@ theorem Game.exists_attr_subset_stage [Finite V] : ∃ K, G.attr X i U ⊆ G.att
   exact G.attrStage_mono X i U this hw.choose_spec
 
 /-- A node of `1 - i` all of whose successors in `X` are in the attractor is in the attractor. -/
-theorem Game.mem_attr_of_opp [Finite V] {v : V} (hv : v ∈ X) (ho : G.owner v ≠ i)
+private theorem Game.mem_attr_of_opp [Finite V] {v : V} (hv : v ∈ X) (ho : G.owner v ≠ i)
     (h : ∀ w ∈ X, G.edge v w → w ∈ G.attr X i U) : v ∈ G.attr X i U := by
   obtain ⟨K, hK⟩ := G.exists_attr_subset_stage X i U
   refine ⟨K + 1, ?_⟩
@@ -81,7 +82,7 @@ theorem Game.mem_attr_of_opp [Finite V] {v : V} (hv : v ∈ X) (ho : G.owner v �
   exact Or.inr ⟨hv, Or.inr ⟨ho, fun w hw he => hK (h w hw he)⟩⟩
 
 /-- A node first added at stage `k + 1` has rank `k + 1`. -/
-theorem Game.attrRank_eq {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
+private theorem Game.attrRank_eq {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
     (hv : v ∉ G.attrStage X i U k) : G.attrRank X i U v = k + 1 := by
   classical
   have hex : ∃ k, v ∈ G.attrStage X i U k := ⟨_, h⟩
@@ -91,7 +92,7 @@ theorem Game.attrRank_eq {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
   exact G.attrStage_mono X i U (by omega) hvn
 
 /-- The attractor strategy moves a node first reached at stage `k + 1` into stage `k`. -/
-theorem Game.attrStrategy_spec {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
+private theorem Game.attrStrategy_spec {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k + 1))
     (hv : v ∉ G.attrStage X i U k) (ho : G.owner v = i) :
     G.attrStrategy X i U v ∈ G.attrStage X i U k ∧ G.edge v (G.attrStrategy X i U v) := by
   classical
@@ -107,7 +108,7 @@ theorem Game.attrStrategy_spec {k : ℕ} {v : V} (h : v ∈ G.attrStage X i U (k
   · exact absurd ho h2
 
 /-- Every play conforming to an attractor strategy reaches `U` from the attractor. -/
-theorem Game.reach_of_mem_stage (σ : Strategy V)
+private theorem Game.reach_of_mem_stage (σ : Strategy V)
     (hσ : ∀ v ∈ G.attr X i U, v ∉ U → G.owner v = i → σ v = G.attrStrategy X i U v)
     (p : ωSequence V) (hp : G.ConformingPlay X i σ p) :
     ∀ k N, p N ∈ G.attrStage X i U k → ∃ n, N ≤ n ∧ p n ∈ U := by
@@ -132,7 +133,7 @@ theorem Game.reach_of_mem_stage (σ : Strategy V)
 
 /-- Nodes of `i` in the attractor (outside `U`) are moved by the attractor strategy to the
     attractor. -/
-theorem Game.attrStrategy_mem {v : V} (hv : v ∈ G.attr X i U) (hvU : v ∉ U)
+private theorem Game.attrStrategy_mem {v : V} (hv : v ∈ G.attr X i U) (hvU : v ∉ U)
     (ho : G.owner v = i) :
     G.attrStrategy X i U v ∈ G.attr X i U ∧ G.edge v (G.attrStrategy X i U v) := by
   obtain ⟨k, hk⟩ := hv
@@ -146,7 +147,7 @@ theorem Game.attrStrategy_mem {v : V} (hv : v ∈ G.attr X i U) (hvU : v ∉ U)
 
 /-- Nodes of `1 - i` in the attractor (outside `U`) have all their successors in `X` in the
     attractor. -/
-theorem Game.attr_opp_closed {v : V} (hv : v ∈ G.attr X i U) (hvU : v ∉ U)
+private theorem Game.attr_opp_closed {v : V} (hv : v ∈ G.attr X i U) (hvU : v ∉ U)
     (ho : G.owner v ≠ i) : ∀ w ∈ X, G.edge v w → w ∈ G.attr X i U := by
   obtain ⟨k, hk⟩ := hv
   induction k with

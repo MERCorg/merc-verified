@@ -5,6 +5,10 @@ public import MercLib.Control.Proofs.While_Proofs
 public import Mathlib.Data.Set.Card
 public import MercLib.ParityGame.Proofs.Attractor_Proofs
 public import MercLib.ParityGame.Proofs.FatalAttractor_Proofs
+import all MercLib.Control.Proofs.While_Proofs
+import all MercLib.ParityGame.Proofs.Attractor_Proofs
+import all MercLib.ParityGame.Proofs.FatalAttractor_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 
@@ -21,7 +25,7 @@ variable {V : Type*}
 /-- A region `W ⊇ S` that is closed under `σ'`, where `σ'` agrees with `σ` on the closed winning
     region `S` and every conforming play inside `W` either reaches `S` or is won, is again a closed
     winning region. -/
-theorem Game.isClosedWinningRegion_of_reach (G : Game V) (X : Set V) (i : Player)
+private theorem Game.isClosedWinningRegion_of_reach (G : Game V) (X : Set V) (i : Player)
     {S W : Set V} {σ σ' : Strategy V} (hsub : G.IsSubgame X)
     (hS : G.IsClosedWinningRegion X i S σ) (hWX : W ⊆ X)
     (hagree : ∀ v ∈ S, G.owner v = i → σ' v = σ v)
@@ -79,7 +83,7 @@ section
 variable (G : Game V) (X : Set V) (i : Player)
 
 /-- The attractor of the attractor adds nothing (finite games). -/
-theorem Game.attr_attr_subset [Finite V] (S : Set V) :
+private theorem Game.attr_attr_subset [Finite V] (S : Set V) :
     G.attr X i (G.attr X i S) ⊆ G.attr X i S := by
   rintro v ⟨k, hk⟩
   induction k generalizing v with
@@ -94,7 +98,7 @@ theorem Game.attr_attr_subset [Finite V] (S : Set V) :
 open scoped Classical in
 /-- Closing a closed winning region under the attractor, with the attractor strategy on the new
     nodes, gives a closed winning region. -/
-theorem Game.isClosedWinningRegion_attr [Finite V] (hsub : G.IsSubgame X) {S : Set V}
+private theorem Game.isClosedWinningRegion_attr [Finite V] (hsub : G.IsSubgame X) {S : Set V}
     {σ : Strategy V} (hS : G.IsClosedWinningRegion X i S σ) :
     G.IsClosedWinningRegion X i (G.attr X i S)
       (fun v => if v ∈ G.attr X i S \ S then G.attrStrategy X i S v else σ v) := by
@@ -123,35 +127,35 @@ end
 /-! ## Invariant of the implementation -/
 
 /-- The invariant: a sound partial solution whose regions are closed under their attractors. -/
-def Game.ImplInv (G : Game V) (X : Set V) (r : Solution V) : Prop :=
+private def Game.ImplInv (G : Game V) (X : Set V) (r : Solution V) : Prop :=
   G.SoundPartial X r ∧ ∀ i, G.attr X i (r.win i) ⊆ r.win i
 
 /-- `r'` extends `r`. -/
-def Solution.Extends (r r' : Solution V) : Prop := ∀ i, r.win i ⊆ r'.win i
+private def Solution.Extends (r r' : Solution V) : Prop := ∀ i, r.win i ⊆ r'.win i
 
-theorem Solution.Extends.refl (r : Solution V) : r.Extends r := fun _ => le_rfl
+private theorem Solution.Extends.refl (r : Solution V) : r.Extends r := fun _ => le_rfl
 
-theorem Solution.Extends.trans {r r' r'' : Solution V} (h : r.Extends r') (h' : r'.Extends r'') :
+private theorem Solution.Extends.trans {r r' r'' : Solution V} (h : r.Extends r') (h' : r'.Extends r'') :
     r.Extends r'' := fun i => (h i).trans (h' i)
 
 section
 variable (G : Game V) (X : Set V)
 
-theorem Game.attrWithTau_win_self (i : Player) (r : Solution V) :
+private theorem Game.attrWithTau_win_self (i : Player) (r : Solution V) :
     (G.attrWithTau X i r).win i = G.attr X i (r.win i) := by
   simp [Game.attrWithTau]
 
-theorem Game.attrWithTau_win_ne {i k : Player} (h : k ≠ i) (r : Solution V) :
+private theorem Game.attrWithTau_win_ne {i k : Player} (h : k ≠ i) (r : Solution V) :
     (G.attrWithTau X i r).win k = r.win k := by
   simp [Game.attrWithTau, Function.update_of_ne h]
 
-theorem Game.attrWithTau_strat_ne {i k : Player} (h : k ≠ i) (r : Solution V) :
+private theorem Game.attrWithTau_strat_ne {i k : Player} (h : k ≠ i) (r : Solution V) :
     (G.attrWithTau X i r).strat k = r.strat k := by
   simp [Game.attrWithTau, Function.update_of_ne h]
 
 /-- `AttrDefaultWithTau` keeps the solution sound, closes the region of `i` under its attractor
     and leaves the other player's region alone. -/
-theorem Game.attrWithTau_sound [Finite V] (hsub : G.IsSubgame X) (i : Player) {r : Solution V}
+private theorem Game.attrWithTau_sound [Finite V] (hsub : G.IsSubgame X) (i : Player) {r : Solution V}
     (hr : G.SoundPartial X r) :
     G.SoundPartial X (G.attrWithTau X i r) ∧
       G.attr X i ((G.attrWithTau X i r).win i) ⊆ (G.attrWithTau X i r).win i ∧
@@ -175,7 +179,7 @@ end
 
 open scoped Classical in
 /-- The strategy set by `acceptFatal` before closing under the attractor. -/
-noncomputable def Game.fatalStrat (G : Game V) (X : Set V) (j : ℕ) (U Y S : Set V)
+private noncomputable def Game.fatalStrat (G : Game V) (X : Set V) (j : ℕ) (U Y S : Set V)
     (τ : Strategy V) : Strategy V := fun v =>
   if v ∈ Y \ S ∧ G.owner v = Player.ofPrio j then
     if v ∈ U then
@@ -183,7 +187,7 @@ noncomputable def Game.fatalStrat (G : Game V) (X : Set V) (j : ℕ) (U Y S : Se
     else G.mattrStrategy X (Player.ofPrio j) j (U ∪ S) v
   else τ v
 
-theorem Game.acceptFatal_eq (G : Game V) (X : Set V) (j : ℕ) (U Y : Set V) (r : Solution V) :
+private theorem Game.acceptFatal_eq (G : Game V) (X : Set V) (j : ℕ) (U Y : Set V) (r : Solution V) :
     G.acceptFatal X j U Y r =
       G.attrWithTau X (Player.ofPrio j)
         { win := Function.update r.win (Player.ofPrio j) (r.win (Player.ofPrio j) ∪ Y)
@@ -196,7 +200,7 @@ variable (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T : Set V)
 
 /-- Any strategy agreeing with the monotone attractor strategy at `v` moves from `v` into the
     previous stage or the target. -/
-theorem Game.step_of_mattr_of_agree (σ : Strategy V) {v w : V} (hv : v ∈ G.mattr X i c T)
+private theorem Game.step_of_mattr_of_agree (σ : Strategy V) {v w : V} (hv : v ∈ G.mattr X i c T)
     (hσ : G.owner v = i → σ v = G.mattrStrategy X i c T v) (hs : G.Step X i σ v w) :
     w ∈ G.mattrStage X i c T (G.mattrRank X i c T v - 1) ∪ T := by
   obtain ⟨hvX, hwX, he, hσ'⟩ := hs
@@ -208,7 +212,7 @@ end
 /-- The fatal step: a closed winning region `S` of `α = Player.ofPrio j` that is closed under the
     `α`-attractor, extended by a fatal monotone attractor `Y` of the priority-`j` nodes `U ⊆ Y`
     with target `U ∪ S`, is a closed winning region for the strategy `fatalStrat`. -/
-theorem Game.isClosedWinningRegion_fatal [Finite V] (G : Game V) (X : Set V)
+private theorem Game.isClosedWinningRegion_fatal [Finite V] (G : Game V) (X : Set V)
     (hsub : G.IsSubgame X) {j : ℕ} {U S : Set V} {τ : Strategy V}
     (hS : G.IsClosedWinningRegion X (Player.ofPrio j) S τ)
     (hSattr : G.attr X (Player.ofPrio j) S ⊆ S) (hUj : ∀ u ∈ U, G.prio u = j)
@@ -304,7 +308,7 @@ theorem Game.isClosedWinningRegion_fatal [Finite V] (G : Game V) (X : Set V)
       exact G.prio_le_of_mattr X α j _ (hY k)
 
 /-- `acceptFatal` preserves the invariant and extends the solution. -/
-theorem Game.acceptFatal_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSubgame X)
+private theorem Game.acceptFatal_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSubgame X)
     {j : ℕ} {U : Set V} {r : Solution V} (hr : G.ImplInv X r) (hUj : ∀ u ∈ U, G.prio u = j)
     (hUY : U ⊆ G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j))) :
     G.ImplInv X (G.acceptFatal X j U (G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j))) r) ∧
@@ -339,7 +343,7 @@ open scoped Classical in
 /-- The `while` loop for priority `j` preserves the invariant and extends the solution: its state
     is `(r, U, prev)`, and the candidate set `U` consists of priority-`j` nodes and shrinks strictly
     in every non-breaking iteration. -/
-theorem Game.fatalLoop_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSubgame X) (j : ℕ)
+private theorem Game.fatalLoop_inv [Finite V] (G : Game V) (X : Set V) (hsub : G.IsSubgame X) (j : ℕ)
     (r0 : Solution V)
     (g : Unit → Solution V × Set V × Set V → Id (ForInStep (Solution V × Set V × Set V)))
     (hg : ∀ r U prev, (g () (r, U, prev)).run =

@@ -2,6 +2,9 @@ module
 
 public import MercLib.HybridSI.Proofs.Key_Proofs
 public import MercLib.ParityGame.Proofs.Game_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIWinProofs
 
@@ -23,7 +26,7 @@ set_option linter.unusedSectionVars false
 
 variable {V : Type*} [Fintype V] [LinearOrder V]
 
-theorem eventually_const_of_monotone {g : ℕ → ℤ} (hg : Monotone g) (hfin : (Set.range g).Finite) :
+private theorem eventually_const_of_monotone {g : ℕ → ℤ} (hg : Monotone g) (hfin : (Set.range g).Finite) :
     ∃ N, ∀ n ≥ N, g n = g N := by
   obtain ⟨_, ⟨N, rfl⟩, hmax⟩ := Set.exists_max_image _ id hfin ⟨g 0, 0, rfl⟩
   exact ⟨N, fun n hn => le_antisymm (hmax (g n) ⟨n, rfl⟩) (hg hn)⟩
@@ -31,9 +34,9 @@ theorem eventually_const_of_monotone {g : ℕ → ℤ} (hg : Monotone g) (hfin :
 variable {G : Game V} {f : V → V} {i : Player}
 
 /-- Player `i`'s view of the key of `x` under `f`. -/
-abbrev K (G : Game V) (f : V → V) (i : Player) (x : V) : Key := kfor i (key G f x)
+private abbrev K (G : Game V) (f : V → V) (i : Player) (x : V) : Key := kfor i (key G f x)
 
-theorem K_le_iff (a b : V) :
+private theorem K_le_iff (a b : V) :
     K G f i a ≤ K G f i b ↔ rI G i (cycMax f a) < rI G i (cycMax f b) ∨
       (rI G i (cycMax f a) = rI G i (cycMax f b) ∧
         (∑ y ∈ bSet f a, wI G i y < ∑ y ∈ bSet f b, wI G i y ∨
@@ -41,22 +44,22 @@ theorem K_le_iff (a b : V) :
             eI G i (cycMax f a) (stepsTo f a) ≤ eI G i (cycMax f b) (stepsTo f b)))) := by
   rw [K, K, kfor_key, kfor_key, lex_le_iff, lex2_le_iff]
 
-theorem rI_le_of_K_le {a b : V} (h : K G f i a ≤ K G f i b) :
+private theorem rI_le_of_K_le {a b : V} (h : K G f i a ≤ K G f i b) :
     rI G i (cycMax f a) ≤ rI G i (cycMax f b) := by
   rcases (K_le_iff a b).1 h with h | ⟨h, -⟩ <;> omega
 
-theorem sum_le_of_K_le {a b : V} (h : K G f i a ≤ K G f i b)
+private theorem sum_le_of_K_le {a b : V} (h : K G f i a ≤ K G f i b)
     (hr : rI G i (cycMax f a) = rI G i (cycMax f b)) :
     ∑ y ∈ bSet f a, wI G i y ≤ ∑ y ∈ bSet f b, wI G i y := by
   rcases (K_le_iff a b).1 h with h | ⟨-, h | ⟨h, -⟩⟩ <;> omega
 
-theorem rI_bound (l : V) : rI G i l ≤ Fintype.card V + 1 := by
+private theorem rI_bound (l : V) : rI G i l ≤ Fintype.card V + 1 := by
   have : rank l ≤ Fintype.card V := by
     rw [rank_eq_card]; exact Finset.card_le_univ _
   unfold rI; split_ifs <;> omega
 
 /-- The core lemma. -/
-theorem winsFrom_of_saddle (hrel : G.Relabelled)
+private theorem winsFrom_of_saddle (hrel : G.Relabelled)
     (hown : ∀ v, G.owner v = i → G.edge v (f v))
     (hloc : ∀ v, G.owner v ≠ i → ∀ w, G.edge v w → K G f i (f v) ≤ K G f i w)
     (v : V) (hv : 0 < rI G i (cycMax f v)) : G.WinsFrom Set.univ i f v := by

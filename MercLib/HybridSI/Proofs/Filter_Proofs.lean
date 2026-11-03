@@ -1,6 +1,12 @@
 module
 
 public import MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.HybridSI.Proofs.Key_Proofs
+import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.HybridSI.Proofs.Win_Proofs
+import all MercLib.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIFilterProofs
 
@@ -22,7 +28,7 @@ set_option linter.unusedSectionVars false
 
 variable {V : Type*} [Fintype V] [LinearOrder V]
 
-theorem foldl_max_le {x : Key} : ∀ (l : List Key) (c : Key), c ≤ x → (∀ y ∈ l, y ≤ x) →
+private theorem foldl_max_le {x : Key} : ∀ (l : List Key) (c : Key), c ≤ x → (∀ y ∈ l, y ≤ x) →
     l.foldl max c ≤ x
   | [], _, hc, _ => hc
   | y :: l, c, hc, hl => by
@@ -30,7 +36,7 @@ theorem foldl_max_le {x : Key} : ∀ (l : List Key) (c : Key), c ≤ x → (∀ 
     exact foldl_max_le l _ (max_le hc (hl y List.mem_cons_self))
       fun z hz => hl z (List.mem_cons_of_mem _ hz)
 
-theorem le_foldl_max_of_mem {x : Key} : ∀ (l : List Key) (c : Key), (x = c ∨ x ∈ l) →
+private theorem le_foldl_max_of_mem {x : Key} : ∀ (l : List Key) (c : Key), (x = c ∨ x ∈ l) →
     x ≤ l.foldl max c
   | [], _, h => by simp at h; simp [h]
   | y :: l, c, h => by
