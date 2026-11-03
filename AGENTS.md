@@ -13,9 +13,9 @@
 
 ## Skills
 
-Task-specific instructions live in `.agents/skills/<name>/SKILL.md` (Agent Skills format: YAML frontmatter with `name` and `description`, then Markdown). Load the relevant skill before starting a matching task. `.claude/skills` is a symlink to the same directory.
+Task-specific instructions are skills in the Agent Skills format (YAML frontmatter with `name` and `description`, then Markdown). Before starting a matching task, read the skill file and follow it. When a skill refers to "the `X` skill", it means `.agents/skills/X/SKILL.md`.
 
-| Skill | Description |
+| Skill file | Read when |
 |---|---|
 | `build` | Build and test commands |
 | `regenerate` | Regenerate Lean code from Rust sources |

@@ -18,7 +18,7 @@ The `lean-lsp` MCP server (configured in `.mcp.json` and `opencode.json`) suppor
 - `lean_code_actions` — resolved edits for `Try this` suggestions (`simp?`, `exact?`)
 - `lean_build` — full `lake build` + LSP restart; slow (see below), use sparingly
 
-This MCP does not edit files — use `Edit`/`Write` for that. All line/column numbers are 1-indexed, columns count characters.
+This MCP does not edit files — use your own file-editing tools for that. All line/column numbers are 1-indexed, columns count characters.
 
 ## Checking a file — prefer `lean_diagnostic_messages` over `lake build`
 
