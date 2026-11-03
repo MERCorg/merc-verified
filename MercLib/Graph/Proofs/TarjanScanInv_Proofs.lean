@@ -1,6 +1,9 @@
 module
 
 public import MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 
@@ -17,7 +20,7 @@ open Relation
 variable {n : ℕ}
 
 /-- The edges examined by the scan are those at the positions `off ≤ i < off'`. -/
-theorem scanRes_idx {g : Graph n} {s : Fin n} {off off' : ℕ} {c c2 : Ctx n} {ch : Option (Fin n)}
+private theorem scanRes_idx {g : Graph n} {s : Fin n} {off off' : ℕ} {c c2 : Ctx n} {ch : Option (Fin n)}
     (hres : ScanRes g s ((g.adj s).drop off) off c ch off' c2) (hoff : off ≤ (g.adj s).length) :
     off' ≤ (g.adj s).length ∧ (ch = none → off' = (g.adj s).length) ∧
     (∀ i w, off ≤ i → i < off' → (g.adj s)[i]? = some (true, w) →
@@ -55,7 +58,7 @@ theorem scanRes_idx {g : Graph n} {s : Fin n} {off off' : ℕ} {c c2 : Ctx n} {c
       have : (true, w) ∈ (g.adj s).drop off := by rw [h1]; exact List.mem_append_left _ hw
       exact List.mem_of_mem_drop this
 
-theorem inv_scan {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ}
+private theorem inv_scan {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ}
     {W : List (Fin n × ℕ)} (hw : c.work = (s, off) :: W) (hsI : Init g c s)
     {ch : Option (Fin n)} {off' : ℕ} {c2 : Ctx n}
     (hres : ScanRes g s ((g.adj s).drop off) off c ch off' c2) :

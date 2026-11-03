@@ -2,6 +2,7 @@ module
 
 public import MercLib.Graph.Tarjan
 public import MercLib.Graph.Proofs.Scc_Proofs
+import all MercLib.Graph.Proofs.Scc_Proofs
 
 @[expose] public section
 
@@ -19,7 +20,7 @@ open Relation
 variable {n : ℕ}
 
 /-- Reachability inside the whole vertex set is plain reachability. -/
-theorem reach_univ_iff (g : Graph n) (u v : Fin n) :
+private theorem reach_univ_iff (g : Graph n) (u v : Fin n) :
     MercLib.Graph.Reach (Edge g) Set.univ u v ↔ ReflTransGen (Edge g) u v := by
   constructor
   · intro h

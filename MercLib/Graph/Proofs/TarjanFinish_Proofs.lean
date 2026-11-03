@@ -1,6 +1,10 @@
 module
 
 public import MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 
@@ -25,7 +29,7 @@ section Finish
 variable {g : Graph n} {V : Ctx n} {s : Fin n} {off' : ℕ} {W : List (Fin n × ℕ)}
 
 /-- The entries below the top of the work stack are initialised. -/
-theorem finish_initW (hV : Inv g V) (hw : V.work = (s, off') :: W) :
+private theorem finish_initW (hV : Inv g V) (hw : V.work = (s, off') :: W) :
     ∀ p off2, (p, off2) ∈ W → Init g V p := by
   intro p off2 hp
   rcases hV.work_fresh p off2 (by rw [hw]; exact List.mem_cons_of_mem _ hp) with hh | hh
@@ -37,7 +41,7 @@ theorem finish_initW (hV : Inv g V) (hw : V.work = (s, off') :: W) :
     exact absurd hp (hV.head_unique hw off2)
 
 /-- Every state below the top of the work stack was discovered before the top state. -/
-theorem finish_discW (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s) :
+private theorem finish_discW (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s) :
     ∀ p off2, (p, off2) ∈ W → V.disc p < V.disc s := by
   intro p off2 hp
   have hpw := hV.work_disc
@@ -45,7 +49,7 @@ theorem finish_discW (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g
   exact (List.pairwise_cons.1 hpw).1 (p, off2) hp hsI
 
 /-- All edges of the top state are examined. -/
-theorem finish_exam_s (hw : V.work = (s, off') :: W) (hV : Inv g V) (hoff : off' = (g.adj s).length)
+private theorem finish_exam_s (hw : V.work = (s, off') :: W) (hV : Inv g V) (hoff : off' = (g.adj s).length)
     (w : Fin n) (hedge : Edge g s w) : Examined g V.work s w := by
   refine ⟨hedge, fun off2 ho => ?_⟩
   rw [hw] at ho
@@ -58,7 +62,7 @@ theorem finish_exam_s (hw : V.work = (s, off') :: W) (hV : Inv g V) (hoff : off'
   · exact absurd e (hV.head_unique hw off2)
 
 /-- States of the SCC stack that were discovered after the top state `s` are not on the work stack. -/
-theorem finish_notW (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s) {x : Fin n}
+private theorem finish_notW (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s) {x : Fin n}
     (hxI : Init g V x) (hx : x ≠ s) (hd : V.disc s ≤ V.disc x) : x ∉ V.work.map Prod.fst := by
   intro hh
   rw [hw] at hh
@@ -71,13 +75,13 @@ theorem finish_notW (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g 
 
 
 /-- A done state only reaches done states. -/
-theorem done_reach (hV : Inv g V) {a b : Fin n} (ha : Done g V a) (h : Reach g a b) : Done g V b := by
+private theorem done_reach (hV : Inv g V) {a b : Fin n} (ha : Done g V a) (h : Reach g a b) : Done g V b := by
   induction h with
   | refl => exact ha
   | tail _ hedge ih => exact hV.E2 _ _ ih hedge
 
 /-- When `s` is the root of an SCC, the states above it on the SCC stack are exactly its SCC. -/
-theorem pop_sem (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
+private theorem pop_sem (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
     (hoff : off' = (g.adj s).length) (hpop : V.disc s = V.low s) :
     (∀ x, x ∈ V.stk → V.disc s ≤ V.disc x → Reach g s x) ∧
     (∀ x, x ∈ V.stk → V.disc s ≤ V.disc x → Reach g x s) ∧
@@ -147,7 +151,7 @@ theorem pop_sem (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
 
 /-- Finishing a state that is not the root of an SCC: the state stays on the SCC stack, and its
 `low` is propagated to the parent `p0` (`lowf`). -/
-theorem inv_finish_nopop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
+private theorem inv_finish_nopop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
     (hoff : off' = (g.adj s).length) (hnp : V.disc s ≠ V.low s) {p0 : Fin n} {o0 : ℕ}
     {W' : List (Fin n × ℕ)} (hW : W = (p0, o0) :: W') (lowf : Fin n → ℕ)
     (hl1 : ∀ v, v ≠ p0 → lowf v = V.low v) (hl2 : lowf p0 ≤ V.low p0)
@@ -349,7 +353,7 @@ theorem inv_finish_nopop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : In
 
 /-- Finishing the root of an SCC: the states above it on the SCC stack (`top`, and `s`) form the
 SCC; they are popped and get the next block number. -/
-theorem inv_finish_pop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
+private theorem inv_finish_pop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
     (hoff : off' = (g.adj s).length) (hpop : V.disc s = V.low s) {top rest : List (Fin n)}
     (hstk : V.stk = top ++ s :: rest) {onSt' : Fin n → Bool} {blk' : Fin n → ℕ}
     (hon' : ∀ u, onSt' u = if u ∈ top ++ [s] then false else V.onSt u)
@@ -639,7 +643,7 @@ theorem inv_finish_pop (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init
 
 
 /-- **Finishing the top state succeeds and preserves the invariant.** -/
-theorem inv_finish (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
+private theorem inv_finish (hV : Inv g V) (hw : V.work = (s, off') :: W) (hsI : Init g V s)
     (hoff : off' = (g.adj s).length) :
     ∃ c3, finish s { V with work := W } = some c3 ∧ Inv g c3 := by
   have hmem : (s, off') ∈ V.work := by rw [hw]; simp

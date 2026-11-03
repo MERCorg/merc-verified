@@ -38,7 +38,7 @@ structure ScanRes (g : Graph n) (s : Fin n) (ts : List (Bool × Fin n)) (idx : �
   disc_ne : ∀ v, ch ≠ some v → c'.disc v = c.disc v
   child : ∀ v, ch = some v → c.disc v = g.unv ∧ c'.disc v = 0
 
-theorem scan_spec (g : Graph n) (s : Fin n) :
+private theorem scan_spec (g : Graph n) (s : Fin n) :
     ∀ (ts : List (Bool × Fin n)) (idx : ℕ) (c : Ctx n),
       (∀ v, c.disc v = g.unv → c.onSt v = false) →
       ScanRes g s ts idx c (scan g s ts idx c).1 (scan g s ts idx c).2.1 (scan g s ts idx c).2.2 := by
@@ -168,7 +168,7 @@ theorem scan_spec (g : Graph n) (s : Fin n) :
             · exact Or.inl h6
             · exact Or.inr ⟨w, by simp [hw], hw2⟩
 
-theorem popComp_spec (s : Fin n) (e : ℕ) :
+private theorem popComp_spec (s : Fin n) (e : ℕ) :
     ∀ (stk : List (Fin n)) (onSt : Fin n → Bool) (blk : Fin n → ℕ), s ∈ stk →
       ∃ top rest : List (Fin n), stk = top ++ s :: rest ∧ s ∉ top ∧
         ∃ onSt' blk', popComp s e stk onSt blk = some (rest, onSt', blk') ∧
@@ -205,7 +205,7 @@ theorem popComp_spec (s : Fin n) (e : ℕ) :
         · subst hw; simp
         · by_cases hw2 : w ∈ top ++ [s] <;> simp [hw, hw2]
 
-theorem popComp_none (s : Fin n) (e : ℕ) :
+private theorem popComp_none (s : Fin n) (e : ℕ) :
     ∀ (stk : List (Fin n)) (onSt : Fin n → Bool) (blk : Fin n → ℕ), s ∉ stk →
       popComp s e stk onSt blk = none := by
   intro stk

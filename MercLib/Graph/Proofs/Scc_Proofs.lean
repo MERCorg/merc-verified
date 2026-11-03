@@ -39,7 +39,7 @@ theorem Reach.mem_of_ne {X : Set V} {a b : V} (h : Reach E X a b) (hne : a ≠ b
     | tail _ hs _ => exact hs.2.1
 
 /-- Paths between vertices of an SCC stay inside it. -/
-theorem IsSCC.reach_within {X D : Set V} (h : IsSCC E X D) {u v : V} (hu : u ∈ D) (hv : v ∈ D) :
+private theorem IsSCC.reach_within {X D : Set V} (h : IsSCC E X D) {u v : V} (hu : u ∈ D) (hv : v ∈ D) :
     Reach E D u v := by
   obtain ⟨-, hDX, hconn, hmax⟩ := h
   have key : ∀ a, Reach E X a v → a ∈ D → Reach E D a v := by
@@ -56,7 +56,7 @@ theorem IsSCC.reach_within {X D : Set V} (h : IsSCC E X D) {u v : V} (hu : u ∈
   exact key u (hconn u hu v hv) hu
 
 /-- Every non-empty subset of a finite graph has a final SCC. -/
-theorem exists_isFinalSCC (E : V → V → Prop) [Finite V] {X : Set V} (hne : X.Nonempty) :
+private theorem exists_isFinalSCC (E : V → V → Prop) [Finite V] {X : Set V} (hne : X.Nonempty) :
     ∃ C, IsFinalSCC E X C := by
   classical
   let R : V → Set V := fun v => {w | w ∈ X ∧ Reach E X v w}
@@ -84,7 +84,7 @@ theorem exists_isFinalSCC (E : V → V → Prop) [Finite V] {X : Set V} (hne : X
 theorem finalSCCExists (E : V → V → Prop) [Finite V] (X : Set V) : FinalSCCExists E X :=
   fun h => exists_isFinalSCC E h
 
-theorem finalSCC_spec (E : V → V → Prop) [Finite V] {X : Set V} (hne : X.Nonempty) :
+private theorem finalSCC_spec (E : V → V → Prop) [Finite V] {X : Set V} (hne : X.Nonempty) :
     IsFinalSCC E X (finalSCC E X) := by
   classical
   unfold finalSCC

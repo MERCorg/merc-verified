@@ -1,6 +1,8 @@
 module
 
 public import MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 
@@ -16,7 +18,7 @@ open Relation
 
 variable {n : ℕ}
 
-theorem inv_initNode {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ}
+private theorem inv_initNode {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ}
     {W : List (Fin n × ℕ)} (hw : c.work = (s, off) :: W) : Inv g (initNode g s c) := by
   by_cases hs : c.low s = g.unv
   · -- the state is fresh

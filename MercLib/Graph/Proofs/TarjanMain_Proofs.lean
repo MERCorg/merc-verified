@@ -1,6 +1,11 @@
 module
 
 public import MercLib.Graph.Proofs.TarjanFinish_Proofs
+import all MercLib.Graph.Proofs.TarjanFinish_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 
@@ -17,14 +22,14 @@ open Relation
 
 variable {n : ℕ}
 
-theorem initNode_work (g : Graph n) (s : Fin n) (c : Ctx n) : (initNode g s c).work = c.work := by
+private theorem initNode_work (g : Graph n) (s : Fin n) (c : Ctx n) : (initNode g s c).work = c.work := by
   unfold initNode; split_ifs <;> rfl
 
-theorem initNode_comm (g : Graph n) (s : Fin n) (c : Ctx n) (W : List (Fin n × ℕ)) :
+private theorem initNode_comm (g : Graph n) (s : Fin n) (c : Ctx n) (W : List (Fin n × ℕ)) :
     initNode g s { c with work := W } = { initNode g s c with work := W } := by
   unfold initNode; split_ifs <;> rfl
 
-theorem scan_comm (g : Graph n) (s : Fin n) :
+private theorem scan_comm (g : Graph n) (s : Fin n) :
     ∀ (ts : List (Bool × Fin n)) (idx : ℕ) (c : Ctx n) (W : List (Fin n × ℕ)),
       scan g s ts idx { c with work := W } =
         ((scan g s ts idx c).1, (scan g s ts idx c).2.1, { (scan g s ts idx c).2.2 with work := W }) := by
@@ -46,12 +51,12 @@ theorem scan_comm (g : Graph n) (s : Fin n) :
           exact ih _ c W
 
 /-- The number of unvisited states. -/
-def cnt (g : Graph n) (c : Ctx n) : ℕ := (Finset.univ.filter (fun v => c.disc v = g.unv)).card
+private def cnt (g : Graph n) (c : Ctx n) : ℕ := (Finset.univ.filter (fun v => c.disc v = g.unv)).card
 
-theorem initNode_ri (g : Graph n) (s : Fin n) (c : Ctx n) : (initNode g s c).ri = c.ri := by
+private theorem initNode_ri (g : Graph n) (s : Fin n) (c : Ctx n) : (initNode g s c).ri = c.ri := by
   unfold initNode; split_ifs <;> rfl
 
-theorem cnt_initNode_le {g : Graph n} {c : Ctx n} (h : Inv g c) (s : Fin n) :
+private theorem cnt_initNode_le {g : Graph n} {c : Ctx n} (h : Inv g c) (s : Fin n) :
     cnt g (initNode g s c) ≤ cnt g c := by
   unfold cnt
   apply Finset.card_le_card
@@ -66,7 +71,7 @@ theorem cnt_initNode_le {g : Graph n} {c : Ctx n} (h : Inv g c) (s : Fin n) :
     · simpa [Function.update_of_ne hus] using hu
   · exact hu
 
-theorem finish_fields {s : Fin n} {c c3 : Ctx n} (h : finish s c = some c3) :
+private theorem finish_fields {s : Fin n} {c c3 : Ctx n} (h : finish s c = some c3) :
     c3.work = c.work ∧ c3.disc = c.disc ∧ c3.ri = c.ri := by
   unfold finish at h
   by_cases hd : c.disc s = c.low s
@@ -88,7 +93,7 @@ theorem finish_fields {s : Fin n} {c c3 : Ctx n} (h : finish s c = some c3) :
       split_ifs at h <;> (subst h; simp [hW])
 
 /-- A step with a non-empty work stack succeeds and preserves the invariant. -/
-theorem step_cons {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ}
+private theorem step_cons {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ}
     {W : List (Fin n × ℕ)} (hw : c.work = (s, off) :: W) :
     ∃ c', step g c = Out.next c' ∧ Inv g c' ∧ measure g c' < measure g c := by
   have h0 := inv_initNode h hw
@@ -179,7 +184,7 @@ theorem step_cons {g : Graph n} {c : Ctx n} (h : Inv g c) {s : Fin n} {off : ℕ
       omega
 
 /-- The invariant holds after a step of the root loop. -/
-theorem step_nil {g : Graph n} {c : Ctx n} (h : Inv g c) (hw : c.work = []) :
+private theorem step_nil {g : Graph n} {c : Ctx n} (h : Inv g c) (hw : c.work = []) :
     (step g c = Out.stop ∧ ¬ c.ri < n) ∨
       ∃ c', step g c = Out.next c' ∧ Inv g c' ∧ measure g c' < measure g c := by
   by_cases hri : c.ri < n
@@ -277,7 +282,7 @@ theorem step_nil {g : Graph n} {c : Ctx n} (h : Inv g c) (hw : c.work = []) :
 
 /-- One step either stops (empty work stack, all roots tried), or moves to a configuration with the
 invariant and a smaller measure; it never fails. -/
-theorem step_cases {g : Graph n} {c : Ctx n} (h : Inv g c) :
+private theorem step_cases {g : Graph n} {c : Ctx n} (h : Inv g c) :
     (step g c = Out.stop ∧ c.work = [] ∧ ¬ c.ri < n) ∨
       ∃ c', step g c = Out.next c' ∧ Inv g c' ∧ measure g c' < measure g c := by
   rcases hw : c.work with _ | ⟨⟨s, off⟩, W⟩
@@ -287,7 +292,7 @@ theorem step_cases {g : Graph n} {c : Ctx n} (h : Inv g c) :
   · obtain ⟨c', h1, h2, h3⟩ := step_cons h hw
     exact Or.inr ⟨c', h1, h2, h3⟩
 
-theorem inv_run (g : Graph n) : ∀ c, ReflTransGen (Step g) (init g) c → Inv g c := by
+private theorem inv_run (g : Graph n) : ∀ c, ReflTransGen (Step g) (init g) c → Inv g c := by
   intro c hc
   induction hc with
   | refl => exact inv_init g
@@ -299,7 +304,7 @@ theorem inv_run (g : Graph n) : ∀ c, ReflTransGen (Step g) (init g) c → Inv 
       cases hstep
       exact h2
 
-theorem partition_of_end {g : Graph n} {c : Ctx n} (h : Inv g c) (hw : c.work = [])
+private theorem partition_of_end {g : Graph n} {c : Ctx n} (h : Inv g c) (hw : c.work = [])
     (hri : ¬ c.ri < n) : IsSccPartition g c.blk c.eq := by
   have hstk : c.stk = [] := by
     by_contra hne

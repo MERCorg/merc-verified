@@ -1,6 +1,12 @@
 module
 
 public import MercLib.Graph.Proofs.TarjanMain_Proofs
+import all MercLib.Graph.Proofs.TarjanFinish_Proofs
+import all MercLib.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanMain_Proofs
+import all MercLib.Graph.Proofs.TarjanScanInv_Proofs
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 
@@ -17,10 +23,10 @@ namespace MercLib.Tarjan
 
 variable {n : ℕ} {g : Graph n} {c : Ctx n}
 
-theorem initNode_eq (g : Graph n) (s : Fin n) (c : Ctx n) : (initNode g s c).eq = c.eq := by
+private theorem initNode_eq (g : Graph n) (s : Fin n) (c : Ctx n) : (initNode g s c).eq = c.eq := by
   unfold initNode; split_ifs <;> rfl
 
-theorem scan_work_eq (g : Graph n) (s : Fin n) :
+private theorem scan_work_eq (g : Graph n) (s : Fin n) :
     ∀ (ts : List (Bool × Fin n)) (idx : ℕ) (c : Ctx n),
       (scan g s ts idx c).2.2.work = c.work ∧ (scan g s ts idx c).2.2.eq = c.eq ∧
         (scan g s ts idx c).2.2.ri = c.ri := by
@@ -41,7 +47,7 @@ theorem scan_work_eq (g : Graph n) (s : Fin n) :
         · simp only [scan, ite_true, hd, ite_false, hc, Bool.false_eq_true]
           exact ih _ c
 
-theorem finish_ri {s : Fin n} {c c' : Ctx n} (h : finish s c = some c') : c'.ri = c.ri := by
+private theorem finish_ri {s : Fin n} {c c' : Ctx n} (h : finish s c = some c') : c'.ri = c.ri := by
   unfold finish at h
   by_cases hd : c.disc s = c.low s
   · rw [ite_eq_left hd] at h
@@ -57,7 +63,7 @@ theorem finish_ri {s : Fin n} {c c' : Ctx n} (h : finish s c = some c') : c'.ri 
     rw [← h]
     split <;> (try split_ifs) <;> rfl
 
-theorem step_ri_cons {g : Graph n} {c c' : Ctx n} {s : Fin n} {off : ℕ} {W : List (Fin n × ℕ)}
+private theorem step_ri_cons {g : Graph n} {c c' : Ctx n} {s : Fin n} {off : ℕ} {W : List (Fin n × ℕ)}
     (hw : c.work = (s, off) :: W) (h : step g c = Out.next c') : c'.ri = c.ri := by
   have hri1 : (initNode g s { c with work := W }).ri = c.ri := by
     rw [initNode_ri]
@@ -84,7 +90,7 @@ theorem step_ri_cons {g : Graph n} {c c' : Ctx n} {s : Fin n} {off : ℕ} {W : L
 
 namespace Inv
 
-theorem eq_le (h : Inv g c) : c.eq ≤ n := by
+private theorem eq_le (h : Inv g c) : c.eq ≤ n := by
   have h4 : ∀ b : Fin c.eq, ∃ v, c.blk v = b.val := fun b => by
     obtain ⟨v, _, hv⟩ := h.E4 b.val b.2
     exact ⟨v, hv⟩
@@ -95,11 +101,11 @@ theorem eq_le (h : Inv g c) : c.eq ≤ n := by
     rw [← hf a, ← hf b, hab]
   simpa using Fintype.card_le_of_injective f hinj
 
-theorem stk_len_le (h : Inv g c) : c.stk.length ≤ n := by
+private theorem stk_len_le (h : Inv g c) : c.stk.length ≤ n := by
   have := List.Nodup.length_le_card h.stk_nodup
   simpa using this
 
-theorem work_len_le (h : Inv g c) : c.work.length ≤ n := by
+private theorem work_len_le (h : Inv g c) : c.work.length ≤ n := by
   have := List.Nodup.length_le_card h.work_nodup
   simpa using this
 

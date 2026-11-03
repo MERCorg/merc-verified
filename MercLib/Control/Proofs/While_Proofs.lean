@@ -16,7 +16,7 @@ lemma `Lean.Loop.forIn_eq_of_monadTail` of `Init.Internal.Order.While`. `forInLi
 the analogue for `for x in l do` loops over a list, which always terminate. -/
 
 /-- One-step unfolding of a loop in `Id`. -/
-theorem loop_unfold {σ : Type u} (f : Unit → σ → Id (ForInStep σ)) (s : σ) :
+private theorem loop_unfold {σ : Type u} (f : Unit → σ → Id (ForInStep σ)) (s : σ) :
     forIn Lean.Loop.mk s f = (match f () s with
       | .done s' => pure s'
       | .yield s' => forIn Lean.Loop.mk s' f : Id σ) := by
@@ -26,7 +26,7 @@ theorem loop_unfold {σ : Type u} (f : Unit → σ → Id (ForInStep σ)) (s : �
 
 /-- **Loop induction.** If every step from an `Inv`-state either finishes in a `P`-state or
     continues in an `Inv`-state that is `r`-smaller, then the loop ends in a `P`-state. -/
-theorem whileInduction {σ : Type u} (f : Unit → σ → Id (ForInStep σ)) {r : σ → σ → Prop}
+private theorem whileInduction {σ : Type u} (f : Unit → σ → Id (ForInStep σ)) {r : σ → σ → Prop}
     (hwf : WellFounded r) (Inv P : σ → Prop)
     (hstep : ∀ s, Inv s → match (f () s).run with
       | .done s' => P s'
@@ -45,7 +45,7 @@ theorem whileInduction {σ : Type u} (f : Unit → σ → Id (ForInStep σ)) {r 
 
 /-- **List loop induction.** If every step preserves `Inv`, whether it continues or breaks, then a
     `for` loop over a list ends in an `Inv`-state. -/
-theorem forInList_induction {α : Type v} {σ : Type u} (f : α → σ → Id (ForInStep σ))
+private theorem forInList_induction {α : Type v} {σ : Type u} (f : α → σ → Id (ForInStep σ))
     (Inv : σ → Prop) (hstep : ∀ a s, Inv s → Inv (f a s).run.value) :
     ∀ (l : List α) (s : σ), Inv s → Inv (forIn l s f).run
   | [], _, hs => hs

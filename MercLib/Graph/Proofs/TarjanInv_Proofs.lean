@@ -3,6 +3,7 @@ module
 public import MercLib.Graph.Proofs.TarjanScan_Proofs
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Data.Fintype.Card
+import all MercLib.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 
@@ -77,7 +78,7 @@ structure Inv (g : Graph n) (c : Ctx n) : Prop where
   R : ∀ v : Fin n, v.val < c.ri → Init g c v ∨ (v, 0) ∈ c.work
   ri_le : c.ri ≤ n
 
-theorem inv_init (g : Graph n) : Inv g (init g) := by
+private theorem inv_init (g : Graph n) : Inv g (init g) := by
   have hI : ∀ v, ¬ Init g (init g) v := fun v h => h rfl
   refine
     { time_card := by simp [init]
@@ -112,24 +113,24 @@ namespace Inv
 
 variable {g : Graph n} {c : Ctx n}
 
-theorem time_le (h : Inv g c) : c.time ≤ n := by
+private theorem time_le (h : Inv g c) : c.time ≤ n := by
   rw [h.time_card]
   calc _ ≤ (Finset.univ : Finset (Fin n)).card := Finset.card_le_univ _
     _ = n := by simp
 
-theorem disc_ne_unv (h : Inv g c) {v : Fin n} (hv : Init g c v) : c.disc v ≠ g.unv := by
+private theorem disc_ne_unv (h : Inv g c) {v : Fin n} (hv : Init g c v) : c.disc v ≠ g.unv := by
   have := h.disc_lt v hv
   have := h.time_le
   have := g.unv_gt
   omega
 
-theorem time_ne_unv (h : Inv g c) : c.time ≠ g.unv := by
+private theorem time_ne_unv (h : Inv g c) : c.time ≠ g.unv := by
   have := h.time_le
   have := g.unv_gt
   omega
 
 /-- A queued (non-initialised, but not unvisited) state is the fresh head of the work stack. -/
-theorem head_unique {s : Fin n} {off : ℕ} {W : List (Fin n × ℕ)} (h : Inv g c)
+private theorem head_unique {s : Fin n} {off : ℕ} {W : List (Fin n × ℕ)} (h : Inv g c)
     (hw : c.work = (s, off) :: W) : ∀ off', (s, off') ∉ W := by
   intro off' hoff
   have := h.work_nodup
