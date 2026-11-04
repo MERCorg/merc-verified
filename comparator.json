@@ -69,7 +69,9 @@
     "MercLib.HybridSI.closedIterations",
     "MercLib.HybridSI.epochIterations",
     "MercLib.HybridSI.kstarBlock",
-    "MercLib.HybridSI.kstarCount"
+    "MercLib.HybridSI.kstarCount",
+    "MercLib.HybridSI.exactCount",
+    "MercLib.HybridSI.switchCount"
   ],
   "permitted_axioms": [
     "propext",

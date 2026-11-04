@@ -17,7 +17,7 @@ namespace MercLib.HybridSI
 /-! Machine-generated; may be freely edited or regenerated (see AGENTS.md). The headline theorem
 `epochBound` is to be stated in `Challenges/HybridSI.lean` (human-vetted).
 
-The epoch-length bound (`experiments/hb_epoch/README.md`, theorem A5). Fix Odd's response `τ` of
+The epoch-length bound. Fix Odd's response `τ` of
 the epoch and let `K*` be the keys of Even's best response `σ*` to `τ` (the same for every
 iteration of the epoch: two best responses to the same `τ` have equal keys). `D σ` is the set of
 Even vertices whose move under `σ` is `K*`-maximal (`Mx`). In each iteration (`epoch_round`):

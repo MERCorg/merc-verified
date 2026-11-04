@@ -29,8 +29,8 @@ relevance order:
 * `Σ_{x ∈ B} sgn x · 2^(r x)`, `sgn x = +1` for even and `-1` for odd priority;
 * `-k` if `prio λ` is even, `k` otherwise.
 Even prefers larger keys, Odd smaller ones; player `0` wins the play from `v` iff the reward is
-positive. This is the encoding of the Python reference implementation
-(`experiments/hybrid/scripts/vj.py`).
+positive. This is the integer triple of the website (Strategy improvement, Definition 5), also
+used by `scripts/hybrid-si/hb.py`.
 -/
 
 variable {V : Type*} [Fintype V] [LinearOrder V]

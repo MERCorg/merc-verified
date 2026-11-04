@@ -203,4 +203,20 @@ number of iterations `k` with `k + 1 < L` at which `K*_{k+1} ≠ K*_k` (`kstarCh
 theorem kstarCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
     (bf : ℕ) : KStarCount G bf := sorry
 
+/-- **Iterations are bounded by stretches with the same exact set.** Let `q` be a saddle profile
+and `exactSet k` the vertices whose key under Odd's best response `ps k` equals their key under
+`q` (their value is already optimal). If, along a trace of length `L`, every stretch of
+iterations with the same exact set has at most `c` iterations, then `L ≤ n + c · (n + 1)`. The
+exact set only grows, so it changes at most `n` times. See `ExactCount`
+(`Algorithms/ParityGame/HybridSI/Counting.lean`). -/
+theorem exactCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : ExactCount G bf := sorry
+
+/-- **Iterations are bounded by switches per vertex.** Every iteration of a trace changes the
+move of some Even vertex, so if, along a trace of length `L`, the move of every vertex changes at
+most `c` times (`switchRounds`), then `L ≤ n_E · c`. See `SwitchCount`
+(`Algorithms/ParityGame/HybridSI/Counting.lean`). -/
+theorem switchCount {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) [DecidableRel G.edge]
+    (bf : ℕ) : SwitchCount G bf := sorry
+
 end MercLib.HybridSI

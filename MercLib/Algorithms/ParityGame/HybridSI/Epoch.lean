@@ -13,8 +13,8 @@ open MercLib.ParityGame
 
 An *epoch* of an H-B run is a maximal stretch of consecutive iterations in which Odd's best
 response `σ̄ = ps k` (the result of `respond G true bf (p k)` inside `hbStep`) plays the same moves.
-`EpochBound` says that an epoch has at most `n_E` iterations, `n_E` the number of Even vertices
-(`experiments/hb_epoch/README.md`, theorem A5). Within an epoch, the vertices whose move is
+`EpochBound` says that an epoch has at most `n_E` iterations, `n_E` the number of Even vertices.
+Within an epoch, the vertices whose move is
 optimal in the one-player game against the fixed Odd strategy form a strictly growing set that
 never contains every Even vertex.
 

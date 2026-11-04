@@ -7,7 +7,8 @@
 #   lake build MercVerified:docs MercLib:docs
 # The HTML ends up in `docbuild/.lake/build/doc/`. Note that doc-gen4 pins a different
 # `Cli` revision than the parent manifest; running `lake build` in the parent checks the
-# parent's revision out again.
+# parent's revision out again. doc-gen4 reads the bibliography from `docs/references.bib` of
+# the root package (this one), which is a symlink to the repository's `references.bib`.
 name = "docbuild"
 reservoir = false
 version = "0.1.0"

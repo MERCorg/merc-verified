@@ -11,10 +11,9 @@ open MercLib.ParityGame
 /-!
 # Structural bounds for H-B runs
 
-Claims about the traces (`RunTrace`, `HybridSI.Potential`) of H-B. The paper proofs are in
-`~/parity-polynomial/experiments/hb_bound/README.md` (P2: the sandwich),
-`hb_nest/README.md` (O1) and `hb_epochs_count/README.md` (autonomy lemma). Nothing here is
-proved; proofs go to `HybridSI/Proofs/Bounds_*.lean`.
+Claims about the traces (`RunTrace`, `HybridSI.Potential`) of H-B: the sandwich (P2), autonomy
+of closed subgames (O1) and the epoch-count autonomy lemma. Proofs go to
+`HybridSI/Proofs/Bounds_*.lean`.
 
 **The sandwich (P2).** `Ξ_k = key G (ps k)` is the valuation of Even's strategy `σ_k` (keys of
 Odd's best response), `K*_j = key G pstar` with `pstar` Even's best response to `ps j` (the
@@ -24,7 +23,7 @@ valuations are unique (`SaddleUnique`) and exist on relabelled games (`SaddleExi
 every trace `Ξ_k ≤ v* ≤ K*_j` (`Sandwich`), in particular `Ξ_k ≤ K*_j` (`LowerBelowUpper`, which
 needs no saddle).
 
-**Autonomy on closed subgames (hb_epochs_count sec. 3) and O1 (hb_nest sec. 2).** A finite set
+**Autonomy on closed subgames and O1.** A finite set
 `D` is closed (`Closed`) if no edge leaves it; then `subgame G D hD : Game D` is the game
 restricted to `D` (with the induced relevance order). `Autonomy`: along every trace of H-B on
 `G`, the restrictions to `D` of the profiles and of Odd's best responses form a trace of H-B on

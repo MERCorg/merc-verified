@@ -14,9 +14,7 @@ open MercLib.ParityGame
 Claims about the sequence of profiles of an H-B run (`hbRun`, `hbStep` of `HybridSI.Algorithm`):
 the run keeps Odd's moves of the initial profile in `p k` (the "restart" variant: every best
 response of Odd is computed from the initial Odd moves), Even's moves change by the H-B rule.
-The paper proofs are in `~/parity-polynomial/experiments/hb_bound/README.md` (P2, P3) and
-`hb_amort/README.md` (TOP). Nothing here is proved; proofs go to
-`Algorithms/ParityGame/HybridSI/Proofs/Potential_Proofs.lean`.
+Proofs go to `Algorithms/ParityGame/HybridSI/Proofs/Potential_Proofs.lean`.
 
 * `RunTrace`: the profiles `p 0, …, p L` and Odd's best responses `ps 0, …, ps L` of `L`
   consecutive non-final iterations; `RunTraceOfRun`: a returning `hbRun` has such a trace.

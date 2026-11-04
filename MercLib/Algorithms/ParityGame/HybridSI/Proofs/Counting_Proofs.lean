@@ -3,6 +3,7 @@ module
 public import MercLib.Algorithms.ParityGame.HybridSI.Counting
 public import MercLib.Algorithms.ParityGame.HybridSI.Proofs.Epoch_Proofs
 public import MercLib.Algorithms.ParityGame.HybridSI.Proofs.Potential_Proofs
+public import MercLib.Algorithms.ParityGame.HybridSI.Proofs.Bounds_Proofs
 import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Correctness_Proofs
 import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Epoch_Proofs
 import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Filter_Proofs
@@ -33,7 +34,13 @@ Counting iterations along a trace (`HybridSI.Counting`).
   under `p k` is `Kst`-maximal grows strictly in each iteration `j ≤ k < j'` and is never all
   Even vertices.
 * `kstarCount`: `card_le_segments` with the changes of `K*` as cuts; in a cut-free stretch `K*` is
-  constant on the iterations below `L`. -/
+  constant on the iterations below `L`.
+* `exactCount`: by `valuationMonotone` and `sandwich`, `Ξ_j v ≤ Ξ_k v ≤ v* v` for `j ≤ k`, so the
+  exact set only grows (`exactSet_mono`); each change makes it strictly larger, so there are at
+  most `n` changes (`exactChange_card`); then `card_le_segments` with the changes as cuts.
+* `switchCount`: every iteration strictly improves the move of some Even vertex
+  (`hbStep_next_spec`), so the rounds `range L` are covered by the switch rounds of the Even
+  vertices. -/
 
 open Function MercLib.ParityGame
 
@@ -233,6 +240,116 @@ theorem kstarCount (bf : ℕ) : KStarCount G bf := by
         exact hc (by omega) (by omega))
   rw [Finset.card_range] at hX
   exact hX
+
+/-- Along a trace the exact set only grows. -/
+private theorem exactSet_mono (bf : ℕ) {L : ℕ} {p ps : ℕ → V → V} (h : RunTrace G bf L p ps)
+    {q : V → V} (hq : Saddle G q) {j k : ℕ} (hjk : j ≤ k) (hk : k ≤ L) :
+    exactSet G ps q j ⊆ exactSet G ps q k := by
+  intro v hv
+  simp only [exactSet, Finset.mem_filter, Finset.mem_univ, true_and] at hv ⊢
+  have h1 := valuationMonotone G bf L p ps h j k hjk hk v
+  have h2 := (sandwich G bf L p ps h q hq).1 k hk v
+  rw [hv] at h1
+  exact le_antisymm h2 h1
+
+/-- Along a trace the exact set changes at most `n` times. -/
+private theorem exactChange_card (bf : ℕ) {L : ℕ} {p ps : ℕ → V → V} (h : RunTrace G bf L p ps)
+    {q : V → V} (hq : Saddle G q) : (exactChangeRounds G L ps q).card ≤ Fintype.card V := by
+  set C := exactChangeRounds G L ps q
+  -- after `m ≤ L` iterations the exact set has at least as many vertices as changes so far
+  have hstep : ∀ m ≤ L, (C.filter (· < m)).card ≤ (exactSet G ps q m).card := by
+    intro m
+    induction m with
+    | zero => intro _; simp
+    | succ m ih =>
+      intro hm
+      have ih' := ih (by omega)
+      have hsub := exactSet_mono G bf h hq (Nat.le_succ m) hm
+      by_cases hmC : m ∈ C
+      · have hlt : (exactSet G ps q m).card < (exactSet G ps q (m + 1)).card := by
+          refine Finset.card_lt_card (Finset.ssubset_iff_subset_ne.2 ⟨hsub, fun he => ?_⟩)
+          simp only [C, exactChangeRounds, Finset.mem_filter] at hmC
+          exact hmC.2 he.symm
+        have hsplit : C.filter (· < m + 1) = insert m (C.filter (· < m)) := by
+          ext x
+          simp only [Finset.mem_filter, Finset.mem_insert]
+          constructor
+          · rintro ⟨hx, hxm⟩
+            rcases Nat.lt_succ_iff_lt_or_eq.1 hxm with h' | h'
+            · exact Or.inr ⟨hx, h'⟩
+            · exact Or.inl h'
+          · rintro (rfl | ⟨hx, hxm⟩)
+            · exact ⟨hmC, Nat.lt_succ_self _⟩
+            · exact ⟨hx, Nat.lt_succ_of_lt hxm⟩
+        rw [hsplit]
+        exact (Finset.card_insert_le _ _).trans (by omega)
+      · have hsplit : C.filter (· < m + 1) = C.filter (· < m) := by
+          ext x
+          simp only [Finset.mem_filter]
+          constructor
+          · rintro ⟨hx, hxm⟩
+            rcases Nat.lt_succ_iff_lt_or_eq.1 hxm with h' | rfl
+            · exact ⟨hx, h'⟩
+            · exact absurd hx hmC
+          · rintro ⟨hx, hxm⟩
+            exact ⟨hx, Nat.lt_succ_of_lt hxm⟩
+        rw [hsplit]
+        exact ih'.trans (Finset.card_le_card hsub)
+  have hall : C.filter (· < L) = C := by
+    ext x
+    simp only [C, exactChangeRounds, Finset.mem_filter, Finset.mem_range]
+    constructor
+    · rintro ⟨hx, -⟩; exact hx
+    · intro hx; exact ⟨hx, hx.1⟩
+  calc C.card = (C.filter (· < L)).card := by rw [hall]
+    _ ≤ (exactSet G ps q L).card := hstep L le_rfl
+    _ ≤ Fintype.card V := Finset.card_le_univ _
+
+/-- Stretches with the same exact set bound the iterations (headline). -/
+theorem exactCount (bf : ℕ) : ExactCount G bf := by
+  intro L p ps h q hq c hstretch
+  have hX := card_le_segments (Finset.range L) (exactChangeRounds G L ps q) c
+    (fun j j' hcut => by
+      set j'' := min j' L
+      have heq : ((Finset.range L).filter fun k => j ≤ k ∧ k < j') = Finset.Ico j j'' := by
+        ext k
+        simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico, j'']
+        omega
+      rw [heq, Nat.card_Ico]
+      refine hstretch j j'' (by omega) fun k h1 h2 => ?_
+      induction k, h1 using Nat.le_induction with
+      | base => rfl
+      | succ k hk ih =>
+        rw [← ih (by omega)]
+        have hc := hcut k hk (by omega)
+        simp only [exactChangeRounds, Finset.mem_filter, Finset.mem_range, not_and,
+          not_not] at hc
+        exact hc (by omega))
+  rw [Finset.card_range] at hX
+  have hC := exactChange_card G bf h hq
+  calc L ≤ (exactChangeRounds G L ps q).card + c * ((exactChangeRounds G L ps q).card + 1) := hX
+    _ ≤ Fintype.card V + c * (Fintype.card V + 1) := by gcongr
+
+/-- Switches per vertex bound the iterations (headline). -/
+theorem switchCount (bf : ℕ) : SwitchCount G bf := by
+  classical
+  intro L p ps h c hc
+  set E := Finset.univ.filter fun v => G.owner v = .zero
+  have hcover : Finset.range L ⊆ E.biUnion fun v => switchRounds L p v := by
+    intro k hk
+    have hkL := Finset.mem_range.1 hk
+    obtain ⟨qt, hqt, hpk⟩ := h.2.2 k hkL
+    obtain ⟨ps', -, -, v, hv0, hv⟩ := hbStep_next_spec G hqt
+    refine Finset.mem_biUnion.2 ⟨v, by simp [E, hv0], ?_⟩
+    simp only [switchRounds, Finset.mem_filter, Finset.mem_range]
+    refine ⟨hkL, fun he => ?_⟩
+    have he' : look qt v v = p k v := by simpa [hpk] using he
+    exact (ne_of_lt hv) (by rw [he'])
+  calc L = (Finset.range L).card := (Finset.card_range L).symm
+    _ ≤ (E.biUnion fun v => switchRounds L p v).card := Finset.card_le_card hcover
+    _ ≤ ∑ v ∈ E, (switchRounds L p v).card := Finset.card_biUnion_le
+    _ ≤ ∑ _v ∈ E, c := Finset.sum_le_sum fun v _ => hc v
+    _ = numEven G * c := by simp [numEven, E]
 
 end MercLib.HybridSI
 

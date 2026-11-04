@@ -15,7 +15,7 @@ namespace MercLib.HybridSI
 /-! Machine-generated; may be freely edited or regenerated (see AGENTS.md). The headline theorem
 `filterNonempty` is to be stated in `Challenges/HybridSI.lean` (human-vetted).
 
-The filter of H-B is never empty while `σ` is not optimal (`hb_lower/README.md`, section 0).
+The filter of H-B is never empty while `σ` is not optimal.
 Let `σ̄ = ps` be Odd's best response to `σ` and `σ* = pstar` Even's best response to `σ̄`. If
 `σ*` used no improving edge of `σ`, the master lemma (from Odd's point of view) gives
 `key σ* ≤ key σ̄`, and optimality of `σ*` gives `key σ̄ ≤ key σ*`; an improving edge `w` of `v`

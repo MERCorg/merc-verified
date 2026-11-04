@@ -22,9 +22,9 @@ vertices. One iteration of H-B:
    against `σ̄`. If some `F(v)` is non-empty, exactly the vertices with non-empty `F(v)` switch,
    each to its `ks`-best edge in `F(v)`; otherwise plain switch-all on `I` (this never happens).
 
-This mirrors `experiments/hybrid/scripts/algs.py` (`alg = "HB"`), including tie-breaking (the
-first best successor in relevance order; the current move is kept unless a successor is strictly
-better), so that iteration counts can be compared.
+This follows the `HybridB` pseudocode of the website, including tie-breaking (the first best
+successor in relevance order; the current move is kept unless a successor is strictly better), so
+that iteration counts can be compared with `scripts/hybrid-si/hb.py` started from `hb.initial`.
 
 **Evaluation.** Profiles and keys are passed around as tables (`tabulate`, `look`) computed once
 per round; functions are only rebuilt from tables, never composed, so `#eval` stays polynomial.
