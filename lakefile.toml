@@ -1,6 +1,7 @@
 name = "merc-verified"
 version = "0.1.0"
 defaultTargets = ["MercVerified", "MercLib"]
+testDriver = "MercLibTest"
 
 [[lean_lib]]
 name = "MercVerified"
@@ -9,6 +10,14 @@ globs = ["MercVerified.*"]
 [[lean_lib]]
 name = "MercLib"
 globs = ["MercLib.*"]
+
+# Tests of the `MercLib` definitions on concrete instances (`lake test`), in the style of Mathlib's
+# `MathlibTest` and CSLib's `CslibTests`: one file per area under `MercLibTest/`, mirroring `MercLib/`.
+# The test files are plain (non-module) Lean files that import the library modules.
+[[lean_lib]]
+name = "MercLibTest"
+globs = ["MercLibTest.+"]
+allowNonModules = true
 
 # `lake comparator` challenges/solutions (see `comparator.json` for `MercLib` and
 # `comparator_MercVerified.json` for `MercVerified`); not a default target, since the
