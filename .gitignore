@@ -12,3 +12,6 @@ MercVerified/Code/Funs.lean
 MercVerified/Code/FunsExternal_Template.lean
 MercVerified/Code/Types.lean
 MercVerified/Code/TypesExternal_Template.lean
+
+# Local copies of papers (see papers/README.md); not redistributed
+papers/*.pdf

@@ -18,7 +18,7 @@ description: Research workflow for the polynomial-bound question of hybrid strat
 | Annealing champions | `experiments/hb_split/results/{climb,esc,reb,rep}_*.json` (`{"gen": [owner, prio, succ, init]}`) |
 | z3 encoding of one H-B step | `experiments/hb_z3/hbz3.py`; falsifier `lemmas.py`, searches `gadget.py`, `reset.py`; replay `replay_run.py` |
 | Friedmann's switch-all family | `experiments/hb_bound/scripts/gen_friedmann.py`; runs in `experiments/friedmann/` |
-| Lean | `MercLib/HybridSI/` in this repository (spec, `Proofs/`, `Challenges/HybridSI.lean`) |
+| Lean | `MercLib/Algorithms/ParityGame/HybridSI/` (valuation in `MercLib/Theory/ParityGame/Valuation.lean`) in this repository (spec, `Proofs/`, `Challenges/HybridSI.lean`) |
 | Rust solver | `~/merc-hybrid-si` worktree (`merc-vpg solve --solver hybrid-si`); never edit `~/merc` |
 | Website pages | `~/merc-website/docs/developer/parity/{strategy-improvement,exponential-constructions,hybrid-strategy-improvement}.md` (source of truth for the definitions) |
 

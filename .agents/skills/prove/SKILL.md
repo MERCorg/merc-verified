@@ -26,7 +26,7 @@ This MCP does not edit files — use `Edit`/`Write` for that. All line/column nu
 
 1. Run `lean_diagnostic_messages` on the target file (absolute path). No diagnostics means it elaborates cleanly.
 2. To check a whole area, run it file-by-file in dependency order — an error upstream usually explains the downstream ones, so fix in that order. Two independent chains in this repo:
-   - **`Signatures/`**: `BranchingBisimilarity.lean` → `Signature.lean` → `InductiveSignatures.lean`, then `Proofs/BranchingBisimilarity_Transitivity_Proofs.lean` → `Proofs/Signature_Proofs.lean` → `Proofs/InductiveSignatures_Proofs.lean` → `Basic.lean` (aggregator, imports everything).
+   - **`MercLib/Theory/Signatures/`**: `MercLib/Theory/LTS/BranchingBisimilarity.lean` → `Signature.lean` → `InductiveSignatures.lean`, then `MercLib/Theory/LTS/Proofs/BranchingBisimilarity_Transitivity_Proofs.lean` → `Proofs/Signature_Proofs.lean` → `Proofs/InductiveSignatures_Proofs.lean` → `Basic.lean` (aggregator, imports everything).
    - **`MercVerified/`**: `Basic.lean` (imports `MercVerified.Code.*` and the top-level `Signatures/` defs), then `Signatures/StrongSignature.lean` → `Signatures/Refinement.lean`, then `Signatures/Proofs/StrongSignature_Proofs.lean` → `Signatures/Proofs/Refinement_Proofs.lean`.
 3. Interpreting results:
    - `declaration uses 'sorry'` (warning) — an incomplete proof. Report it; do not treat the file as verified. If it's one of the theorems listed in `scripts/check_axioms.py`'s `KNOWN_INCOMPLETE`, that's expected and tracked — otherwise it's new and worth flagging.
@@ -47,7 +47,7 @@ Only scans the given file, not its imports, so run it on the file that actually 
 ## Proof idioms in this repo
 
 - **Translated-code contracts** (theorems about Aeneas-translated Rust, e.g. `MercVerified/Refinement/Proofs/StrongSignature_Proofs.lean`) go through `Aeneas.Std.WP`: `spec_bind`, `spec_imp_exists`, `loop.spec_decr_nat` with explicit `measure`/`inv`/`post`, and `unfold <def>` before stepping through a `do`-block. Look at an existing loop proof before writing a new one — the shape is fairly fixed.
-- **Pure LTS/signature math** (`Signatures/Proofs/*.lean`) is mostly `rcases`/`obtain` destructuring, `calc` chains through `↔`/`⊆`, and targeted `simp [...]`/`rw [...]`. See lean-conventions for the general tactic-preference order (`grind`/`simp`/`omega`/`aesop`/`decide` before manual term-mode).
+- **Pure LTS/signature math** (`MercLib/Theory/{LTS,Signatures}/Proofs/*.lean`) is mostly `rcases`/`obtain` destructuring, `calc` chains through `↔`/`⊆`, and targeted `simp [...]`/`rw [...]`. See lean-conventions for the general tactic-preference order (`grind`/`simp`/`omega`/`aesop`/`decide` before manual term-mode).
 
 ## Fixing a failing proof
 
@@ -57,7 +57,7 @@ Only scans the given file, not its imports, so run it on the file that actually 
 4. If a supporting lemma might already exist, check `lean_local_search` (this project) before `lean_state_search`/`lean_leansearch`/`lean_loogle`/`lean_hammer_premise` (cslib/Mathlib).
 5. Apply the fix, then re-run `lean_diagnostic_messages` on the file.
 
-**File editing policy:** `Signatures/Proofs/` and `MercVerified/{Refinement,Lts}/Proofs/` files are machine-generated and can be freely modified. All other `Signatures/` and `MercVerified/Refinement/` and `MercVerified/Lts/` files are human-vetted — make only minimal, necessary changes (e.g. adding a spec `def` or a single helper `def`); do not refactor, reorder, or rewrite existing content. See the lean-conventions skill for the spec/Proofs/pin split these files follow.
+**File editing policy:** `MercLib/**/Proofs/` and `MercVerified/{Refinement,Lts}/Proofs/` files are machine-generated and can be freely modified. All other `MercLib/` and `MercVerified/Refinement/` and `MercVerified/Lts/` files are human-vetted — make only minimal, necessary changes (e.g. adding a spec `def` or a single helper `def`); do not refactor, reorder, or rewrite existing content. See the lean-conventions skill for the spec/Proofs/pin split these files follow.
 
 ## Rules
 
@@ -72,8 +72,8 @@ Only scans the given file, not its imports, so run it on the file that actually 
 | Symbol | File | Description |
 |---|---|---|
 | `LabelledTransitionSystem` | `Signatures/Basic.lean` | Core LTS structure |
-| `LTS.IsBranchingBisimulation` | `Signatures/BranchingBisimilarity.lean` | Branching bisimulation predicate |
-| `BranchingBisimilarity` | `Signatures/BranchingBisimilarity.lean` | Bisimilarity relation (`≈br[lts]`) |
-| `StrongSignature` / `Refine` / `IsStable` / `FixPoint` | `Signatures/Signature.lean` | Partition refinement for observational equivalence |
+| `LTS.IsBranchingBisimulation` | `MercLib/Theory/LTS/BranchingBisimilarity.lean` | Branching bisimulation predicate |
+| `BranchingBisimilarity` | `MercLib/Theory/LTS/BranchingBisimilarity.lean` | Bisimilarity relation (`≈br[lts]`) |
+| `StrongSignature` / `Refine` / `IsStable` / `FixPoint` | `Theory/Signatures/Signature.lean` | Partition refinement for observational equivalence |
 | `StrongBisimSignatureSpec` | `MercVerified/Refinement/Proofs/StrongSignature_Proofs.lean` | Contract: translated `strong_bisim_signature` computes `StrongSignature` |
 | `StrongBisimSigrefCorrectSpec` | `MercVerified/Refinement/Refinement.lean` | Contract: translated `strong_bisim_sigref` is a strong-bisimulation partition refinement (open, `sorry`) |
