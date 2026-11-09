@@ -28,3 +28,6 @@ jobs:
 
     - name: Check the exported API against EXPORTS.md
       run: lake env lean --run scripts/CheckExports.lean
+
+    - name: Run the MercLib tests (MercLibTest)
+      run: lake test
