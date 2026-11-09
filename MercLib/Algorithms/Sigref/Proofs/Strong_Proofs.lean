@@ -1,14 +1,14 @@
 module
 
-public import MercLib.Sigref.Strong
-public import MercLib.Sigref.Proofs.Defs_Proofs
-public import MercLib.Signatures.Proofs.Signature_Proofs
+public import MercLib.Algorithms.Sigref.Strong
+public import MercLib.Algorithms.Sigref.Proofs.Defs_Proofs
+public import MercLib.Theory.Signatures.Proofs.Signature_Proofs
 public import Mathlib.Data.Set.Card
 public import Mathlib.Order.WellFounded
 public import Mathlib.Order.Prod.Lex.Basic
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.Signature_Proofs
-import all MercLib.Sigref.Proofs.Defs_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.Signature_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Defs_Proofs
 
 @[expose] public section
 

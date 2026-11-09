@@ -1,12 +1,12 @@
 module
 
-public import MercLib.Sigref.SigData
-public import MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+public import MercLib.Theory.Sigref.SigData
+public import MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
 public import Mathlib.SetTheory.Ordinal.Rank
 public import Mathlib.Order.Prod.Lex.Basic
 public import Mathlib.Logic.Encodable.Basic
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
 
 @[expose] public section
 

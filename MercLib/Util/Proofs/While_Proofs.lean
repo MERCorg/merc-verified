@@ -4,7 +4,7 @@ public import Init.Internal.Order.While
 
 @[expose] public section
 
-namespace MercLib.Control
+namespace MercLib.Util
 
 /-! Machine-generated; may be freely edited or regenerated (see AGENTS.md).
 
@@ -57,4 +57,4 @@ private theorem forInList_induction {α : Type v} {σ : Type u} (f : α → σ �
     | done s' => exact id
     | yield s' => exact fun h => forInList_induction f Inv hstep l s' h
 
-end MercLib.Control
+end MercLib.Util

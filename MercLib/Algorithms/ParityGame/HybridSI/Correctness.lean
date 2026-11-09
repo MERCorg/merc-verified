@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Algorithm
+public import MercLib.Algorithms.ParityGame.HybridSI.Algorithm
 
 @[expose] public section HybridSICorrectness
 

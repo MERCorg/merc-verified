@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Sigref.TopoSort
+public import MercLib.Algorithms.Sigref.TopoSort
 public import Mathlib.Order.WellFounded
 public import Mathlib.Data.Fintype.Card
 

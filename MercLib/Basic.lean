@@ -1,11 +1,15 @@
 module
 
-public import MercLib.Control.Basic
-public import MercLib.Graph.Basic
-public import MercLib.HybridSI.Basic
-public import MercLib.LTS.Basic
-public import MercLib.ParityGame.Basic
-public import MercLib.Refinement.Basic
-public import MercLib.Rewriting.Basic
-public import MercLib.Signatures.Basic
-public import MercLib.Sigref.Basic
+public import MercLib.Util.Basic
+public import MercLib.Theory.Graph.Basic
+public import MercLib.Theory.LTS.Basic
+public import MercLib.Theory.ParityGame.Basic
+public import MercLib.Theory.Refinement.Basic
+public import MercLib.Theory.Rewriting.Basic
+public import MercLib.Theory.Signatures.Basic
+public import MercLib.Theory.Sigref.Basic
+public import MercLib.Algorithms.Graph.Basic
+public import MercLib.Algorithms.ParityGame.Basic
+public import MercLib.Algorithms.Refinement.Basic
+public import MercLib.Algorithms.Sigref.Basic
+public import MercLib.Implementation.ParityGame.Basic

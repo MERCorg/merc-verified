@@ -1,6 +1,6 @@
 module
 
-public import MercLib.ParityGame.Game
+public import MercLib.Theory.ParityGame.Game
 
 @[expose] public section
 

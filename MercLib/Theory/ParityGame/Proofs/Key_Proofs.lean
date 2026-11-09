@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Proofs.Lasso_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Lasso_Proofs
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Algebra.Order.Ring.Abs
 public import Mathlib.Algebra.Ring.GeomSum
@@ -8,7 +8,7 @@ public import Mathlib.Tactic.Positivity
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.NormNum
 public import Mathlib.Tactic.Linarith
-import all MercLib.HybridSI.Proofs.Lasso_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Lasso_Proofs
 
 @[expose] public section HybridSIKeyProofs
 

@@ -3,7 +3,7 @@ module
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.HasTau
 public import Cslib.Foundations.Semantics.LTS.Divergence
-public import MercLib.Refinement.Semantics
+public import MercLib.Theory.Refinement.Semantics
 
 open Cslib (LTS HasTau)
 

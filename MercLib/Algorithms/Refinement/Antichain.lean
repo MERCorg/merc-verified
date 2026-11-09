@@ -2,8 +2,8 @@ module
 
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.HasTau
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
 
 open Cslib (LTS HasTau)
 
@@ -20,7 +20,7 @@ Algorithms for Refinement Checking*][Laveaux2021], LMCS 17(1:8), 2021.
 `NormTr`/`FdrNormTr` states are sets `U : Set State1`; both share the key property that their
 transition relation is a *monotone functional image operator* (`IsMonotoneNormalForm`, capturing
 Lemma 5.7 abstractly so it is proved once and reused for both, in
-`MercLib/Refinement/Proofs/Antichain_Proofs.lean`, which also has Proposition 5.8 and Lemma 5.9).
+`MercLib/Algorithms/Refinement/Proofs/Antichain_Proofs.lean`, which also has Proposition 5.8 and Lemma 5.9).
 -/
 
 /-- The order on product states (Section 4): `(U, s) ≤ (V, t)` iff they agree on the

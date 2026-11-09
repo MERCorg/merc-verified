@@ -1,10 +1,10 @@
 module
 
-public import MercLib.Sigref.Iteration
-public import MercLib.Sigref.Proofs.Refinable_Proofs
-public import MercLib.Sigref.Proofs.CountingSort_Proofs
-import all MercLib.Sigref.Proofs.CountingSort_Proofs
-import all MercLib.Sigref.Proofs.Refinable_Proofs
+public import MercLib.Algorithms.Sigref.Iteration
+public import MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
+public import MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
 
 @[expose] public section
 

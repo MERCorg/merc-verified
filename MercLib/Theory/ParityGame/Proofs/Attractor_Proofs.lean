@@ -1,9 +1,9 @@
 module
 
-public import MercLib.ParityGame.Attractor
-public import MercLib.ParityGame.Proofs.Game_Proofs
+public import MercLib.Theory.ParityGame.Attractor
+public import MercLib.Theory.ParityGame.Proofs.Game_Proofs
 public import Mathlib.Data.Fintype.Order
-import all MercLib.ParityGame.Proofs.Game_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 

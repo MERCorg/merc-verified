@@ -1,22 +1,22 @@
 module
 
 public import Mathlib.Data.Set.Card
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
-public import MercLib.Refinement.Antichain
-public import MercLib.Refinement.Algorithm
-public import MercLib.Refinement.ImpossibleFutures
-public import MercLib.Refinement.AlgorithmImpossibleFutures
-public import MercLib.Refinement.Proofs.Antichain_Proofs
-public import MercLib.Refinement.Proofs.Product_Proofs
-public import MercLib.Refinement.Proofs.Algorithm_Proofs
-public import MercLib.Refinement.Proofs.ImpossibleFutures_Proofs
-import all MercLib.Control.Proofs.While_Proofs
-import all MercLib.Refinement.Proofs.Algorithm_Proofs
-import all MercLib.Refinement.Proofs.Antichain_Proofs
-import all MercLib.Refinement.Proofs.ImpossibleFutures_Proofs
-import all MercLib.Refinement.Proofs.Product_Proofs
-import all MercLib.Refinement.Proofs.Semantics_Proofs
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
+public import MercLib.Algorithms.Refinement.Antichain
+public import MercLib.Algorithms.Refinement.Algorithm
+public import MercLib.Theory.Refinement.ImpossibleFutures
+public import MercLib.Algorithms.Refinement.AlgorithmImpossibleFutures
+public import MercLib.Algorithms.Refinement.Proofs.Antichain_Proofs
+public import MercLib.Theory.Refinement.Proofs.Product_Proofs
+public import MercLib.Algorithms.Refinement.Proofs.Algorithm_Proofs
+public import MercLib.Algorithms.Refinement.Proofs.ImpossibleFutures_Proofs
+import all MercLib.Util.Proofs.While_Proofs
+import all MercLib.Algorithms.Refinement.Proofs.Algorithm_Proofs
+import all MercLib.Algorithms.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Algorithms.Refinement.Proofs.ImpossibleFutures_Proofs
+import all MercLib.Theory.Refinement.Proofs.Product_Proofs
+import all MercLib.Theory.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -251,7 +251,7 @@ private theorem weakTraceOpt_ok [HasTau Label] [Finite Label] [Finite State1] [F
   generalize hres : (forIn (m := Id) Lean.Loop.mk _ _).run = res
   have key : LoopPost5 lts1 lts2 (NormInit lts2 impl, t) pos res := by
     rw [← hres]
-    refine MercLib.Control.whileInduction _
+    refine MercLib.Util.whileInduction _
       (InvImage.wf (fun s : LoopState5 State1 State2 => (pending s.2.2).ncard + s.2.1.length)
         Nat.lt_wfRel.wf)
       (fun s => s.1 = none ∧ ∃ done, ExploreInv (NormTr lts2) lts1 IsTRWitness (fun _ => False)
@@ -495,7 +495,7 @@ private theorem weakImpossibleFuturesOpt_iff [HasTau Label] [Finite Label] [Fini
   generalize hres : (forIn (m := Id) Lean.Loop.mk _ _).run = res
   have key : LoopPost6 lts1 lts2 (NormInit lts1 s1, s2) res := by
     rw [← hres]
-    refine MercLib.Control.whileInduction _
+    refine MercLib.Util.whileInduction _
       (InvImage.wf (fun s : LoopState6 State1 State2 => (pending s.2.2.1).ncard + s.2.1.length)
         Nat.lt_wfRel.wf)
       (fun s => s.1 = none ∧ (∃ done, ExploreInv (NormTr lts1) lts2 (IsStableIFWitness lts1 lts2)

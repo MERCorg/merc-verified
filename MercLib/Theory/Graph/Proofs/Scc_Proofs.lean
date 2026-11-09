@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Graph.Scc
+public import MercLib.Theory.Graph.Scc
 public import Mathlib.Data.Set.Card
 public import Mathlib.Data.Set.Finite.Lemmas
 

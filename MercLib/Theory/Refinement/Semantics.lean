@@ -38,19 +38,6 @@ inductive WeakTr [HasTau Label] (lts : LTS State Label) : State → List Label �
   | comp {s u t : State} {ρ σ : List Label} :
       WeakTr lts s ρ u → WeakTr lts u σ t → WeakTr lts s (ρ ++ σ) t
 
-/-- Every label occurring in a weak trace is visible, i.e. `ρ ∈ Act*` as the paper requires. -/
-theorem WeakTr.visible [HasTau Label] {lts : LTS State Label} {s t : State} {ρ : List Label}
-    (h : WeakTr lts s ρ t) : ∀ μ ∈ ρ, IsVisible μ := by
-  induction h with
-  | refl _ => simp
-  | tau _ => simp
-  | vis hv _ => simpa using hv
-  | comp _ _ ih1 ih2 =>
-    intro μ hμ
-    rcases List.mem_append.mp hμ with h | h
-    · exact ih1 μ h
-    · exact ih2 μ h
-
 /-- The weak traces of a state `s` (Definition 2.2): the visible-action sequences reachable from
     `s` via `WeakTr`. -/
 def weaktraces [HasTau Label] (lts : LTS State Label) (s : State) : Set (List Label) :=
@@ -82,10 +69,11 @@ def failures [HasTau Label] (lts : LTS State Label) (s : State) :
     Set (List Label × Set Label) :=
   { p | ∃ t, WeakTr lts s p.1 t ∧ Stable lts t ∧ p.2 ∈ refusalsOf lts t }
 
-/-- The stable failures of `s` with post-divergence details obscured (Definition 2.7). -/
+/-- The stable failures of `s` with post-divergence details obscured (Definition 2.7): the stable
+    failures, and every `(ρ, X)` with `ρ` a divergence and `X ⊆ Act`. -/
 def failuresBot [HasTau Label] (lts : LTS State Label) (s : State) :
     Set (List Label × Set Label) :=
-  failures lts s ∪ { p | p.1 ∈ divergences lts s }
+  failures lts s ∪ { p | p.1 ∈ divergences lts s ∧ p.2 ⊆ { μ | IsVisible μ } }
 
 /-! ## Refinement relations (Definition 2.9)
 

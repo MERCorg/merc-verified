@@ -3,7 +3,7 @@ module
 public import Mathlib.Logic.Equiv.Defs
 public import Mathlib.Logic.Equiv.Basic
 public import Mathlib.Data.Fintype.Perm
-public import MercLib.Sigref.Defs
+public import MercLib.Algorithms.Sigref.Defs
 
 @[expose] public section
 

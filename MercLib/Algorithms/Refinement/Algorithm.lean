@@ -2,9 +2,9 @@ module
 
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.HasTau
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
-public import MercLib.Refinement.Antichain
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
+public import MercLib.Algorithms.Refinement.Antichain
 public import Mathlib.Data.Set.Card
 
 open Cslib (LTS HasTau)

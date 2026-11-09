@@ -1,11 +1,11 @@
 module
 
-public import MercLib.Sigref.Proofs.SigE_Proofs
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
-import all MercLib.Sigref.Proofs.RelBisim_Proofs
-import all MercLib.Sigref.Proofs.SigData_Proofs
-import all MercLib.Sigref.Proofs.SigE_Proofs
+public import MercLib.Theory.Sigref.Proofs.SigE_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Theory.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Theory.Sigref.Proofs.SigData_Proofs
+import all MercLib.Theory.Sigref.Proofs.SigE_Proofs
 
 @[expose] public section
 

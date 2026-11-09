@@ -1,6 +1,6 @@
 module
 
-public import MercLib.ParityGame.Game
+public import MercLib.Theory.ParityGame.Game
 public import Mathlib.Order.Prod.Lex.Basic
 public import Mathlib.Data.Fintype.Sort
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic

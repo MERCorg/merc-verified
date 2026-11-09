@@ -1,9 +1,9 @@
 module
 
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
-public import MercLib.Refinement.Proofs.Semantics_Proofs
-import all MercLib.Refinement.Proofs.Semantics_Proofs
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
+public import MercLib.Theory.Refinement.Proofs.Semantics_Proofs
+import all MercLib.Theory.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -262,7 +262,7 @@ private theorem failuresDivergencesRefines_of_not_reachable_fdWitness_aux [HasTa
         have htU : t' ∈ U := by rw [himg]; exact ht1
         rw [hUempty] at htU
         exact htU
-      · exact hρnd hd
+      · exact hρnd hd.1
   · -- refusal mismatch
     obtain ⟨X, hXmem, hXnot⟩ := Set.not_subset.mp hnsub
     have hfail2 : (ρ, X) ∈ failuresBot lts2 s2 := Or.inl ⟨s, hρ2, hstable, hXmem⟩
@@ -270,7 +270,7 @@ private theorem failuresDivergencesRefines_of_not_reachable_fdWitness_aux [HasTa
     · obtain ⟨t, ht1, ht2, ht3⟩ := hf
       have htU : t ∈ U := by rw [himg]; exact ht1
       exact hXnot ⟨t, htU, ht2, ht3⟩
-    · exact hρnd hd
+    · exact hρnd hd.1
   · exact hρnd (hdiv ⟨hρ2.visible, ρ, [], (List.append_nil ρ).symm, s, hρ2, hsdiv⟩)
 
 /-- For any visible-only `ρ`, the FDR normal form either processes all of `ρ` successfully, or
@@ -326,7 +326,7 @@ private theorem failuresDivergencesRefines_of_not_reachable_fdWitness [HasTau La
     by_cases hdU : SetDivergent lts1 U
     · obtain ⟨u, huU, hdu⟩ := hdU
       rw [fdrNormTr_image lts1 s1 hmtr] at huU
-      exact Or.inr (show ρ ∈ divergences lts1 s1 from ⟨hρ2.visible, ρ'', σ'', hσ'', u, huU, hdu⟩)
+      exact Or.inr ⟨⟨hρ2.visible, ρ'', σ'', hσ'', u, huU, hdu⟩, fun μ hμ => (hXmem hμ).1⟩
     · have heq : ρ'' = ρ := hdisj.resolve_right hdU
       subst heq
       by_contra hnotfail
@@ -338,7 +338,7 @@ private theorem failuresDivergencesRefines_of_not_reachable_fdWitness [HasTau La
         exact ht'U
       exact hnwit ⟨U, s, product_zip (FdrNormTr lts1) lts2 hρ2 hmtr, hdU,
         Or.inr (Or.inl ⟨hstable, fun hsub => hXnotin (hsub hXmem)⟩)⟩
-  · exact Or.inr (hdiv hd)
+  · exact Or.inr ⟨hdiv hd.1, hd.2⟩
 
 /-- **Theorem 3.24.** Failures-divergences refinement holds iff no FD-witness is reachable in
     `normfdr(L1) ⋉ L2`. -/

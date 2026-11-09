@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Sigref.Scc
+public import MercLib.Algorithms.Sigref.Scc
 
 @[expose] public section
 

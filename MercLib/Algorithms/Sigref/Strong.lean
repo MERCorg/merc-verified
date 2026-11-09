@@ -1,7 +1,7 @@
 module
 
-public import MercLib.Signatures.Signature
-public import MercLib.Sigref.Defs
+public import MercLib.Theory.Signatures.Signature
+public import MercLib.Algorithms.Sigref.Defs
 
 @[expose] public section
 

@@ -1,14 +1,14 @@
 module
 
-public import MercLib.ParityGame.Implementation
-public import MercLib.Control.Proofs.While_Proofs
+public import MercLib.Implementation.ParityGame.Implementation
+public import MercLib.Util.Proofs.While_Proofs
 public import Mathlib.Data.Set.Card
-public import MercLib.ParityGame.Proofs.Attractor_Proofs
-public import MercLib.ParityGame.Proofs.FatalAttractor_Proofs
-import all MercLib.Control.Proofs.While_Proofs
-import all MercLib.ParityGame.Proofs.Attractor_Proofs
-import all MercLib.ParityGame.Proofs.FatalAttractor_Proofs
-import all MercLib.ParityGame.Proofs.Game_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Attractor_Proofs
+public import MercLib.Theory.ParityGame.Proofs.FatalAttractor_Proofs
+import all MercLib.Util.Proofs.While_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Attractor_Proofs
+import all MercLib.Theory.ParityGame.Proofs.FatalAttractor_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 
@@ -357,7 +357,7 @@ private theorem Game.fatalLoop_inv [Finite V] (G : Game V) (X : Set V) (hsub : G
       (∀ u ∈ s.2.1, G.prio u = j) →
       G.ImplInv X (forIn Lean.Loop.mk s g).run.1 ∧ r0.Extends (forIn Lean.Loop.mk s g).run.1 := by
   intro s h1 h2 h3
-  refine MercLib.Control.whileInduction g
+  refine MercLib.Util.whileInduction g
     (InvImage.wf (fun s : Solution V × Set V × Set V => s.2.1.ncard) Nat.lt_wfRel.wf)
     (fun s => G.ImplInv X s.1 ∧ r0.Extends s.1 ∧ ∀ u ∈ s.2.1, G.prio u = j)
     (fun s => G.ImplInv X s.1 ∧ r0.Extends s.1) ?_ s ⟨h1, h2, h3⟩
@@ -397,7 +397,7 @@ theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js
   have key : G.ImplInv X res ∧
       (G.attrWithTau X .one (G.attrWithTau X .zero r)).Extends res := by
     rw [← hres]
-    refine MercLib.Control.forInList_induction _
+    refine MercLib.Util.forInList_induction _
       (fun s => G.ImplInv X s ∧ (G.attrWithTau X .one (G.attrWithTau X .zero r)).Extends s) ?_
       _ _ ⟨hinv, Solution.Extends.refl _⟩
     rintro j s ⟨hs, hes⟩

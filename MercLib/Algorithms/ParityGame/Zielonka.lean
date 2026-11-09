@@ -1,7 +1,7 @@
 module
 
-public import MercLib.ParityGame.Game
-public import MercLib.ParityGame.Attractor
+public import MercLib.Theory.ParityGame.Game
+public import MercLib.Theory.ParityGame.Attractor
 public import Mathlib.Data.Set.Card
 public import Mathlib.Order.Lattice.Nat
 

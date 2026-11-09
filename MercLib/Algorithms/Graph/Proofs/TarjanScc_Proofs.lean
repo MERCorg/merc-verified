@@ -1,8 +1,8 @@
 module
 
-public import MercLib.Graph.Tarjan
-public import MercLib.Graph.Proofs.Scc_Proofs
-import all MercLib.Graph.Proofs.Scc_Proofs
+public import MercLib.Algorithms.Graph.Tarjan
+public import MercLib.Theory.Graph.Proofs.Scc_Proofs
+import all MercLib.Theory.Graph.Proofs.Scc_Proofs
 
 @[expose] public section
 
@@ -10,7 +10,7 @@ import all MercLib.Graph.Proofs.Scc_Proofs
 # Proofs: the blocks of an SCC partition of the Tarjan model are SCCs
 
 Machine-generated; may be freely edited or regenerated (see AGENTS.md). Relates the numbering
-`IsSccPartition` of `Graph/Tarjan.lean` to the set-based `MercLib.Graph.IsSCC` of `Graph/Scc.lean`.
+`IsSccPartition` of `Algorithms/Graph/Tarjan.lean` to the set-based `MercLib.Graph.IsSCC` of `Theory/Graph/Scc.lean`.
 -/
 
 namespace MercLib.Tarjan

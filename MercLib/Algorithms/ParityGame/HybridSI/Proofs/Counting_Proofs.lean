@@ -1,18 +1,18 @@
 module
 
-public import MercLib.HybridSI.Counting
-public import MercLib.HybridSI.Proofs.Epoch_Proofs
-public import MercLib.HybridSI.Proofs.Potential_Proofs
-import all MercLib.HybridSI.Proofs.Correctness_Proofs
-import all MercLib.HybridSI.Proofs.Epoch_Proofs
-import all MercLib.HybridSI.Proofs.Filter_Proofs
-import all MercLib.HybridSI.Proofs.Improvement_Proofs
-import all MercLib.HybridSI.Proofs.Key_Proofs
-import all MercLib.HybridSI.Proofs.Lasso_Proofs
-import all MercLib.HybridSI.Proofs.Potential_Proofs
-import all MercLib.HybridSI.Proofs.Termination_Proofs
-import all MercLib.HybridSI.Proofs.Win_Proofs
-import all MercLib.ParityGame.Proofs.Game_Proofs
+public import MercLib.Algorithms.ParityGame.HybridSI.Counting
+public import MercLib.Algorithms.ParityGame.HybridSI.Proofs.Epoch_Proofs
+public import MercLib.Algorithms.ParityGame.HybridSI.Proofs.Potential_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Epoch_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Filter_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Improvement_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Key_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Lasso_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Potential_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Termination_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Win_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSICountingProofs
 

@@ -1,8 +1,8 @@
 module
 
-public import MercLib.Rewriting.Rewrite
-public import MercLib.Rewriting.Proofs.Signature_Proofs
-import all MercLib.Rewriting.Proofs.Signature_Proofs
+public import MercLib.Theory.Rewriting.Rewrite
+public import MercLib.Theory.Rewriting.Proofs.Signature_Proofs
+import all MercLib.Theory.Rewriting.Proofs.Signature_Proofs
 
 @[expose] public section
 
@@ -13,7 +13,7 @@ Basic closure properties of the rewrite relation: rules fire at the root, and re
 under contexts.
 
 Machine-generated; may be freely edited or regenerated (see AGENTS.md). The definitions live in
-`Rewriting/Rewrite.lean` (human-vetted).
+`Theory/Rewriting/Rewrite.lean` (human-vetted).
 -/
 
 namespace MercLib.Rewriting

@@ -1,12 +1,12 @@
 module
 
-public import MercLib.ParityGame.Zielonka
-public import MercLib.ParityGame.Proofs.Game_Proofs
-public import MercLib.ParityGame.Proofs.Attractor_Proofs
-public import MercLib.ParityGame.Proofs.Region_Proofs
-import all MercLib.ParityGame.Proofs.Attractor_Proofs
-import all MercLib.ParityGame.Proofs.Game_Proofs
-import all MercLib.ParityGame.Proofs.Region_Proofs
+public import MercLib.Algorithms.ParityGame.Zielonka
+public import MercLib.Theory.ParityGame.Proofs.Game_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Attractor_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Region_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Attractor_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Region_Proofs
 
 open Cslib (ωSequence)
 

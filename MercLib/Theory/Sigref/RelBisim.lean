@@ -1,6 +1,6 @@
 module
 
-public import MercLib.LTS.BranchingBisimilarity
+public import MercLib.Theory.LTS.BranchingBisimilarity
 public import Mathlib.Logic.Relation
 
 @[expose] public section
@@ -11,8 +11,8 @@ public import Mathlib.Logic.Relation
 For a partition `π`, `E π s t` is the coarsest relation that is a *branching bisimulation in which
 only the τ-steps inside a block of `π` are inert, and the targets of every other transition are
 compared up to `π`* (instead of up to the relation itself). This is exactly the equivalence induced
-by the paper's inductive signature `Sig_π` (checked by brute force, see
-`scripts/sigref_bruteforce.py`), but stated without hashes or absorption.
+by the paper's inductive signature `Sig_π` (proved in `Theory/Sigref/SigE.lean`), but stated
+without hashes or absorption.
 
 It is defined as ordinary branching bisimilarity of an auxiliary LTS `relLTS lts π` in which the
 non-inert transition `s -a→ x` is replaced by `s -(a, [x]_π)→ ⊥`. This gives reflexivity,

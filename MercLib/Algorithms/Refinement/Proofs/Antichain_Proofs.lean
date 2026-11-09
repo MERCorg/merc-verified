@@ -1,8 +1,8 @@
 module
 
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
-public import MercLib.Refinement.Antichain
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
+public import MercLib.Algorithms.Refinement.Antichain
 
 open Cslib (LTS HasTau)
 

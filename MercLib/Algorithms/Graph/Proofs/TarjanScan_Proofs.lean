@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Graph.Tarjan
+public import MercLib.Algorithms.Graph.Tarjan
 
 @[expose] public section
 

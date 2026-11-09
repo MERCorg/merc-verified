@@ -1,14 +1,14 @@
 module
 
-public import MercLib.Sigref.Branching
-public import MercLib.Sigref.Proofs.Strong_Proofs
-public import MercLib.Sigref.Proofs.RelBisim_Proofs
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
-import all MercLib.Signatures.Proofs.Signature_Proofs
-import all MercLib.Sigref.Proofs.Defs_Proofs
-import all MercLib.Sigref.Proofs.RelBisim_Proofs
-import all MercLib.Sigref.Proofs.Strong_Proofs
+public import MercLib.Algorithms.Sigref.Branching
+public import MercLib.Algorithms.Sigref.Proofs.Strong_Proofs
+public import MercLib.Theory.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Theory.Signatures.Proofs.Signature_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Defs_Proofs
+import all MercLib.Theory.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Strong_Proofs
 
 @[expose] public section
 

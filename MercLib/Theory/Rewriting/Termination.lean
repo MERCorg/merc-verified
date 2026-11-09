@@ -1,37 +1,34 @@
 module
 
-public import MercLib.Rewriting.Confluence
+public import MercLib.Theory.Rewriting.Rewrite
 
 @[expose] public section
 
 /-!
 # Termination criteria
 
-Termination is the one ingredient of the semantic confluence proof that the model does not give
-for free. This file collects the criteria used to discharge it.
+* `terminating_of_measure`: a measure into a well-founded order that decreases with every step.
+* `terminating_of_interpretation`: the monotone-interpretation criterion. Interpret every sort by a
+  well-founded carrier and every operator by a function that is strictly monotone in each argument,
+  and check that every rule decreases the interpretation under every valuation.
 
-* `terminating_of_measure` — a measure into a well-founded order that decreases with every step.
-  This is the general shape: every concrete termination argument below produces such a measure.
-* `terminating_of_interpretation` — the classical *monotone algebra* criterion: interpret every
-  operator by a strictly monotone function into `Nat`, and check that every rule decreases the
-  interpretation for all valuations.
+Conditions of rules are ignored by the second criterion, which is sound.
 
-Note that a monotone algebra can only ever work for systems whose rules do not duplicate a
-variable in a way that outweighs the decrease; see the discussion in `Rewriting.TRS.Pos` for
-the mCRL2 `@addc` rules, which duplicate their `Bool` argument and therefore need a stronger
-criterion than `terminating_of_interpretation`.
+## Main definitions
+
+- `MonotoneInterpretation`: well-founded carriers with strictly monotone operators.
+- `Term.eval`: the value of a term under a valuation.
+- `Decreasing`: every rule decreases the interpretation.
 -/
 
 namespace MercLib.Rewriting
 
 variable {S : Signature} {V : VarSet S} {ι : Type}
 
-/-! ## Monotone algebras
-
-An interpretation into `Nat` that is strictly monotone in every argument turns a rewrite step into
-a strict decrease, provided every rule decreases under every valuation. The monotonicity condition
-is what propagates a decrease at an inner position to the whole term.
--/
+/-- Values for an argument list: one carrier element per sort in `ss`. -/
+@[reducible] def Vals (A : S.Srt → Type) : List S.Srt → Type
+  | [] => PUnit
+  | s :: ss => A s × Vals A ss
 
 /-- One position of an argument list decreases, the others stay equal. -/
 def ValsLt (A : S.Srt → Type) (lt : ∀ s, A s → A s → Prop) :
@@ -39,23 +36,51 @@ def ValsLt (A : S.Srt → Type) (lt : ∀ s, A s → A s → Prop) :
   | [], _, _ => False
   | s :: _, (a, as), (b, bs) => (lt s b a ∧ as = bs) ∨ (a = b ∧ ValsLt A lt as bs)
 
-/-- An algebra whose operators are strictly monotone in every argument, with a well-founded strict
-order on each carrier. -/
-structure MonotoneAlgebra (S : Signature) where
-  /-- The underlying algebra. -/
-  alg : Algebra S
+/-- A monotone interpretation: a carrier with a well-founded strict order for every sort, and for
+every operator a function on the carriers that is strictly monotone in every argument. -/
+structure MonotoneInterpretation (S : Signature) where
+  /-- The carrier of each sort. -/
+  carrier : S.Srt → Type
+  /-- The interpretation of each operator. -/
+  interp : ∀ {ss : List S.Srt} {s : S.Srt}, S.Op ss s → Vals carrier ss → carrier s
   /-- The strict order on each carrier. -/
-  lt : ∀ s, alg.carrier s → alg.carrier s → Prop
+  lt : ∀ s, carrier s → carrier s → Prop
   /-- Each order is well founded, so there are no infinite descending chains. -/
   wf : ∀ s, WellFounded (lt s)
   /-- Every operator is strictly monotone in every argument. -/
-  mono : ∀ {ss : List S.Srt} {s : S.Srt} (f : S.Op ss s) {as bs : Vals alg.carrier ss},
-    ValsLt alg.carrier lt as bs → lt s (alg.interp f bs) (alg.interp f as)
+  mono : ∀ {ss : List S.Srt} {s : S.Srt} (f : S.Op ss s) {as bs : Vals carrier ss},
+    ValsLt carrier lt as bs → lt s (interp f bs) (interp f as)
 
-/-- Every rule of `R` strictly decreases the interpretation, for every valuation. Conditions are
-ignored, which is sound but can only prove more systems terminating than needed. -/
-def Decreasing (R : TRS S V ι) (M : MonotoneAlgebra S) : Prop :=
-  ∀ (i : ι) (ν : Valuation M.alg V),
-    M.lt (R i).srt (Term.eval M.alg ν (R i).rhs) (Term.eval M.alg ν (R i).lhs)
+/-- A valuation assigns a carrier element to every variable. -/
+abbrev Valuation (M : MonotoneInterpretation S) (V : VarSet S) := ∀ s, V s → M.carrier s
+
+namespace Term
+
+mutual
+
+/-- The value of a term under a valuation. -/
+def eval {V : VarSet S} (M : MonotoneInterpretation S) (ν : Valuation M V) :
+    {s : S.Srt} → Term S V s → M.carrier s
+  | _, .var x => ν _ x
+  | _, .op f args => M.interp f (Args.eval M ν args)
+
+/-- The values of an argument list. -/
+def _root_.MercLib.Rewriting.Args.eval {V : VarSet S} (M : MonotoneInterpretation S)
+    (ν : Valuation M V) : {ss : List S.Srt} → Args S V ss → Vals M.carrier ss
+  | _, .nil => PUnit.unit
+  | _, .cons t ts => (Term.eval M ν t, Args.eval M ν ts)
+
+end
+
+/-- The valuation induced by a substitution: every rule variable gets the value of the term the
+substitution assigns to it. -/
+abbrev substValuation {V W : VarSet S} (M : MonotoneInterpretation S) (ν : Valuation M W)
+    (σ : Subst S V W) : Valuation M V := fun s x => eval M ν (σ s x)
+
+end Term
+
+/-- Every rule of `R` strictly decreases the interpretation, for every valuation. -/
+def Decreasing (R : TRS S V ι) (M : MonotoneInterpretation S) : Prop :=
+  ∀ (i : ι) (ν : Valuation M V), M.lt (R i).srt (Term.eval M ν (R i).rhs) (Term.eval M ν (R i).lhs)
 
 end MercLib.Rewriting

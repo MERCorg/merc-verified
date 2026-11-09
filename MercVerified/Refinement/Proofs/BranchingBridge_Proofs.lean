@@ -1,6 +1,6 @@
 module
 
-public import MercLib.LTS.BranchingBisimilarity
+public import MercLib.Theory.LTS.BranchingBisimilarity
 public import Mathlib.Logic.Relation
 import all Aeneas.Std.Scalar.Ops.Add
 import all Aeneas.Std.Core.Core

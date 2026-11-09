@@ -1,25 +1,25 @@
 module
 
-public import MercLib.Sigref.KeyComp
-public import MercLib.Sigref.Proofs.KeyComp_Proofs
-public import MercLib.Sigref.Proofs.Iteration_Proofs
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
-import all MercLib.Signatures.Proofs.Signature_Proofs
-import all MercLib.Sigref.Proofs.Absorb_Proofs
-import all MercLib.Sigref.Proofs.Branching_Proofs
-import all MercLib.Sigref.Proofs.CountingSort_Proofs
-import all MercLib.Sigref.Proofs.Defs_Proofs
-import all MercLib.Sigref.Proofs.Iteration_Proofs
-import all MercLib.Sigref.Proofs.KeyComp_Proofs
-import all MercLib.Sigref.Proofs.RPStep_Proofs
-import all MercLib.Sigref.Proofs.Refinable_Proofs
-import all MercLib.Sigref.Proofs.RelBisim_Proofs
-import all MercLib.Sigref.Proofs.SigData_Proofs
-import all MercLib.Sigref.Proofs.SigE_Proofs
-import all MercLib.Sigref.Proofs.Split_Proofs
-import all MercLib.Sigref.Proofs.Strong_Proofs
-import all MercLib.Sigref.Proofs.Worklist_Proofs
+public import MercLib.Algorithms.Sigref.KeyComp
+public import MercLib.Algorithms.Sigref.Proofs.KeyComp_Proofs
+public import MercLib.Algorithms.Sigref.Proofs.Iteration_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Theory.Signatures.Proofs.Signature_Proofs
+import all MercLib.Theory.Sigref.Proofs.Absorb_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Branching_Proofs
+import all MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Defs_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Iteration_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.KeyComp_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.RPStep_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
+import all MercLib.Theory.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Theory.Sigref.Proofs.SigData_Proofs
+import all MercLib.Theory.Sigref.Proofs.SigE_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Split_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Strong_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Worklist_Proofs
 
 @[expose] public section
 

@@ -1,10 +1,10 @@
 module
 
-public import MercLib.HybridSI.Proofs.Key_Proofs
-public import MercLib.ParityGame.Proofs.Game_Proofs
-import all MercLib.HybridSI.Proofs.Key_Proofs
-import all MercLib.HybridSI.Proofs.Lasso_Proofs
-import all MercLib.ParityGame.Proofs.Game_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Key_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Game_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Key_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Lasso_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIWinProofs
 

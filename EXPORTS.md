@@ -11,6 +11,10 @@ from the Rust sources checks their contents.
 * axiom `MercLib.Tarjan.tarjanCorrect`
 * axiom `MercLib.Tarjan.tarjanTerminates`
 
+## `MercLib.Algorithms.Graph.Proofs.TarjanRun_Proofs` (proofs)
+
+* axiom `MercLib.Tarjan.tarjanRunCorrect`
+
 ## `MercLib.Algorithms.Graph.Proofs.TarjanScc_Proofs` (proofs)
 
 * axiom `MercLib.Tarjan.IsSccPartition.isSCC`

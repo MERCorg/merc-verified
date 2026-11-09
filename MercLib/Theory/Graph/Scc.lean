@@ -16,7 +16,7 @@ of the vertices: reachability only uses edges between vertices of `X` (Section 3
 [O. Friedmann and M. Lange, *Solving Parity Games in Practice*][Friedmann2009], ATVA 2009, takes the
 SCCs of a subgame in this way).
 
-They are specified mathematically (not by an algorithm, see `Graph/Tarjan.lean` for that):
+They are specified mathematically (not by an algorithm, see `Algorithms/Graph/Tarjan.lean` for that):
 `IsSCC E X C` says `C` is a maximal strongly connected subset of `X`, and `IsFinalSCC` that no edge
 of `X` leaves it.
 -/

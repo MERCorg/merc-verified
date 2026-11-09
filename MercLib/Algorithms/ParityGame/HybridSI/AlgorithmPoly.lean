@@ -1,7 +1,7 @@
 module
 
-public import MercLib.HybridSI.BestResponse
-public import MercLib.HybridSI.Correctness
+public import MercLib.Algorithms.ParityGame.HybridSI.BestResponse
+public import MercLib.Algorithms.ParityGame.HybridSI.Correctness
 
 @[expose] public section HybridSIAlgorithmPoly
 
@@ -26,7 +26,7 @@ so it never gets stuck; `hbRunPoly` iterates it. Both are in `TimeM ℕ`, with t
   `ks`-argmax): `4 · roundCost (succList G)`;
 * one tick per iteration of `hbRunPoly`'s loop.
 
-Contracts (proved in `HybridSI/Proofs/AlgorithmPoly_Proofs.lean`):
+Contracts (proved in `Algorithms/ParityGame/HybridSI/Proofs/AlgorithmPoly_Proofs.lean`):
 * `HBStepCost`: one iteration costs at most `hbStepBound n m`, a polynomial in `n = |V|` and the
   number of edges `m`;
 * `HBRunCost`: a run that returns after `it` iterations costs at most

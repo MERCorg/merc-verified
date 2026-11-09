@@ -1,9 +1,9 @@
 module
 
-public import MercLib.Graph.Proofs.TarjanScan_Proofs
+public import MercLib.Algorithms.Graph.Proofs.TarjanScan_Proofs
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Data.Fintype.Card
-import all MercLib.Graph.Proofs.TarjanScan_Proofs
+import all MercLib.Algorithms.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 

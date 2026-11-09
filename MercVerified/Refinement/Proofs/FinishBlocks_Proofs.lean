@@ -5,12 +5,12 @@ public import MercVerified.Refinement.Proofs.Partition_Proofs
 public import MercVerified.Refinement.Proofs.PartitionInv_Proofs
 public import MercVerified.Refinement.Proofs.LoopTools_Proofs
 public import MercVerified.Refinement.Proofs.SwapBlocks_Proofs
-public import MercLib.Sigref.Proofs.CountingSort_Proofs
+public import MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
 public import MercVerified.Refinement.Proofs.FinishPartition_Proofs
 public import MercVerified.Refinement.Proofs.ScatterLoop_Proofs
 public import MercVerified.Refinement.Proofs.SplitPartInv_Proofs
 public import Aeneas.Std.WP
-import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
 import all MercVerified.Lts.Proofs.Foundation_Proofs
 import all MercVerified.Refinement.Proofs.FinishPartition_Proofs
 import all MercVerified.Refinement.Proofs.LoopTools_Proofs

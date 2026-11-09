@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Sigref.Defs
+public import MercLib.Algorithms.Sigref.Defs
 
 @[expose] public section
 

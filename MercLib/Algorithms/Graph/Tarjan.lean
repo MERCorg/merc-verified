@@ -23,7 +23,7 @@ by the implementation to mark a state that is queued but not yet initialised.
 
 Claims: `TarjanCorrect` (the result numbers the states by their SCC, with `eq` blocks; the run never
 fails), `TarjanTerminates` (a measure decreases at every step). `IsSccPartition` is related to the
-set-based `MercLib.Graph.IsSCC` by `IsSccPartition.isSCC` in `Graph/Proofs/TarjanScc_Proofs.lean`.
+set-based `MercLib.Graph.IsSCC` by `IsSccPartition.isSCC` in `Algorithms/Graph/Proofs/TarjanScc_Proofs.lean`.
 -/
 
 namespace MercLib.Tarjan
@@ -129,6 +129,33 @@ def step (g : Graph n) (c : Ctx n) : Out n :=
 /-- A step of the machine. -/
 def Step (g : Graph n) (c c' : Ctx n) : Prop := step g c = Out.next c'
 
+/-- Tarjan's algorithm, iteratively: every state not yet visited becomes the root of a depth-first
+search with an explicit work stack of `(state, resume offset)` entries. One iteration of either
+loop is one `step` (`scc_visit_roots` for the outer loop, `scc_process_work` for the inner one);
+`none` if popping a component runs out of stack (which never happens, see `TarjanRunCorrect`). -/
+def tarjan (g : Graph n) : Option (Ctx n) := Id.run do
+  let mut c := init g
+  let mut failed := false
+  while h : c.ri < n ∧ failed = false do
+    let r : Fin n := ⟨c.ri, h.1⟩                                  -- the next root candidate
+    if c.low r = g.unv then
+      c := { c with work := [(r, 0)], ri := c.ri + 1 }           -- start a search from r
+      while c.work ≠ [] ∧ failed = false do
+        match c.work with
+        | [] => pure ()
+        | (s, off) :: W =>                                         -- resume s at offset off
+          let c1 := initNode g s { c with work := W }
+          match scan g s ((g.adj s).drop off) off c1 with
+          | (some ch, off', c2) =>                                 -- descend into ch
+            c := { c2 with work := (ch, 0) :: (s, off') :: W }
+          | (none, _, c2) =>                                       -- s is done
+            match finish s c2 with
+            | none => failed := true
+            | some c3 => c := c3
+    else
+      c := { c with ri := c.ri + 1 }                              -- r was already visited
+  return if failed then none else some c
+
 /-- A termination measure: the number of unvisited states and the work stack. -/
 def measure (g : Graph n) (c : Ctx n) : ℕ :=
   2 * (n - c.ri) + 2 * (Finset.univ.filter (fun v => c.disc v = g.unv)).card + c.work.length
@@ -146,6 +173,11 @@ SCC with `eq` blocks, and no step of the run fails. -/
 def TarjanCorrect (g : Graph n) : Prop :=
   ∀ c, Relation.ReflTransGen (Step g) (init g) c →
     (step g c = Out.stop → IsSccPartition g c.blk c.eq) ∧ step g c ≠ Out.fail
+
+/-- **Correctness of `tarjan`**: it terminates without failing, and the result numbers the states by
+their SCC with `eq` blocks. -/
+def TarjanRunCorrect (g : Graph n) : Prop :=
+  ∃ c, tarjan g = some c ∧ IsSccPartition g c.blk c.eq
 
 /-- **Termination of the SCC decomposition**: the measure decreases at every step of a run. -/
 def TarjanTerminates (g : Graph n) : Prop :=

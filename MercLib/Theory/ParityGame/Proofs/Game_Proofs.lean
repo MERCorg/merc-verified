@@ -1,6 +1,6 @@
 module
 
-public import MercLib.ParityGame.Game
+public import MercLib.Theory.ParityGame.Game
 public import Cslib.Foundations.Data.OmegaSequence.Init
 
 open Cslib (ωSequence)

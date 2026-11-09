@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Potential
+public import MercLib.Algorithms.ParityGame.HybridSI.Potential
 
 @[expose] public section HybridSICounting
 
@@ -19,7 +19,7 @@ Bounds on the length of a `RunTrace` in terms of events along it, for every game
   `n_E` iterations; the epoch-bound argument needs only that `K*` is constant, not Odd's moves.
 * `KStarCount`: at most `C + n_E (C + 1)` iterations, `C` the number of changes of `K*`.
 
-Proofs go to `HybridSI/Proofs/Counting_Proofs.lean`.
+Proofs go to `Algorithms/ParityGame/HybridSI/Proofs/Counting_Proofs.lean`.
 -/
 
 variable {V : Type*} [Fintype V] [LinearOrder V]

@@ -1,11 +1,11 @@
 module
 
-public import MercLib.Sigref.RelBisim
-public import MercLib.Signatures.InductiveSignatures
-public import MercLib.Signatures.Proofs.InductiveSignatures_Proofs
-public import MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
+public import MercLib.Theory.Sigref.RelBisim
+public import MercLib.Theory.Signatures.InductiveSignatures
+public import MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
+public import MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
 
 @[expose] public section
 

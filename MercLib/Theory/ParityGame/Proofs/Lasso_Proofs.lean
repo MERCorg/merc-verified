@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Valuation
+public import MercLib.Theory.ParityGame.Valuation
 public import Mathlib.Dynamics.PeriodicPts.Defs
 public import Mathlib.Data.Fintype.Pigeonhole
 

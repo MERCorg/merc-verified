@@ -1,13 +1,13 @@
 module
 
-public import MercLib.HybridSI.Proofs.BestResponse_Graph_Proofs
-public import MercLib.HybridSI.Proofs.Key_Proofs
-import all MercLib.HybridSI.Proofs.BestResponse_Graph_Proofs
-import all MercLib.HybridSI.Proofs.Correctness_Proofs
-import all MercLib.HybridSI.Proofs.Key_Proofs
-import all MercLib.HybridSI.Proofs.Lasso_Proofs
-import all MercLib.HybridSI.Proofs.Win_Proofs
-import all MercLib.ParityGame.Proofs.Game_Proofs
+public import MercLib.Algorithms.ParityGame.HybridSI.Proofs.BestResponse_Graph_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Key_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.BestResponse_Graph_Proofs
+import all MercLib.Algorithms.ParityGame.HybridSI.Proofs.Correctness_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Key_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Lasso_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Win_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
 
 @[expose] public section HybridSIBestResponseClassesProofs
 

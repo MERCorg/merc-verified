@@ -2,10 +2,10 @@ module
 
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.Bisimulation
-public import MercLib.LTS.BranchingBisimilarity
-public import MercLib.Signatures.Signature
-public import MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+public import MercLib.Theory.LTS.BranchingBisimilarity
+public import MercLib.Theory.Signatures.Signature
+public import MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
 
 @[expose] public section SignatureProofs
 

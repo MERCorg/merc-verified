@@ -2,7 +2,7 @@ module
 
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.HasTau
-public import MercLib.LTS.BranchingBisimilarity
+public import MercLib.Theory.LTS.BranchingBisimilarity
 
 open Cslib (LTS HasTau)
 

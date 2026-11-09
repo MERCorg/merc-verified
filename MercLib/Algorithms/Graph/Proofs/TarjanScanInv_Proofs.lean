@@ -1,9 +1,9 @@
 module
 
-public import MercLib.Graph.Proofs.TarjanInit_Proofs
-import all MercLib.Graph.Proofs.TarjanInit_Proofs
-import all MercLib.Graph.Proofs.TarjanInv_Proofs
-import all MercLib.Graph.Proofs.TarjanScan_Proofs
+public import MercLib.Algorithms.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Algorithms.Graph.Proofs.TarjanInit_Proofs
+import all MercLib.Algorithms.Graph.Proofs.TarjanInv_Proofs
+import all MercLib.Algorithms.Graph.Proofs.TarjanScan_Proofs
 
 @[expose] public section
 

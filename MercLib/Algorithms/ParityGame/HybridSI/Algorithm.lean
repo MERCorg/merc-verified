@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Valuation
+public import MercLib.Theory.ParityGame.Valuation
 
 @[expose] public section HybridSIAlgorithm
 

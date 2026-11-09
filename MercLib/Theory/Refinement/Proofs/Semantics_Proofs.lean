@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Refinement.Semantics
+public import MercLib.Theory.Refinement.Semantics
 
 open Cslib (LTS HasTau)
 
@@ -8,8 +8,22 @@ open Cslib (LTS HasTau)
 
 namespace MercLib.Refinement
 
+
+/-- Every label occurring in a weak trace is visible, i.e. `ρ ∈ Act*` as the paper requires. -/
+private theorem WeakTr.visible [HasTau Label] {lts : LTS State Label} {s t : State} {ρ : List Label}
+    (h : WeakTr lts s ρ t) : ∀ μ ∈ ρ, IsVisible μ := by
+  induction h with
+  | refl _ => simp
+  | tau _ => simp
+  | vis hv _ => simpa using hv
+  | comp _ _ ih1 ih2 =>
+    intro μ hμ
+    rcases List.mem_append.mp hμ with h | h
+    · exact ih1 μ h
+    · exact ih2 μ h
+
 /-! Machine-generated; may be freely edited or regenerated (see AGENTS.md). Helper lemmas about
-`WeakTr`'s composability, used throughout `MercLib/Refinement/Proofs/Product_Proofs.lean`. -/
+`WeakTr`'s composability, used throughout `MercLib/Theory/Refinement/Proofs/Product_Proofs.lean`. -/
 
 /-- A weak trace over `a :: ρ'` splits into a weak step over the singleton `[a]` followed by one
     over `ρ'`. The general "split at any prefix" fact also holds but this is the only shape the

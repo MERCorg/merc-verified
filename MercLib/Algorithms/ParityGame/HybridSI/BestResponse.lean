@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Algorithm
+public import MercLib.Algorithms.ParityGame.HybridSI.Algorithm
 public import Cslib.Algorithms.Lean.TimeM
 public import Mathlib.Order.WithBot
 public import Mathlib.Algebra.Order.Monoid.WithTop

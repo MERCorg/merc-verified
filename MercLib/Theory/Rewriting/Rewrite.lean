@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Rewriting.Signature
+public import MercLib.Theory.Rewriting.Signature
 public import Cslib.Foundations.Relation.Confluence
 
 @[expose] public section
@@ -8,13 +8,13 @@ public import Cslib.Foundations.Relation.Confluence
 /-!
 # Conditional rewrite systems
 
-An mCRL2 `eqn` block is a list of (conditional) rewrite rules: `c -> l = r` rewrites an instance
-`lσ` to `rσ` provided the condition instance `cσ` rewrites to `true`. Here a rule carries a list of
-*oriented* conditions `u → v`; an mCRL2 condition `c` is the single condition `c → true`.
+A conditional rewrite rule `c₁, …, cₖ → l = r` rewrites an instance `lσ` to `rσ` provided every
+condition instance holds. A rule carries a list of *oriented* conditions `u → v`, which hold when
+`uσ` reaches `vσ`.
 
 Such a system is an oriented CTRS, whose rewrite relation is defined by the usual stratification by
 condition depth: `stepAt R 0` is empty, and `stepAt R (n+1)` fires a rule whose conditions are
-already joinable by `stepAt R n`. `Step R` is the union over all levels; it is the least relation
+already satisfied by `stepAt R n`. `Step R` is the union over all levels; it is the least relation
 closed under the rule and congruence clauses, which is what makes induction over a rewrite step
 possible (`Step.rec_on` style proofs go by induction on the level).
 
@@ -32,7 +32,7 @@ structure Cond (S : Signature) (V : VarSet S) where
   srt : S.Srt
   /-- The left-hand side. -/
   lhs : Term S V srt
-  /-- The right-hand side; for an mCRL2 condition this is `true`. -/
+  /-- The right-hand side. -/
   rhs : Term S V srt
 
 /-- A conditional rewrite rule `conds -> lhs = rhs` with variables drawn from `V`. -/

@@ -1,9 +1,9 @@
 module
 
-public import MercLib.Sigref.Refinable
-public import MercLib.Sigref.Branching
-public import MercLib.Sigref.Proofs.Refinable_Proofs
-import all MercLib.Sigref.Proofs.Refinable_Proofs
+public import MercLib.Algorithms.Sigref.Refinable
+public import MercLib.Algorithms.Sigref.Branching
+public import MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
 
 @[expose] public section
 

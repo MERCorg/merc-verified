@@ -1,7 +1,7 @@
 module
 
-public import MercLib.Graph.Tarjan
-public import MercLib.Sigref.Scc
+public import MercLib.Algorithms.Graph.Tarjan
+public import MercLib.Algorithms.Sigref.Scc
 
 @[expose] public section
 

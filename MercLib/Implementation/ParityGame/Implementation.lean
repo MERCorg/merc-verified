@@ -1,7 +1,7 @@
 module
 
-public import MercLib.ParityGame.Attractor
-public import MercLib.ParityGame.FatalAttractor
+public import MercLib.Theory.ParityGame.Attractor
+public import MercLib.Theory.ParityGame.FatalAttractor
 public import Mathlib.SetTheory.Cardinal.Finite
 
 @[expose] public section

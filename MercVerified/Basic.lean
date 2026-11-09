@@ -1,7 +1,7 @@
 module
 
-public import MercLib.LTS.BranchingBisimilarity
-public import MercLib.Signatures.Signature
+public import MercLib.Theory.LTS.BranchingBisimilarity
+public import MercLib.Theory.Signatures.Signature
 
 -- Import the generated Lean code
 public import MercVerified.Code.Funs

@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Sigref.Defs
+public import MercLib.Algorithms.Sigref.Defs
 public import Cslib.Foundations.Semantics.LTS.HasTau
 
 @[expose] public section

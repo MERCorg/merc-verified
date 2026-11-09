@@ -1,9 +1,9 @@
 module
 
 public import Mathlib.Logic.Relation
-public import MercLib.Signatures.InductiveSignatures
-public import MercLib.Sigref.Strong
-public import MercLib.Sigref.RelBisim
+public import MercLib.Theory.Signatures.InductiveSignatures
+public import MercLib.Algorithms.Sigref.Strong
+public import MercLib.Theory.Sigref.RelBisim
 
 @[expose] public section
 
@@ -27,10 +27,9 @@ while h : ∃ s0, s0 ∈ c.X do                       -- the block B of any dirt
 `h.choose` and `Classical.epsilon` stand for arbitrary choices: `BranchingStep` allows every choice.
 
 The signature equality `Sig_π(s) = Sig_π(t)` of the paper is the relation `E π` of `RelBisim.lean`
-(branching bisimilarity relative to `π`). Brute force on 40000 random LTSs found that the two
-coincide for every partition (`scripts/sigref_bruteforce.py` and its siblings), so the hash-based
-signature of an implementation is only a way to compute `E π`; relating them is a separate, static
-lemma. The *flat* signature is not a valid abstraction: it forgets the inert τ-edges that turn
+(branching bisimilarity relative to `π`): for a coherent fixed point of `Sig_π`, two `π`-related
+states have equal signatures iff they are `E π`-related (`Theory/Sigref/SigE.lean`). So the
+hash-based signature of an implementation is only a way to compute `E π`. The *flat* signature is not a valid abstraction: it forgets the inert τ-edges that turn
 non-inert after a split.
 
 `BranchingInv` is the invariant, preserved by every non-deterministic step (`branchingInv_step`)

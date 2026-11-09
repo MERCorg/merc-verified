@@ -1,42 +1,35 @@
 module
 
-public import MercLib.Rewriting.Soundness
+public import MercLib.Theory.Rewriting.Rewrite
+public import Cslib.Foundations.Relation.Confluence
 
 @[expose] public section
 
 /-!
-# Ground confluence from a model
+# Confluence of rewrite systems
 
-This file and `Rewriting/Proofs/Confluence_Proofs.lean` prove confluence of a rewrite system
-*semantically*, avoiding critical pairs entirely.
-The ingredients are:
+Local confluence and confluence of a rewrite system on the terms over a variable family `W`, sort by
+sort. The abstract vocabulary (`Relation.LocallyConfluent`, `Relation.Confluent`, Newman's lemma) is
+taken from `Cslib.Foundations.Relation`.
 
-* **termination** — every term has a normal form;
-* **soundness** — rewriting preserves values in a model `A` (`Rewriting.Soundness`);
-* **sufficient completeness with no confusion** — two normal forms with the same value are equal.
+## Main definitions
 
-Then any two reducts of a term reduce to normal forms with the same value, hence to the *same*
-normal form. Overlapping rules, non-left-linear rules and rules that only normalise a symbolic
-subterm (mCRL2's `succ(p)`-rules) cost nothing here: they are simply extra value-preserving rules.
-
-The abstract-rewriting vocabulary (`Relation.Normal`, `Relation.Normalizing`,
-`Relation.Terminating`, `Relation.Confluent`, and the equivalence of confluence with uniqueness of
-normal forms) is taken from `Cslib.Foundations.Relation`; this file only adds the model-based
-criterion and its specialisation to terms.
+- `LocallyConfluent`: every one-step peak of `R` is joinable.
+- `Confluent`: every many-step peak of `R` is joinable.
 -/
 
 namespace MercLib.Rewriting
 
-/-! ## Specialisation to rewrite systems -/
+variable {S : Signature} {V : VarSet S} {ι : Type}
 
-variable {S : Signature} {V W : VarSet S} {ι : Type}
+/-- `R` is locally confluent on the terms over `W`: at every sort, two one-step reducts of a term
+have a common reduct. -/
+def LocallyConfluent (R : TRS S V ι) (W : VarSet S) : Prop :=
+  ∀ s, Relation.LocallyConfluent (rel R W s)
 
-/-- Distinct normal forms of the same sort have distinct values in `A`. This is the combination of
-sufficient completeness (normal forms are constructor terms) and no confusion (the model has no
-junk), and is the only property of the model that the confluence proof needs. -/
-def NormalFormsInjective (R : TRS S V ι) (W : VarSet S) (A : Algebra S)
-    (ν : Valuation A W) : Prop :=
-  ∀ {s : S.Srt} {a b : Term S W s}, Normal R a → Normal R b →
-    Term.eval A ν a = Term.eval A ν b → a = b
+/-- `R` is confluent on the terms over `W`: at every sort, two many-step reducts of a term have a
+common reduct. -/
+def Confluent (R : TRS S V ι) (W : VarSet S) : Prop :=
+  ∀ s, Relation.Confluent (rel R W s)
 
 end MercLib.Rewriting

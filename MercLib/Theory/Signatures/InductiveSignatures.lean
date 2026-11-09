@@ -2,8 +2,8 @@ module
 
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.Bisimulation
-public import MercLib.Signatures.Signature
-import MercLib.LTS.BranchingBisimilarity
+public import MercLib.Theory.Signatures.Signature
+import MercLib.Theory.LTS.BranchingBisimilarity
 
 @[expose] public section InductiveSignatures
 

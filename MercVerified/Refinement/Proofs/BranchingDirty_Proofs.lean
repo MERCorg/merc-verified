@@ -3,7 +3,7 @@ module
 public import MercVerified.Refinement.Proofs.MarkDirty_Proofs
 public import MercVerified.Refinement.Proofs.WorklistLoop_Proofs
 public import Aeneas.Std.WP
-import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
 import all MercVerified.Lts.Proofs.Foundation_Proofs
 import all MercVerified.Refinement.Proofs.FinishBlocks_Proofs
 import all MercVerified.Refinement.Proofs.FinishPartition_Proofs

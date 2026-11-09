@@ -3,11 +3,11 @@ module
 public import MercVerified.Refinement.Proofs.WorklistStep_Proofs
 public import MercVerified.Refinement.Proofs.WorklistLoopCorrect_Proofs
 public import MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
-public import MercLib.Signatures.Proofs.Signature_Proofs
+public import MercLib.Theory.Signatures.Proofs.Signature_Proofs
 public import Aeneas.Std.WP
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.Signature_Proofs
-import all MercLib.Sigref.Proofs.CountingSort_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.Signature_Proofs
+import all MercLib.Theory.Sigref.Proofs.CountingSort_Proofs
 import all MercVerified.Lts.Proofs.Foundation_Proofs
 import all MercVerified.Lts.Proofs.IncomingTransitionsCorrect_Proofs
 import all MercVerified.Lts.Proofs.IncomingTransitions_Proofs

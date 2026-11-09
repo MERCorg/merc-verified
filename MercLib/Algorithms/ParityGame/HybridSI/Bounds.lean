@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Potential
+public import MercLib.Algorithms.ParityGame.HybridSI.Potential
 
 @[expose] public section HybridSIBounds
 

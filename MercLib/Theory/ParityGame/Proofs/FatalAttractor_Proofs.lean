@@ -1,6 +1,6 @@
 module
 
-public import MercLib.ParityGame.FatalAttractor
+public import MercLib.Theory.ParityGame.FatalAttractor
 
 open Cslib (ωSequence)
 

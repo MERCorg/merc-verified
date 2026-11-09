@@ -1,7 +1,7 @@
 module
 
 public import MercVerified.Lts.Lts
-public import MercLib.Sigref.Scc
+public import MercLib.Algorithms.Sigref.Scc
 
 @[expose] public section
 

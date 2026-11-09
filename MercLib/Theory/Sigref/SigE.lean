@@ -1,7 +1,7 @@
 module
 
-public import MercLib.Sigref.SigData
-public import MercLib.Sigref.RelBisim
+public import MercLib.Theory.Sigref.SigData
+public import MercLib.Theory.Sigref.RelBisim
 
 @[expose] public section
 

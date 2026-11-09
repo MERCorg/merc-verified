@@ -1,7 +1,7 @@
 module
 
-public import MercLib.Sigref.Iteration
-public import MercLib.Sigref.Branching
+public import MercLib.Algorithms.Sigref.Iteration
+public import MercLib.Algorithms.Sigref.Branching
 
 @[expose] public section
 

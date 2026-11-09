@@ -1,14 +1,14 @@
 module
 
-public import MercLib.Sigref.SigE
-public import MercLib.Sigref.SigData
-public import MercLib.Sigref.RelBisim
-public import MercLib.Sigref.Proofs.SigData_Proofs
-public import MercLib.Sigref.Proofs.RelBisim_Proofs
-import all MercLib.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
-import all MercLib.Signatures.Proofs.InductiveSignatures_Proofs
-import all MercLib.Sigref.Proofs.RelBisim_Proofs
-import all MercLib.Sigref.Proofs.SigData_Proofs
+public import MercLib.Theory.Sigref.SigE
+public import MercLib.Theory.Sigref.SigData
+public import MercLib.Theory.Sigref.RelBisim
+public import MercLib.Theory.Sigref.Proofs.SigData_Proofs
+public import MercLib.Theory.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Theory.LTS.Proofs.BranchingBisimilarity_Transitivity_Proofs
+import all MercLib.Theory.Signatures.Proofs.InductiveSignatures_Proofs
+import all MercLib.Theory.Sigref.Proofs.RelBisim_Proofs
+import all MercLib.Theory.Sigref.Proofs.SigData_Proofs
 
 @[expose] public section
 

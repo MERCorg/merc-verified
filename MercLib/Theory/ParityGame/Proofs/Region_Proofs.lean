@@ -1,9 +1,9 @@
 module
 
-public import MercLib.ParityGame.Game
-public import MercLib.ParityGame.Proofs.Game_Proofs
+public import MercLib.Theory.ParityGame.Game
+public import MercLib.Theory.ParityGame.Proofs.Game_Proofs
 public import Cslib.Foundations.Data.OmegaSequence.Init
-import all MercLib.ParityGame.Proofs.Game_Proofs
+import all MercLib.Theory.ParityGame.Proofs.Game_Proofs
 
 open Cslib (ωSequence)
 

@@ -20,7 +20,7 @@ non-isomorphic way:
   configuration with no dirty states is the coarsest bisimulation.
 
 Nothing here mentions vectors, hash maps, indices or worklists. The Rust implementation is related
-to this model by a simulation proof (see `docs/branching-correctness-plan.md`).
+to this model by a simulation proof (`MercVerified/Refinement/Proofs/Branching*_Proofs.lean`).
 -/
 
 namespace MercLib.Sigref

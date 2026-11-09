@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Sigref.Defs
+public import MercLib.Algorithms.Sigref.Defs
 public import Mathlib.Logic.Relation
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Order.Interval.Finset.Fin

@@ -1,9 +1,9 @@
 module
 
-public import MercLib.Sigref.Worklist
-public import MercLib.Sigref.SigData
-public import MercLib.Sigref.Branching
-public import MercLib.Sigref.Refinable
+public import MercLib.Algorithms.Sigref.Worklist
+public import MercLib.Theory.Sigref.SigData
+public import MercLib.Algorithms.Sigref.Branching
+public import MercLib.Algorithms.Sigref.Refinable
 
 @[expose] public section
 

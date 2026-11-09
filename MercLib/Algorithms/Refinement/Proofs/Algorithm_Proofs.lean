@@ -1,18 +1,18 @@
 module
 
 public import Mathlib.Data.Set.Card
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
-public import MercLib.Refinement.Antichain
-public import MercLib.Refinement.Algorithm
-public import MercLib.Refinement.Proofs.Semantics_Proofs
-public import MercLib.Refinement.Proofs.Antichain_Proofs
-public import MercLib.Refinement.Proofs.Product_Proofs
-public import MercLib.Control.Proofs.While_Proofs
-import all MercLib.Control.Proofs.While_Proofs
-import all MercLib.Refinement.Proofs.Antichain_Proofs
-import all MercLib.Refinement.Proofs.Product_Proofs
-import all MercLib.Refinement.Proofs.Semantics_Proofs
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
+public import MercLib.Algorithms.Refinement.Antichain
+public import MercLib.Algorithms.Refinement.Algorithm
+public import MercLib.Theory.Refinement.Proofs.Semantics_Proofs
+public import MercLib.Algorithms.Refinement.Proofs.Antichain_Proofs
+public import MercLib.Theory.Refinement.Proofs.Product_Proofs
+public import MercLib.Util.Proofs.While_Proofs
+import all MercLib.Util.Proofs.While_Proofs
+import all MercLib.Algorithms.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Theory.Refinement.Proofs.Product_Proofs
+import all MercLib.Theory.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -579,7 +579,7 @@ private theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Fi
   generalize hres : (forIn (m := Id) Lean.Loop.mk _ _).run = res
   have key : LoopPost lts1 lts2 c (NormInit lts1 s1, s2) res := by
     rw [← hres]
-    refine MercLib.Control.whileInduction _
+    refine MercLib.Util.whileInduction _
       (InvImage.wf (fun s : LoopState State1 State2 => (pending s.2.2).ncard + s.2.1.length)
         Nat.lt_wfRel.wf)
       (fun s => s.1 = none ∧ ∃ done, ExploreInv (ModeNorm lts1 c) lts2 (ModeWitness lts1 lts2 c)

@@ -3,8 +3,8 @@ module
 public import Cslib.Foundations.Semantics.LTS.Basic
 public import Cslib.Foundations.Semantics.LTS.HasTau
 public import Cslib.Foundations.Semantics.LTS.Divergence
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
 
 open Cslib (LTS HasTau)
 
@@ -27,11 +27,11 @@ witnesses `(s, U) ∈ L1 ⋉ norm(L2)` are our `(U, s)` in `product (NormTr lts1
 -/
 
 /-- The weak impossible futures `IF(s)` of a state (Definition 2.2): pairs `(ρ, X)` of a weak trace
-    `ρ` and a set `X` of traces such that after `ρ` the system can reach a state `t` none of whose
-    weak traces lies in `X`. -/
+    `ρ` and a set `X ⊆ Act*` of sequences of visible actions such that after `ρ` the system can
+    reach a state `t` none of whose weak traces lies in `X`. -/
 def impossibleFutures [HasTau Label] (lts : LTS State Label) (s : State) :
     Set (List Label × Set (List Label)) :=
-  { p | ∃ t, WeakTr lts s p.1 t ∧ p.2 ∩ weaktraces lts t = ∅ }
+  { p | (∀ σ ∈ p.2, ∀ μ ∈ σ, IsVisible μ) ∧ ∃ t, WeakTr lts s p.1 t ∧ p.2 ∩ weaktraces lts t = ∅ }
 
 /-- Weak impossible futures refinement (Definition 3): every impossible future of the
     implementation `s2` is one of the specification `s1`. -/

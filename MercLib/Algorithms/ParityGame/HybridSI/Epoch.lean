@@ -1,6 +1,6 @@
 module
 
-public import MercLib.HybridSI.Correctness
+public import MercLib.Algorithms.ParityGame.HybridSI.Correctness
 
 @[expose] public section HybridSIEpoch
 
@@ -18,7 +18,7 @@ response `σ̄ = ps k` (the result of `respond G true bf (p k)` inside `hbStep`)
 optimal in the one-player game against the fixed Odd strategy form a strictly growing set that
 never contains every Even vertex.
 
-Nothing here is proved; the proof is in `HybridSI/Proofs/Epoch_Proofs.lean`.
+Nothing here is proved; the proof is in `Algorithms/ParityGame/HybridSI/Proofs/Epoch_Proofs.lean`.
 -/
 
 variable {V : Type*} [Fintype V] [LinearOrder V]

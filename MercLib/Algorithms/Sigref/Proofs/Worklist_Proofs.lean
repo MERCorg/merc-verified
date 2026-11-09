@@ -1,8 +1,8 @@
 module
 
-public import MercLib.Sigref.Worklist
-public import MercLib.Sigref.Proofs.Refinable_Proofs
-import all MercLib.Sigref.Proofs.Refinable_Proofs
+public import MercLib.Algorithms.Sigref.Worklist
+public import MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
+import all MercLib.Algorithms.Sigref.Proofs.Refinable_Proofs
 
 @[expose] public section
 

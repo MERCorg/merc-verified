@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Signatures.InductiveSignatures
+public import MercLib.Theory.Signatures.InductiveSignatures
 
 @[expose] public section
 

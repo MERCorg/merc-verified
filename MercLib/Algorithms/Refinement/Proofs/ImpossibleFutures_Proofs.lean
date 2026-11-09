@@ -1,15 +1,15 @@
 module
 
-public import MercLib.Refinement.Semantics
-public import MercLib.Refinement.Product
-public import MercLib.Refinement.Antichain
-public import MercLib.Refinement.ImpossibleFutures
-public import MercLib.Refinement.Proofs.Semantics_Proofs
-public import MercLib.Refinement.Proofs.Product_Proofs
-public import MercLib.Refinement.Proofs.Antichain_Proofs
-import all MercLib.Refinement.Proofs.Antichain_Proofs
-import all MercLib.Refinement.Proofs.Product_Proofs
-import all MercLib.Refinement.Proofs.Semantics_Proofs
+public import MercLib.Theory.Refinement.Semantics
+public import MercLib.Theory.Refinement.Product
+public import MercLib.Algorithms.Refinement.Antichain
+public import MercLib.Theory.Refinement.ImpossibleFutures
+public import MercLib.Theory.Refinement.Proofs.Semantics_Proofs
+public import MercLib.Theory.Refinement.Proofs.Product_Proofs
+public import MercLib.Algorithms.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Algorithms.Refinement.Proofs.Antichain_Proofs
+import all MercLib.Theory.Refinement.Proofs.Product_Proofs
+import all MercLib.Theory.Refinement.Proofs.Semantics_Proofs
 
 open Cslib (LTS HasTau)
 
@@ -38,8 +38,9 @@ private theorem not_impossibleFuturesRefines_iff [HasTau Label]
     change ¬ (impossibleFutures lts2 s2 ⊆ impossibleFutures lts1 s1) at h
     rw [Set.not_subset] at h
     obtain ⟨⟨ρ, X⟩, hmem, hnotmem⟩ := h
-    have h1 : ∃ s, WeakTr lts2 s2 ρ s ∧ X ∩ weaktraces lts2 s = ∅ := hmem
-    have h2 : ¬ ∃ t, WeakTr lts1 s1 ρ t ∧ X ∩ weaktraces lts1 t = ∅ := hnotmem
+    have h1 : ∃ s, WeakTr lts2 s2 ρ s ∧ X ∩ weaktraces lts2 s = ∅ := hmem.2
+    have h2 : ¬ ∃ t, WeakTr lts1 s1 ρ t ∧ X ∩ weaktraces lts1 t = ∅ :=
+      fun h => hnotmem ⟨hmem.1, h⟩
     obtain ⟨s, hws, hemp⟩ := h1
     rw [Set.eq_empty_iff_forall_notMem] at hemp
     refine ⟨ρ, s, hws, fun t ht hsub => ?_⟩
@@ -52,12 +53,12 @@ private theorem not_impossibleFuturesRefines_iff [HasTau Label]
     rw [Set.not_subset]
     refine ⟨(ρ, {w | ∃ t, WeakTr lts1 s1 ρ t ∧ w ∈ weaktraces lts1 t ∧
         w ∉ weaktraces lts2 s}), ?_, ?_⟩
-    · refine ⟨s, hws, ?_⟩
+    · refine ⟨fun w ⟨_, _, ⟨u, hu⟩, _⟩ => hu.visible, s, hws, ?_⟩
       rw [Set.eq_empty_iff_forall_notMem]
       rintro w ⟨⟨t, _, _, hnot⟩, hws⟩
       exact hnot hws
     · intro hmem
-      obtain ⟨t, ht, hemp⟩ := hmem
+      obtain ⟨_, t, ht, hemp⟩ := hmem
       rw [Set.eq_empty_iff_forall_notMem] at hemp
       refine hall t ht ?_
       intro w hw
@@ -170,10 +171,10 @@ private theorem impossibleFutures_eq_of_tauCycle [HasTau Label]
     impossibleFutures lts s = impossibleFutures lts s' := by
   ext p
   constructor
-  · rintro ⟨t, ht, hemp⟩
-    exact ⟨t, h2.comp ht, hemp⟩
-  · rintro ⟨t, ht, hemp⟩
-    exact ⟨t, h1.comp ht, hemp⟩
+  · rintro ⟨hv, t, ht, hemp⟩
+    exact ⟨hv, t, h2.comp ht, hemp⟩
+  · rintro ⟨hv, t, ht, hemp⟩
+    exact ⟨hv, t, h1.comp ht, hemp⟩
 
 /-- **Lemma 11** (as stated in the paper): collapsing a `τ`-cycle of the implementation preserves
     impossible futures refinement. -/
