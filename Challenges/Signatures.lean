@@ -1,11 +1,11 @@
-import MercLib.LTS.BranchingBisimilarity
-import MercLib.Signatures.Signature
-import MercLib.Signatures.InductiveSignatures
+import MercLib.Theory.LTS.BranchingBisimilarity
+import MercLib.Theory.Signatures.Signature
+import MercLib.Theory.Signatures.InductiveSignatures
 
 /-!
 # Comparator challenge: signature-based partition refinement (human-vetted)
 
-The headline theorems of `MercLib/Signatures/`, stated with `sorry` against the human-vetted spec
+The headline theorems of `MercLib/Theory/Signatures/`, stated with `sorry` against the human-vetted spec
 files only; `lake comparator` checks them against the solution module `MercLib` (see
 `Challenges.Refinement`).
 

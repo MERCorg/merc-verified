@@ -1,9 +1,9 @@
-import MercLib.LTS.BranchingBisimilarity
+import MercLib.Theory.LTS.BranchingBisimilarity
 
 /-!
 # Comparator challenge: labelled transition systems (human-vetted)
 
-The headline theorems of `MercLib/LTS/`, stated with `sorry` against the human-vetted spec files
+The headline theorems of `MercLib/Theory/LTS/`, stated with `sorry` against the human-vetted spec files
 only; `lake comparator` checks them against the solution module `MercLib` (see
 `Challenges.Refinement`).
 

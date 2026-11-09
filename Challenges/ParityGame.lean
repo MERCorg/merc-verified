@@ -1,13 +1,13 @@
-import MercLib.ParityGame.Game
-import MercLib.ParityGame.Attractor
-import MercLib.ParityGame.FatalAttractor
-import MercLib.ParityGame.Implementation
-import MercLib.ParityGame.Zielonka
+import MercLib.Theory.ParityGame.Game
+import MercLib.Theory.ParityGame.Attractor
+import MercLib.Theory.ParityGame.FatalAttractor
+import MercLib.Implementation.ParityGame.Implementation
+import MercLib.Algorithms.ParityGame.Zielonka
 
 /-!
 # Comparator challenge: parity games (human-vetted)
 
-The headline theorems of `MercLib/ParityGame/`, stated with `sorry` against the human-vetted spec
+The headline theorems of `MercLib/{Theory,Algorithms,Implementation}/ParityGame/`, stated with `sorry` against the human-vetted spec
 files only; `lake comparator` checks them against the solution module `MercLib` (see
 `Challenges.Refinement`).
 
@@ -51,7 +51,7 @@ theorem Game.attractorCorrect (G : Game V) [Finite V] (X : Set V) (i : Player) (
 and `T ⊆ X` a set of vertices of priority `c` that is fatal in `X` (`IsFatal`). Then the player
 favoured by `c` (`Player.ofPrio c`) wins from every vertex of the monotone attractor `MA(T)` within
 `X`, with the monotone attractor strategy. See `Game.FatalAttractorWins`
-(`ParityGame/FatalAttractor.lean`). -/
+(`Theory/ParityGame/FatalAttractor.lean`). -/
 theorem Game.fatalAttractorWins (G : Game V) (X : Set V) (c : ℕ) (T : Set V) :
     G.FatalAttractorWins X c T := sorry
 
@@ -62,7 +62,7 @@ game on a finite vertex type, `js` any processing order of the priorities, and `
 solution of `X` (`SoundPartial`: each `r.win i` is a closed region that `i` wins with
 `r.strat i`). Then `fatalAttractorOriginal X js r` is again a sound partial solution of `X`, and
 its winning regions contain those of `r`. See `Game.FatalAttractorOriginalSound`
-(`ParityGame/Implementation.lean`). -/
+(`Implementation/ParityGame/Implementation.lean`). -/
 theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
     (r : Solution V) : G.FatalAttractorOriginalSound X js r := sorry
 
@@ -72,7 +72,7 @@ theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js
 solution `G.zielonka` solves the whole game (`Solves Set.univ`): the two winning regions partition
 the vertices, and each player's positional strategy wins from every vertex of that player's
 region. In particular, parity games are positionally determined. See `Game.ZielonkaCorrect`
-(`ParityGame/Zielonka.lean`). -/
+(`Algorithms/ParityGame/Zielonka.lean`). -/
 theorem Game.zielonka_correct (G : Game V) [Finite V] : G.ZielonkaCorrect := sorry
 
 end MercLib.ParityGame

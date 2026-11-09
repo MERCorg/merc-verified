@@ -1,14 +1,14 @@
-import MercLib.Refinement.Semantics
-import MercLib.Refinement.Product
-import MercLib.Refinement.Antichain
-import MercLib.Refinement.Algorithm
-import MercLib.Refinement.ImpossibleFutures
-import MercLib.Refinement.AlgorithmImpossibleFutures
+import MercLib.Theory.Refinement.Semantics
+import MercLib.Theory.Refinement.Product
+import MercLib.Algorithms.Refinement.Antichain
+import MercLib.Algorithms.Refinement.Algorithm
+import MercLib.Theory.Refinement.ImpossibleFutures
+import MercLib.Algorithms.Refinement.AlgorithmImpossibleFutures
 
 /-!
 # Comparator challenge: refinement checking (human-vetted)
 
-The headline theorems of `MercLib/Refinement/`, stated with `sorry` against the human-vetted spec
+The headline theorems of `MercLib/{Theory,Algorithms}/Refinement/`, stated with `sorry` against the human-vetted spec
 files only. `lake comparator` (configured by `comparator.json`) checks that
 the solution module (`MercLib`) proves each of them with the same statement, using only the
 axioms listed there, and replays the proofs through the kernel.
