@@ -3,6 +3,7 @@ import MercLib.Theory.ParityGame.Attractor
 import MercLib.Theory.ParityGame.FatalAttractor
 import MercLib.Implementation.ParityGame.Implementation
 import MercLib.Algorithms.ParityGame.Zielonka
+import MercLib.Theory.ParityGame.Valuation
 
 /-!
 # Comparator challenge: parity games (human-vetted)
@@ -55,6 +56,15 @@ favoured by `c` (`Player.ofPrio c`) wins from every vertex of the monotone attra
 theorem Game.fatalAttractorWins (G : Game V) (X : Set V) (c : ℕ) (T : Set V) :
     G.FatalAttractorWins X c T := sorry
 
+/-- **Fatal attractors are won, as stated in the paper (Theorem 2 of [Huth2014]).** The same claim
+as `Game.fatalAttractorWins`, in the convention of the paper: on a finite game, plays are decided by
+the *least* colour occurring infinitely often and the monotone attractor passes through colours at
+least `c`. Let `X` be a subgame, and `T ⊆ X` a set of vertices of colour `c` that is fatal in `X`
+(`IsFatalMin`). Then the player favoured by `c` wins from every vertex of `MA(T)` with the attractor
+strategy. See `Game.FatalAttractorWinsMin` (`Theory/ParityGame/FatalAttractor.lean`). -/
+theorem Game.fatalAttractorWinsMin (G : Game V) [Finite V] (X : Set V) (c : ℕ) (T : Set V) :
+    G.FatalAttractorWinsMin X c T := sorry
+
 /-! ## Fatal-attractor implementation (`FatalAttractorOriginal`, Figure 3 of [Huth2014]) -/
 
 /-- **The fatal-attractor solver is sound (Figure 3 of [Huth2014]).** Let `X` be a subgame of a
@@ -76,3 +86,15 @@ region. In particular, parity games are positionally determined. See `Game.Zielo
 theorem Game.zielonka_correct (G : Game V) [Finite V] : G.ZielonkaCorrect := sorry
 
 end MercLib.ParityGame
+
+namespace MercLib.HybridSI
+
+open MercLib.ParityGame
+
+/-- **The Vöge–Jurdziński valuation is faithful.** `key G` encodes the value of a play profile as an
+integer triple whose lexicographic order is the order `≺` of the paper. See `KeyOrderEmbedding`
+(`Theory/ParityGame/Valuation.lean`). -/
+theorem keyOrderEmbedding {V : Type*} [Fintype V] [LinearOrder V] (G : Game V) :
+    KeyOrderEmbedding G := sorry
+
+end MercLib.HybridSI
