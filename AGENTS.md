@@ -24,3 +24,9 @@ Task-specific instructions are skills in the Agent Skills format (YAML frontmatt
 | `prove` | lean-lsp MCP workflow, tools, and key definitions |
 | `ci` | CI workflow descriptions |
 | `hb-research` | H-B polynomial-bound research: paper proofs, reference, z3, website |
+| `delegate-proofs` | Splitting proofs across `lean-prover` subagents and opencode instances |
+
+## Agents
+
+- **`lean-prover`** (`.claude/agents/lean-prover.md`) — Claude Code subagent for proofs that need a plan; edits only `Proofs/` files.
+- **`prover`** (`.opencode/agents/prover.md`) — opencode agent for one routine lemma, launched by `scripts/delegate_proof.py`, which checks the result itself (statement unchanged, no `sorry`/axioms, `lake build` passes) and restores the file on failure. See the `delegate-proofs` skill.
