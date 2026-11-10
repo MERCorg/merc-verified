@@ -7,35 +7,60 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Do not cancel a running docs build when a new commit lands: the first (uncached) build
+# takes hours, and a cancelled run never saves its cache, so it would never finish.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 330
 
     steps:
     - uses: actions/checkout@v5
       with:
         submodules: true
 
+    # doc-gen4 runs one `single` process per imported module (~4000, including ~1200 Mathlib
+    # modules), in parallel, each loading that module's environment; the 16 GB runner runs out
+    # of memory. Swap absorbs the peaks.
+    - name: Add swap space
+      run: |
+        sudo swapoff -a || true
+        sudo fallocate -l 16G /mnt/swapfile-docs
+        sudo chmod 600 /mnt/swapfile-docs
+        sudo mkswap /mnt/swapfile-docs
+        sudo swapon /mnt/swapfile-docs
+        free -h
+
     - name: Install and build Lean
       uses: leanprover/lean-action@v1
 
-    - name: Cache documentation
-      uses: actions/cache@v4
+    # Restore and save separately, so that partial progress (the doc database and per-module
+    # markers) is saved even when the build fails or times out; the next run resumes from it.
+    - name: Restore documentation cache
+      uses: actions/cache/restore@v4
       with:
         path: docbuild/.lake
-        key: docbuild-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}
+        key: docbuild-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}-${{ github.run_attempt }}
         restore-keys: |
           docbuild-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lakefile.toml') }}-
 
     - name: Build documentation
       working-directory: docbuild
+      timeout-minutes: 300
       run: |
         MATHLIB_NO_CACHE_ON_UPDATE=1 lake update doc-gen4
         lake build MercVerified:docs MercLib:docs
+
+    - name: Save documentation cache
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        path: docbuild/.lake
+        key: docbuild-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}-${{ github.run_attempt }}
 
     - name: Upload documentation
       uses: actions/upload-pages-artifact@v3
