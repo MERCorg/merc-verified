@@ -52,26 +52,21 @@ private theorem IsStable.isHomBranchingBisimulation [Cslib.HasTau Label] (lts : 
     · -- Inert τ-step: mimic by doing nothing.
       exact Or.inl ⟨hInert.1, hInert.2.trans hRel⟩
     · -- Non-inert: the triple is in the signature, transport it via stability.
-      have hNonInert : μ ≠ Cslib.HasTau.τ ∨ partition t₁ ≠ partition s₁ := by tauto
       have hmem : (partition s₁, μ, partition t₁) ∈ BranchingSignature lts s₁ partition :=
-        ⟨s₁, t₁, Relation.ReflTransGen.refl, hTr₁, rfl, rfl, hNonInert⟩
+        ⟨s₁, t₁, Relation.ReflTransGen.refl, Or.inl hTr₁, rfl, rfl⟩
       rw [show BranchingSignature lts s₁ partition = BranchingSignature lts s₂ partition from h s₁ s₂ hRel] at hmem
-      obtain ⟨u, u', hτ, hTr, hβ, hα, _⟩ := hmem
-      exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr_iff lts).mpr hτ, hTr, hβ.symm, hα.symm⟩
+      obtain ⟨u, u', hτ, hTr | ⟨hμ, rfl⟩, hβ, hα⟩ := hmem
+      · exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr_iff lts).mpr hτ, hTr, hβ.symm, hα.symm⟩
+      · exact absurd ⟨hμ, hα.symm.trans hβ⟩ hInert
   · intro t₂ hTr₂
     by_cases hInert : μ = Cslib.HasTau.τ ∧ partition t₂ = partition s₂
     · exact Or.inl ⟨hInert.1, hRel.trans hInert.2.symm⟩
-    · have hNonInert : μ ≠ Cslib.HasTau.τ ∨ partition t₂ ≠ partition s₁ := by
-        rcases (Classical.em (μ = Cslib.HasTau.τ)) with hμ | hμ
-        · right
-          intro heq
-          exact hInert ⟨hμ, heq.trans hRel⟩
-        · exact Or.inl hμ
-      have hmem : (partition s₁, μ, partition t₂) ∈ BranchingSignature lts s₂ partition :=
-        ⟨s₂, t₂, Relation.ReflTransGen.refl, hTr₂, hRel.symm, rfl, hNonInert⟩
+    · have hmem : (partition s₁, μ, partition t₂) ∈ BranchingSignature lts s₂ partition :=
+        ⟨s₂, t₂, Relation.ReflTransGen.refl, Or.inl hTr₂, hRel.symm, rfl⟩
       rw [← show BranchingSignature lts s₁ partition = BranchingSignature lts s₂ partition from h s₁ s₂ hRel] at hmem
-      obtain ⟨u, u', hτ, hTr, hβ, hα, _⟩ := hmem
-      exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr_iff lts).mpr hτ, hTr, hβ.trans hRel, hα⟩
+      obtain ⟨u, u', hτ, hTr | ⟨hμ, rfl⟩, hβ, hα⟩ := hmem
+      · exact Or.inr ⟨u, u', (Cslib.LTS.sTr_τSTr_iff lts).mpr hτ, hTr, hβ.trans hRel, hα⟩
+      · exact absurd ⟨hμ, hα.symm.trans (hβ.trans hRel)⟩ hInert
 
 -- If a partition is stable w.r.t. SplitSignature, then same-block states form a bisimulation.
 -- Proof mirrors IsStable.isHomBisimulation but uses congr_fun to apply the per-label equality.
@@ -235,10 +230,8 @@ theorem BranchingFixPoint.branchingBisimilarity [Cslib.HasTau Label] (lts : Csli
   obtain ⟨_, partition, hStable, hEq⟩ := h
   exact IsStable.branchingBisimilarity lts partition hStable hEq
 
--- Reverse direction (branching): branching bisimilarity implies BranchingFixPoint. Uses the
--- ≈br-quotient as the witness partition. The inert-τ exclusion in BranchingSignature is essential
--- here: when the inner τ-step is matched by "do nothing", the side condition `μ ≠ τ ∨ α ≠ β`
--- rules out the case that would otherwise prevent stability of the bisim-class partition.
+-- Reverse direction (branching): branching bisimilarity implies BranchingFixPoint, with the
+-- ≈br-quotient as the witness partition.
 theorem BranchingBisimilarity.branchingFixPoint [Cslib.HasTau Label] (lts : Cslib.LTS State Label)
     {s s' : State} (h : BranchingBisimilarity lts s s') :
     BranchingFixPoint lts s s' := by
@@ -255,32 +248,30 @@ theorem BranchingBisimilarity.branchingFixPoint [Cslib.HasTau Label] (lts : Csli
     have aux : ∀ {x y : State}, BranchingBisimilarity lts x y →
         BranchingSignature lts x (Quotient.mk brSetoid) ⊆
           BranchingSignature lts y (Quotient.mk brSetoid) := by
-      rintro x y hxy ⟨β, μ, α⟩ ⟨u, u', hτPath, hTr, hβEq, hαEq, hSide⟩
+      rintro x y hxy ⟨β, μ, α⟩ ⟨u, u', hτPath, hStep, hβEq, hαEq⟩
       obtain ⟨r, hrXY, hrBis⟩ := hxy
       -- Stutter through τ-path to find matching y-side state.
       obtain ⟨v, hPathYV, hrUV⟩ :=
         IsBranchingBisimulation.stutter hrBis hrXY hτPath
-      -- Apply BB on (u, v) for u →μ→ u'.
-      rcases (hrBis hrUV μ).1 _ hTr with ⟨hμτ, hrU'V⟩ | ⟨w, w', hSTrVw, hTrW, hrUW, hrU'W'⟩
-      · -- Or.inl: u' ≈br v ≈br u (same equivalence class), so partition u = partition u',
-        -- i.e., β = α. But the side condition forbids μ=τ ∧ α=β. Contradiction.
-        exfalso
-        have hUV : BranchingBisimilarity lts u v := ⟨r, hrUV, hrBis⟩
-        have hU'V : BranchingBisimilarity lts u' v := ⟨r, hrU'V, hrBis⟩
-        have hUU' : BranchingBisimilarity lts u u' :=
-          BranchingBisimilarity.trans hUV (BranchingBisimilarity.symm hU'V)
-        rcases hSide with hμNeτ | hαNeβ
-        · exact hμNeτ hμτ
-        · apply hαNeβ
-          rw [← hαEq, ← hβEq]
-          exact (Quotient.sound hUU').symm
-      · -- Or.inr: real τ*-prefix + μ-step in y-side, matching the triple.
-        refine ⟨w, w', ?_, hTrW, ?_, ?_, hSide⟩
-        · exact hPathYV.trans ((Cslib.LTS.sTr_τSTr_iff lts).mp hSTrVw)
-        · rw [← hβEq]
-          exact (Quotient.sound (s := brSetoid) ⟨r, hrUW, hrBis⟩).symm
-        · rw [← hαEq]
-          exact (Quotient.sound (s := brSetoid) ⟨r, hrU'W', hrBis⟩).symm
+      have hUV : Quotient.mk brSetoid v = β := by
+        rw [← hβEq]
+        exact (Quotient.sound (s := brSetoid) ⟨r, hrUV, hrBis⟩).symm
+      rcases hStep with hTr | ⟨hμτ, rfl⟩
+      · -- Apply BB on (u, v) for u →μ→ u'.
+        rcases (hrBis hrUV μ).1 _ hTr with ⟨hμτ, hrU'V⟩ | ⟨w, w', hSTrVw, hTrW, hrUW, hrU'W'⟩
+        · -- Matched by doing nothing: the reflexive triple at v.
+          refine ⟨v, v, hPathYV, Or.inr ⟨hμτ, rfl⟩, hUV, ?_⟩
+          rw [← hαEq]
+          exact (Quotient.sound (s := brSetoid) ⟨r, hrU'V, hrBis⟩).symm
+        · -- Real τ*-prefix + μ-step on the y-side, matching the triple.
+          refine ⟨w, w', ?_, Or.inl hTrW, ?_, ?_⟩
+          · exact hPathYV.trans ((Cslib.LTS.sTr_τSTr_iff lts).mp hSTrVw)
+          · rw [← hβEq]
+            exact (Quotient.sound (s := brSetoid) ⟨r, hrUW, hrBis⟩).symm
+          · rw [← hαEq]
+            exact (Quotient.sound (s := brSetoid) ⟨r, hrU'W', hrBis⟩).symm
+      · -- The reflexive triple of x is the reflexive triple at v.
+        exact ⟨v, v, hPathYV, Or.inr ⟨hμτ, rfl⟩, hUV, hβEq.symm.trans (hαEq) ▸ hUV⟩
     exact Set.eq_of_subset_of_subset (aux hAB) (aux (BranchingBisimilarity.symm hAB))
   · exact Quotient.sound h
 

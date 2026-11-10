@@ -3,6 +3,7 @@ module
 public import MercLib.Theory.ParityGame.Game
 public import Mathlib.Order.Prod.Lex.Basic
 public import Mathlib.Data.Fintype.Sort
+public import Mathlib.Data.Finset.SymmDiff
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 @[expose] public section HybridSIValuation
@@ -82,6 +83,52 @@ def key (G : Game V) (f : V → V) (v : V) : Key :=
   let even := G.prio l % 2 = 0
   toLex ((if even then (rank l : ℤ) + 1 else -((rank l : ℤ) + 1)),
     toLex ((bSet f v).sum (weight G), if even then -(k : ℤ) else k))
+
+/-! ## Play profiles and their order
+
+The definitions of [J. Vöge and M. Jurdziński, *A Discrete Strategy Improvement Algorithm for
+Solving Parity Games*][Voege2000], Sections 2 and 3.1. `key` is an encoding of the play profile as
+an integer triple; `KeyOrderEmbedding` says that it is faithful to the order `≺` of the paper. -/
+
+/-- `v` is positive (`V₊`): its priority is even. -/
+def IsPos (G : Game V) (v : V) : Prop := G.prio v % 2 = 0
+
+/-- The reward order on vertices: `u ≺ v ⟺ (u < v ∧ v ∈ V₊) ∨ (v < u ∧ u ∈ V₋)`. -/
+def rewardLt (G : Game V) (u v : V) : Prop := (u < v ∧ IsPos G v) ∨ (v < u ∧ ¬ IsPos G u)
+
+/-- The reward order on sets of vertices: `P ≺ Q` iff `P ≠ Q` and the most relevant vertex `x` of
+the symmetric difference lies in `Q △ V₋`, that is, `x ∈ Q ↔ x ∈ V₊`. -/
+def setLt (G : Game V) (P Q : Finset V) : Prop :=
+  ∃ x ∈ symmDiff P Q, (∀ y ∈ symmDiff P Q, y ≤ x) ∧ (x ∈ Q ↔ IsPos G x)
+
+/-- A play profile `(u, P, e)`. -/
+@[ext] structure PlayProfile (V : Type*) where
+  /-- The most relevant vertex visited infinitely often. -/
+  u : V
+  /-- The vertices more relevant than `u` visited before the first visit of `u`. -/
+  P : Finset V
+  /-- The number of vertices visited before the first visit of `u`. -/
+  e : ℕ
+
+/-- The order on play profiles. -/
+def profileLt (G : Game V) (a b : PlayProfile V) : Prop :=
+  rewardLt G a.u b.u ∨ (a.u = b.u ∧ setLt G a.P b.P) ∨
+    (a.u = b.u ∧ a.P = b.P ∧ ¬ IsPos G b.u ∧ a.e < b.e) ∨
+    (a.u = b.u ∧ a.P = b.P ∧ IsPos G b.u ∧ b.e < a.e)
+
+/-- `α(π)`: the vertices visited before the first visit of the cycle maximum. -/
+def visitedBefore (f : V → V) (v : V) : Finset V :=
+  (playPrefix f (stepsTo f v) v).toFinset
+
+/-- The play profile of the play from `v` under `f`. -/
+def playProfile (f : V → V) (v : V) : PlayProfile V :=
+  ⟨cycMax f v, bSet f v, (visitedBefore f v).card⟩
+
+/-- Contract: `key` is an order embedding of the play profiles, also across different profiles. -/
+def KeyOrderEmbedding (G : Game V) : Prop :=
+  ∀ (f g : V → V) (x y : V),
+    (key G f x < key G g y ↔ profileLt G (playProfile f x) (playProfile g y)) ∧
+    (key G f x = key G g y ↔ playProfile f x = playProfile g y)
 
 /-- The values of `f` on all vertices, in relevance order (a table computed once). -/
 def tabulate {α : Type*} (f : V → α) : List (V × α) := (univList V).map fun v => (v, f v)

@@ -12,3 +12,5 @@ public import MercLib.Theory.ParityGame.Proofs.Region_Proofs
 public import MercLib.Theory.ParityGame.Proofs.Key_Proofs
 public import MercLib.Theory.ParityGame.Proofs.Lasso_Proofs
 public import MercLib.Theory.ParityGame.Proofs.Win_Proofs
+public import MercLib.Theory.ParityGame.Proofs.Valuation_Proofs
+public import MercLib.Theory.ParityGame.Proofs.FatalAttractorMin_Proofs

@@ -11,5 +11,6 @@ public import MercLib.Theory.Sigref.Basic
 public import MercLib.Algorithms.Graph.Basic
 public import MercLib.Algorithms.ParityGame.Basic
 public import MercLib.Algorithms.Refinement.Basic
+public import MercLib.Algorithms.Rewriting.Basic
 public import MercLib.Algorithms.Sigref.Basic
 public import MercLib.Implementation.ParityGame.Basic

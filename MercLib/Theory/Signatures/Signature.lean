@@ -13,15 +13,14 @@ namespace MercLib.Signatures
 def StrongSignature (lts : Cslib.LTS State Label) (s : State) (partition : State → Block): Set (Label × Block)
   := { (μ, α) | ∃ s', lts.Tr s μ s' ∧ partition s' = α }
 
-/-- The branching signature of `s`: the triples `(β, μ, α)` such that `s` reaches some `s'` in block
-    `β` by τ-steps, and `s'` has a `μ`-transition into block `α` that is not inert, i.e. visible
-    (`μ ≠ τ`) or leaving the block (`α ≠ β`). It captures the behaviour of branching bisimulation.
-    Excluding inert transitions is what makes a partition that is stable for this signature a
-    branching bisimulation (`IsStable.branchingBisimilarity`). -/
+/-- The branching signature of `s` (`sig_π^b` of [Martens and Laveaux, *Faster Signature Refinement
+    for Branching Bisimilarity Minimization*][Martens2026], Section 2.1): the triples `(π s', μ, π s'')`
+    for `(s', μ, s'')` in the successors `c(s)`, that is, `s` reaches `s'` by τ-steps and either
+    `s' -μ→ s''`, or `μ = τ` and `s' = s''`. -/
 def BranchingSignature [Cslib.HasTau Label] (lts : Cslib.LTS State Label) (s : State)
     (partition : State → Block) : Set (Block × Label × Block) :=
-  { (β, μ, α) | ∃ s' s'', lts.τSTr s s' ∧ lts.Tr s' μ s'' ∧ partition s' = β ∧ partition s'' = α
-                ∧ (μ ≠ Cslib.HasTau.τ ∨ α ≠ β) }
+  { (β, μ, α) | ∃ s' s'', lts.τSTr s s' ∧ (lts.Tr s' μ s'' ∨ (μ = Cslib.HasTau.τ ∧ s' = s'')) ∧
+                partition s' = β ∧ partition s'' = α }
 
 /-- A partition is stable with respect to a signature if states in the same block always have the
     same signature. -/

@@ -13,10 +13,11 @@ Section 3 (Definitions 3 and 4, Theorem 2) of
 [M. Huth, J. H.-P. Kuo and N. Piterman, *Fatal Attractors in Parity Games: Building Blocks for
 Partial Solvers*][Huth2014].
 
-**Dualised priority convention.** The paper decides a play by the *least* colour occurring
-infinitely often, whereas `Game.PlayWonBy` uses the *greatest* priority. Every colour comparison
-is therefore flipped: the monotone attractor for target priority `c` only passes through nodes of
-priority *at most* `c` (the paper: at least `c`).
+**Priority convention.** The paper decides a play by the *least* colour occurring infinitely often,
+whereas `Game.PlayWonBy` uses the *greatest* priority. `Game.mattr` and `Game.FatalAttractorWins` are
+the flipped versions: the monotone attractor for target priority `c` only passes through nodes of
+priority *at most* `c`. The last section states the definitions and Theorem 2 literally as in the
+paper; `Game.FatalAttractorWinsMin` is derived by reversing the priorities.
 
 **Modeling choices**
 * As in `Attractor.lean`, everything is relative to a subgame `X`; moves leaving `X` are
@@ -81,5 +82,73 @@ def Game.FatalAttractorWins (G : Game V) (X : Set V) (c : ℕ) (T : Set V) : Pro
   G.IsSubgame X → T ⊆ X → (∀ v ∈ T, G.prio v = c) → G.IsFatal X c T →
     ∀ v ∈ G.ma X c T,
       G.WinsFrom X (Player.ofPrio c) (G.mattrStrategy X (Player.ofPrio c) c T) v
+
+open Cslib (ωSequence)
+
+/-! ## The convention of the paper
+
+[M. Huth, J. H.-P. Kuo and N. Piterman][Huth2014] decide a play by the *least* colour occurring
+infinitely often. The definitions below are Definitions 3 and 4 and the claim of Theorem 2 of the
+paper literally, in that convention; the theorem follows from `Game.FatalAttractorWins` by
+reversing the priorities. -/
+
+/-- `n` is the least colour occurring infinitely often along the play `p`. -/
+def Game.MinInfPrio (G : Game V) (p : ωSequence V) (n : ℕ) : Prop :=
+  n ∈ (p.map G.prio).infOcc ∧ ∀ m ∈ (p.map G.prio).infOcc, n ≤ m
+
+/-- Player `i` wins the play `p`: the least colour occurring infinitely often has `i`'s parity. -/
+def Game.PlayWonByMin (G : Game V) (i : Player) (p : ωSequence V) : Prop :=
+  ∃ n, G.MinInfPrio p n ∧ Player.ofPrio n = i
+
+/-- `WinsFrom` for the winning condition of the paper. -/
+def Game.WinsFromMin (G : Game V) (X : Set V) (i : Player) (σ : Strategy V) (v : V) : Prop :=
+  (∀ w, Relation.ReflTransGen (G.Step X i σ) v w → ∃ u, G.Step X i σ w u) ∧
+  ∀ p : ωSequence V, p 0 = v → G.ConformingPlay X i σ p → G.PlayWonByMin i p
+
+/-- The monotone control predecessor `mpreᵢ(A, T, c)` of Definition 3: nodes of `X` of colour at
+    least `c` from which player `i` can force the next move into `A ∪ T`. -/
+def Game.mpreMin (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T A : Set V) : Set V :=
+  {v | v ∈ X ∧ c ≤ G.prio v ∧
+    ((G.owner v = i ∧ ∃ w ∈ X, G.edge v w ∧ w ∈ A ∪ T) ∨
+     (G.owner v ≠ i ∧ ∀ w ∈ X, G.edge v w → w ∈ A ∪ T))}
+
+/-- The stages of the monotone attractor of Definition 3. -/
+def Game.mattrStageMin (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T : Set V) : ℕ → Set V
+  | 0 => ∅
+  | k + 1 => G.mpreMin X i c T (G.mattrStageMin X i c T k)
+
+/-- The monotone attractor `MAttrᵢ(T, c)` of Definition 3. -/
+def Game.mattrMin (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T : Set V) : Set V :=
+  {v | ∃ k, v ∈ G.mattrStageMin X i c T k}
+
+/-- `MA(T)` (Definition 4.1). -/
+def Game.maMin (G : Game V) (X : Set V) (c : ℕ) (T : Set V) : Set V :=
+  G.mattrMin X (Player.ofPrio c) c T
+
+/-- `MA(T)` is a fatal attractor (Definition 4.2). -/
+def Game.IsFatalMin (G : Game V) (X : Set V) (c : ℕ) (T : Set V) : Prop :=
+  T ⊆ G.maMin X c T
+
+open scoped Classical in
+/-- The stage at which `v` first enters the monotone attractor. -/
+noncomputable def Game.mattrRankMin (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T : Set V)
+    (v : V) : ℕ :=
+  if h : ∃ k, v ∈ G.mattrStageMin X i c T k then Nat.find h else 0
+
+open scoped Classical in
+/-- The attractor strategy of the least fixed-point computation. -/
+noncomputable def Game.mattrStrategyMin (G : Game V) (X : Set V) (i : Player) (c : ℕ) (T : Set V) :
+    Strategy V := fun v =>
+  if h : 0 < G.mattrRankMin X i c T v ∧
+      ∃ w ∈ X, G.edge v w ∧ w ∈ G.mattrStageMin X i c T (G.mattrRankMin X i c T v - 1) ∪ T
+  then h.2.choose else v
+
+/-- Contract (Theorem 2 of the paper): if `T ⊆ X` consists of nodes of colour `c` and `MA(T)` is
+    fatal in the subgame `X`, then the attractor strategy for player `c % 2` wins from every node of
+    `MA(T)`. -/
+def Game.FatalAttractorWinsMin (G : Game V) (X : Set V) (c : ℕ) (T : Set V) : Prop :=
+  G.IsSubgame X → T ⊆ X → (∀ v ∈ T, G.prio v = c) → G.IsFatalMin X c T →
+    ∀ v ∈ G.maMin X c T,
+      G.WinsFromMin X (Player.ofPrio c) (G.mattrStrategyMin X (Player.ofPrio c) c T) v
 
 end MercLib.ParityGame
