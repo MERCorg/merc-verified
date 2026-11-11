@@ -1,6 +1,6 @@
 module
 
-public import MercLib.Implementation.ParityGame.Implementation
+public import MercLib.Implementation.ParityGame.FatalAttractor
 public import MercLib.Util.Proofs.While_Proofs
 public import Mathlib.Data.Set.Card
 public import MercLib.Theory.ParityGame.Proofs.Attractor_Proofs

@@ -9,7 +9,7 @@ public import MercLib.Theory.Signatures.InductiveSignatures
 
 `SigData lts π` packages a fixed point `sigFn` of the paper's inductive signature `Sig` for the
 partition `π`, together with a *coherent* hash `sigHash` (equal hash ⇔ equal signature), as an
-implementation's hash map provides. `sigData_exists` shows that it exists on a finite τ-loop-free LTS.
+implementation's hash map provides. `SigDataExists` states that it exists on a finite τ-loop-free LTS.
 -/
 
 namespace MercLib.Sigref
@@ -26,5 +26,10 @@ structure SigData (lts : LTS State Label) (π : Setoid State) where
   sigFn : State → Set (Label × (Quotient π ⊕ Tag))
   hFix : ∀ s, sigFn s = Sig lts (Quotient.mk π) sigHash sigFn s
   hCoh : ∀ s t, sigHash s = sigHash t ↔ sigFn s = sigFn t
+
+/-- **Signature data exists**: on a finite τ-loop-free LTS, every partition has a hash-coherent fixed
+point of the inductive signature. -/
+def SigDataExists [Finite State] (lts : LTS State Label) (π : Setoid State) : Prop :=
+  TauLoopFree lts → Nonempty (SigData lts π)
 
 end MercLib.Sigref

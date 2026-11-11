@@ -1,5 +1,7 @@
 module
 
-public import MercLib.Implementation.ParityGame.Implementation
+public import MercLib.Implementation.ParityGame.FatalAttractor
+public import MercLib.Implementation.ParityGame.FatalAttractorsAlt
 
-public import MercLib.Implementation.ParityGame.Proofs.Implementation_Proofs
+public import MercLib.Implementation.ParityGame.Proofs.FatalAttractor_Proofs
+public import MercLib.Implementation.ParityGame.Proofs.FatalAttractorsAlt_Proofs

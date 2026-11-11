@@ -54,6 +54,7 @@ private structure CInv (ar : F → ℕ) (Ls : Finset (Pat F)) (L : State F → P
   heta : ∀ s f a, (s, f, a) ∈ η ↔ (s ∈ S ∧ s ∉ Q) ∧ a ∈ eta ar s (L s) f
   closed : ∀ s ∈ S, s ∉ Q → ∀ f n, n ∈ delta ar Ls s (L s) f → n.1 ∈ S
 
+omit [Fintype F] in
 private theorem cinv_init : CInv ar Ls L {initial Ls} {initial Ls} ∅ ∅ := by
   refine ⟨?_, subset_rfl, Finset.mem_singleton_self _, ?_, ?_, ?_⟩
   · intro s hs
@@ -146,6 +147,7 @@ private theorem cinv_measure {R S Q : Finset (State F)} {δ : Finset (State F ×
   rw [he]
   omega
 
+omit [Fintype F] in
 private theorem cinv_final {S : Finset (State F)} {δ : Finset (State F × F × State F × Position)}
     {η : Finset (State F × F × At F)} (I : CInv ar Ls L S ∅ δ η) (s : State F) :
     s ∈ S ↔ Reachable ar Ls L s := by
@@ -244,6 +246,7 @@ private structure MInv (ar : F → ℕ) (Ls : Finset (Pat F)) (L : State F → P
   ann : ∀ a, a ∈ A ↔ ∃ n ∈ S, a ∈ M.announced L t n
   closed : ∀ n ∈ S, ∀ c, Child depR ar Ls L t n c → c ∈ S ∨ c ∈ Wk
 
+omit [Fintype F] in
 private theorem minv_init : MInv ar Ls L M t ∅ {(initial Ls, [])} ∅ 0 := by
   refine ⟨by simp, ?_, by simp, ?_, by simp, by simp, by simp, by simp⟩
   · intro n hn
@@ -252,6 +255,7 @@ private theorem minv_init : MInv ar Ls L M t ∅ {(initial Ls, [])} ∅ 0 := by
   · intro n hn m hm hne
     exact absurd ((Finset.mem_singleton.1 hn).trans (Finset.mem_singleton.1 hm).symm) hne
 
+omit [Fintype F] in
 private theorem minv_disjoint (H : Hyp depR ar Ls L t) {S Wk B : Finset (Config F)} {A : Finset (At F)}
     {log : Multiset Position} (I : MInv ar Ls L M t S Wk A log) (hB : B ⊆ Wk) : Disjoint S B :=
   Finset.disjoint_left.2 fun m hS hb =>
@@ -335,6 +339,7 @@ private theorem minv_step (T : Tab ar Ls L M) (H : Hyp depR ar Ls L t) {S Wk B :
     · refine Or.inr (Finset.mem_union_right _ (Finset.mem_biUnion.2 ⟨n, h, ?_⟩))
       exact (mem_successors T (I.nodeW n (hB h))).2 hc
 
+omit [Fintype F] in
 /-- The inspected positions stay within the domain, so the variant goes down. -/
 private theorem minv_measure (H : Hyp depR ar Ls L t) {S Wk B : Finset (Config F)}
     {A : Finset (At F)} {log : Multiset Position} (I : MInv ar Ls L M t S Wk A log) (hB : B ⊆ Wk)

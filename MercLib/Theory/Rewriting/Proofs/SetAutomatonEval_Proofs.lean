@@ -107,6 +107,7 @@ private theorem lift_obl {K : State F} {g' : Goal F} {a' : At F} (hg : g' ∈ li
   obtain ⟨a, ha', rfl⟩ := Finset.mem_image.1 ha
   exact ⟨h, hh, a, ha', rfl⟩
 
+omit [∀ l f, DecidableRel (R l f)] in
 private theorem phi_mem_W {n : State F × Position} {f : F} (A : At' R ar Ls L t n f) :
     n.2 ++ L n.1 ∈ W t n := by
   obtain ⟨g, hg, a, ha, e⟩ := A.lab
@@ -220,6 +221,7 @@ private theorem W_exists_child (H : Hyp R ar Ls L t) {n : State F × Position} {
       exact eb
     exact hmem hG (Finset.mem_singleton_self _) y rfl
 
+omit [DecidableEq F] in
 private theorem W_finite (n : State F × Position) : (W t n).Finite :=
   t.dom.finite_toSet.subset fun _ hx => hx.1
 
@@ -306,6 +308,7 @@ private theorem path_of_node {m : State F × Position} (h : NodeBy R ar Ls L t m
   | root => exact .refl
   | step _ hf hd ih => exact ih.tail ⟨_, _, _, hf, hd, rfl⟩
 
+omit [∀ l f, DecidableRel (R l f)] in
 private theorem mem_W_root (H : Hyp R ar Ls L t) {x : Position} (hx : x ∈ t.dom) :
     x ∈ W t (initial Ls, []) := by
   obtain ⟨p, hp⟩ := H.hne
@@ -566,6 +569,7 @@ private theorem finite_aux [Finite F] (hR : PartitionAdmissible R) {L : State F 
 /-- The relation of the paper: dependency (Definition 7). -/
 private abbrev depR : Position → F → Goal F → Goal F → Prop := fun _ _ => Depends
 
+omit [DecidableEq F] in
 private theorem depR_admissible : PartitionAdmissible (depR (F := F)) :=
   fun _ _ _ _ => ⟨depends_symm, id, Or.inl⟩
 

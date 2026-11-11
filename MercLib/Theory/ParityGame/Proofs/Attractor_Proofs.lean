@@ -161,18 +161,10 @@ private theorem Game.attr_opp_closed {v : V} (hv : v ∈ G.attr X i U) (hvU : v 
 
 end
 
-/-- Correctness of the attractor (Section 2): for a subgame `X` and `U ⊆ X`, the attractor lies
-    between `U` and `X`, its complement in `X` is again a subgame in which player `i` cannot
-    escape (a *trap* for `i`), and every play conforming to a strategy for `i` that agrees with
-    the attractor strategy on the attractor outside `U` reaches `U` from within the attractor. -/
-theorem Game.attractorCorrect (G : Game V) [Finite V] (X : Set V) (i : Player) (U : Set V)
-    (hX : G.IsSubgame X) (hU : U ⊆ X) :
-    (U ⊆ G.attr X i U ∧ G.attr X i U ⊆ X) ∧
-    G.IsSubgame (X \ G.attr X i U) ∧
-    (∀ v ∈ X \ G.attr X i U, G.owner v = i → ∀ w ∈ X, G.edge v w → w ∉ G.attr X i U) ∧
-    ∀ σ : Strategy V,
-      (∀ v ∈ G.attr X i U, v ∉ U → G.owner v = i → σ v = G.attrStrategy X i U v) →
-      ∀ p : ωSequence V, G.ConformingPlay X i σ p → p 0 ∈ G.attr X i U → ∃ n, p n ∈ U := by
+/-- **Correctness of the attractor** (Section 2). -/
+theorem Game.attractorCorrect (G : Game V) [Finite V] (X : Set V) (i : Player) (U : Set V) :
+    G.AttractorCorrect X i U := by
+  intro hX hU
   have htrap : ∀ v ∈ X \ G.attr X i U, G.owner v = i → ∀ w ∈ X, G.edge v w →
       w ∉ G.attr X i U := fun v hv ho w hw he hwa =>
     hv.2 (G.mem_attr_of_owner X i U hv.1 ho he hwa)

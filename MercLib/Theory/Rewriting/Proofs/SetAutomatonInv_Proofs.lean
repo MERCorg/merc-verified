@@ -51,6 +51,7 @@ private theorem mem_deriv {s : State F} {l : Position} {f : F} {g : Goal F} :
   · rintro ⟨p, hp, i, h1, h2, rfl⟩
     exact ⟨p, hp, i, Finset.mem_image.1 (mem_idx.2 ⟨h1, h2⟩), rfl⟩
 
+omit [DecidableEq F] in
 private theorem mem_pos {mo : Finset (At F)} {p : Position} : p ∈ pos mo ↔ ∃ a ∈ mo, a.2 = p := by
   simp [pos]
 
@@ -61,6 +62,7 @@ private structure GInv (Ls : Finset (Pat F)) (s : State F) : Prop where
   incomp : ∀ g ∈ s, ∀ g' ∈ s, ∀ a ∈ g.1, ∀ b ∈ g'.1, (a.2 <+: b.2 ∨ b.2 <+: a.2) → a.2 = b.2
   fresh : ∀ g ∈ s, ∀ a ∈ g.1, ∀ p ∈ Ls, (({(p, a.2)}, (p, a.2)) : Goal F) ∈ s
 
+omit [DecidableEq F] in
 private theorem GInv.below {X : State F} (I : GInv Ls X) : ∀ h ∈ X, ∀ a ∈ h.1, h.2.2 <+: a.2 := by
   intro h hh a ha
   obtain ⟨r, e, _⟩ := (I.goals h hh).2.2 a ha
@@ -96,6 +98,7 @@ private theorem pos_deriv {s : State F} {l : Position} {f : F} {g : Goal F} {a :
     · exact Or.inr ⟨i, h1, h2, rfl⟩
   · rw [Finset.mem_singleton.1 ha]; exact Or.inr ⟨i, h1, h2, rfl⟩
 
+omit [DecidableEq F] in
 private theorem not_comparable_child {s : State F} {l : Position} (I : GInv Ls s)
     {g₀ g₁ : Goal F} (hg₀ : g₀ ∈ s) (hg₁ : g₁ ∈ s) {a d : At F} (ha : a ∈ g₀.1) (hd : d ∈ g₁.1)
     (hdl : d.2 = l) (hne : a.2 ≠ l) (i : ℕ) (hc : a.2 <+: l ++ [i] ∨ l ++ [i] <+: a.2) : False := by
@@ -176,6 +179,7 @@ private structure QOk (Q : Goal F → Goal F → Prop) : Prop where
   dep : ∀ g h, Depends g h → Q g h
   cmp : ∀ g h, Q g h → Depends g h ∨ Comparable g.2.2 h.2.2
 
+omit [DecidableEq F] in
 private theorem PartitionAdmissible.ok {R : Position → F → Goal F → Goal F → Prop}
     (hR : PartitionAdmissible R) (l : Position) (f : F) : QOk (R l f) :=
   ⟨fun g h => (hR l f g h).1, fun g h => (hR l f g h).2.1, fun g h => (hR l f g h).2.2⟩
@@ -243,6 +247,7 @@ variable {R : Position → F → Goal F → Goal F → Prop} [∀ l f, Decidable
 private structure Inv (Ls : Finset (Pat F)) (s : State F) : Prop extends GInv Ls s where
   root : ∃ g ∈ s, g.2.2 = []
 
+omit [DecidableEq F] in
 /-- The label of a reachable state is an obligation position. -/
 private theorem label_mem {L : State F → Position} (hL : Admissible L) {s : State F}
     (I : Inv Ls s) : ∃ g ∈ s, ∃ a ∈ g.1, a.2 = L s := by

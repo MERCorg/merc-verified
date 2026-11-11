@@ -79,6 +79,8 @@ variable {F : Type} [DecidableEq F]
 
 namespace Pat
 
+section
+omit [DecidableEq F]
 mutual
 
 private theorem at_append : ∀ (t : Pat F) (r r' : Position),
@@ -96,7 +98,10 @@ private theorem atArgs_append : ∀ (ts : List (Pat F)) (i : ℕ) (r r' : Positi
   | _ :: ts, i + 2, r, r' => by simpa [atArgs] using atArgs_append ts (i + 1) r r'
 
 end
+end
 
+section
+omit [DecidableEq F]
 mutual
 
 private theorem mem_domList_iff : ∀ (t : Pat F) (r : Position), r ∈ domList t ↔ (t.at r).isSome
@@ -146,7 +151,9 @@ private theorem mem_domArgs_iff : ∀ (ts : List (Pat F)) (k i : ℕ) (r : Posit
       · exact hki (by have := (ih.1 h).1; omega)
 
 end
+end
 
+omit [DecidableEq F] in
 /-- `r ∈ D(t)` iff `t[r]` is defined. -/
 private theorem mem_dom_iff (t : Pat F) (r : Position) : r ∈ t.dom ↔ (t.at r).isSome := by
   simp only [dom, List.mem_toFinset, mem_domList_iff]
@@ -155,6 +162,7 @@ end Pat
 
 /-! ### Classes of a relation -/
 
+omit [DecidableEq F] in
 private theorem depends_symm {g h : Goal F} (d : Depends g h) : Depends h g := by
   unfold Depends at *; rwa [Finset.inter_comm]
 

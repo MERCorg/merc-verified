@@ -334,21 +334,9 @@ private theorem sig_iff_E (hWF : TauLoopFree lts) {s t : State} (hπ : π.r s t)
   ⟨d.sig_E hWF hπ, d.E_sig hWF⟩
 end SigData
 
-section
-variable {State Label : Type} [HasTau Label]
-
-/-- **Signature equality is `E π`**: for `π`-related states of a finite τ-loop-free LTS, the
-inductive signatures of a coherent fixed point are equal exactly when the states are related by
-branching bisimilarity relative to `π`. -/
-private def SigEqualIffRelBisim [Finite State] (lts : LTS State Label) (π : Setoid State)
-    (d : SigData lts π) : Prop :=
-  TauLoopFree lts → ∀ s t : State, π.r s t → (d.sigFn s = d.sigFn t ↔ E lts π s t)
-
-end
-
-/-- Headline: signature equality is `E π`. -/
-private theorem sigEqualIffRelBisim [Finite State] {lts : LTS State Label} {π : Setoid State}
-    (d : SigData lts π) : SigEqualIffRelBisim lts π d :=
+/-- **Signature equality is `E π`.** -/
+public theorem sigEqualIffRelBisim {State Label : Type} [HasTau Label] [Finite State] (lts : LTS State Label)
+    (π : Setoid State) (d : SigData lts π) : SigEqualIffRelBisim lts π d :=
   fun hWF _ _ hπ => SigData.sig_iff_E d hWF hπ
 
 end MercLib.Sigref

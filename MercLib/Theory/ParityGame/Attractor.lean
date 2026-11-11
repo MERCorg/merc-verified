@@ -48,4 +48,17 @@ noncomputable def Game.attrStrategy (G : Game V) (X : Set V) (i : Player) (U : S
   if h : 0 < G.attrRank X i U v ∧ ∃ w ∈ G.attrStage X i U (G.attrRank X i U v - 1), G.edge v w
   then h.2.choose else v
 
+/-- **Correctness of the attractor** (Section 2): for a subgame `X` and `U ⊆ X`, the attractor lies
+    between `U` and `X`, its complement in `X` is again a subgame in which player `i` cannot
+    escape (a *trap* for `i`), and every play conforming to a strategy for `i` that agrees with
+    the attractor strategy on the attractor outside `U` reaches `U` from within the attractor. -/
+def Game.AttractorCorrect (G : Game V) (X : Set V) (i : Player) (U : Set V) : Prop :=
+  G.IsSubgame X → U ⊆ X →
+    (U ⊆ G.attr X i U ∧ G.attr X i U ⊆ X) ∧
+    G.IsSubgame (X \ G.attr X i U) ∧
+    (∀ v ∈ X \ G.attr X i U, G.owner v = i → ∀ w ∈ X, G.edge v w → w ∉ G.attr X i U) ∧
+    ∀ σ : Strategy V,
+      (∀ v ∈ G.attr X i U, v ∉ U → G.owner v = i → σ v = G.attrStrategy X i U v) →
+      ∀ p : ωSequence V, G.ConformingPlay X i σ p → p 0 ∈ G.attr X i U → ∃ n, p n ∈ U
+
 end MercLib.ParityGame

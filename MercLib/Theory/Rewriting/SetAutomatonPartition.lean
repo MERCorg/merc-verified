@@ -45,7 +45,7 @@ def classesBy (R : Goal F → Goal F → Prop) [DecidableRel R] (X : State F) : 
 /-- Two positions are comparable if one is a prefix of the other. -/
 def Comparable (p q : Position) : Prop := p <+: q ∨ q <+: p
 
-instance : DecidableRel Comparable := fun p q => inferInstanceAs (Decidable (_ ∨ _))
+instance : DecidableRel Comparable := fun _ _ => inferInstanceAs (Decidable (_ ∨ _))
 
 variable (R : Position → F → Goal F → Goal F → Prop) [∀ l f, DecidableRel (R l f)]
   (ar : F → ℕ) (Ls : Finset (Pat F))
@@ -114,7 +114,7 @@ def MercDepends (l : Position) (f : F) (g h : Goal F) : Prop :=
   Depends g h ∨
     (g ∉ freshGoals ar Ls l f ∧ h ∉ freshGoals ar Ls l f ∧ Comparable g.2.2 h.2.2)
 
-instance (l : Position) (f : F) : DecidableRel (MercDepends ar Ls l f) := fun g h =>
+instance (l : Position) (f : F) : DecidableRel (MercDepends ar Ls l f) := fun _ _ =>
   inferInstanceAs (Decidable (_ ∨ _))
 
 /-- **merc's partition is admissible** (Conjecture 1 of the website, for the partition). -/

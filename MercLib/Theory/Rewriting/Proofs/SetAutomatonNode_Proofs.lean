@@ -16,6 +16,8 @@ variable {F : Type} [DecidableEq F] {ar : F → ℕ} {Ls : Finset (Pat F)}
 
 namespace Pat
 
+section
+omit [DecidableEq F]
 mutual
 
 private theorem at_wf : ∀ (t : Pat F) (r : Position) (u : Pat F), t.WF ar → t.at r = some u → u.WF ar
@@ -31,7 +33,10 @@ private theorem atArgs_wf : ∀ (ts : List (Pat F)) (i : ℕ) (r : Position) (u 
   | _ :: ts, i + 2, r, u, h, e => atArgs_wf ts (i + 1) r u h.2 (by simpa [atArgs] using e)
 
 end
+end
 
+section
+omit [DecidableEq F]
 mutual
 
 private theorem at_closed : ∀ (t : Pat F) (r : Position) (u : Pat F), t.Closed → t.at r = some u →
@@ -48,7 +53,9 @@ private theorem atArgs_closed : ∀ (ts : List (Pat F)) (i : ℕ) (r : Position)
   | _ :: ts, i + 2, r, u, h, e => atArgs_closed ts (i + 1) r u h.2 (by simpa [atArgs] using e)
 
 end
+end
 
+omit [DecidableEq F] in
 private theorem atArgs_bounds : ∀ (ts : List (Pat F)) (i : ℕ) (r : Position) (u : Pat F),
     atArgs ts i r = some u → 1 ≤ i ∧ i ≤ ts.length
   | [], _, _, _, e => by simp [atArgs] at e
@@ -58,6 +65,7 @@ private theorem atArgs_bounds : ∀ (ts : List (Pat F)) (i : ℕ) (r : Position)
     have := atArgs_bounds ts (i + 1) r u (by simpa [atArgs] using e)
     simp only [List.length_cons]; omega
 
+omit [DecidableEq F] in
 private theorem atArgs_isSome : ∀ (ts : List (Pat F)) (i : ℕ), 1 ≤ i → i ≤ ts.length →
     (atArgs ts i []).isSome
   | [], _, _, h => by simp at h; omega
@@ -66,6 +74,7 @@ private theorem atArgs_isSome : ∀ (ts : List (Pat F)) (i : ℕ), 1 ≤ i → i
   | _ :: ts, i + 2, _, h => by
     simpa [atArgs] using atArgs_isSome ts (i + 1) (by omega) (by simpa using h)
 
+omit [DecidableEq F] in
 private theorem mem_atArgs : ∀ (ts : List (Pat F)) (x : Pat F), x ∈ ts →
     ∃ i, 1 ≤ i ∧ i ≤ ts.length ∧ atArgs ts i [] = some x
   | t :: ts, x, h => by
@@ -75,6 +84,7 @@ private theorem mem_atArgs : ∀ (ts : List (Pat F)) (x : Pat F), x ∈ ts →
       obtain ⟨j, rfl⟩ : ∃ j, i = j + 1 := ⟨i - 1, by omega⟩
       exact ⟨j + 2, by omega, by simp at *; omega, by simpa [atArgs] using e⟩
 
+omit [DecidableEq F] in
 private theorem atArgs_replicate : ∀ (n i : ℕ) (x : Position) (l : Pat F),
     atArgs (List.replicate n (Pat.omega : Pat F)) i x = some l → l = .omega
   | 0, _, _, _, e => by simp [atArgs] at e
@@ -88,6 +98,7 @@ private theorem atArgs_replicate : ∀ (n i : ℕ) (x : Position) (l : Pat F),
     simp only [List.replicate_succ, atArgs] at e
     exact atArgs_replicate n (i + 1) x l e
 
+omit [DecidableEq F] in
 /-- The shape of a well-formed pattern with head `f`. -/
 private theorem shape {u : Pat F} {f : F} (hu : u.WF ar) (hd : u.hd = some f) :
     ∃ args, u = .app f args ∧ args.length = ar f := by
@@ -106,6 +117,7 @@ private structure NInv (t : Pat F) (s : State F) (p : Position) : Prop where
   sound : ∀ g ∈ s, ∀ r l', g.2.1.at r = some l' → l' ≠ .omega →
     (∃ a ∈ g.1, a.2 <+: g.2.2 ++ r) ∨ headAt t (p ++ (g.2.2 ++ r)) = l'.hd
 
+omit [DecidableEq F] in
 /-- The term below a position with head `f`. -/
 private theorem head_shape {t : Pat F} (hw : t.WF ar) {x : Position} {f : F}
     (hf : headAt t x = some f) : ∃ args, t.at x = some (.app f args) ∧ args.length = ar f := by
@@ -114,6 +126,7 @@ private theorem head_shape {t : Pat F} (hw : t.WF ar) {x : Position} {f : F}
   obtain ⟨args, rfl, hl⟩ := Pat.shape (Pat.at_wf t x u hw hu) hd
   exact ⟨args, hu, hl⟩
 
+omit [DecidableEq F] in
 private theorem child_inside {t : Pat F} (hw : t.WF ar) {x : Position} {f : F}
     (hf : headAt t x = some f) {i : ℕ} (h1 : 1 ≤ i) (h2 : i ≤ ar f) : (t.at (x ++ [i])).isSome := by
   obtain ⟨args, hu, hl⟩ := head_shape hw hf

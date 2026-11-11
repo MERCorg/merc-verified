@@ -116,6 +116,7 @@ section Monotone
 variable {σ σ' : Subst S V W} (hm : ∀ s y, UU R W s (σ s y) (σ' s y))
 include hm
 
+set_option linter.unusedSectionVars false in
 mutual
 
 private theorem subst_mono : ∀ {s : S.Srt} (t : Term S V s), UU R W s (subst σ t) (subst σ' t)
@@ -129,6 +130,7 @@ private theorem args_subst_mono :
 
 end
 
+set_option linter.unusedSectionVars false in
 mutual
 
 private theorem ctx_mono (c : Term S W h) : ∀ {s : S.Srt} (C : Ctx S V h s),
@@ -259,6 +261,7 @@ section Descend
 variable (hu : Unconditional R) (hc : CriticalPairsJoinable R) (i : ι) (σ : Subst S V W)
 include hu hc
 
+set_option linter.unusedSectionVars false in
 mutual
 
 /-- A step in an instance of a subterm `u` of the left-hand side of the rule `i`. -/
