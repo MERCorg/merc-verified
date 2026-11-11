@@ -1,6 +1,7 @@
 module
 
 public import MercLib.Util.Basic
+public import MercLib.Theory.ControlFlow.Basic
 public import MercLib.Theory.Graph.Basic
 public import MercLib.Theory.LTS.Basic
 public import MercLib.Theory.ParityGame.Basic
