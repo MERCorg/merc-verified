@@ -86,184 +86,33 @@ from the Rust sources checks their contents.
 * def `MercLib.LDD.Ldd.union`
 * def `MercLib.LDD.UnionCorrect`
 
-## `MercLib.Algorithms.ParityGame.HybridSI.Algorithm`
+## `MercLib.Algorithms.ParityGame.Incomplete`
 
-* inductive `MercLib.HybridSI.Step`
-* def `MercLib.HybridSI.Step.ctorElimType`
-* def `MercLib.HybridSI.Step.noConfusionType`
-* def `MercLib.HybridSI.argmaxKey`
-* def `MercLib.HybridSI.bestOf`
-* def `MercLib.HybridSI.filtered`
-* def `MercLib.HybridSI.hbRun`
-* def `MercLib.HybridSI.hbSolve`
-* def `MercLib.HybridSI.hbStep`
-* def `MercLib.HybridSI.improving`
-* def `MercLib.HybridSI.initProfile`
-* def `MercLib.HybridSI.keyDefault`
-* def `MercLib.HybridSI.keyTable`
-* def `MercLib.HybridSI.ownedBy`
-* def `MercLib.HybridSI.respond`
-* def `MercLib.HybridSI.respondRound`
-* def `MercLib.HybridSI.succList`
+* def `MercLib.ParityGame.Incomplete.AttrCorrect`
+* def `MercLib.ParityGame.Incomplete.I`
+* def `MercLib.ParityGame.Incomplete.SAttrCorrect`
+* def `MercLib.ParityGame.Incomplete.SafeCorrect`
+* def `MercLib.ParityGame.Incomplete.attr`
+* def `MercLib.ParityGame.Incomplete.cpre`
+* def `MercLib.ParityGame.Incomplete.lfp`
+* def `MercLib.ParityGame.Incomplete.own`
+* def `MercLib.ParityGame.Incomplete.pre`
+* def `MercLib.ParityGame.Incomplete.safe`
+* def `MercLib.ParityGame.Incomplete.sattr`
+* def `MercLib.ParityGame.Incomplete.sinks`
+* def `MercLib.ParityGame.Incomplete.spre`
+* def `MercLib.ParityGame.Incomplete.vs`
 
-## `MercLib.Algorithms.ParityGame.HybridSI.AlgorithmPoly`
+## `MercLib.Algorithms.ParityGame.Proofs.Incomplete_Proofs` (proofs)
 
-* def `MercLib.HybridSI.HBPolyCorrect`
-* def `MercLib.HybridSI.HBRunCost`
-* def `MercLib.HybridSI.HBStepCost`
-* def `MercLib.HybridSI.hbRunPoly`
-* def `MercLib.HybridSI.hbStepBound`
-* def `MercLib.HybridSI.hbStepPoly`
-* def `MercLib.HybridSI.keyTableT`
+* axiom `MercLib.ParityGame.Incomplete.attr_correct`
+* axiom `MercLib.ParityGame.Incomplete.safe_correct`
+* axiom `MercLib.ParityGame.Incomplete.sattr_correct`
 
-## `MercLib.Algorithms.ParityGame.HybridSI.BestResponse`
+## `MercLib.Algorithms.ParityGame.Proofs.ZielonkaSymbolic_Proofs` (proofs)
 
-* def `MercLib.HybridSI.BestResponseCost`
-* def `MercLib.HybridSI.BestResponseOptimal`
-* def `MercLib.HybridSI.allowed`
-* def `MercLib.HybridSI.argmaxBy`
-* def `MercLib.HybridSI.bestResponse`
-* def `MercLib.HybridSI.bestResponseBound`
-* def `MercLib.HybridSI.bestResponseT`
-* def `MercLib.HybridSI.bfInit`
-* def `MercLib.HybridSI.bfRound`
-* def `MercLib.HybridSI.bfVal`
-* def `MercLib.HybridSI.bfValT`
-* def `MercLib.HybridSI.bfWeight`
-* def `MercLib.HybridSI.cands`
-* def `MercLib.HybridSI.classStep`
-* def `MercLib.HybridSI.classStepT`
-* def `MercLib.HybridSI.classes`
-* def `MercLib.HybridSI.classesT`
-* def `MercLib.HybridSI.edgeCount`
-* def `MercLib.HybridSI.favours`
-* def `MercLib.HybridSI.hsucc`
-* def `MercLib.HybridSI.isTarget`
-* def `MercLib.HybridSI.iterT`
-* def `MercLib.HybridSI.mat`
-* def `MercLib.HybridSI.matV`
-* def `MercLib.HybridSI.movesOf`
-* def `MercLib.HybridSI.opens`
-* def `MercLib.HybridSI.pw`
-* def `MercLib.HybridSI.reachFrom`
-* def `MercLib.HybridSI.reachFromT`
-* def `MercLib.HybridSI.reachRound`
-* def `MercLib.HybridSI.roundCost`
-* def `MercLib.HybridSI.scale`
-* def `MercLib.HybridSI.unclassified`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Bounds`
-
-* def `MercLib.HybridSI.Autonomy`
-* def `MercLib.HybridSI.Closed`
-* def `MercLib.HybridSI.ClosedIterations`
-* def `MercLib.HybridSI.LowerBelowUpper`
-* def `MercLib.HybridSI.Saddle`
-* def `MercLib.HybridSI.SaddleExists`
-* def `MercLib.HybridSI.SaddleUnique`
-* def `MercLib.HybridSI.Sandwich`
-* def `MercLib.HybridSI.instDecidableRelSubtypeMemFinsetEdgeSubgame`
-* def `MercLib.HybridSI.subgame`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Correctness`
-
-* def `MercLib.HybridSI.FilterNonempty`
-* def `MercLib.HybridSI.HBCorrect`
-* def `MercLib.HybridSI.HBPolyIterations`
-* def `MercLib.HybridSI.HBTerminates`
-* def `MercLib.HybridSI.RespondPolyRounds`
-* def `MercLib.HybridSI.hbFuel`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Counting`
-
-* def `MercLib.HybridSI.EpochIterations`
-* def `MercLib.HybridSI.ExactCount`
-* def `MercLib.HybridSI.ExactCount`
-* def `MercLib.HybridSI.KStarBlock`
-* def `MercLib.HybridSI.KStarCount`
-* def `MercLib.HybridSI.SwitchCount`
-* def `MercLib.HybridSI.exactChangeRounds`
-* def `MercLib.HybridSI.exactSet`
-* def `MercLib.HybridSI.SwitchCount`
-* def `MercLib.HybridSI.exactChangeRounds`
-* def `MercLib.HybridSI.exactSet`
-* def `MercLib.HybridSI.kstarChangeRounds`
-* def `MercLib.HybridSI.kstarOf`
-* def `MercLib.HybridSI.switchRounds`
-* def `MercLib.HybridSI.switchRounds`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Epoch`
-
-* def `MercLib.HybridSI.EpochBound`
-* def `MercLib.HybridSI.numEven`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Potential`
-
-* def `MercLib.HybridSI.CycleMaxChanges`
-* def `MercLib.HybridSI.RunTrace`
-* def `MercLib.HybridSI.RunTraceOfRun`
-* def `MercLib.HybridSI.TopChanges`
-* def `MercLib.HybridSI.ValuationMonotone`
-* def `MercLib.HybridSI.VertexCycMaxChanges`
-* def `MercLib.HybridSI.cycMaxChangeRounds`
-* def `MercLib.HybridSI.oddChangeRounds`
-* def `MercLib.HybridSI.topChangeRounds`
-* def `MercLib.HybridSI.topClass`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.AlgorithmPoly_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.hbPolyCorrect` *not a headline*
-* axiom `MercLib.HybridSI.hbRunPoly_cost` *not a headline*
-* axiom `MercLib.HybridSI.hbStepPoly_cost` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.BestResponse_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.bestResponse_cost` *not a headline*
-* axiom `MercLib.HybridSI.bestResponse_optimal` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Bounds_Autonomy_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.autonomy` *not a headline*
-* axiom `MercLib.HybridSI.closedIterations` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Bounds_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.lowerBelowUpper` *not a headline*
-* axiom `MercLib.HybridSI.saddleExists` *not a headline*
-* axiom `MercLib.HybridSI.saddleUnique` *not a headline*
-* axiom `MercLib.HybridSI.sandwich` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Correctness_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.hbCorrect` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Counting_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.epochIterations`
-* axiom `MercLib.HybridSI.exactCount`
-* axiom `MercLib.HybridSI.kstarBlock`
-* axiom `MercLib.HybridSI.kstarCount`
-* axiom `MercLib.HybridSI.switchCount`
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Epoch_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.epochBound` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Filter_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.filterNonempty` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Potential_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.cycleMaxChanges` *not a headline*
-* axiom `MercLib.HybridSI.runTraceOfRun` *not a headline*
-* axiom `MercLib.HybridSI.topChanges` *not a headline*
-* axiom `MercLib.HybridSI.valuationMonotone` *not a headline*
-* axiom `MercLib.HybridSI.vertexCycMaxChanges` *not a headline*
-
-## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Termination_Proofs` (proofs)
-
-* axiom `MercLib.HybridSI.hbTerminates` *not a headline*
+* axiom `MercLib.ParityGame.Game.attrSym_correct`
+* axiom `MercLib.ParityGame.Game.zielonkaSym_correct`
 
 ## `MercLib.Algorithms.ParityGame.Proofs.Zielonka_Proofs` (proofs)
 
@@ -279,6 +128,15 @@ from the Rust sources checks their contents.
 * def `MercLib.ParityGame.Game.zielonka`
 * def `MercLib.ParityGame.Game.zielonkaAux`
 * def `MercLib.ParityGame.Solution.empty`
+
+## `MercLib.Algorithms.ParityGame.ZielonkaSymbolic`
+
+* def `MercLib.ParityGame.Game.AttrSymCorrect`
+* def `MercLib.ParityGame.Game.ZielonkaSymCorrect`
+* def `MercLib.ParityGame.Game.attrSym`
+* def `MercLib.ParityGame.Game.cpre`
+* def `MercLib.ParityGame.Game.zielonkaSym`
+* def `MercLib.ParityGame.Game.zielonkaSymAux`
 
 ## `MercLib.Algorithms.Refinement.Algorithm`
 
@@ -318,6 +176,25 @@ from the Rust sources checks their contents.
 
 * axiom `MercLib.Refinement.impossibleFuturesRefines_iff_not_reachable_ifWitness`
 * axiom `MercLib.Refinement.impossibleFuturesRefines_iff_of_tauCycle`
+
+## `MercLib.Algorithms.Rewriting.Proofs.SetAutomatonRun_Proofs` (proofs)
+
+* axiom `MercLib.SetAutomaton.constructCorrect`
+* axiom `MercLib.SetAutomaton.findMatchesCorrect`
+
+## `MercLib.Algorithms.Rewriting.SetAutomaton`
+
+* inductive `MercLib.SetAutomaton.Automaton`
+* def `MercLib.SetAutomaton.Automaton.announced`
+* def `MercLib.SetAutomaton.Automaton.noConfusionType`
+* def `MercLib.SetAutomaton.Automaton.successors`
+* def `MercLib.SetAutomaton.Config`
+* def `MercLib.SetAutomaton.ConstructCorrect`
+* def `MercLib.SetAutomaton.FindMatchesCorrect`
+* def `MercLib.SetAutomaton.construct`
+* def `MercLib.SetAutomaton.edges`
+* def `MercLib.SetAutomaton.findMatches`
+* def `MercLib.SetAutomaton.outputs`
 
 ## `MercLib.Algorithms.Sigref.Branching`
 
@@ -464,7 +341,7 @@ from the Rust sources checks their contents.
 * def `MercLib.Sigref.RP.markAllW`
 * def `MercLib.Sigref.RP.markW`
 
-## `MercLib.Implementation.ParityGame.Implementation`
+## `MercLib.Implementation.ParityGame.FatalAttractor`
 
 * def `MercLib.ParityGame.Game.FatalAttractorOriginalSound`
 * def `MercLib.ParityGame.Game.IsClosedWinningRegion`
@@ -473,9 +350,85 @@ from the Rust sources checks their contents.
 * def `MercLib.ParityGame.Game.attrWithTau`
 * def `MercLib.ParityGame.Game.fatalAttractorOriginal`
 
-## `MercLib.Implementation.ParityGame.Proofs.Implementation_Proofs` (proofs)
+## `MercLib.Implementation.ParityGame.FatalAttractorsAlt`
+
+* inductive `MercLib.ParityGame.CexNode`
+* def `MercLib.ParityGame.CexNode.ctorElimType`
+* def `MercLib.ParityGame.CexNode.noConfusionType`
+* def `MercLib.ParityGame.CexNode.ofNat`
+* axiom `MercLib.ParityGame.CexNode.ofNat_ctorIdx`
+* def `MercLib.ParityGame.Game.FatalAttractorsAltBuggyUnsound`
+* def `MercLib.ParityGame.Game.FatalAttractorsAltSound`
+* def `MercLib.ParityGame.Game.SubgameAttrCorrect`
+* def `MercLib.ParityGame.Game.acceptAlt`
+* def `MercLib.ParityGame.Game.attrMinRank`
+* def `MercLib.ParityGame.Game.fatalAttractorsAlt`
+* def `MercLib.ParityGame.Game.fatalAttractorsAltBuggy`
+* def `MercLib.ParityGame.cexEdges`
+* def `MercLib.ParityGame.cexGame`
+* def `MercLib.ParityGame.instDecidableEqCexNode`
+
+## `MercLib.Implementation.ParityGame.Proofs.FatalAttractor_Proofs` (proofs)
 
 * axiom `MercLib.ParityGame.Game.fatalAttractorOriginalSound`
+
+## `MercLib.Implementation.ParityGame.Proofs.FatalAttractorsAlt_Proofs` (proofs)
+
+* axiom `MercLib.ParityGame.Game.fatalAttractorsAltBuggyUnsound`
+* axiom `MercLib.ParityGame.Game.fatalAttractorsAltSound`
+* axiom `MercLib.ParityGame.Game.subgameAttrCorrect`
+
+## `MercLib.Theory.ControlFlow.ControlFlow`
+
+* def `MercLib.ControlFlow.BoundNotFree`
+* inductive `MercLib.ControlFlow.DataLanguage`
+* def `MercLib.ControlFlow.DataLanguage.noConfusionType`
+* inductive `MercLib.ControlFlow.Formula`
+* def `MercLib.ControlFlow.Formula.Binds`
+* def `MercLib.ControlFlow.Formula.FreeIn`
+* axiom `MercLib.ControlFlow.Formula.brecOn.eq`
+* def `MercLib.ControlFlow.Formula.brecOn.go`
+* def `MercLib.ControlFlow.Formula.ctorElimType`
+* def `MercLib.ControlFlow.Formula.eval`
+* def `MercLib.ControlFlow.Formula.noConfusionType`
+* def `MercLib.ControlFlow.Formula.npred`
+* def `MercLib.ControlFlow.Formula.pviAt`
+* def `MercLib.ControlFlow.Formula.replace`
+* def `MercLib.ControlFlow.IsSource`
+* def `MercLib.ControlFlow.PruningSound`
+* def `MercLib.ControlFlow.SemanticEdge`
+* def `MercLib.ControlFlow.ShadowedPruningUnsound`
+* def `MercLib.ControlFlow.SyntacticEdge`
+* def `MercLib.ControlFlow.SyntacticPruningSound`
+* def `MercLib.ControlFlow.SyntacticPruningUnsound`
+* def `MercLib.ControlFlow.instDecidableEqVar`
+
+## `MercLib.Theory.ControlFlow.LinearProcess`
+
+* def `MercLib.ControlFlow.Lpe.Decided`
+* def `MercLib.ControlFlow.Lpe.DecidedLocationsAreValues`
+* def `MercLib.ControlFlow.Lpe.Edge`
+* def `MercLib.ControlFlow.Lpe.IsDestination`
+* def `MercLib.ControlFlow.Lpe.IsSource`
+* inductive `MercLib.ControlFlow.Lpe.LinearProcess`
+* def `MercLib.ControlFlow.Lpe.LinearProcess.noConfusionType`
+* def `MercLib.ControlFlow.Lpe.LocationPruningSound`
+* def `MercLib.ControlFlow.Lpe.Proposition1`
+* def `MercLib.ControlFlow.Lpe.Rules`
+* def `MercLib.ControlFlow.Lpe.SoundEquality`
+
+## `MercLib.Theory.ControlFlow.Proofs.ControlFlow_Proofs` (proofs)
+
+* axiom `MercLib.ControlFlow.pruningSound`
+* axiom `MercLib.ControlFlow.shadowedPruningUnsound`
+* axiom `MercLib.ControlFlow.syntacticPruningSound`
+* axiom `MercLib.ControlFlow.syntacticPruningUnsound`
+
+## `MercLib.Theory.ControlFlow.Proofs.LinearProcess_Proofs` (proofs)
+
+* axiom `MercLib.ControlFlow.Lpe.decidedLocationsAreValues`
+* axiom `MercLib.ControlFlow.Lpe.locationPruningSound`
+* axiom `MercLib.ControlFlow.Lpe.proposition1`
 
 ## `MercLib.Theory.Graph.Proofs.Scc_Proofs` (proofs)
 
@@ -526,6 +479,7 @@ from the Rust sources checks their contents.
 
 ## `MercLib.Theory.ParityGame.Attractor`
 
+* def `MercLib.ParityGame.Game.AttractorCorrect`
 * def `MercLib.ParityGame.Game.attr`
 * def `MercLib.ParityGame.Game.attrRank`
 * def `MercLib.ParityGame.Game.attrStage`
@@ -534,13 +488,24 @@ from the Rust sources checks their contents.
 ## `MercLib.Theory.ParityGame.FatalAttractor`
 
 * def `MercLib.ParityGame.Game.FatalAttractorWins`
+* def `MercLib.ParityGame.Game.FatalAttractorWinsMin`
 * def `MercLib.ParityGame.Game.IsFatal`
+* def `MercLib.ParityGame.Game.IsFatalMin`
+* def `MercLib.ParityGame.Game.MinInfPrio`
+* def `MercLib.ParityGame.Game.PlayWonByMin`
+* def `MercLib.ParityGame.Game.WinsFromMin`
 * def `MercLib.ParityGame.Game.ma`
+* def `MercLib.ParityGame.Game.maMin`
 * def `MercLib.ParityGame.Game.mattr`
+* def `MercLib.ParityGame.Game.mattrMin`
 * def `MercLib.ParityGame.Game.mattrRank`
+* def `MercLib.ParityGame.Game.mattrRankMin`
 * def `MercLib.ParityGame.Game.mattrStage`
+* def `MercLib.ParityGame.Game.mattrStageMin`
 * def `MercLib.ParityGame.Game.mattrStrategy`
+* def `MercLib.ParityGame.Game.mattrStrategyMin`
 * def `MercLib.ParityGame.Game.mpre`
+* def `MercLib.ParityGame.Game.mpreMin`
 
 ## `MercLib.Theory.ParityGame.Game`
 
@@ -565,9 +530,43 @@ from the Rust sources checks their contents.
 * def `MercLib.ParityGame.Strategy`
 * def `MercLib.ParityGame.instDecidableEqPlayer`
 
+## `MercLib.Theory.ParityGame.Incomplete`
+
+* inductive `MercLib.ParityGame.IncompleteGame`
+* def `MercLib.ParityGame.IncompleteGame.DominionsSurvive`
+* def `MercLib.ParityGame.IncompleteGame.Extends`
+* def `MercLib.ParityGame.IncompleteGame.IsDominion`
+* def `MercLib.ParityGame.IncompleteGame.SAttrDominion`
+* def `MercLib.ParityGame.IncompleteGame.SafeAttrEq`
+* def `MercLib.ParityGame.IncompleteGame.SafeCpreEq`
+* def `MercLib.ParityGame.IncompleteGame.SafeOptimal`
+* def `MercLib.ParityGame.IncompleteGame.SinkAttrDominion`
+* def `MercLib.ParityGame.IncompleteGame.UnsafeLost`
+* def `MercLib.ParityGame.IncompleteGame.Wins`
+* def `MercLib.ParityGame.IncompleteGame.attr`
+* def `MercLib.ParityGame.IncompleteGame.attrStage`
+* def `MercLib.ParityGame.IncompleteGame.cpre`
+* def `MercLib.ParityGame.IncompleteGame.embed`
+* def `MercLib.ParityGame.IncompleteGame.noConfusionType`
+* def `MercLib.ParityGame.IncompleteGame.own`
+* def `MercLib.ParityGame.IncompleteGame.pre`
+* def `MercLib.ParityGame.IncompleteGame.restrict`
+* def `MercLib.ParityGame.IncompleteGame.safe`
+* def `MercLib.ParityGame.IncompleteGame.safeWon`
+* def `MercLib.ParityGame.IncompleteGame.sattr`
+* def `MercLib.ParityGame.IncompleteGame.sattrStage`
+* def `MercLib.ParityGame.IncompleteGame.sinks`
+* def `MercLib.ParityGame.IncompleteGame.spre`
+* def `MercLib.ParityGame.IncompleteGame.toGame`
+* def `MercLib.ParityGame.IncompleteGame.undecided`
+
 ## `MercLib.Theory.ParityGame.Proofs.Attractor_Proofs` (proofs)
 
 * axiom `MercLib.ParityGame.Game.attractorCorrect`
+
+## `MercLib.Theory.ParityGame.Proofs.FatalAttractorMin_Proofs` (proofs)
+
+* axiom `MercLib.ParityGame.Game.fatalAttractorWinsMin`
 
 ## `MercLib.Theory.ParityGame.Proofs.FatalAttractor_Proofs` (proofs)
 
@@ -577,9 +576,36 @@ from the Rust sources checks their contents.
 
 * axiom `MercLib.ParityGame.Game.playHasUniqueWinner`
 
+## `MercLib.Theory.ParityGame.Proofs.IncompleteAttr_Proofs` (proofs)
+
+* axiom `MercLib.ParityGame.IncompleteGame.sAttrDominion`
+* axiom `MercLib.ParityGame.IncompleteGame.sinkAttrDominion`
+* axiom `MercLib.ParityGame.IncompleteGame.unsafeLost`
+
+## `MercLib.Theory.ParityGame.Proofs.IncompleteDominion_Proofs` (proofs)
+
+* axiom `MercLib.ParityGame.IncompleteGame.dominionsSurvive`
+
+## `MercLib.Theory.ParityGame.Proofs.IncompleteOptimal_Proofs` (proofs)
+
+* axiom `MercLib.ParityGame.IncompleteGame.safeOptimal`
+
+## `MercLib.Theory.ParityGame.Proofs.Incomplete_Proofs` (proofs)
+
+* axiom `MercLib.ParityGame.IncompleteGame.safeAttrEq`
+* axiom `MercLib.ParityGame.IncompleteGame.safeCpreEq`
+
+## `MercLib.Theory.ParityGame.Proofs.Valuation_Proofs` (proofs)
+
+* axiom `MercLib.HybridSI.keyOrderEmbedding`
+
 ## `MercLib.Theory.ParityGame.Valuation`
 
+* def `MercLib.HybridSI.IsPos`
 * def `MercLib.HybridSI.Key`
+* def `MercLib.HybridSI.KeyOrderEmbedding`
+* inductive `MercLib.HybridSI.PlayProfile`
+* def `MercLib.HybridSI.PlayProfile.noConfusionType`
 * def `MercLib.HybridSI.bSet`
 * def `MercLib.HybridSI.cycMax`
 * def `MercLib.HybridSI.iter`
@@ -587,10 +613,15 @@ from the Rust sources checks their contents.
 * def `MercLib.HybridSI.keyWinner`
 * def `MercLib.HybridSI.look`
 * def `MercLib.HybridSI.playPrefix`
+* def `MercLib.HybridSI.playProfile`
+* def `MercLib.HybridSI.profileLt`
 * def `MercLib.HybridSI.rank`
+* def `MercLib.HybridSI.rewardLt`
+* def `MercLib.HybridSI.setLt`
 * def `MercLib.HybridSI.stepsTo`
 * def `MercLib.HybridSI.tabulate`
 * def `MercLib.HybridSI.univList`
+* def `MercLib.HybridSI.visitedBefore`
 * def `MercLib.HybridSI.weight`
 * def `MercLib.ParityGame.Game.Relabelled`
 
@@ -642,21 +673,90 @@ from the Rust sources checks their contents.
 
 ## `MercLib.Theory.Rewriting.Confluence`
 
+* def `MercLib.Rewriting.Both`
 * def `MercLib.Rewriting.Confluent`
+* def `MercLib.Rewriting.CriticalPairLemma`
+* def `MercLib.Rewriting.CriticalPairsJoinable`
 * def `MercLib.Rewriting.LocallyConfluent`
-* def `MercLib.Rewriting.Confluent`
-* def `MercLib.Rewriting.LocallyConfluent`
+* inductive `MercLib.Rewriting.Overlap`
+* def `MercLib.Rewriting.Overlap.left`
+* def `MercLib.Rewriting.Overlap.noConfusionType`
+* def `MercLib.Rewriting.Overlap.right`
+* def `MercLib.Rewriting.Unconditional`
+* def `MercLib.Rewriting.renameL`
+* def `MercLib.Rewriting.renameR`
+
+## `MercLib.Theory.Rewriting.Context`
+
+* inductive `MercLib.Rewriting.ArgsCtx`
+* axiom `MercLib.Rewriting.ArgsCtx.brecOn.eq`
+* def `MercLib.Rewriting.ArgsCtx.brecOn.go`
+* def `MercLib.Rewriting.ArgsCtx.ctorElimType`
+* def `MercLib.Rewriting.ArgsCtx.fill`
+* def `MercLib.Rewriting.ArgsCtx.noConfusionType`
+* def `MercLib.Rewriting.ArgsCtx.subst`
+* inductive `MercLib.Rewriting.Ctx`
+* axiom `MercLib.Rewriting.Ctx.brecOn.eq`
+* def `MercLib.Rewriting.Ctx.brecOn.go`
+* def `MercLib.Rewriting.Ctx.ctorElimType`
+* def `MercLib.Rewriting.Ctx.fill`
+* def `MercLib.Rewriting.Ctx.noConfusionType`
+* def `MercLib.Rewriting.Ctx.subst`
+
+## `MercLib.Theory.Rewriting.Matching`
+
+* def `MercLib.Rewriting.Args.toPats`
+* def `MercLib.Rewriting.Args.vars`
+* def `MercLib.Rewriting.LinearMatchIffHeads`
+* def `MercLib.Rewriting.Sym`
+* def `MercLib.Rewriting.Term.Linear`
+* def `MercLib.Rewriting.Term.Matches`
+* def `MercLib.Rewriting.Term.toPat`
+* def `MercLib.Rewriting.Term.vars`
+
+## `MercLib.Theory.Rewriting.Position`
+
+* def `MercLib.SetAutomaton.Position`
+* def `MercLib.SetAutomaton.Position.Below`
+* def `MercLib.SetAutomaton.Position.Comparable`
+* def `MercLib.SetAutomaton.Position.gcp`
+* def `MercLib.SetAutomaton.Position.instDecidableRelBelow`
+* def `MercLib.SetAutomaton.Position.lcp`
 
 ## `MercLib.Theory.Rewriting.Proofs.Confluence_Proofs` (proofs)
 
 * axiom `MercLib.Rewriting.confluent_of_locallyConfluent`
-* axiom `MercLib.Rewriting.confluent_of_locallyConfluent`
 * axiom `MercLib.Rewriting.existsUnique_normalForm`
+
+## `MercLib.Theory.Rewriting.Proofs.CriticalPair_Proofs` (proofs)
+
+* axiom `MercLib.Rewriting.criticalPairLemma`
+
+## `MercLib.Theory.Rewriting.Proofs.Matching_Proofs` (proofs)
+
+* axiom `MercLib.Rewriting.linearMatchIffHeads`
+
+## `MercLib.Theory.Rewriting.Proofs.Semantics_Proofs` (proofs)
+
+* axiom `MercLib.Rewriting.distinctOfStepsFalse`
+* axiom `MercLib.Rewriting.stepsSound`
+
+## `MercLib.Theory.Rewriting.Proofs.SetAutomaton_Proofs` (proofs)
+
+* axiom `MercLib.SetAutomaton.mercPartitionAdmissible`
+* axiom `MercLib.SetAutomaton.partitionTheorems`
+* axiom `MercLib.SetAutomaton.setAutomatonCorrect`
+* axiom `MercLib.SetAutomaton.setAutomatonFinite`
+* axiom `MercLib.SetAutomaton.setAutomatonInspectsOnce`
 
 ## `MercLib.Theory.Rewriting.Proofs.Termination_Proofs` (proofs)
 
 * axiom `MercLib.Rewriting.terminating_of_interpretation`
 * axiom `MercLib.Rewriting.terminating_of_measure`
+
+## `MercLib.Theory.Rewriting.Proofs.Unification_Proofs` (proofs)
+
+* axiom `MercLib.Rewriting.unificationTheorem`
 
 ## `MercLib.Theory.Rewriting.Rewrite`
 
@@ -681,6 +781,106 @@ from the Rust sources checks their contents.
 * def `MercLib.Rewriting.rel`
 * def `MercLib.Rewriting.stepAt`
 
+## `MercLib.Theory.Rewriting.Semantics`
+
+* inductive `MercLib.Rewriting.Algebra`
+* def `MercLib.Rewriting.Algebra.noConfusionType`
+* def `MercLib.Rewriting.Args.denote`
+* def `MercLib.Rewriting.Assignment`
+* def `MercLib.Rewriting.DistinctOfStepsFalse`
+* inductive `MercLib.Rewriting.Equality`
+* def `MercLib.Rewriting.Equality.Respects`
+* def `MercLib.Rewriting.Equality.eqTerm`
+* def `MercLib.Rewriting.Equality.falseTerm`
+* def `MercLib.Rewriting.Equality.noConfusionType`
+* def `MercLib.Rewriting.Equality.trueTerm`
+* def `MercLib.Rewriting.Models`
+* def `MercLib.Rewriting.NormalFormsNotDistinct`
+* def `MercLib.Rewriting.StepsSound`
+* def `MercLib.Rewriting.Term.denote`
+
+## `MercLib.Theory.Rewriting.SetAutomaton`
+
+* def `MercLib.SetAutomaton.Admissible`
+* def `MercLib.SetAutomaton.At`
+* def `MercLib.SetAutomaton.Correct`
+* def `MercLib.SetAutomaton.Depends`
+* def `MercLib.SetAutomaton.FinitelyManyStates`
+* def `MercLib.SetAutomaton.Goal`
+* def `MercLib.SetAutomaton.InspectsOnce`
+* inductive `MercLib.SetAutomaton.Node`
+* inductive `MercLib.SetAutomaton.Node.below`
+* axiom `MercLib.SetAutomaton.Node.brecOn`
+* inductive `MercLib.SetAutomaton.Pat`
+* def `MercLib.SetAutomaton.Pat.Closed`
+* def `MercLib.SetAutomaton.Pat.ClosedArgs`
+* def `MercLib.SetAutomaton.Pat.Matches`
+* def `MercLib.SetAutomaton.Pat.WF`
+* def `MercLib.SetAutomaton.Pat.WFArgs`
+* def `MercLib.SetAutomaton.Pat.at`
+* def `MercLib.SetAutomaton.Pat.atArgs`
+* axiom `MercLib.SetAutomaton.Pat.brecOn.eq`
+* def `MercLib.SetAutomaton.Pat.brecOn.go`
+* axiom `MercLib.SetAutomaton.Pat.brecOn_1.eq`
+* def `MercLib.SetAutomaton.Pat.brecOn_1.go`
+* def `MercLib.SetAutomaton.Pat.ctorElimType`
+* def `MercLib.SetAutomaton.Pat.decEq`
+* def `MercLib.SetAutomaton.Pat.decEqArgs`
+* def `MercLib.SetAutomaton.Pat.dom`
+* def `MercLib.SetAutomaton.Pat.domArgs`
+* def `MercLib.SetAutomaton.Pat.domList`
+* def `MercLib.SetAutomaton.Pat.hd`
+* def `MercLib.SetAutomaton.Pat.noConfusionType`
+* inductive `MercLib.SetAutomaton.Reachable`
+* inductive `MercLib.SetAutomaton.Reachable.below`
+* axiom `MercLib.SetAutomaton.Reachable.brecOn`
+* def `MercLib.SetAutomaton.State`
+* def `MercLib.SetAutomaton.argAt`
+* def `MercLib.SetAutomaton.classOf`
+* def `MercLib.SetAutomaton.classes`
+* def `MercLib.SetAutomaton.delta`
+* def `MercLib.SetAutomaton.deriv`
+* def `MercLib.SetAutomaton.eta`
+* def `MercLib.SetAutomaton.gcpOf`
+* def `MercLib.SetAutomaton.headAt`
+* def `MercLib.SetAutomaton.initial`
+* def `MercLib.SetAutomaton.instDecidableEqAt`
+* def `MercLib.SetAutomaton.instDecidableEqGoal`
+* def `MercLib.SetAutomaton.instDecidableEqPat`
+* def `MercLib.SetAutomaton.instDecidableEqState`
+* def `MercLib.SetAutomaton.instDecidableRelGoalDepends`
+* def `MercLib.SetAutomaton.lift`
+* def `MercLib.SetAutomaton.output`
+* def `MercLib.SetAutomaton.pos`
+* def `MercLib.SetAutomaton.posMA`
+* def `MercLib.SetAutomaton.reduce`
+* def `MercLib.SetAutomaton.shallow`
+* def `MercLib.SetAutomaton.shorten`
+
+## `MercLib.Theory.Rewriting.SetAutomatonPartition`
+
+* def `MercLib.SetAutomaton.Comparable`
+* def `MercLib.SetAutomaton.CorrectBy`
+* def `MercLib.SetAutomaton.FinitelyManyStatesBy`
+* def `MercLib.SetAutomaton.InspectsOnceBy`
+* def `MercLib.SetAutomaton.MercDepends`
+* def `MercLib.SetAutomaton.MercPartitionAdmissible`
+* inductive `MercLib.SetAutomaton.NodeBy`
+* inductive `MercLib.SetAutomaton.NodeBy.below`
+* axiom `MercLib.SetAutomaton.NodeBy.brecOn`
+* def `MercLib.SetAutomaton.PartitionAdmissible`
+* def `MercLib.SetAutomaton.PartitionTheorems`
+* inductive `MercLib.SetAutomaton.ReachableBy`
+* inductive `MercLib.SetAutomaton.ReachableBy.below`
+* axiom `MercLib.SetAutomaton.ReachableBy.brecOn`
+* def `MercLib.SetAutomaton.classOfBy`
+* def `MercLib.SetAutomaton.classesBy`
+* def `MercLib.SetAutomaton.deltaBy`
+* def `MercLib.SetAutomaton.freshGoals`
+* def `MercLib.SetAutomaton.instDecidableRelGoalMercDepends`
+* def `MercLib.SetAutomaton.instDecidableRelPositionComparable`
+* def `MercLib.SetAutomaton.outputBy`
+
 ## `MercLib.Theory.Rewriting.Signature`
 
 * inductive `MercLib.Rewriting.Args`
@@ -704,13 +904,7 @@ from the Rust sources checks their contents.
 ## `MercLib.Theory.Rewriting.Termination`
 
 * def `MercLib.Rewriting.Args.eval`
-* def `MercLib.Rewriting.Args.eval`
 * def `MercLib.Rewriting.Decreasing`
-* inductive `MercLib.Rewriting.MonotoneInterpretation`
-* def `MercLib.Rewriting.MonotoneInterpretation.noConfusionType`
-* def `MercLib.Rewriting.Term.eval`
-* def `MercLib.Rewriting.Term.substValuation`
-* def `MercLib.Rewriting.Vals`
 * inductive `MercLib.Rewriting.MonotoneInterpretation`
 * def `MercLib.Rewriting.MonotoneInterpretation.noConfusionType`
 * def `MercLib.Rewriting.Term.eval`
@@ -718,7 +912,12 @@ from the Rust sources checks their contents.
 * def `MercLib.Rewriting.Vals`
 * def `MercLib.Rewriting.ValsLt`
 * def `MercLib.Rewriting.Valuation`
-* def `MercLib.Rewriting.Valuation`
+
+## `MercLib.Theory.Rewriting.Unification`
+
+* def `MercLib.Rewriting.Term.IsMGU`
+* def `MercLib.Rewriting.Term.Unifies`
+* def `MercLib.Rewriting.UnificationTheorem`
 
 ## `MercLib.Theory.Signatures.InductiveSignatures`
 
@@ -753,9 +952,14 @@ from the Rust sources checks their contents.
 * def `MercLib.Signatures.StrongFixPoint`
 * def `MercLib.Signatures.StrongSignature`
 
+## `MercLib.Theory.Sigref.Proofs.SigData_Proofs` (proofs)
+
+* axiom `MercLib.Sigref.sigDataExists`
+
 ## `MercLib.Theory.Sigref.Proofs.SigE_Proofs` (proofs)
 
 * def `MercLib.Sigref.SigData.PS` *not a headline*
+* axiom `MercLib.Sigref.sigEqualIffRelBisim`
 
 ## `MercLib.Theory.Sigref.RelBisim`
 
@@ -769,6 +973,11 @@ from the Rust sources checks their contents.
 
 * inductive `MercLib.Sigref.SigData`
 * def `MercLib.Sigref.SigData.noConfusionType`
+* def `MercLib.Sigref.SigDataExists`
+
+## `MercLib.Theory.Sigref.SigE`
+
+* def `MercLib.Sigref.SigEqualIffRelBisim`
 
 ## `MercVerified.Code.Funs` (generated by Aeneas)
 
