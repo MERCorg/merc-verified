@@ -178,13 +178,18 @@ from the Rust sources checks their contents.
 
 * def `MercLib.HybridSI.EpochIterations`
 * def `MercLib.HybridSI.ExactCount`
+* def `MercLib.HybridSI.ExactCount`
 * def `MercLib.HybridSI.KStarBlock`
 * def `MercLib.HybridSI.KStarCount`
 * def `MercLib.HybridSI.SwitchCount`
 * def `MercLib.HybridSI.exactChangeRounds`
 * def `MercLib.HybridSI.exactSet`
+* def `MercLib.HybridSI.SwitchCount`
+* def `MercLib.HybridSI.exactChangeRounds`
+* def `MercLib.HybridSI.exactSet`
 * def `MercLib.HybridSI.kstarChangeRounds`
 * def `MercLib.HybridSI.kstarOf`
+* def `MercLib.HybridSI.switchRounds`
 * def `MercLib.HybridSI.switchRounds`
 
 ## `MercLib.Algorithms.ParityGame.HybridSI.Epoch`
@@ -234,11 +239,11 @@ from the Rust sources checks their contents.
 
 ## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Counting_Proofs` (proofs)
 
-* axiom `MercLib.HybridSI.epochIterations` *not a headline*
-* axiom `MercLib.HybridSI.exactCount` *not a headline*
-* axiom `MercLib.HybridSI.kstarBlock` *not a headline*
-* axiom `MercLib.HybridSI.kstarCount` *not a headline*
-* axiom `MercLib.HybridSI.switchCount` *not a headline*
+* axiom `MercLib.HybridSI.epochIterations`
+* axiom `MercLib.HybridSI.exactCount`
+* axiom `MercLib.HybridSI.kstarBlock`
+* axiom `MercLib.HybridSI.kstarCount`
+* axiom `MercLib.HybridSI.switchCount`
 
 ## `MercLib.Algorithms.ParityGame.HybridSI.Proofs.Epoch_Proofs` (proofs)
 
@@ -639,9 +644,12 @@ from the Rust sources checks their contents.
 
 * def `MercLib.Rewriting.Confluent`
 * def `MercLib.Rewriting.LocallyConfluent`
+* def `MercLib.Rewriting.Confluent`
+* def `MercLib.Rewriting.LocallyConfluent`
 
 ## `MercLib.Theory.Rewriting.Proofs.Confluence_Proofs` (proofs)
 
+* axiom `MercLib.Rewriting.confluent_of_locallyConfluent`
 * axiom `MercLib.Rewriting.confluent_of_locallyConfluent`
 * axiom `MercLib.Rewriting.existsUnique_normalForm`
 
@@ -696,13 +704,20 @@ from the Rust sources checks their contents.
 ## `MercLib.Theory.Rewriting.Termination`
 
 * def `MercLib.Rewriting.Args.eval`
+* def `MercLib.Rewriting.Args.eval`
 * def `MercLib.Rewriting.Decreasing`
 * inductive `MercLib.Rewriting.MonotoneInterpretation`
 * def `MercLib.Rewriting.MonotoneInterpretation.noConfusionType`
 * def `MercLib.Rewriting.Term.eval`
 * def `MercLib.Rewriting.Term.substValuation`
 * def `MercLib.Rewriting.Vals`
+* inductive `MercLib.Rewriting.MonotoneInterpretation`
+* def `MercLib.Rewriting.MonotoneInterpretation.noConfusionType`
+* def `MercLib.Rewriting.Term.eval`
+* def `MercLib.Rewriting.Term.substValuation`
+* def `MercLib.Rewriting.Vals`
 * def `MercLib.Rewriting.ValsLt`
+* def `MercLib.Rewriting.Valuation`
 * def `MercLib.Rewriting.Valuation`
 
 ## `MercLib.Theory.Signatures.InductiveSignatures`
