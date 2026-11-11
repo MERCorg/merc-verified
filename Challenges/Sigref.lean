@@ -26,6 +26,22 @@ namespace MercLib.Sigref
 
 open Cslib MercLib.LTS MercLib.Signatures
 
+/-! ## Signatures relative to a partition -/
+
+/-- **Signature data exists.** On a finite τ-loop-free LTS, every partition `π` has a fixed point of the
+inductive signature `Sig` of [Martens2026] together with a coherent hash (equal hash iff equal
+signature). See `SigDataExists` (`Theory/Sigref/SigData.lean`). -/
+theorem sigDataExists {State Label : Type} [HasTau Label] [Finite State] (lts : LTS State Label)
+    (π : Setoid State) : SigDataExists lts π := sorry
+
+/-- **Signature equality is `E π`.** For a finite τ-loop-free LTS and coherent signature data for
+`π`, two `π`-related states have equal signatures iff they are branching bisimilar relative to `π`
+(only τ-steps inside a block are inert, other targets compared up to `π`). See
+`SigEqualIffRelBisim` (`Theory/Sigref/SigE.lean`). -/
+theorem sigEqualIffRelBisim {State Label : Type} [HasTau Label] [Finite State]
+    (lts : LTS State Label) (π : Setoid State) (d : SigData lts π) :
+    SigEqualIffRelBisim lts π d := sorry
+
 /-! ## Strong signature refinement -/
 
 /-- **Abstract strong signature refinement is correct.** For any LTS, the invariant `StrongInv`

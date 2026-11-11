@@ -5,6 +5,7 @@ import MercLib.Theory.Rewriting.Unification
 import MercLib.Theory.Rewriting.Rewrite
 import MercLib.Theory.Rewriting.SetAutomaton
 import MercLib.Theory.Rewriting.SetAutomatonPartition
+import MercLib.Theory.Rewriting.Semantics
 import MercLib.Theory.Rewriting.Signature
 import MercLib.Theory.Rewriting.Termination
 
@@ -70,6 +71,26 @@ on the terms over `Both V` has joinable critical pairs. See `CriticalPairLemma`
 (`Theory/Rewriting/Confluence.lean`). -/
 theorem criticalPairLemma {S : Signature} {V : VarSet S} {ι : Type} (R : TRS S V ι) :
     CriticalPairLemma R := sorry
+
+/-! ## Semantics -/
+
+/-- **Rewriting is sound.** In every algebra that models `R`, where a model satisfies every rule as a
+conditional equation, a term over `W` and every term it rewrites to have the same value under every
+assignment. See `StepsSound` (`Theory/Rewriting/Semantics.lean`). -/
+theorem stepsSound {S : Signature} {V : VarSet S} {ι : Type} (R : TRS S V ι) (W : VarSet S) :
+    StepsSound R W := sorry
+
+/-- **Distinct by rewriting.** If `a == b` rewrites to `false` with `R`, then `a` and `b` have
+distinct values in every model of `R` in which `true` and `false` differ and `==` is equality, under
+every assignment. See `DistinctOfStepsFalse` (`Theory/Rewriting/Semantics.lean`). -/
+theorem distinctOfStepsFalse {S : Signature} {V : VarSet S} {ι : Type} (E : Equality S)
+    (R : TRS S V ι) (W : VarSet S) : DistinctOfStepsFalse E R W := sorry
+
+/-- **Distinct normal forms need not be distinct values.** There is an unconditional rewrite system
+that is terminating and confluent on the ground terms, with a model in which `==` is equality, and
+two distinct ground normal forms that have the same value in every such model. See
+`NormalFormsNotDistinct` (`Theory/Rewriting/Semantics.lean`). -/
+theorem normalFormsNotDistinct : NormalFormsNotDistinct := sorry
 
 end MercLib.Rewriting
 
