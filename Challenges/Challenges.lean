@@ -4,5 +4,6 @@ import Challenges.LTS
 import Challenges.Signatures
 import Challenges.ControlFlow
 import Challenges.Graph
+import Challenges.LDD
 import Challenges.Sigref
 import Challenges.Rewriting
