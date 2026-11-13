@@ -7,3 +7,4 @@ import Challenges.Graph
 import Challenges.LDD
 import Challenges.Sigref
 import Challenges.Rewriting
+import Challenges.CoupledSim

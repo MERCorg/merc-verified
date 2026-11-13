@@ -91,7 +91,19 @@
     "MercLib.ControlFlow.shadowedPruningUnsound",
     "MercLib.ControlFlow.Lpe.proposition1",
     "MercLib.ControlFlow.Lpe.decidedLocationsAreValues",
-    "MercLib.ControlFlow.Lpe.locationPruningSound"
+    "MercLib.ControlFlow.Lpe.locationPruningSound",
+    "MercLib.CoupledSim.CoupledSimulationPreorder.refl",
+    "MercLib.CoupledSim.CoupledSimulationPreorder.trans",
+    "MercLib.CoupledSim.preorder_of_tauReach",
+    "MercLib.CoupledSim.cds_iff_preorder",
+    "MercLib.CoupledSim.tauCycle_coupledSimilarity",
+    "MercLib.CoupledSim.preorder_coinductive_iff",
+    "MercLib.CoupledSim.tauLoopIgnorance",
+    "MercLib.CoupledSim.extendSink_ws_iff_cs",
+    "MercLib.CoupledSim.extendSink_ws_some_iff",
+    "MercLib.CoupledSim.gfp_iff_preorder",
+    "MercLib.CoupledSim.exists_fpIter_eq_preorder",
+    "MercLib.CoupledSim.defenderWinning_iff_preorder"
   ],
   "permitted_axioms": [
     "propext",

@@ -6,3 +6,4 @@ import MercLibTest.Algorithms.Rewriting.SetAutomaton
 import MercLibTest.Theory.Rewriting.CriticalPair
 import MercLibTest.Theory.Rewriting.Rewrite
 import MercLibTest.Theory.Rewriting.SetAutomaton
+import MercLibTest.Theory.CoupledSim

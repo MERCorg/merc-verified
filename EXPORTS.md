@@ -430,6 +430,61 @@ from the Rust sources checks their contents.
 * axiom `MercLib.ControlFlow.Lpe.locationPruningSound`
 * axiom `MercLib.ControlFlow.Lpe.proposition1`
 
+## `MercLib.Theory.CoupledSim.CoupledSimilarity`
+
+* def `MercLib.CoupledSim.CoupledSimilarity`
+* def `MercLib.CoupledSim.CoupledSimulationPreorder`
+* def `MercLib.CoupledSim.Coupling`
+* inductive `MercLib.CoupledSim.DTr`
+* def `MercLib.CoupledSim.IsCoupledDelaySimulation`
+* def `MercLib.CoupledSim.IsCoupledSimulation`
+* def `MercLib.CoupledSim.IsWeakSimulation`
+* def `MercLib.CoupledSim.WeakSimulationPreorder`
+* def `MercLib.CoupledSim.extendSink`
+* axiom `MercLib.CoupledSim.«term_≡cs[_]_»`
+* axiom `MercLib.CoupledSim.«term_≼cs[_]_»`
+* axiom `MercLib.CoupledSim.«term_≼ws[_]_»`
+
+## `MercLib.Theory.CoupledSim.FixedPoint`
+
+* def `MercLib.CoupledSim.IsGreatestFixedPt`
+* def `MercLib.CoupledSim.fpIter`
+* def `MercLib.CoupledSim.fpStep`
+
+## `MercLib.Theory.CoupledSim.Game`
+
+* def `MercLib.CoupledSim.CSGameMoves`
+* inductive `MercLib.CoupledSim.CSGameNode`
+* def `MercLib.CoupledSim.CSGameNode.ctorElimType`
+* def `MercLib.CoupledSim.CSGameNode.noConfusionType`
+* def `MercLib.CoupledSim.DefenderWinning`
+* def `MercLib.CoupledSim.defenderHom`
+* def `MercLib.CoupledSim.defenderStep`
+
+## `MercLib.Theory.CoupledSim.Proofs.CoupledSimilarity_Proofs` (proofs)
+
+* axiom `MercLib.CoupledSim.CoupledSimulationPreorder.refl`
+* axiom `MercLib.CoupledSim.CoupledSimulationPreorder.trans`
+* axiom `MercLib.CoupledSim.cds_iff_preorder`
+* axiom `MercLib.CoupledSim.preorder_coinductive_iff`
+* axiom `MercLib.CoupledSim.preorder_of_tauReach`
+* axiom `MercLib.CoupledSim.tauCycle_coupledSimilarity`
+* axiom `MercLib.CoupledSim.tauLoopIgnorance`
+
+## `MercLib.Theory.CoupledSim.Proofs.FixedPoint_Proofs` (proofs)
+
+* axiom `MercLib.CoupledSim.exists_fpIter_eq_preorder`
+* axiom `MercLib.CoupledSim.gfp_iff_preorder`
+
+## `MercLib.Theory.CoupledSim.Proofs.Game_Proofs` (proofs)
+
+* axiom `MercLib.CoupledSim.defenderWinning_iff_preorder`
+
+## `MercLib.Theory.CoupledSim.Proofs.Reduction_Proofs` (proofs)
+
+* axiom `MercLib.CoupledSim.extendSink_ws_iff_cs`
+* axiom `MercLib.CoupledSim.extendSink_ws_some_iff`
+
 ## `MercLib.Theory.Graph.Proofs.Scc_Proofs` (proofs)
 
 * axiom `MercLib.Graph.finalSCCExists`
