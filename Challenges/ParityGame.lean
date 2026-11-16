@@ -75,6 +75,16 @@ its winning regions contain those of `r`. See `Game.FatalAttractorOriginalSound`
 theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
     (r : Solution V) : G.FatalAttractorOriginalSound X js r := sorry
 
+/-- **The fatal-attractor solver finds every fatal attractor (Figure 3 of [Huth2014]).** Let `X` be a
+subgame of a game on a finite vertex type, `js` any processing order of the priorities, and `r` a
+sound partial solution of `X` (`SoundPartial`). Then for every priority `j ∈ js` and every set
+`T ⊆ X` of vertices of priority `j` that is fatal in `X` (`IsFatal`: `T ⊆ MA(T)`), the monotone
+attractor `MA(T)` is contained in the region of the player favoured by `j` in
+`fatalAttractorOriginal X js r`. See `Game.FatalAttractorOriginalComplete`
+(`Implementation/ParityGame/FatalAttractor.lean`). -/
+theorem Game.fatalAttractorOriginalComplete (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
+    (r : Solution V) : G.FatalAttractorOriginalComplete X js r := sorry
+
 /-! ## The alternative fatal-attractor implementation of mCRL2 (`fatal_attractors_generic`) -/
 
 /-- **The fixed alternative fatal-attractor solver is sound.** Let `X` be a subgame of a game on a
@@ -85,6 +95,15 @@ regions contain those of `r`. In particular the loop terminates. See `Game.Fatal
 (`Implementation/ParityGame/FatalAttractorsAlt.lean`). -/
 theorem Game.fatalAttractorsAltSound (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
     (r : Solution V) : G.FatalAttractorsAltSound X js r := sorry
+
+/-- **The fixed alternative solver finds every fatal attractor.** Let `X` be a subgame of a game on
+a finite vertex type, `js` any processing order of the priorities, and `r` a sound partial solution
+of `X` (`SoundPartial`). Then for every priority `j ∈ js` and every set `T ⊆ X` of vertices of
+priority `j` that is fatal in `X` (`IsFatal`: `T ⊆ MA(T)`), the monotone attractor `MA(T)` is
+contained in the region of the player favoured by `j` in `fatalAttractorsAlt X js r`. See
+`Game.FatalAttractorsAltComplete` (`Implementation/ParityGame/FatalAttractorsAlt.lean`). -/
+theorem Game.fatalAttractorsAltComplete (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
+    (r : Solution V) : G.FatalAttractorsAltComplete X js r := sorry
 
 /-- **The alternative solver before the fix is unsound.** On the five-node game `cexGame`, starting
 from the empty partial solution, which is sound, and processing priority `2`, the model

@@ -405,4 +405,212 @@ theorem Game.fatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js
       fun u (hu : u ∈ {u | u ∈ X ∧ G.prio u = j} \ _) => hu.1.2
   exact ⟨key.1.1, (he0.trans he1).trans key.2⟩
 
+/-! ## Completeness -/
+
+private theorem Player.eq_opp_of_ne {a b : Player} (h : a ≠ b) : a = b.opp := by
+  cases a <;> cases b <;> first | exact absurd rfl h | rfl
+
+private theorem Player.ne_opp (a : Player) : a ≠ a.opp := by
+  cases a <;> decide
+
+section
+variable (G : Game V) (X : Set V)
+
+/-- The stages of the monotone attractor grow with the target. -/
+private theorem Game.mattrStage_mono_target (i : Player) (c : ℕ) {T T' : Set V} (h : T ⊆ T')
+    (k : ℕ) : G.mattrStage X i c T k ⊆ G.mattrStage X i c T' k := by
+  induction k with
+  | zero => exact le_rfl
+  | succ k ih =>
+    rintro v ⟨hvX, hp, hcase⟩
+    refine ⟨hvX, hp, ?_⟩
+    rcases hcase with ⟨ho, w, hw, he, hm⟩ | ⟨ho, hall⟩
+    · exact Or.inl ⟨ho, w, hw, he, hm.imp (fun h' => ih h') (fun h' => h h')⟩
+    · exact Or.inr ⟨ho, fun w hw he => (hall w hw he).imp (fun h' => ih h') (fun h' => h h')⟩
+
+/-- The monotone attractor grows with the target. -/
+private theorem Game.mattr_mono_target (i : Player) (c : ℕ) {T T' : Set V} (h : T ⊆ T') :
+    G.mattr X i c T ⊆ G.mattr X i c T' :=
+  fun _ ⟨k, hk⟩ => ⟨k, G.mattrStage_mono_target X i c h k hk⟩
+
+/-- In a subgame, the monotone attractor of the empty set is empty. -/
+private theorem Game.mattr_empty (hsub : G.IsSubgame X) (i : Player) (c : ℕ) :
+    G.mattr X i c ∅ = ∅ := by
+  have hst : ∀ k, G.mattrStage X i c ∅ k = ∅ := by
+    intro k
+    induction k with
+    | zero => rfl
+    | succ k ih =>
+      refine Set.eq_empty_of_subset_empty ?_
+      rintro v ⟨hvX, -, ⟨-, w, -, -, hw⟩ | ⟨-, hall⟩⟩
+      · rw [ih, Set.union_empty] at hw; exact hw
+      · obtain ⟨w, hw, he⟩ := hsub v hvX
+        have := hall w hw he
+        rw [ih, Set.union_empty] at this; exact this
+  refine Set.eq_empty_of_subset_empty ?_
+  rintro v ⟨k, hk⟩
+  rw [hst] at hk
+  exact hk
+
+/-- In a fatal attractor, the monotone attractor strategy stays inside `MA(T)`. -/
+private theorem Game.ma_owner_closed {c : ℕ} {T : Set V} (hfat : G.IsFatal X c T) {v : V}
+    (hv : v ∈ G.ma X c T) (ho : G.owner v = Player.ofPrio c) :
+    G.mattrStrategy X (Player.ofPrio c) c T v ∈ X ∧
+      G.edge v (G.mattrStrategy X (Player.ofPrio c) c T v) ∧
+      G.mattrStrategy X (Player.ofPrio c) c T v ∈ G.ma X c T := by
+  obtain ⟨hX, he, hm⟩ := G.mattrStrategy_spec X _ c T hv ho
+  exact ⟨hX, he, hm.elim (fun h => ⟨_, h⟩) (fun h => hfat h)⟩
+
+/-- The opponent cannot leave a fatal attractor. -/
+private theorem Game.ma_opp_closed {c : ℕ} {T : Set V} (hfat : G.IsFatal X c T) {v : V}
+    (hv : v ∈ G.ma X c T) (ho : G.owner v ≠ Player.ofPrio c) :
+    ∀ w ∈ X, G.edge v w → w ∈ G.ma X c T := by
+  intro w hw he
+  obtain ⟨-, -, hcase⟩ := G.mem_mpre_of_mattr X _ c T hv
+  rcases hcase with ⟨ho', -⟩ | ⟨-, hall⟩
+  · exact absurd ho' ho
+  · exact (hall w hw he).elim (fun h => ⟨_, h⟩) (fun h => hfat h)
+
+/-- A fatal attractor is disjoint from every closed winning region of the opponent: from a common
+    node, the play conforming to both strategies stays in both, so both players would win it. -/
+private theorem Game.ma_disjoint [Finite V] (hsub : G.IsSubgame X) {c : ℕ} {T S : Set V}
+    {τ : Strategy V} (hTX : T ⊆ X) (hTc : ∀ v ∈ T, G.prio v = c) (hfat : G.IsFatal X c T)
+    (hS : G.IsClosedWinningRegion X (Player.ofPrio c).opp S τ) {v : V} (hvM : v ∈ G.ma X c T)
+    (hvS : v ∈ S) : False := by
+  set α := Player.ofPrio c
+  set σ := G.mattrStrategy X α c T
+  let f : V → V := fun w => if G.owner w = α then σ w else τ w
+  have hf : ∀ w ∈ G.ma X c T, w ∈ S →
+      w ∈ X ∧ f w ∈ X ∧ G.edge w (f w) ∧ f w ∈ G.ma X c T ∧ f w ∈ S := by
+    intro w hwM hwS
+    have hwX := hS.1 hwS
+    by_cases ho : G.owner w = α
+    · obtain ⟨hX, he, hm⟩ := G.ma_owner_closed X hfat hwM ho
+      have hfw : f w = σ w := ite_eq_left ho
+      rw [hfw]
+      refine ⟨hwX, hX, he, hm, hS.2.2.1 w hwS ?_ _ hX he⟩
+      rw [ho]; exact α.ne_opp
+    · have hfw : f w = τ w := ite_eq_right ho
+      obtain ⟨he, hm⟩ := hS.2.1 w hwS (Player.eq_opp_of_ne ho)
+      rw [hfw]
+      exact ⟨hwX, hS.1 hm, he, G.ma_opp_closed X hfat hwM ho _ (hS.1 hm) he, hm⟩
+  let p : ωSequence V := ⟨fun n => f^[n] v⟩
+  have hpsucc : ∀ n, p (n + 1) = f (p n) := fun n => Function.iterate_succ_apply' f n v
+  have hp : ∀ n, p n ∈ G.ma X c T ∧ p n ∈ S := by
+    intro n
+    induction n with
+    | zero => exact ⟨hvM, hvS⟩
+    | succ n ih =>
+      rw [hpsucc]
+      obtain ⟨-, -, -, h1, h2⟩ := hf _ ih.1 ih.2
+      exact ⟨h1, h2⟩
+  have hwinα : G.PlayWonBy α p := by
+    refine (G.fatalAttractorWins X c T hsub hTX hTc hfat v hvM).2 p rfl ?_
+    intro n
+    obtain ⟨h1, h2, h3, -, -⟩ := hf _ (hp n).1 (hp n).2
+    rw [hpsucc]
+    exact ⟨h1, h2, h3, fun ho => ite_eq_left ho⟩
+  have hwinβ : G.PlayWonBy α.opp p := by
+    refine (hS.2.2.2 v hvS).2 p rfl ?_
+    intro n
+    obtain ⟨h1, h2, h3, -, -⟩ := hf _ (hp n).1 (hp n).2
+    rw [hpsucc]
+    refine ⟨h1, h2, h3, fun ho => ?_⟩
+    have hne : G.owner (p n) ≠ α := by rw [ho]; exact α.ne_opp.symm
+    exact ite_eq_right hne
+  exact α.ne_opp ((G.playHasUniqueWinner p).unique hwinα hwinβ)
+
+/-- A fatal attractor of priority `j` is disjoint from the opponent's region of an invariant
+    solution, so its target lies in the candidate set `U` of the loop for `j`. -/
+private theorem Game.fatal_subset_candidates [Finite V] (hsub : G.IsSubgame X) {j : ℕ}
+    {T : Set V} {r : Solution V} (hr : G.SoundPartial X r) (hTX : T ⊆ X)
+    (hTj : ∀ v ∈ T, G.prio v = j) (hfat : G.IsFatal X j T) :
+    T ⊆ {u | u ∈ X ∧ G.prio u = j} \ r.win (Player.ofPrio j).opp :=
+  fun v hv => ⟨⟨hTX hv, hTj v hv⟩, fun hvS =>
+    G.ma_disjoint X hsub hTX hTj hfat (hr _) (hfat hv) hvS⟩
+
+/-- `acceptFatal` adds `Y` to the region of the player favoured by `j`. -/
+private theorem Game.subset_acceptFatal_win (j : ℕ) (U Y : Set V) (r : Solution V) :
+    Y ⊆ (G.acceptFatal X j U Y r).win (Player.ofPrio j) := by
+  intro v hv
+  rw [G.acceptFatal_eq, G.attrWithTau_win_self]
+  exact G.subset_attr X _ _ (by simp [hv])
+
+end
+
+open scoped Classical in
+/-- The `while` loop for priority `j` puts every fatal attractor `MA(T)` of priority `j` in the
+    region of `Player.ofPrio j`, as long as `T` lies in the candidate set: `T ⊆ U` is preserved
+    because `MA(T) ⊆ MA(U ∪ Sα)`, and the loop cannot stop with `U ≠ ∅` without accepting. -/
+private theorem Game.fatalLoop_complete [Finite V] (G : Game V) (X : Set V)
+    (hsub : G.IsSubgame X) (j : ℕ) {T : Set V} (hfat : G.IsFatal X j T)
+    (g : Unit → Solution V × Set V × Set V → Id (ForInStep (Solution V × Set V × Set V)))
+    (hg : ∀ r U prev, (g () (r, U, prev)).run =
+      if U ≠ ∅ ∧ U ≠ prev then
+        if U ⊆ G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j)) then
+          .done (G.acceptFatal X j U (G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j)))
+            r, U, U)
+        else .yield (r, U ∩ G.mattr X (Player.ofPrio j) j (U ∪ r.win (Player.ofPrio j)), U)
+      else .done (r, U, prev)) :
+    ∀ s : Solution V × Set V × Set V, T ⊆ s.2.1 → (s.2.1 = s.2.2 → s.2.1 = ∅) →
+      G.ma X j T ⊆ (forIn Lean.Loop.mk s g).run.1.win (Player.ofPrio j) := by
+  set α := Player.ofPrio j
+  intro s h1 h2
+  refine MercLib.Util.whileInduction g
+    (InvImage.wf (fun s : Solution V × Set V × Set V => s.2.1.ncard) Nat.lt_wfRel.wf)
+    (fun s => T ⊆ s.2.1 ∧ (s.2.1 = s.2.2 → s.2.1 = ∅))
+    (fun s => G.ma X j T ⊆ s.1.win α) ?_ s ⟨h1, h2⟩
+  rintro ⟨r, U, prev⟩ ⟨hTU, hprev⟩
+  rw [hg]
+  by_cases hc : U ≠ ∅ ∧ U ≠ prev
+  · simp only [eq_true hc, ↓reduceIte]
+    by_cases hY : U ⊆ G.mattr X α j (U ∪ r.win α)
+    · simp only [eq_true hY, ↓reduceIte]
+      exact (G.mattr_mono_target X α j (hTU.trans Set.subset_union_left)).trans
+        (G.subset_acceptFatal_win X j U _ r)
+    · simp only [eq_false hY, ↓reduceIte]
+      refine ⟨⟨fun v hv => ⟨hTU hv,
+        G.mattr_mono_target X α j (hTU.trans Set.subset_union_left) (hfat hv)⟩,
+        fun h => absurd (fun x hx => (h.symm ▸ hx : x ∈ U ∩ _).2) hY⟩, ?_⟩
+      show Set.ncard _ < Set.ncard _
+      exact Set.ncard_lt_ncard ⟨Set.inter_subset_left, fun h => hY fun x hx => (h hx).2⟩
+        (Set.toFinite _)
+  · simp only [eq_false hc, ↓reduceIte]
+    have hU : U = ∅ := by
+      by_contra hne
+      exact hc ⟨hne, fun h => hne (hprev h)⟩
+    have hT : T = ∅ := Set.subset_empty_iff.mp (hU ▸ hTU)
+    show G.mattr X α j T ⊆ _
+    rw [hT, G.mattr_empty X hsub]
+    exact Set.empty_subset _
+
+/-- Completeness contract for `FatalAttractorOriginal`. -/
+theorem Game.fatalAttractorOriginalComplete (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
+    (r : Solution V) : G.FatalAttractorOriginalComplete X js r := by
+  intro hsub hr
+  obtain ⟨hs0, -, -⟩ := G.attrWithTau_sound X hsub .zero hr
+  obtain ⟨hs1, hcl1, -⟩ := G.attrWithTau_sound X hsub .one hs0
+  have hinv : G.ImplInv X (G.attrWithTau X .one (G.attrWithTau X .zero r)) := by
+    refine ⟨hs1, fun k => ?_⟩
+    cases k with
+    | one => exact hcl1
+    | zero =>
+      rw [G.attrWithTau_win_ne X (by decide : Player.zero ≠ Player.one),
+        G.attrWithTau_win_self]
+      exact G.attr_attr_subset X _ _
+  unfold Game.fatalAttractorOriginal
+  dsimp only [Id.run_bind]
+  refine (MercLib.Util.forInList_mem_induction _ (fun s => G.ImplInv X s) Solution.Extends
+    (fun j s => ∀ T : Set V, T ⊆ X → (∀ v ∈ T, G.prio v = j) → G.IsFatal X j T →
+      G.ma X j T ⊆ s.win (Player.ofPrio j))
+    (fun _ _ => rfl) ?_ ?_ ?_ js _ hinv).2
+  · intro j s hs
+    exact G.fatalLoop_inv X hsub j s _ (fun _ _ _ => rfl) _ hs (Solution.Extends.refl _)
+      fun u (hu : u ∈ {u | u ∈ X ∧ G.prio u = j} \ _) => hu.1.2
+  · intro j s hs T hTX hTj hfat
+    exact G.fatalLoop_complete X hsub j hfat _ (fun _ _ _ => rfl) _
+      (G.fatal_subset_candidates X hsub hs.1 hTX hTj hfat) (fun h => h)
+  · intro j s s' hQ hext T hTX hTj hfat
+    exact (hQ T hTX hTj hfat).trans (hext _)
+
 end MercLib.ParityGame

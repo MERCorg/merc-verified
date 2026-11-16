@@ -57,4 +57,34 @@ private theorem forInList_induction {α : Type v} {σ : Type u} (f : α → σ �
     | done s' => exact id
     | yield s' => exact fun h => forInList_induction f Inv hstep l s' h
 
+/-- **Per-element loop induction.** For a `for x in l do` loop whose body never breaks: if every
+    step preserves `Inv` and is related to its input by `Ext`, the step for `a` establishes `Q a`,
+    and `Q a` is preserved along `Ext`, then the final state satisfies `Q a` for every `a ∈ l`. -/
+private theorem forInList_mem_induction {α : Type v} {σ : Type u} (f : α → σ → Id (ForInStep σ))
+    (Inv : σ → Prop) (Ext : σ → σ → Prop) (Q : α → σ → Prop)
+    (hy : ∀ a s, (f a s).run = .yield (f a s).run.value)
+    (hstep : ∀ a s, Inv s → Inv (f a s).run.value ∧ Ext s (f a s).run.value)
+    (hQ : ∀ a s, Inv s → Q a (f a s).run.value)
+    (hpres : ∀ a s s', Q a s → Ext s s' → Q a s') :
+    ∀ (l : List α) (s : σ), Inv s → (∀ a, Q a s → Q a (forIn l s f).run) ∧
+      ∀ a ∈ l, Q a (forIn l s f).run
+  | [], _, _ => ⟨fun _ h => h, fun _ h => absurd h List.not_mem_nil⟩
+  | b :: l, s, hs => by
+    rw [List.forIn_cons]
+    have hyb := hy b s
+    revert hyb
+    generalize hfb : f b s = st
+    intro hyb
+    have hinv : Inv st.run.value := hfb ▸ (hstep b s hs).1
+    have hQb : Q b st.run.value := hfb ▸ hQ b s hs
+    have hpb : ∀ a, Q a s → Q a st.run.value := fun a h => hpres a s _ h (hfb ▸ (hstep b s hs).2)
+    change ForInStep σ at st
+    change st = _ at hyb
+    rw [hyb]
+    obtain ⟨ih1, ih2⟩ := forInList_mem_induction f Inv Ext Q hy hstep hQ hpres l _ hinv
+    refine ⟨fun a h => ih1 a (hpb a h), fun a ha => ?_⟩
+    rcases List.mem_cons.mp ha with rfl | ha
+    · exact ih1 a hQb
+    · exact ih2 a ha
+
 end MercLib.Util

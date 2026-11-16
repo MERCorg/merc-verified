@@ -119,6 +119,16 @@ def Game.FatalAttractorsAltSound (G : Game V) [Finite V] (X : Set V) (js : List 
     G.SoundPartial X (G.fatalAttractorsAlt X js r) ∧
       ∀ i, r.win i ⊆ (G.fatalAttractorsAlt X js r).win i
 
+/-- Completeness contract for the fixed `fatal_attractors_generic`: on a finite game, starting from
+    a sound partial solution of the subgame `X`, every fatal attractor of a processed priority is
+    found. That is, for every `j ∈ js` and every set `T ⊆ X` of priority-`j` nodes that is fatal in
+    `X`, the whole monotone attractor `MA(T)` ends up in the region of the player favoured by `j`. -/
+def Game.FatalAttractorsAltComplete (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
+    (r : Solution V) : Prop :=
+  G.IsSubgame X → G.SoundPartial X r →
+    ∀ j ∈ js, ∀ T : Set V, T ⊆ X → (∀ v ∈ T, G.prio v = j) → G.IsFatal X j T →
+      G.ma X j T ⊆ (G.fatalAttractorsAlt X js r).win (Player.ofPrio j)
+
 /-- The attractor update of the fixed loop is the refinement inside the subgame `Y`: if `Y ⊆ X` is
     a trap for player `i` (every node of `i` in `Y` has all its successors in `X` inside `Y`) and
     `W ⊆ Y`, then removing from `X` the `i`-attractor of `X \ W` computed in `X` leaves the same set

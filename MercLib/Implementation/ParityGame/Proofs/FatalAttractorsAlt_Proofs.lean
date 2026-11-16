@@ -104,9 +104,6 @@ theorem Game.subgameAttrCorrect (G : Game V) [Finite V] (X Y W : Set V) (i : Pla
 
 /-! ## The region found by the fixed loop -/
 
-private theorem Player.eq_opp_of_ne {a b : Player} (h : a ≠ b) : a = b.opp := by
-  cases a <;> cases b <;> first | exact absurd rfl h | rfl
-
 open scoped Classical in
 /-- The strategy set by `acceptAlt` before closing under the attractor. -/
 private noncomputable def Game.altStrat (G : Game V) (X : Set V) (j : ℕ) (U R A Y S : Set V)
@@ -378,6 +375,168 @@ theorem Game.fatalAttractorsAltSound (G : Game V) [Finite V] (X : Set V) (js : L
       (X, X \ G.attr X α.opp (X \ G.attrMinRank X α j (T ∩ X))) rfl
     exact hbody _ hpost hY
   exact ⟨key.1.1, (he0.trans he1).trans key.2⟩
+
+/-! ## Completeness -/
+
+private theorem Player.eq_of_ne_opp {a b : Player} (h : a ≠ b.opp) : a = b := by
+  cases a <;> cases b <;> first | exact absurd rfl h | rfl
+
+/-- One refinement step of the fixed loop keeps a fatal attractor `M = MA(T₀)` with `T₀ ⊆ T`:
+    if `M ⊆ R ⊆ X` then `M ⊆ X \ Attr_{1-α}(X \ AttrMinRank(T ∩ R, α, R, j))`. The monotone
+    attractor of `T₀` computed in `X` is also one in `R`, and `M` is a trap for the opponent. -/
+private theorem Game.ma_subset_altStep (G : Game V) (X : Set V) {j : ℕ} {T₀ T R : Set V}
+    (hfat : G.IsFatal X j T₀) (hT : T₀ ⊆ T) (hRX : R ⊆ X) (hMR : G.ma X j T₀ ⊆ R) :
+    G.ma X j T₀ ⊆ X \ G.attr X (Player.ofPrio j).opp
+      (X \ G.attrMinRank R (Player.ofPrio j) j (T ∩ R)) := by
+  set α := Player.ofPrio j
+  set M := G.ma X j T₀
+  have hstage : ∀ k, G.mattrStage X α j T₀ k ⊆ G.mattrStage R α j T₀ k := by
+    intro k
+    induction k with
+    | zero => exact le_rfl
+    | succ k ih =>
+      intro v hv
+      have hvM : v ∈ M := ⟨k + 1, hv⟩
+      obtain ⟨-, hp, hcase⟩ := hv
+      refine ⟨hMR hvM, hp, ?_⟩
+      rcases hcase with ⟨ho, w, -, he, hm⟩ | ⟨ho, hall⟩
+      · have hwM : w ∈ M := hm.elim (fun h => ⟨k, h⟩) (fun h => hfat h)
+        exact Or.inl ⟨ho, w, hMR hwM, he, hm.imp (fun h => ih h) id⟩
+      · exact Or.inr ⟨ho, fun w hwR he => (hall w (hRX hwR) he).imp (fun h => ih h) id⟩
+  have hMA : M ⊆ G.attrMinRank R α j (T ∩ R) := by
+    intro v hv
+    obtain ⟨k, hk⟩ := hv
+    refine Or.inr (G.mattr_mono_target R α j (T := T₀) ?_ ⟨k, hstage k hk⟩)
+    intro w hw
+    exact ⟨hT hw, hMR (hfat hw)⟩
+  have hattr : G.attr X α.opp (X \ G.attrMinRank R α j (T ∩ R)) ⊆ X \ M := by
+    refine G.attr_subset_of_closed X α.opp (fun v hv => ⟨hv.1, fun hvM => hv.2 (hMA hvM)⟩) ?_
+    rintro v hvX (⟨ho, w, hw, he⟩ | ⟨ho, hall⟩)
+    · refine ⟨hvX, fun hvM => hw.2 (G.ma_opp_closed X hfat hvM ?_ w hw.1 he)⟩
+      rw [ho]; exact α.ne_opp.symm
+    · refine ⟨hvX, fun hvM => ?_⟩
+      obtain ⟨hX, he, hm⟩ := G.ma_owner_closed X hfat hvM (Player.eq_of_ne_opp ho)
+      exact (hall _ hX he).2 hm
+  intro v hv
+  exact ⟨G.mattr_subset_X X α j T₀ hv, fun h => (hattr h).2 hv⟩
+
+/-- `acceptAlt` adds `Y` to the region of the player favoured by `j`. -/
+private theorem Game.subset_acceptAlt_win (G : Game V) (X : Set V) (j : ℕ) (U R A Y : Set V)
+    (r : Solution V) : Y ⊆ (G.acceptAlt X j U R A Y r).win (Player.ofPrio j) := by
+  intro v hv
+  rw [G.acceptAlt_eq, G.attrWithTau_win_self]
+  exact G.subset_attr X _ _ (by simp [hv])
+
+open scoped Classical in
+/-- The `while` loop of the fixed version for priority `j` keeps every fatal attractor `MA(T₀)`
+    with `T₀ ⊆ T` inside the region `Y` it ends with. -/
+private theorem Game.altLoop_complete [Finite V] (G : Game V) (X : Set V) (j : ℕ) {T₀ : Set V}
+    (T : Set V) (hfat : G.IsFatal X j T₀) (hT : T₀ ⊆ T)
+    (g : Unit → Set V × Set V → Id (ForInStep (Set V × Set V)))
+    (hg : ∀ R Y, (g () (R, Y)).run =
+      if G.attrMinRank R (Player.ofPrio j) j (T ∩ R) ≠ Y then
+        .yield (Y, X \ G.attr X (Player.ofPrio j).opp
+          (X \ G.attrMinRank Y (Player.ofPrio j) j (T ∩ Y)))
+      else .done (R, Y)) :
+    ∀ s : Set V × Set V, s.1 ⊆ X → G.ma X j T₀ ⊆ s.1 →
+      s.2 = X \ G.attr X (Player.ofPrio j).opp
+        (X \ G.attrMinRank s.1 (Player.ofPrio j) j (T ∩ s.1)) →
+      G.ma X j T₀ ⊆ (forIn Lean.Loop.mk s g).run.2 := by
+  set α := Player.ofPrio j
+  intro s h1 h2 h3
+  refine MercLib.Util.whileInduction g
+    (InvImage.wf (fun s : Set V × Set V => s.1.ncard) Nat.lt_wfRel.wf)
+    (fun s => s.1 ⊆ X ∧ G.ma X j T₀ ⊆ s.1 ∧
+      s.2 = X \ G.attr X α.opp (X \ G.attrMinRank s.1 α j (T ∩ s.1)))
+    (fun s => G.ma X j T₀ ⊆ s.2) ?_ s ⟨h1, h2, h3⟩
+  rintro ⟨R, Y⟩ ⟨hRX, hMR, hInv⟩
+  simp only at hRX hMR hInv
+  have hMY : G.ma X j T₀ ⊆ Y := by
+    rw [hInv]; exact G.ma_subset_altStep X hfat hT hRX hMR
+  rw [hg]
+  by_cases hc : G.attrMinRank R α j (T ∩ R) ≠ Y
+  · simp only [eq_true hc, ↓reduceIte]
+    refine ⟨⟨by rw [hInv]; exact Set.sdiff_subset, hMY, by trivial⟩, ?_⟩
+    show Set.ncard Y < Set.ncard R
+    change Y = _ at hInv
+    have hXsR : G.attrMinRank R α j (T ∩ R) ⊆ R :=
+      Set.union_subset Set.inter_subset_right (G.mattr_subset_X R α j _)
+    have hYXs : Y ⊆ G.attrMinRank R α j (T ∩ R) := by
+      intro v hv
+      rw [hInv] at hv
+      by_contra hn
+      exact hv.2 (G.subset_attr X α.opp _ ⟨hv.1, hn⟩)
+    exact Set.ncard_lt_ncard
+      (Set.ssubset_of_ssubset_of_subset (hYXs.ssubset_of_ne (Ne.symm hc)) hXsR) (Set.toFinite _)
+  · simp only [eq_false hc, ↓reduceIte]
+    exact hMY
+
+open scoped Classical in
+/-- Completeness contract for the fixed `fatal_attractors_generic`. -/
+theorem Game.fatalAttractorsAltComplete (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
+    (r : Solution V) : G.FatalAttractorsAltComplete X js r := by
+  intro hsub hr
+  obtain ⟨hs0, -, -⟩ := G.attrWithTau_sound X hsub .zero hr
+  obtain ⟨hs1, hcl1, -⟩ := G.attrWithTau_sound X hsub .one hs0
+  have hinv : G.ImplInv X (G.attrWithTau X .one (G.attrWithTau X .zero r)) := by
+    refine ⟨hs1, fun k => ?_⟩
+    cases k with
+    | one => exact hcl1
+    | zero =>
+      rw [G.attrWithTau_win_ne X (by decide : Player.zero ≠ Player.one),
+        G.attrWithTau_win_self]
+      exact G.attr_attr_subset X _ _
+  unfold Game.fatalAttractorsAlt
+  dsimp only [Id.run_bind]
+  refine (MercLib.Util.forInList_mem_induction _ (fun s => G.ImplInv X s) Solution.Extends
+    (fun j s => ∀ T : Set V, T ⊆ X → (∀ v ∈ T, G.prio v = j) → G.IsFatal X j T →
+      G.ma X j T ⊆ s.win (Player.ofPrio j))
+    (fun _ _ => rfl) ?_ ?_ ?_ js _ hinv).2
+  · intro j s hs
+    set α := Player.ofPrio j
+    set U := {u | u ∈ X ∧ G.prio u = j} \ s.win α.opp
+    set T := U ∪ s.win α
+    have hbody : ∀ w : Set V × Set V, G.attrMinRank w.1 α j (T ∩ w.1) = w.2 →
+        w.2 = X \ G.attr X α.opp (X \ G.attrMinRank w.1 α j (T ∩ w.1)) →
+        G.ImplInv X (G.acceptAlt X j U w.1 (T ∩ w.1) w.2 s) ∧
+          s.Extends (G.acceptAlt X j U w.1 (T ∩ w.1) w.2 s) := by
+      rintro ⟨R, Y⟩ hpost hY
+      simp only at hpost hY
+      have hcorr := G.attractorCorrect X α.opp (X \ G.attrMinRank R α j (T ∩ R)) hsub
+        Set.sdiff_subset
+      have hYX : Y ⊆ X := by rw [hY]; exact Set.sdiff_subset
+      have hYsub : ∀ v ∈ Y, G.owner v = α → ∃ w ∈ X, G.edge v w ∧ w ∈ Y := by
+        intro v hv _
+        rw [hY] at hv ⊢
+        obtain ⟨w, hw, he⟩ := hcorr.2.1 v hv
+        exact ⟨w, hw.1, he, hw⟩
+      have hYtrap : ∀ v ∈ Y, G.owner v ≠ α → ∀ w ∈ X, G.edge v w → w ∈ Y := by
+        intro v hv ho w hw he
+        rw [hY] at hv ⊢
+        exact ⟨hw, hcorr.2.2.1 v hv (Player.eq_opp_of_ne ho) w hw he⟩
+      exact G.acceptAlt_inv X hsub hs (fun u hu => hu.1.2) hpost hYX hYsub hYtrap
+    obtain ⟨hpost, hY⟩ := G.altLoop_post X j T
+      (fun _ st => if G.attrMinRank st.1 α j (T ∩ st.1) ≠ st.2 then
+        pure (ForInStep.yield (st.2, X \ G.attr X α.opp (X \ G.attrMinRank st.2 α j (T ∩ st.2))))
+        else pure (ForInStep.done (st.1, st.2)))
+      (fun _ _ => rfl)
+      (X, X \ G.attr X α.opp (X \ G.attrMinRank X α j (T ∩ X))) rfl
+    exact hbody _ hpost hY
+  · intro j s hs T₀ hTX hTj hfat
+    set α := Player.ofPrio j
+    set U := {u | u ∈ X ∧ G.prio u = j} \ s.win α.opp
+    set T := U ∪ s.win α
+    have hM := G.altLoop_complete X j T hfat
+      ((G.fatal_subset_candidates X hsub hs.1 hTX hTj hfat).trans Set.subset_union_left)
+      (fun _ st => if G.attrMinRank st.1 α j (T ∩ st.1) ≠ st.2 then
+        pure (ForInStep.yield (st.2, X \ G.attr X α.opp (X \ G.attrMinRank st.2 α j (T ∩ st.2))))
+        else pure (ForInStep.done (st.1, st.2)))
+      (fun _ _ => rfl)
+      (X, X \ G.attr X α.opp (X \ G.attrMinRank X α j (T ∩ X))) le_rfl
+      (G.mattr_subset_X X α j T₀) rfl
+    exact hM.trans (G.subset_acceptAlt_win X j U _ _ _ s)
+  · intro j s s' hQ hext T hTX hTj hfat
+    exact (hQ T hTX hTj hfat).trans (hext _)
 
 /-! ## The counterexample -/
 

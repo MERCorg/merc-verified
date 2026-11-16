@@ -113,4 +113,14 @@ def Game.FatalAttractorOriginalSound (G : Game V) [Finite V] (X : Set V) (js : L
     G.SoundPartial X (G.fatalAttractorOriginal X js r) ∧
       ∀ i, r.win i ⊆ (G.fatalAttractorOriginal X js r).win i
 
+/-- Completeness contract for `FatalAttractorOriginal`: on a finite game, starting from a sound
+    partial solution of the subgame `X`, every fatal attractor of a processed priority is found.
+    That is, for every `j ∈ js` and every set `T ⊆ X` of priority-`j` nodes that is fatal in `X`,
+    the whole monotone attractor `MA(T)` ends up in the region of the player favoured by `j`. -/
+def Game.FatalAttractorOriginalComplete (G : Game V) [Finite V] (X : Set V) (js : List ℕ)
+    (r : Solution V) : Prop :=
+  G.IsSubgame X → G.SoundPartial X r →
+    ∀ j ∈ js, ∀ T : Set V, T ⊆ X → (∀ v ∈ T, G.prio v = j) → G.IsFatal X j T →
+      G.ma X j T ⊆ (G.fatalAttractorOriginal X js r).win (Player.ofPrio j)
+
 end MercLib.ParityGame
