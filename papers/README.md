@@ -9,6 +9,8 @@ one came from, so the folder can be rebuilt.
 | Basten1996 | `Basten1996.pdf` | added by the maintainer (IPL 58(3), doi 10.1016/0020-0190(96)00034-8) |
 | Bisping2019 | `Bisping2019.pdf` | added by the maintainer (TACAS 2019) |
 | Blom2008 | `Blom2008.pdf` | added by the maintainer (ICTAC 2008, doi 10.1007/978-3-540-85762-4_6) |
+| Brand2023 (REACH operator, FM 2023) | `Brand2023.pdf` | arXiv 2212.03684 |
+| Ciardo2001 (saturation; ICASE report 2001-5 version of the TACAS 2001 paper) | `Ciardo2001.pdf` | NASA/CR-2001-210663, ntrs.nasa.gov |
 | Czerwinski2019 | `Czerwinski2019.pdf` | arXiv 1807.10546 |
 | DeNicola1995 | `DeNicola1995.pdf` | added by the maintainer (JACM 42(2), doi 10.1145/201019.201032) |
 | Erkens2021 (set automaton, ICTAC 2021, with proofs) | `Erkens2021.pdf` | arXiv 2106.15311 |
@@ -27,6 +29,7 @@ one came from, so the folder can be rebuilt.
 | Zielonka1998 | `Zielonka1998.pdf` | added by the maintainer (TCS 200(1–2), doi 10.1016/S0304-3975(98)00009-7) |
 | vanGlabbeek1996 | `vanGlabbeek1996-PhD.pdf` (thesis; the JACM paper is a chapter) | cgi.cse.unsw.edu.au/~rvg/pub/PhD.pdf |
 | (related) van Glabbeek, Luttik, Trčka 2009, *Branching bisimilarity with explicit divergence* | `vanGlabbeek2009-bbed.pdf` | cgi.cse.unsw.edu.au/~rvg/pub/bbed.pdf |
+| vanDijk2019 (multi-core on-the-fly saturation, TACAS 2019) | `vanDijk2019.pdf` | Springer open access, doi 10.1007/978-3-030-17465-1_4 |
 | vandePol2009 | `vandePol2009.pdf` | added by the maintainer (technical report TR-CTIT-09-24) |
 
 ## Further parity-game literature (not yet in `references.bib`)

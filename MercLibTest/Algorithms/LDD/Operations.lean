@@ -1,4 +1,5 @@
 import MercLib.Algorithms.LDD.Relational
+import MercLib.Algorithms.LDD.Cube
 
 /-!
 # Tests for `MercLib.Algorithms.LDD`
@@ -45,6 +46,16 @@ def B : List (List ℕ) := [[0, 1, 2], [1, 0, 1], [3, 1, 2], [3, 3, 3]]
 #guard diff (ofList A) (ofList B) == ofList (A.filter (· ∉ B))
 #guard diff (ofList A) (ofList A) == zero
 #guard ofList (A ++ B) == ofList (B.reverse ++ A)
+
+/-! ## Adding one vector -/
+
+#guard singleton [1, 2, 3] == ofList [[1, 2, 3]]
+#guard unionCube (ofList A) [0, 1, 3] == ofList (A ++ [[0, 1, 3]])
+#guard unionCube (ofList A) [2, 0, 0] == ofList (A ++ [[2, 0, 0]])
+#guard unionCube (ofList A) [9, 9, 9] == ofList (A ++ [[9, 9, 9]])
+#guard unionCube (ofList A) [0, 1, 2] == ofList A
+#guard unionCube (zero : Ldd ℕ) [4, 5, 6] == ofList [[4, 5, 6]]
+#guard A.foldl unionCube zero == ofList A
 
 /-! ## Projection -/
 

@@ -1,6 +1,8 @@
 import MercLib.Theory.LDD.Ldd
 import MercLib.Algorithms.LDD.SetOperations
+import MercLib.Algorithms.LDD.Cube
 import MercLib.Algorithms.LDD.Relational
+import MercLib.Algorithms.LDD.Reachability
 
 /-!
 # Comparator challenge: list decision diagrams (human-vetted)
@@ -48,6 +50,18 @@ theorem interCorrect (a b : Ldd α) (n : ℕ) : InterCorrect a b n := sorry
 `b`. See `DiffCorrect` (`Algorithms/LDD/SetOperations.lean`). -/
 theorem diffCorrect (a b : Ldd α) (n : ℕ) : DiffCorrect a b n := sorry
 
+/-! ## Adding one vector -/
+
+/-- **The singleton is correct.** For every vector `x`, `Ldd.singleton x` is a well-formed LDD whose
+height is the length of `x`, and it represents the set containing only `x`. See `SingletonCorrect`
+(`Algorithms/LDD/Cube.lean`). -/
+theorem singletonCorrect (x : List α) : SingletonCorrect x := sorry
+
+/-- **Adding one vector is correct.** If `X` is a well-formed LDD of height `n` and the vector `x`
+has length `n`, then `Ldd.unionCube X x` is a well-formed LDD of height `n` that represents the set
+of `X` with `x` added. See `UnionCubeCorrect` (`Algorithms/LDD/Cube.lean`). -/
+theorem unionCubeCorrect (X : Ldd α) (x : List α) (n : ℕ) : UnionCubeCorrect X x n := sorry
+
 /-! ## Projection and relational successors -/
 
 /-- **Projection is correct.** If `X` is a well-formed LDD of height `n` and the projection
@@ -64,6 +78,82 @@ height `n` that represents the vectors `y` with `Apply m t x y` for some `x` in 
 `y` agrees with the read values of `t`, takes the written values of `t`, and copies `x` elsewhere.
 See `SuccessorsCorrect` (`Algorithms/LDD/Relational.lean`). -/
 theorem successorsCorrect (m : List Access) (X R : Ldd α) (n : ℕ) : SuccessorsCorrect m X R n :=
+  sorry
+
+/-! ## Reachability -/
+
+/-- **Breadth-first search is correct.** If every event of `E` is well-formed for vectors of length
+`n` (`Event.WellFormed`: it accesses positions below `n` only, and its relation is a well-formed LDD
+of the matching height), `X` is a well-formed LDD of height `n`, and only finitely many vectors are
+reachable from those of `X`, then breadth-first search `Ldd.bfs E X` returns a well-formed LDD of
+height `n` that represents the vectors reachable from those of `X` with the events of `E`. See
+`BfsCorrect` (`Algorithms/LDD/Reachability.lean`). -/
+theorem bfsCorrect (E : List (Event α)) (X : Ldd α) (n : ℕ) : BfsCorrect E X n := sorry
+
+/-- **Breadth-first search terminates.** Under the hypotheses of `bfsCorrect` except finiteness, a
+round of breadth-first search from a well-formed LDD `S` of height `n` between `X` and the vectors
+reachable from `X` either changes nothing, which stops the loop, or yields a strictly larger set of
+vectors reachable from `X`. See `BfsTerminates` (`Algorithms/LDD/Reachability.lean`). -/
+theorem bfsTerminates (E : List (Event α)) (X : Ldd α) (n : ℕ) : BfsTerminates E X n := sorry
+
+/-- **Chaining is correct.** Under the hypotheses of `bfsCorrect`, chaining `Ldd.chaining E X`
+returns a well-formed LDD of height `n` that represents the vectors reachable from those of `X`.
+See `ChainingCorrect` (`Algorithms/LDD/Reachability.lean`). -/
+theorem chainingCorrect (E : List (Event α)) (X : Ldd α) (n : ℕ) : ChainingCorrect E X n := sorry
+
+/-- **Chaining terminates.** As `bfsTerminates`, for a round of chaining. See
+`ChainingTerminates` (`Algorithms/LDD/Reachability.lean`). -/
+theorem chainingTerminates (E : List (Event α)) (X : Ldd α) (n : ℕ) : ChainingTerminates E X n :=
+  sorry
+
+/-- **Recursive saturation is correct.** If every event of `E` is well-formed for vectors of length
+`n`, `p ≤ n`, `X` is a well-formed LDD of height `n - p` (the vectors from position `p` on), and only
+finitely many vectors are reachable from those of `X` with the events whose `top` is at least `p`,
+then the recursive saturation `Ldd.saturate E n p X` is a well-formed LDD of height `n - p` that
+represents exactly those reachable vectors. With `p = 0` these are the reachable vectors. See
+`SaturateCorrect` (`Algorithms/LDD/Reachability.lean`). -/
+theorem saturateCorrect (E : List (Event α)) (n p : ℕ) (X : Ldd α) : SaturateCorrect E n p X :=
+  sorry
+
+/-- **Recursive saturation terminates.** Under the hypotheses of `saturateCorrect` with `p < n`, a
+round of the loop of the recursive saturation of `X` at `p`, from a well-formed `S` of height
+`n - p` between `X` and its reachable vectors in which firing the events at `p` changes `S`, ends in
+a strictly larger set of vectors reachable from `X`. See `SaturateTerminates`
+(`Algorithms/LDD/Reachability.lean`). -/
+theorem saturateTerminates (E : List (Event α)) (n p : ℕ) (X : Ldd α) :
+    SaturateTerminates E n p X :=
+  sorry
+
+/-- **Node-wise saturation is correct.** Under the hypotheses of `saturateCorrect`, the node-wise
+saturation `Ldd.saturateNodewise E n p X`, which fires the events at `p` value by value from a
+frontier, is a well-formed LDD of height `n - p` that represents the vectors reachable from those of
+`X` with the events whose `top` is at least `p`. See `SaturateNodewiseCorrect`
+(`Algorithms/LDD/Reachability.lean`). -/
+theorem saturateNodewiseCorrect (E : List (Event α)) (n p : ℕ) (X : Ldd α) :
+    SaturateNodewiseCorrect E n p X :=
+  sorry
+
+/-- **Node-wise saturation terminates.** Under the hypotheses of `saturateCorrect` with `p < n`,
+firing out of the first value of a non-empty frontier `F`, from a well-formed `S` of height `n - p`
+between `X` and its reachable vectors, either leaves `S` unchanged and only removes that value from
+the frontier, or yields a strictly larger set of vectors reachable from `X`. See
+`SaturateNodewiseTerminates` (`Algorithms/LDD/Reachability.lean`). -/
+theorem saturateNodewiseTerminates (E : List (Event α)) (n p : ℕ) (X : Ldd α) :
+    SaturateNodewiseTerminates E n p X :=
+  sorry
+
+/-- **REACH is correct.** Under the hypotheses of `saturateCorrect`, REACH `Ldd.reach E n p X` is a
+well-formed LDD of height `n - p` that represents the vectors reachable from those of `X` with the
+events whose `top` is at least `p`. Below each value `v` at position `p`, REACH continues with the
+events below `p` and with the diagonals for `v` of the events at `p` (`Event.diag`: their
+transitions that keep the value `v`). See `ReachCorrect` (`Algorithms/LDD/Reachability.lean`). -/
+theorem reachCorrect (E : List (Event α)) (n p : ℕ) (X : Ldd α) : ReachCorrect E n p X := sorry
+
+/-- **REACH terminates.** Under the hypotheses of `saturateCorrect` with `p < n`, a round of REACH
+of `X` at `p` from a well-formed `S` of height `n - p` between `X` and its reachable vectors either
+changes nothing, which stops the loop, or yields a strictly larger set of vectors reachable from
+`X`. See `ReachTerminates` (`Algorithms/LDD/Reachability.lean`). -/
+theorem reachTerminates (E : List (Event α)) (n p : ℕ) (X : Ldd α) : ReachTerminates E n p X :=
   sorry
 
 end MercLib.LDD

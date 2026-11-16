@@ -43,6 +43,31 @@ from the Rust sources checks their contents.
 * def `MercLib.Tarjan.step`
 * def `MercLib.Tarjan.tarjan`
 
+## `MercLib.Algorithms.LDD.Cube`
+
+* def `MercLib.LDD.Ldd.singleton`
+* def `MercLib.LDD.Ldd.unionCube`
+* def `MercLib.LDD.SingletonCorrect`
+* def `MercLib.LDD.UnionCubeCorrect`
+
+## `MercLib.Algorithms.LDD.Proofs.Cube_Proofs` (proofs)
+
+* axiom `MercLib.LDD.singletonCorrect`
+* axiom `MercLib.LDD.unionCubeCorrect`
+
+## `MercLib.Algorithms.LDD.Proofs.Reachability_Proofs` (proofs)
+
+* axiom `MercLib.LDD.bfsCorrect`
+* axiom `MercLib.LDD.bfsTerminates`
+* axiom `MercLib.LDD.chainingCorrect`
+* axiom `MercLib.LDD.chainingTerminates`
+* axiom `MercLib.LDD.reachCorrect`
+* axiom `MercLib.LDD.reachTerminates`
+* axiom `MercLib.LDD.saturateCorrect`
+* axiom `MercLib.LDD.saturateNodewiseCorrect`
+* axiom `MercLib.LDD.saturateNodewiseTerminates`
+* axiom `MercLib.LDD.saturateTerminates`
+
 ## `MercLib.Algorithms.LDD.Proofs.Relational_Proofs` (proofs)
 
 * axiom `MercLib.LDD.projectCorrect`
@@ -53,6 +78,46 @@ from the Rust sources checks their contents.
 * axiom `MercLib.LDD.diffCorrect`
 * axiom `MercLib.LDD.interCorrect`
 * axiom `MercLib.LDD.unionCorrect`
+
+## `MercLib.Algorithms.LDD.Reachability`
+
+* def `MercLib.LDD.BfsCorrect`
+* def `MercLib.LDD.BfsTerminates`
+* def `MercLib.LDD.ChainingCorrect`
+* def `MercLib.LDD.ChainingTerminates`
+* inductive `MercLib.LDD.Event`
+* def `MercLib.LDD.Event.Fires`
+* def `MercLib.LDD.Event.WellFormed`
+* def `MercLib.LDD.Event.diag`
+* def `MercLib.LDD.Event.metaAt`
+* def `MercLib.LDD.Event.noConfusionType`
+* def `MercLib.LDD.Event.rows`
+* def `MercLib.LDD.Ldd.addRow`
+* def `MercLib.LDD.Ldd.bfs`
+* def `MercLib.LDD.Ldd.bfsStep`
+* def `MercLib.LDD.Ldd.chainStep`
+* def `MercLib.LDD.Ldd.chaining`
+* def `MercLib.LDD.Ldd.entries`
+* def `MercLib.LDD.Ldd.fire`
+* def `MercLib.LDD.Ldd.fireTop`
+* def `MercLib.LDD.Ldd.fireValue`
+* def `MercLib.LDD.Ldd.fixLoop`
+* def `MercLib.LDD.Ldd.lookup`
+* def `MercLib.LDD.Ldd.mapSpineWith`
+* def `MercLib.LDD.Ldd.reach`
+* def `MercLib.LDD.Ldd.reachEvents`
+* def `MercLib.LDD.Ldd.saturate`
+* def `MercLib.LDD.Ldd.saturateNodewise`
+* inductive `MercLib.LDD.Reach`
+* inductive `MercLib.LDD.Reach.below`
+* axiom `MercLib.LDD.Reach.brecOn`
+* def `MercLib.LDD.ReachCorrect`
+* def `MercLib.LDD.ReachTerminates`
+* def `MercLib.LDD.Sat`
+* def `MercLib.LDD.SaturateCorrect`
+* def `MercLib.LDD.SaturateNodewiseCorrect`
+* def `MercLib.LDD.SaturateNodewiseTerminates`
+* def `MercLib.LDD.SaturateTerminates`
 
 ## `MercLib.Algorithms.LDD.Relational`
 
@@ -340,6 +405,48 @@ from the Rust sources checks their contents.
 * inductive `MercLib.Sigref.RP.WLInv`
 * def `MercLib.Sigref.RP.markAllW`
 * def `MercLib.Sigref.RP.markW`
+
+## `MercLib.Implementation.LockFreeTable.Proofs.Table_Proofs` (proofs)
+
+* theorem `MercLib.LockFreeTable.Pc.claim.match_1.congr_eq_1` *not a headline*
+* theorem `MercLib.LockFreeTable.Pc.claim.match_1.congr_eq_2` *not a headline*
+* theorem `MercLib.LockFreeTable.Pc.claim.match_1.congr_eq_3` *not a headline*
+* theorem `MercLib.LockFreeTable.Pc.claim.match_1.hcongr_6` *not a headline*
+* axiom `MercLib.LockFreeTable.absMonotone`
+* axiom `MercLib.LockFreeTable.distinctIndices`
+* axiom `MercLib.LockFreeTable.insertedOnce`
+* axiom `MercLib.LockFreeTable.invariantHolds`
+* axiom `MercLib.LockFreeTable.noLeakedSlots`
+* axiom `MercLib.LockFreeTable.oneIndexPerNode`
+* theorem `MercLib.LockFreeTable.release.match_1.congr_eq_1` *not a headline*
+* theorem `MercLib.LockFreeTable.release.match_1.congr_eq_2` *not a headline*
+
+## `MercLib.Implementation.LockFreeTable.Table`
+
+* def `MercLib.LockFreeTable.Abs`
+* def `MercLib.LockFreeTable.AbsMonotone`
+* def `MercLib.LockFreeTable.Claims`
+* def `MercLib.LockFreeTable.DistinctIndices`
+* def `MercLib.LockFreeTable.Init`
+* def `MercLib.LockFreeTable.InsertedOnce`
+* inductive `MercLib.LockFreeTable.Inv`
+* def `MercLib.LockFreeTable.InvariantHolds`
+* def `MercLib.LockFreeTable.NoLeakedSlots`
+* def `MercLib.LockFreeTable.OneIndexPerNode`
+* inductive `MercLib.LockFreeTable.Params`
+* def `MercLib.LockFreeTable.Params.noConfusionType`
+* inductive `MercLib.LockFreeTable.Pc`
+* def `MercLib.LockFreeTable.Pc.claim`
+* def `MercLib.LockFreeTable.Pc.ctorElimType`
+* def `MercLib.LockFreeTable.Pc.noConfusionType`
+* def `MercLib.LockFreeTable.PrefixOther`
+* inductive `MercLib.LockFreeTable.Reachable`
+* inductive `MercLib.LockFreeTable.Reachable.below`
+* axiom `MercLib.LockFreeTable.Reachable.brecOn`
+* inductive `MercLib.LockFreeTable.State`
+* def `MercLib.LockFreeTable.State.noConfusionType`
+* inductive `MercLib.LockFreeTable.Step`
+* def `MercLib.LockFreeTable.release`
 
 ## `MercLib.Implementation.ParityGame.FatalAttractor`
 
