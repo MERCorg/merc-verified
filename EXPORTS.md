@@ -343,6 +343,7 @@ from the Rust sources checks their contents.
 
 ## `MercLib.Implementation.ParityGame.FatalAttractor`
 
+* def `MercLib.ParityGame.Game.FatalAttractorOriginalComplete`
 * def `MercLib.ParityGame.Game.FatalAttractorOriginalSound`
 * def `MercLib.ParityGame.Game.IsClosedWinningRegion`
 * def `MercLib.ParityGame.Game.SoundPartial`
@@ -358,6 +359,7 @@ from the Rust sources checks their contents.
 * def `MercLib.ParityGame.CexNode.ofNat`
 * axiom `MercLib.ParityGame.CexNode.ofNat_ctorIdx`
 * def `MercLib.ParityGame.Game.FatalAttractorsAltBuggyUnsound`
+* def `MercLib.ParityGame.Game.FatalAttractorsAltComplete`
 * def `MercLib.ParityGame.Game.FatalAttractorsAltSound`
 * def `MercLib.ParityGame.Game.SubgameAttrCorrect`
 * def `MercLib.ParityGame.Game.acceptAlt`
@@ -370,11 +372,13 @@ from the Rust sources checks their contents.
 
 ## `MercLib.Implementation.ParityGame.Proofs.FatalAttractor_Proofs` (proofs)
 
+* axiom `MercLib.ParityGame.Game.fatalAttractorOriginalComplete`
 * axiom `MercLib.ParityGame.Game.fatalAttractorOriginalSound`
 
 ## `MercLib.Implementation.ParityGame.Proofs.FatalAttractorsAlt_Proofs` (proofs)
 
 * axiom `MercLib.ParityGame.Game.fatalAttractorsAltBuggyUnsound`
+* axiom `MercLib.ParityGame.Game.fatalAttractorsAltComplete`
 * axiom `MercLib.ParityGame.Game.fatalAttractorsAltSound`
 * axiom `MercLib.ParityGame.Game.subgameAttrCorrect`
 
