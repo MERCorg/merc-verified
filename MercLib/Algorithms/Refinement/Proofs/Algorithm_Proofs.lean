@@ -23,14 +23,15 @@ namespace MercLib.Refinement
 /-! Machine-generated; may be freely edited or regenerated (see AGENTS.md). The headline
 theorem `refinesNewCorrect` is stated in `Challenges/Refinement.lean`.
 
-Correctness of Algorithm 2 (Theorem 2). The proof follows Lemma 2 of the paper: a loop invariant
+Correctness of Algorithms 5 and 6 of [Laveaux2021] (Theorem 5.2). The proof follows Lemmas 5.4
+and 5.5 of the paper: a loop invariant
 `ExploreInv` relating `done`, `working` and `antichain` (everything in `working` is reachable and
 non-empty, the antichain is covered by `working ∪ done`, nothing in `done` is a witness, and every
 successor of a fully explored pair of `done` is covered by the antichain). When `working` runs
 empty, every reachable pair is dominated by a pair of `done` (`ExploreInv.no_witness`), so by
-antitonicity of witnesses (Lemma 3) no witness is reachable. The invariant is stated over an
+antitonicity of witnesses (Corollary 5.10) no witness is reachable. The invariant is stated over an
 arbitrary monotone normal form, witness predicate and pruning predicate, so that the outer loop of
-Algorithm 6 (`AlgorithmImpossibleFutures_Proofs.lean`) reuses it. -/
+Algorithm 6 of [Laveaux2026] (`AlgorithmImpossibleFutures_Proofs.lean`) reuses it. -/
 
 /-! ## The successor computation (lines 13-22) -/
 
@@ -212,7 +213,7 @@ private theorem forSuccessors_some [HasTau Label] {lts1 : LTS State1 Label} {spe
     · exact SuccFacts.skip (Or.inl h2) (forSuccessors_some hle h)
     · exact SuccFacts.push hle h1 h2 (forSuccessors_some hle h)
 
-/-! ## The exploration invariant (Lemma 2) -/
+/-! ## The exploration invariant (Lemmas 5.4 and 5.5) -/
 
 /-- The invariant of the `while` loop, for the exploration of `L1 ⋉ lts2` from `p0` looking for
     pairs satisfying `W`, where pairs whose specification set satisfies `Pr` are not expanded and
@@ -346,7 +347,7 @@ private theorem reach_succ {lts1 : LTS State1 Label} {spec : Set State1} {impl :
 
 /-- When `working` is empty, no pair reachable from a pair dominating one of `done` is a witness,
     unless it is pruned: every such pair is dominated by a pair of `done` (Proposition 2,
-    saturation) or reachable from an `Ex` pair, and witnesses are antitone (Lemma 3). -/
+    saturation) or reachable from an `Ex` pair, and witnesses are antitone (Corollary 5.10). -/
 private theorem safe (hmono : IsMonotoneNormalForm L1)
     (hW_anti : ∀ {U V : Set State1} {s t : State2}, ProductLE (U, s) (V, t) → W V t → W U s)
     (hPr_mono : ∀ {U V : Set State1}, U ⊆ V → Pr U → Pr V)
@@ -374,7 +375,7 @@ private theorem safe (hmono : IsMonotoneNormalForm L1)
     · obtain ⟨q', hq', hq'le⟩ := productLE_canReach hmono lts2 hz'le ⟨μs, hrest⟩
       exact hEx z' hex ⟨q', hq', hW_anti hq'le hw⟩
 
-/-- Line 23: when `working` is empty, no witness is reachable from `p0`. -/
+/-- Line 24: when `working` is empty, no witness is reachable from `p0`. -/
 private theorem no_witness (hmono : IsMonotoneNormalForm L1)
     (hW_anti : ∀ {U V : Set State1} {s t : State2}, ProductLE (U, s) (V, t) → W V t → W U s)
     (hPr_mono : ∀ {U V : Set State1}, U ⊆ V → Pr U → Pr V)
@@ -392,21 +393,21 @@ private theorem no_witness (hmono : IsMonotoneNormalForm L1)
 
 end ExploreInv
 
-/-! ## Algorithm 2 -/
+/-! ## Algorithms 5 and 6 -/
 
-/-- The normal form explored by Algorithm 2: `norm` for stable failures, `normfdr` for
+/-- The normal form explored by Algorithms 5 and 6: `norm` for stable failures, `normfdr` for
     failures-divergences refinement. -/
 private def ModeNorm [HasTau Label] (lts1 : LTS State1 Label) : Bool → LTS (Set State1) Label
   | false => NormTr lts1
   | true => FdrNormTr lts1
 
-/-- The witnesses Algorithm 2 looks for: SF-witnesses or FD-witnesses. -/
+/-- The witnesses Algorithms 5 and 6 look for: SF-witnesses or FD-witnesses. -/
 private def ModeWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) :
     Bool → Set State1 → State2 → Prop
   | false => IsSFWitness lts1 lts2
   | true => IsFDWitness lts1 lts2
 
-/-- The pairs Algorithm 2 does not expand (line 6): divergent specification sets, when checking
+/-- The pairs Algorithm 6 does not expand (line 7): divergent specification sets, when checking
     for divergences. -/
 private def Pruned [HasTau Label] (lts1 : LTS State1 Label) (checkDiv : Bool) (U : Set State1) : Prop :=
   checkDiv = true ∧ SetDivergent lts1 U
@@ -457,7 +458,7 @@ private theorem stepsBy_modeNorm {c : Bool} {spec : Set State1} (h : ¬ Pruned l
   · exact stepsBy_normTr lts1 spec
   · exact stepsBy_fdrNormTr lts1 fun hd => h ⟨rfl, hd⟩
 
-/-- Lines 7-12 decide whether a popped, non-pruned, non-empty pair is a witness. -/
+/-- Lines 8-12 decide whether a popped, non-pruned, non-empty pair is a witness. -/
 private theorem modeWitness_iff {c : Bool} {spec : Set State1} {impl : State2} (hne : spec.Nonempty)
     (hp : ¬ Pruned lts1 c spec) :
     ModeWitness lts1 lts2 c spec impl ↔
@@ -555,7 +556,7 @@ private theorem forSuccessors_measure [HasTau Label] [Finite State1] [Finite Sta
       simp only [List.length_cons] at ih
       omega
 
-/-- No witness is reachable from `p0` (the right-hand side of Theorem 2). -/
+/-- No witness is reachable from `p0` (the right-hand side of Theorem 5.2). -/
 private def NoWitness [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2 Label) (c : Bool)
     (p0 : Set State1 × State2) : Prop :=
   ¬ ∃ q, (product (ModeNorm lts1 c) lts2).CanReach p0 q ∧ ModeWitness lts1 lts2 c q.1 q.2
@@ -567,7 +568,7 @@ private def LoopPost [HasTau Label] (lts1 : LTS State1 Label) (lts2 : LTS State2
   (s.1 = none ∧ NoWitness lts1 lts2 c p0) ∨
     ∃ b, s.1 = some (.up b) ∧ (b = true ↔ NoWitness lts1 lts2 c p0)
 
-/-- **Theorem 2**, for the whole algorithm: `refinesNew` returns `true` iff no witness is reachable
+/-- **Theorem 5.2**, for the whole algorithm: `refinesNew` returns `true` iff no witness is reachable
     from the initial pair. -/
 private theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Finite State2]
     (lts1 : LTS State1 Label) (s1 : State1) (lts2 : LTS State2 Label) (s2 : State2) (c : Bool) :
@@ -607,7 +608,7 @@ private theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Fi
     dsimp +instances only [List.head_cons, List.tail_cons, Id.run_bind]
     by_cases hor : ¬ SetDivergent lts1 spec ∨ c = false
     swap
-    · -- the pair is pruned (line 6 fails)
+    · -- the pair is pruned (line 7 fails)
       simp only [hor, ↓reduceIte]
       have hpr : Pruned lts1 c spec := by
         rw [not_or, not_not, Bool.not_eq_false] at hor
@@ -617,7 +618,7 @@ private theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Fi
       simp
     simp only [hor, ↓reduceIte]
     by_cases hdiv : c = true ∧ lts2.Divergent impl
-    · -- line 8
+    · -- line 9
       simp only [eq_true hdiv, ↓reduceIte]
       exact Or.inr ⟨false, rfl, found _ h.reach_head ((modeWitness_iff lts1 lts2
         (h.nonempty _ List.mem_cons_self) (hnp hor)).mpr (Or.inl hdiv))⟩
@@ -660,7 +661,7 @@ private theorem refinesNew_iff [HasTau Label] [Finite Label] [Finite State1] [Fi
   · rw [h1]; exact iff_of_true rfl h2
   · rw [h1]; exact h2
 
-/-- **Theorem 2.** `refines_new` decides stable failures refinement (`CheckDiv = false`) and
+/-- **Theorem 5.2.** `refinesNew` decides stable failures refinement (`CheckDiv = false`) and
     failures-divergences refinement (`CheckDiv = true`). -/
 theorem refinesNewCorrect {State1 State2 Label : Type*} [HasTau Label] [Finite Label]
     [Finite State1] [Finite State2]

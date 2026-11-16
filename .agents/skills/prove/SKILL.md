@@ -48,8 +48,21 @@ Only scans the given file, not its imports, so run it on the file that actually 
 ## Proof idioms in this repo
 
 - **Translated-code contracts** (theorems about Aeneas-translated Rust, e.g. `MercVerified/Refinement/Proofs/StrongSignature_Proofs.lean`) go through `Aeneas.Std.WP`: `spec_bind`, `spec_imp_exists`, `loop.spec_decr_nat` with explicit `measure`/`inv`/`post`, and `unfold <def>` before stepping through a `do`-block. Look at an existing loop proof before writing a new one — the shape is fairly fixed.
-- **`while`/`for` loops in `Id.run do` pseudocode** (`MercLib/Algorithms/`): use `whileInduction` / `forInList_induction` from `MercLib/Util/Proofs/While_Proofs.lean` with an invariant and a decreasing measure.
-- **Pure theory** (`MercLib/Theory/*/Proofs/*.lean`) is mostly `rcases`/`obtain` destructuring, `calc` chains through `↔`/`⊆`, and targeted `simp [...]`/`rw [...]`. See lean-conventions for the general tactic-preference order (`grind`/`simp`/`omega`/`aesop`/`decide` before manual term-mode).
+- **`while`/`for` loops in `Id.run do` pseudocode** (`MercLib/Algorithms/`): prefer Hoare triples (`Std.Do`, `import Std.Tactic.Do`) and `mvcgen` where the loop has a real invariant. The pattern (see `MercLib/Algorithms/Graph/Proofs/TarjanRunStep_Proofs.lean`, `MercLib/Algorithms/ParityGame/Proofs/Incomplete_Aux.lean`):
+  ```
+  open Std.Do in
+  theorem foo_spec ... := by
+    generalize h : foo x = r
+    apply Id.of_wp_run_eq h
+    mvcgen invariants
+    | inv1 => fun s => ⟨measure s⟩                  -- termination variant of a `while`
+    | inv2 => ⇓ x => match x with                    -- loop invariant, per exit kind
+        | .inl s => ⌜Inv s⌝
+        | .inr s => ⌜Inv s ∧ Done s⌝
+    case vc1.step.isTrue => ...                      -- one case per verification condition
+  ```
+  Close the generated verification conditions with `grind`/`simp_all`/`omega` first. Put `mvcgen` proofs in a private `_Aux` module (or keep the lemmas `private`) so the lemmas it generates are not exported. `whileInduction` / `forInList_induction` from `MercLib/Util/Proofs/While_Proofs.lean` remain available for simple loops or when `mvcgen` produces unwieldy goals.
+- **Pure theory** (`MercLib/Theory/*/Proofs/*.lean`) is mostly `rcases`/`obtain` destructuring, `calc` chains through `↔`/`⊆`, and targeted `simp [...]`/`rw [...]`. See lean-conventions for the general tactic-preference order (`grind`/`simp`/`omega`/`aesop`/`decide` before manual term-mode); `grind` is usually the best first attempt.
 - No `native_decide` anywhere a headline depends on: the comparator cannot load its auxiliary axiom (see the `ci` skill).
 
 ## Fixing a failing proof

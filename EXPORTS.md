@@ -477,7 +477,7 @@ from the Rust sources checks their contents.
 
 ## `MercLib.Theory.CoupledSim.Proofs.FixedPoint_Proofs` (proofs)
 
-* axiom `MercLib.CoupledSim.exists_fpIter_eq_preorder`
+* axiom `MercLib.CoupledSim.fpIter_fixedPt_eq_preorder`
 * axiom `MercLib.CoupledSim.gfp_iff_preorder`
 
 ## `MercLib.Theory.CoupledSim.Proofs.Game_Proofs` (proofs)

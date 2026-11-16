@@ -14,20 +14,21 @@ namespace MercLib.CoupledSim
 
 This module formalises the game characterisation of the coupled simulation preorder
 (Section 4 of [B. Bisping and U. Nestmann, *Computing Coupled Similarity*][Bisping2019],
-Definitions 7–10). We do not model plays and strategies explicitly: since all infinite plays are
-won by the attacker in a bounded game (the game graph is finite whenever the LTS is), the
-defender's winning region is the greatest fixed point of the monotone `defenderStep` operator
-below, i.e. the standard coinductive (greatest-fixed-point) winning-region semantics of the
+Definitions 7–10). We do not model plays and strategies explicitly: the defender wins every
+infinite play and the player who is stuck loses (Definition 8), so the game is a safety game for
+the defender, and the defender's winning region is the greatest fixed point of the monotone
+`defenderStep` operator below, i.e. the standard coinductive (greatest-fixed-point) winning-region semantics of the
 game. Theorem 3 of [Bisping2019] — the defender wins the game at `att p q` iff
 `p ≼cs[lts] q` — is proved against this characterisation.
 
 ## Main definitions
 
 - `CSGameNode`: game positions `att p q`, `sim a p' q`, `cpl p q` (Definition 7).
-- `CSGameMoves`: the game graph (Definition 8).
+- `CSGameMoves`: the game moves (Definition 7).
 - `defenderStep` / `defenderHom`: the monotone one-step operator on defender-winning regions
-  (Definition 9 in coinductive form).
-- `DefenderWinning`: the defender's winning region (greatest fixed point of `defenderHom`).
+  (Definitions 8 and 9 in coinductive form).
+- `DefenderWinning`: the defender's winning region (Definition 10; greatest fixed point of
+  `defenderHom`).
 
 ## Main statements
 
@@ -49,7 +50,7 @@ inductive CSGameNode [HasTau Label] (lts : LTS State Label) where
   | sim (a : Label) (p' q : State)
   | cpl (p q : State)
 
-/-- The game graph (Definition 8 of [Bisping2019]):
+/-- The game moves (Definition 7 of [Bisping2019]):
 - attacker: challenge a visible step of `p`, or follow a `τ`-step of `p` without changing `q`;
 - defender (sim): answer with a delay step of `q`;
 - attacker: challenge the coupling;
@@ -67,10 +68,11 @@ def CSGameMoves [HasTau Label] (lts : LTS State Label) :
 
 /-! ## The defender's winning region -/
 
-/-- One step of the winning-region computation (Definition 9 of [Bisping2019] in coinductive
-form): at an attacker node the defender must cope with every attacker move; at defender nodes
-one suitable move must lead back into the winning region. (All infinite plays are won by the
-attacker, so defender nodes must be able to keep the play going.) -/
+/-- One step of the winning-region computation (Definitions 8 and 9 of [Bisping2019] in
+coinductive form): at an attacker node the defender must cope with every attacker move (a stuck
+attacker loses); at defender nodes one suitable move must lead back into the winning region (a
+stuck defender loses). All infinite plays are won by the defender, hence the greatest fixed
+point. -/
 def defenderStep [HasTau Label] (lts : LTS State Label)
     (d : CSGameNode lts → Prop) : CSGameNode lts → Prop :=
   fun n =>

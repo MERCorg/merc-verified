@@ -7,7 +7,7 @@ import MercLib.Theory.CoupledSim.Game
 
 The headline theorems of `MercLib/Theory/CoupledSim/` — the theory of coupled similarity
 ([B. Bisping and U. Nestmann, *Computing Coupled Similarity*][Bisping2019], Theorems 1–3 and
-Lemmas 1–5, 7, 8, Corollary 1) — stated with `sorry` against the human-vetted spec files only;
+Lemmas 1–5, 7, Corollary 1) — stated with `sorry` against the human-vetted spec files only;
 `lake comparator` checks them against the solution module `MercLib`.
 
 Every statement must be written exactly as in the proof files (binder names and binder kinds
@@ -69,17 +69,22 @@ with weak similarity between the corresponding `some`-states of the sink-extende
 theorem extendSink_ws_some_iff [HasTau Label] (lts : LTS State Label) (s t : State) :
     s ≼ws[lts] t ↔ (some s) ≼ws[extendSink lts] (some t) := sorry
 
-/-! ## The fixed-point algorithm (Lemmas 7, 8 and Theorem 2) -/
+/-! ## The fixed-point algorithm (Lemma 7 and Theorem 2) -/
 
 /-- **Lemma 7 of [Bisping2019]**: the greatest fixed points of `fpStep` are exactly the relations
 equivalent to the coupled simulation preorder. -/
 theorem gfp_iff_preorder [HasTau Label] (lts : LTS State Label) (r : State → State → Prop) :
     IsGreatestFixedPt lts r ↔ ∀ p q, r p q ↔ p ≼cs[lts] q := sorry
 
-/-- **Theorem 2 of [Bisping2019]**: on finite state spaces, the fixed-point iteration returns the
-coupled simulation preorder. -/
-theorem exists_fpIter_eq_preorder [HasTau Label] [Finite State] (lts : LTS State Label) :
-    ∃ n, ∀ p q, fpIter lts n p q ↔ p ≼cs[lts] q := sorry
+/-- **Theorem 2 of [Bisping2019]**: on finite state spaces, `fp_compute_cs` returns the coupled
+simulation preorder. The loop `while fpStep R ≠ R do R := fpStep R`, started on the full relation,
+visits `fpIter lts 0, fpIter lts 1, …`: it terminates, since some iterate is a fixed point of
+`fpStep`, and the iterate at which it stops, being a fixed point, is the coupled simulation
+preorder. -/
+theorem fpIter_fixedPt_eq_preorder [HasTau Label] [Finite State] (lts : LTS State Label) :
+    (∃ n, fpStep lts (fpIter lts n) = fpIter lts n) ∧
+      ∀ n, fpStep lts (fpIter lts n) = fpIter lts n → ∀ p q, fpIter lts n p q ↔ p ≼cs[lts] q :=
+  sorry
 
 /-! ## The coupled simulation game (Theorem 3) -/
 

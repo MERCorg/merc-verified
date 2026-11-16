@@ -92,8 +92,8 @@ scoped notation s:max " ≼cs[" lts "] " s':max => CoupledSimulationPreorder lts
 /-- `p ≼ws[lts] q`: `p` is weakly simulated by `q` in `lts`. -/
 scoped notation s:max " ≼ws[" lts "] " s':max => WeakSimulationPreorder lts s s'
 
-/-- **Coupled similarity** `≡cs` (Definition 4 of [Bisping2019]): the symmetric closure of the
-coupled simulation preorder. -/
+/-- **Coupled similarity** `≡cs` (Definition 4 of [Bisping2019]): `p ≡cs q` iff `p ≼cs q` and
+`q ≼cs p`. -/
 def CoupledSimilarity [HasTau Label] (lts : LTS State Label) : State → State → Prop :=
   fun p q => p ≼cs[lts] q ∧ q ≼cs[lts] p
 

@@ -56,9 +56,9 @@ theorem failuresDivergencesRefines_iff_not_reachable_fdWitness [HasTau Label]
       ¬ ∃ U s, (product (FdrNormTr lts1) lts2).CanReach (NormInit lts1 s1, s2) (U, s) ∧
         IsFDWitness lts1 lts2 U s := sorry
 
-/-! ## Algorithm 2 (Theorem 2 of [Laveaux2019]) -/
+/-! ## Algorithms 5 and 6 (Theorem 5.2 of [Laveaux2021]) -/
 
-/-- **`refines_new` decides stable failures and failures-divergences refinement (Theorem 2).**
+/-- **`refinesNew` decides stable failures and failures-divergences refinement (Theorem 5.2).**
 For two finite LTSs with a silent action over a finite alphabet,
 `refinesNew lts1 s1 lts2 s2 false = true` iff `s1 ⊑sfr s2`, and
 `refinesNew lts1 s1 lts2 s2 true = true` iff `s1 ⊑fdr s2`. -/

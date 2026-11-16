@@ -16,8 +16,10 @@ namespace MercLib.Refinement
 # Weak impossible futures
 
 Sections 2-3 of [M. Laveaux and T. A. C. Willemse, *Deciding Impossible Futures*][Laveaux2026],
-LNCS 16365, 2026 (the preorder is due to
-[Voorhoeve and Mauw, *Impossible futures and determinism*][Voorhoeve2001], 2001).
+LNCS 16365, 2026 (impossible futures are due to
+[Voorhoeve and Mauw, *Impossible futures and determinism*][Voorhoeve2001], 2001, whose preorder
+`⊑₂` additionally requires every weak trace of the specification to be one of the implementation;
+the preorder here is the plain inclusion of Definition 3 of [Laveaux2026]).
 
 **Orientation.** As everywhere in this package, `lts1`/`State1` is the *specification* and
 `lts2`/`State2` the *implementation*. The paper writes `L1 ⊑if L2` with `L1` the implementation,

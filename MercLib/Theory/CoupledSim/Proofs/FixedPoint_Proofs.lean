@@ -229,7 +229,7 @@ theorem gfp_iff_preorder [HasTau Label] (lts : LTS State Label) (r : State → S
     · intro s hs p q hspq
       exact (hiff p q).mpr ⟨s, cds_isCoupledSimulation (fpStep_self_iff_cds.mp hs), hspq⟩
 
-/-! ## The iteration (Lemma 8 and Theorem 2) -/
+/-! ## The iteration (Theorem 2) -/
 
 /-- Each iteration step applies `fpStep` to the previous iterate. -/
 private theorem fpIter_succ [HasTau Label] (lts : LTS State Label) (n : ℕ) :
@@ -262,7 +262,8 @@ private theorem relExt_injective {State : Type*} :
   funext p q
   exact congrArg (fun (s : Set (State × State)) => (p, q) ∈ s) hext
 
-/-- **Lemma 8 of [Bisping2019]**: on finite state spaces, the iteration of `fpStep` stabilizes. -/
+/-- On finite state spaces, the iteration of `fpStep` stabilizes (the termination part of Lemma 8
+of [Bisping2019]). -/
 private theorem exists_fpIter_fixed [HasTau Label] [Finite State] (lts : LTS State Label) :
     ∃ n, fpIter lts n = fpIter lts (n + 1) := by
   by_contra hcon
@@ -302,15 +303,20 @@ private theorem fixedPoint_subset_fpIter [HasTau Label] (lts : LTS State Label)
     rw [fpIter_succ lts k]
     exact fpStep_mono (fun a b hab => ih hab) (by rw [hu]; exact h)
 
-/-- **Theorem 2 of [Bisping2019]**: on finite state spaces, the fixed-point iteration returns the
-coupled simulation preorder. -/
-theorem exists_fpIter_eq_preorder [HasTau Label] [Finite State] (lts : LTS State Label) :
-    ∃ n, ∀ p q, fpIter lts n p q ↔ p ≼cs[lts] q := by
-  obtain ⟨n, hn⟩ := exists_fpIter_fixed lts
-  have hfix : fpStep lts (fpIter lts n) = fpIter lts n := by
-    rw [← fpIter_succ lts n, hn]
-  refine ⟨n, (gfp_iff_preorder lts (fpIter lts n)).mp ⟨hfix, ?_⟩⟩
-  intro s hs p q hspq
-  exact fixedPoint_subset_fpIter lts hs n hspq
+/-- **Theorem 2 of [Bisping2019]**: on finite state spaces, `fp_compute_cs` returns the coupled
+simulation preorder. The loop `while fpStep R ≠ R do R := fpStep R`, started on the full relation,
+visits `fpIter lts 0, fpIter lts 1, …`: it terminates, since some iterate is a fixed point of
+`fpStep`, and the iterate at which it stops, being a fixed point, is the coupled simulation
+preorder. -/
+theorem fpIter_fixedPt_eq_preorder [HasTau Label] [Finite State] (lts : LTS State Label) :
+    (∃ n, fpStep lts (fpIter lts n) = fpIter lts n) ∧
+      ∀ n, fpStep lts (fpIter lts n) = fpIter lts n → ∀ p q, fpIter lts n p q ↔ p ≼cs[lts] q := by
+  refine ⟨?_, ?_⟩
+  · obtain ⟨n, hn⟩ := exists_fpIter_fixed lts
+    exact ⟨n, by rw [← fpIter_succ lts n, hn]⟩
+  · intro n hfix
+    refine (gfp_iff_preorder lts (fpIter lts n)).mp ⟨hfix, ?_⟩
+    intro s hs p q hspq
+    exact fixedPoint_subset_fpIter lts hs n hspq
 
 end MercLib.CoupledSim

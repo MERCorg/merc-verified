@@ -20,8 +20,8 @@ delay simulations) is exactly the coupled simulation preorder.
 
 ## Main definitions
 
-- `fpStep`: one pruning step; `fpStep r` keeps those pairs of `r` that satisfy a clause of
-  `IsCoupledDelaySimulation`.
+- `fpStep`: one pruning step; `fpStep r` keeps those pairs of `r` that satisfy both clauses
+  of `IsCoupledDelaySimulation` within `r`.
 - `fpIter`: the `n`-fold iteration of `fpStep` on the full relation.
 - `IsGreatestFixedPt`: `r` is the greatest fixed point of `fpStep`.
 
