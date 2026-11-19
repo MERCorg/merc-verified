@@ -791,6 +791,82 @@ from the Rust sources checks their contents.
 * def `MercLib.HybridSI.weight`
 * def `MercLib.ParityGame.Game.Relabelled`
 
+## `MercLib.Theory.Pbes.Proofs.SymmetryDetection_Proofs` (proofs)
+
+* axiom `MercLib.Symmetry.agreesWithAct`
+* axiom `MercLib.Symmetry.restrictionExists`
+* axiom `MercLib.Symmetry.rhsFixed`
+* axiom `MercLib.Symmetry.sizePreserved`
+* axiom `MercLib.Symmetry.symmetryFromAutomorphism`
+* axiom `MercLib.Symmetry.uncolouredUpdatesUnsound`
+* axiom `MercLib.Symmetry.undirectedUnsound`
+
+## `MercLib.Theory.Pbes.SymmetryDetection`
+
+* def `MercLib.Symmetry.AgreesWithAct`
+* def `MercLib.Symmetry.Arc`
+* inductive `MercLib.Symmetry.ArcColour`
+* def `MercLib.Symmetry.ArcColour.ctorElimType`
+* def `MercLib.Symmetry.ArcColour.noConfusionType`
+* inductive `MercLib.Symmetry.BoolSym`
+* def `MercLib.Symmetry.BoolSym.noConfusionType`
+* def `MercLib.Symmetry.BoolSym.ofNat`
+* axiom `MercLib.Symmetry.BoolSym.ofNat_ctorIdx`
+* def `MercLib.Symmetry.CommSound`
+* def `MercLib.Symmetry.Edge`
+* inductive `MercLib.Symmetry.Equation`
+* def `MercLib.Symmetry.Equation.noConfusionType`
+* inductive `MercLib.Symmetry.Expr`
+* def `MercLib.Symmetry.Expr.Equivalent`
+* def `MercLib.Symmetry.Expr.act`
+* axiom `MercLib.Symmetry.Expr.brecOn.eq`
+* def `MercLib.Symmetry.Expr.brecOn.go`
+* axiom `MercLib.Symmetry.Expr.brecOn_1.eq`
+* def `MercLib.Symmetry.Expr.brecOn_1.go`
+* def `MercLib.Symmetry.Expr.ctorElimType`
+* def `MercLib.Symmetry.Expr.eval`
+* def `MercLib.Symmetry.Expr.holds`
+* def `MercLib.Symmetry.Expr.isPvi`
+* def `MercLib.Symmetry.Expr.noConfusionType`
+* def `MercLib.Symmetry.Expr.pvis`
+* def `MercLib.Symmetry.Expr.size`
+* def `MercLib.Symmetry.Expr.sub`
+* def `MercLib.Symmetry.Expr.subD`
+* def `MercLib.Symmetry.Expr.subst`
+* def `MercLib.Symmetry.IsAut`
+* def `MercLib.Symmetry.IsPviAt`
+* def `MercLib.Symmetry.IsSdgAut`
+* def `MercLib.Symmetry.IsSymmetry`
+* def `MercLib.Symmetry.Pbes`
+* def `MercLib.Symmetry.RestrictionExists`
+* def `MercLib.Symmetry.Restricts`
+* def `MercLib.Symmetry.RhsFixed`
+* inductive `MercLib.Symmetry.Role`
+* def `MercLib.Symmetry.Role.ctorElimType`
+* def `MercLib.Symmetry.Role.noConfusionType`
+* inductive `MercLib.Symmetry.ShapeColour`
+* def `MercLib.Symmetry.ShapeColour.ctorElimType`
+* def `MercLib.Symmetry.ShapeColour.noConfusionType`
+* def `MercLib.Symmetry.SizePreserved`
+* def `MercLib.Symmetry.SymmetryFromAutomorphism`
+* def `MercLib.Symmetry.UncolouredUpdatesUnsound`
+* def `MercLib.Symmetry.UndirectedUnsound`
+* inductive `MercLib.Symmetry.Vertex`
+* def `MercLib.Symmetry.Vertex.ctorElimType`
+* def `MercLib.Symmetry.Vertex.noConfusionType`
+* def `MercLib.Symmetry.WellFormed`
+* def `MercLib.Symmetry.arcColour`
+* def `MercLib.Symmetry.boolComm`
+* def `MercLib.Symmetry.boolI`
+* def `MercLib.Symmetry.colour`
+* def `MercLib.Symmetry.edgeColour`
+* def `MercLib.Symmetry.instDecidableEqBoolSym`
+* def `MercLib.Symmetry.paperArcColour`
+* def `MercLib.Symmetry.shapeColour`
+* def `MercLib.Symmetry.subE`
+* def `MercLib.Symmetry.termArcColour`
+* def `MercLib.Symmetry.vertices`
+
 ## `MercLib.Theory.Refinement.ImpossibleFutures`
 
 * def `MercLib.Refinement.Convergent`

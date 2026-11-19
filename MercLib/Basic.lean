@@ -7,6 +7,7 @@ public import MercLib.Theory.Graph.Basic
 public import MercLib.Theory.LDD.Basic
 public import MercLib.Theory.LTS.Basic
 public import MercLib.Theory.ParityGame.Basic
+public import MercLib.Theory.Pbes.Basic
 public import MercLib.Theory.Refinement.Basic
 public import MercLib.Theory.Rewriting.Basic
 public import MercLib.Theory.Signatures.Basic

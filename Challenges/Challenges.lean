@@ -8,3 +8,4 @@ import Challenges.LDD
 import Challenges.Sigref
 import Challenges.Rewriting
 import Challenges.CoupledSim
+import Challenges.Pbes

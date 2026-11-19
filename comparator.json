@@ -117,7 +117,14 @@
     "MercLib.CoupledSim.extendSink_ws_some_iff",
     "MercLib.CoupledSim.gfp_iff_preorder",
     "MercLib.CoupledSim.fpIter_fixedPt_eq_preorder",
-    "MercLib.CoupledSim.defenderWinning_iff_preorder"
+    "MercLib.CoupledSim.defenderWinning_iff_preorder",
+    "MercLib.Symmetry.restrictionExists",
+    "MercLib.Symmetry.rhsFixed",
+    "MercLib.Symmetry.sizePreserved",
+    "MercLib.Symmetry.agreesWithAct",
+    "MercLib.Symmetry.symmetryFromAutomorphism",
+    "MercLib.Symmetry.undirectedUnsound",
+    "MercLib.Symmetry.uncolouredUpdatesUnsound"
   ],
   "permitted_axioms": [
     "propext",
